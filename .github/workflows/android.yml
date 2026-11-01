@@ -100,7 +100,9 @@ jobs:
           aapt2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
           "$aapt2" dump badging fasan-split.apk | grep -E "^package|^sdkVersion|^targetSdk|^application-label:" | tee -a logs/signatur.log
 
+      # Wie bei der Kamera: veröffentlicht wird nur, wenn Analyse und Tests grün sind.
       - name: Release „neueste“ aktualisieren
+        if: steps.analyze.outcome == 'success' && steps.tests.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -121,3 +123,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash ci/push-logs.sh "analyse=${{ steps.analyze.outcome }} tests=${{ steps.tests.outcome }} job=${{ job.status }}"
+
+      - name: Rote Analyse oder Tests melden
+        if: steps.analyze.outcome != 'success' || steps.tests.outcome != 'success'
+        run: |
+          echo "Analyse=${{ steps.analyze.outcome }} Tests=${{ steps.tests.outcome }}: keine Veröffentlichung."
+          exit 1

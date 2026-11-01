@@ -21,7 +21,10 @@ void main() {
     addTearDown(tester.view.reset);
     final store = BillStore.memory();
     final b = demoBill();
-    await tester.pumpWidget(SplitApp(store: store, ui: FasanController(), home: ReviewScreen(bill: b)));
+    // Korn und Bildstandwackeln laufen bei voller Akku-Stufe dauerhaft (FasanFilm-Ticker, 24 Hz), dann wird
+    // pumpAndSettle nie fertig. Dieser Test prüft die Bedienung, darum mit „Animationen entfernen“.
+    final ui = FasanController(settings: const FasanSettings(reduceMotion: true));
+    await tester.pumpWidget(SplitApp(store: store, ui: ui, home: ReviewScreen(bill: b)));
     await tester.pumpAndSettle();
     expect(find.text('Bacalhau à Brás'), findsOneWidget);
     await tester.tap(find.byType(FasanButton).last); // Next

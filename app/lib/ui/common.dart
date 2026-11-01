@@ -54,7 +54,7 @@ class StepScaffold extends StatelessWidget {
             child: FasanGlass(
               padding: const EdgeInsets.all(6),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                if (bottomExtra != null) bottomExtra!,
+                ?bottomExtra,
                 if (action != null)
                   Row(children: [
                     if (secondary != null) ...[secondary!, const SizedBox(width: 6)],
