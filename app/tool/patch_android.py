@@ -27,6 +27,13 @@ android {{
     defaultConfig {{
         minSdk = 26
         manifestPlaceholders["fasanLabel"] = System.getenv("FASAN_LABEL") ?: "Fasan Split"
+        // Nur arm64: Die CI baut Flutter nur für android-arm64. Ohne diesen Filter setzt das Flutter-Gradle-Plugin
+        // (ab 3.35) armeabi-v7a, arm64-v8a und x86_64, und die APK trägt ONNX Runtime für zwei unbrauchbare
+        // Architekturen mit (~37 MB). Quelle: docs.flutter.dev/release/breaking-changes/default-abi-filters-android
+        ndk {{
+            abiFilters.clear()
+            abiFilters.addAll(listOf("arm64-v8a"))
+        }}
     }}
     signingConfigs {{
         create("fasan") {{
