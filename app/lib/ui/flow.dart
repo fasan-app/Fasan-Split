@@ -1,0 +1,446 @@
+// Fasan Split – the bill flow: 1 total and purpose, 2 who was there, 3 assign, 4 who paid + result. MPL-2.0
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:fasan_ui/fasan_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../l10n.dart';
+import '../main.dart';
+import '../model/bill.dart';
+import '../recognition_service.dart';
+import 'assign.dart';
+import 'common.dart';
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 1. total and purpose
+
+class ReviewScreen extends StatefulWidget {
+  const ReviewScreen({super.key, required this.bill, this.scan});
+
+  final Bill bill;
+  final ScanResultData? scan;
+
+  @override
+  State<ReviewScreen> createState() => _ReviewScreenState();
+}
+
+class _ReviewScreenState extends State<ReviewScreen> {
+  late final _purpose = TextEditingController(text: widget.bill.purpose);
+  late final _total = TextEditingController(text: widget.bill.total == null ? '' : money(widget.bill.total!));
+
+  Bill get b => widget.bill;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    final l = FasanLook.of(context);
+    final tt = Theme.of(context).textTheme;
+    final diff = b.difference;
+    final status = b.checked && diff == 0
+        ? _Status(icon: Icons.verified_outlined, text: t.checked, color: l.accent)
+        : (diff != 0 && b.total != null
+            ? _Status(icon: Icons.error_outline, text: t.diff('${money(diff.abs(), de: t.de)} €'), color: Theme.of(context).colorScheme.error)
+            : (widget.scan?.contradiction == true ? _Status(icon: Icons.help_outline, text: t.contradiction, color: Theme.of(context).colorScheme.error) : null));
+    return StepScaffold(
+      title: t.totalAndPurpose,
+      step: 1,
+      action: t.next,
+      onAction: b.its.isEmpty && b.total == null
+          ? null
+          : () {
+              b.purpose = _purpose.text.trim();
+              StoreScope.of(context).upsert(b);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => PeopleScreen(bill: b)));
+            },
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context)),
+        children: [
+          TextField(controller: _purpose, decoration: InputDecoration(labelText: t.purpose, hintText: t.purposeHint), textInputAction: TextInputAction.next),
+          const SizedBox(height: FasanSpace.s),
+          TextField(
+            controller: _total,
+            decoration: InputDecoration(labelText: t.total, suffixText: '€'),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: tt.headlineSmall,
+            onChanged: (v) => setState(() {
+              b.total = parseMoney(v);
+              b.checked = false;
+            }),
+          ),
+          if (status != null) ...[const SizedBox(height: FasanSpace.m), status],
+          const SizedBox(height: FasanSpace.l),
+          Row(children: [
+            FasanLabel('${t.items} · ${b.its.length}'),
+            const Spacer(),
+            Money(b.itemSum, style: tt.bodyMedium),
+          ]),
+          const SizedBox(height: FasanSpace.s),
+          for (var i = 0; i < b.its.length; i++) _ItemRow(item: b.its[i], onTap: () => _edit(i)),
+          const SizedBox(height: FasanSpace.s),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FasanButton(label: t.addItem, icon: Icons.add, kind: FasanButtonKind.quiet, onPressed: _add),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _edit(int i) async {
+    final it = b.its[i];
+    var deleted = false;
+    final changed = await editItem(context, it, onDelete: () => deleted = true);
+    if (!changed) return;
+    setState(() {
+      if (deleted) b.its.removeAt(i);
+      b.checked = false;
+    });
+  }
+
+  Future<void> _add() async {
+    final it = BillItem(name: S.of(context).de ? 'Posten' : 'Item', amount: 0);
+    if (await editItem(context, it)) setState(() => b.its.add(it));
+  }
+}
+
+class _Status extends StatelessWidget {
+  const _Status({required this.icon, required this.text, required this.color});
+
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context);
+    return Container(
+      padding: const EdgeInsets.all(FasanSpace.m),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(l.radius * 0.6)),
+      child: Row(children: [
+        Icon(icon, color: color, size: 22),
+        const SizedBox(width: FasanSpace.s),
+        Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
+      ]),
+    );
+  }
+}
+
+class _ItemRow extends StatelessWidget {
+  const _ItemRow({required this.item, required this.onTap});
+
+  final BillItem item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context);
+    final t = S.of(context);
+    final tt = Theme.of(context).textTheme;
+    final unsure = !item.sure || (item.certainty != null && item.certainty! < 60);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        constraints: BoxConstraints(minHeight: l.minTap),
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: l.hairline))),
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(item.qty > 1 ? '${item.qty} × ${item.name}' : item.name, style: tt.bodyLarge, maxLines: 2, overflow: TextOverflow.ellipsis),
+              if (item.note != null) Text(item.note!, style: tt.bodySmall),
+              if (item.snippet != null) Padding(padding: const EdgeInsets.only(top: 4), child: Snippet(item.snippet, height: 22)),
+            ]),
+          ),
+          if (unsure)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Tooltip(message: t.unsure, child: Icon(Icons.help_outline, size: 18, color: Theme.of(context).colorScheme.error)),
+            ),
+          Money(item.amount),
+        ]),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 2. who was there
+
+class PeopleScreen extends StatefulWidget {
+  const PeopleScreen({super.key, required this.bill});
+
+  final Bill bill;
+
+  @override
+  State<PeopleScreen> createState() => _PeopleScreenState();
+}
+
+class _PeopleScreenState extends State<PeopleScreen> {
+  final _name = TextEditingController();
+  Bill get b => widget.bill;
+
+  void _add(String n) {
+    final name = n.trim();
+    if (name.isEmpty || b.ps.any((p) => p.name.toLowerCase() == name.toLowerCase())) return;
+    final used = b.ps.map((p) => p.color).toSet();
+    var c = 0;
+    while (used.contains(c) && c < 64) {
+      c++;
+    }
+    setState(() => b.ps.add(Person(name, c)));
+    _name.clear();
+    FasanHaptics.of(context).tap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    final recent = StoreScope.of(context).recentNames.where((n) => !b.ps.any((p) => p.name == n)).toList();
+    return StepScaffold(
+      title: t.whoWasThere,
+      step: 2,
+      action: b.ps.length < 2 ? t.needPeople : t.next,
+      onAction: b.ps.length < 2
+          ? null
+          : () {
+              StoreScope.of(context).upsert(b);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssignScreen(bill: b)));
+            },
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context)),
+        children: [
+          Row(children: [
+            Expanded(child: TextField(controller: _name, decoration: InputDecoration(labelText: t.addPerson), textCapitalization: TextCapitalization.words, onSubmitted: _add)),
+            const SizedBox(width: FasanSpace.s),
+            FasanButton(label: t.add, onPressed: () => _add(_name.text)),
+          ]),
+          const SizedBox(height: FasanSpace.l),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (var i = 0; i < b.ps.length; i++)
+              InputChip(
+                avatar: FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 28),
+                label: Text(b.ps[i].name),
+                onDeleted: () => setState(() {
+                  b.ps.removeAt(i);
+                  for (final it in b.its) {
+                    it.shares = {for (final e in it.shares.entries) if (e.key != i) (e.key > i ? e.key - 1 : e.key): e.value};
+                  }
+                  if (b.payer == i) b.payer = null;
+                }),
+              ),
+          ]),
+          if (recent.isNotEmpty) ...[
+            const SizedBox(height: FasanSpace.xl),
+            FasanLabel(t.recent),
+            const SizedBox(height: FasanSpace.s),
+            Wrap(spacing: 8, runSpacing: 8, children: [for (final n in recent) ActionChip(label: Text(n), onPressed: () => _add(n))]),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 4. who paid + result
+
+class PayScreen extends StatefulWidget {
+  const PayScreen({super.key, required this.bill});
+
+  final Bill bill;
+
+  @override
+  State<PayScreen> createState() => _PayScreenState();
+}
+
+class _PayScreenState extends State<PayScreen> {
+  Bill get b => widget.bill;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    return StepScaffold(
+      title: t.whoPaid,
+      step: 4,
+      action: t.done,
+      onAction: b.payer == null
+          ? null
+          : () {
+              StoreScope.of(context).upsert(b);
+              Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => ResultScreen(bill: b)), (r) => r.isFirst);
+            },
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context)),
+        children: [
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (var i = 0; i < b.ps.length; i++)
+              FasanPersonChip(name: b.ps[i].name, index: b.ps[i].color, selected: b.payer == i, onTap: () => setState(() => b.payer = i)),
+          ]),
+          if (b.advance > 0) ...[
+            const SizedBox(height: FasanSpace.l),
+            Text('${t.advance}: ${money(b.advance, de: t.de)} €', style: Theme.of(context).textTheme.bodyMedium),
+          ],
+          const SizedBox(height: FasanSpace.xl),
+          if (b.payer != null) ResultBody(bill: b),
+        ],
+      ),
+    );
+  }
+}
+
+/// Per person, transfers, unassigned items.
+class ResultBody extends StatelessWidget {
+  const ResultBody({super.key, required this.bill});
+
+  final Bill bill;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    final l = FasanLook.of(context);
+    final tt = Theme.of(context).textTheme;
+    final pp = bill.perPerson();
+    final open = bill.its.where((p) => !p.assigned).toList();
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      FasanLabel(t.result),
+      const SizedBox(height: FasanSpace.s),
+      for (var i = 0; i < bill.ps.length; i++)
+        Container(
+          constraints: BoxConstraints(minHeight: l.minTap),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: l.hairline))),
+          child: Row(children: [
+            FasanAvatar(name: bill.ps[i].name, index: bill.ps[i].color, size: 32),
+            const SizedBox(width: FasanSpace.m),
+            Expanded(child: Text(t.perPerson(bill.ps[i].name), style: tt.bodyLarge)),
+            Money(pp[i] ?? 0),
+          ]),
+        ),
+      if (bill.difference != 0) Padding(padding: const EdgeInsets.only(top: 6), child: Text('${t.differenceSpread}: ${money(bill.difference, de: t.de, sign: true)} €', style: tt.bodySmall)),
+      const SizedBox(height: FasanSpace.l),
+      for (final (from, to, c) in bill.transfers())
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(children: [
+            FasanAvatar(name: bill.ps[from].name, index: bill.ps[from].color, size: 26),
+            const SizedBox(width: 6),
+            Icon(Icons.arrow_forward_rounded, size: 18, color: l.textMuted),
+            const SizedBox(width: 6),
+            FasanAvatar(name: bill.ps[to].name, index: bill.ps[to].color, size: 26),
+            const SizedBox(width: FasanSpace.m),
+            Expanded(child: Text(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} €'), style: tt.bodyMedium)),
+          ]),
+        ),
+      if (open.isNotEmpty) ...[
+        const SizedBox(height: FasanSpace.l),
+        Text('${t.notAssigned}: ${open.map((p) => p.name).join(', ')}', style: tt.bodySmall!.copyWith(color: Theme.of(context).colorScheme.error)),
+      ],
+    ]);
+  }
+}
+
+class ResultScreen extends StatelessWidget {
+  const ResultScreen({super.key, required this.bill});
+
+  final Bill bill;
+
+  String _text(S t) {
+    final b = StringBuffer('${bill.purpose.isEmpty ? t.appName : bill.purpose}: ${money(bill.effectiveTotal, de: t.de)} €\n');
+    final pp = bill.perPerson();
+    for (var i = 0; i < bill.ps.length; i++) {
+      b.writeln('${bill.ps[i].name}: ${money(pp[i] ?? 0, de: t.de)} €');
+    }
+    for (final (from, to, c) in bill.transfers()) {
+      b.writeln(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} €'));
+    }
+    return b.toString();
+  }
+
+  Future<void> _shareLog(BuildContext context) async {
+    final t = S.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.shareLog),
+        content: Text(t.logConsent),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t.cancel)),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(t.share)),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    Map<String, Object?> log = {};
+    if (bill.logPath != null && File(bill.logPath!).existsSync()) {
+      try {
+        log = (jsonDecode(File(bill.logPath!).readAsStringSync()) as Map).cast<String, Object?>();
+      } catch (_) {}
+    }
+    final doc = {
+      'app': 'app.fasan.split',
+      'geraet': {'os': Platform.operatingSystem, 'version': Platform.operatingSystemVersion, 'kerne': Platform.numberOfProcessors},
+      'erkennung': log,
+      'rechnung': {
+        'summe': bill.total,
+        'posten': [for (final p in bill.its) {'t': p.name, 'b': p.amount, 'menge': p.qty, 'sicher': p.sure}],
+      },
+    };
+    await SharePlus.instance.share(ShareParams(files: [
+      XFile.fromData(Uint8List.fromList(utf8.encode(const JsonEncoder.withIndent(' ').convert(doc))), mimeType: 'application/json', name: 'fasan-split-protokoll.json'),
+    ]));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    final store = StoreScope.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(bill.purpose.isEmpty ? t.appName : bill.purpose),
+        actions: [
+          IconButton(
+            tooltip: t.edit,
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReviewScreen(bill: bill))),
+          ),
+          PopupMenuButton<String>(
+            onSelected: (v) {
+              if (v == 'log') _shareLog(context);
+              if (v == 'del') {
+                store.remove(bill);
+                Navigator.of(context).maybePop();
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'log', child: Text(t.shareLog)),
+              PopupMenuItem(value: 'del', child: Text(t.deleteBill)),
+            ],
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.xxxl),
+        children: [
+          Money(bill.effectiveTotal, style: Theme.of(context).textTheme.displaySmall),
+          const SizedBox(height: FasanSpace.l),
+          if (bill.payer != null) ResultBody(bill: bill) else Text(t.whoPaid),
+          const SizedBox(height: FasanSpace.xl),
+          FasanButton(label: t.shareText, icon: Icons.ios_share_rounded, expand: true, onPressed: () => SharePlus.instance.share(ShareParams(text: _text(t)))),
+          const SizedBox(height: FasanSpace.s),
+          FasanButton(
+            label: t.exportCsv,
+            icon: Icons.table_view_outlined,
+            kind: FasanButtonKind.secondary,
+            expand: true,
+            onPressed: () => SharePlus.instance.share(ShareParams(files: [
+              XFile.fromData(Uint8List.fromList(utf8.encode(billCsv(bill, de: t.de))), mimeType: 'text/csv', name: 'fasan-split.csv'),
+            ])),
+          ),
+        ],
+      ),
+    );
+  }
+}

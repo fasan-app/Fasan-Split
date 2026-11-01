@@ -1,0 +1,123 @@
+# Baut bei jedem Push auf main Fasan Split und legt die APK unter Releases → „neueste“ ab (Vorlage: Fasan-Camera).
+# Nur der FOSS-Weg: Flutter, Gradle, ONNX Runtime (MIT) aus Maven Central, keine Google-Dienste, kein FCM.
+# Die Logs jedes Laufs landen im Branch `ci-logs`, damit sie ohne die Actions-Oberfläche lesbar sind.
+name: Android-APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: android
+  cancel-in-progress: true
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Platz schaffen
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /opt/hostedtoolcache/CodeQL || true
+          df -h / | tail -1
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Flutter festgenagelt wie bei der Kamera
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Modelle holen (Prüfsummen)
+        working-directory: app
+        run: |
+          mkdir -p ../logs
+          bash tool/fetch_models.sh 2>&1 | tee ../logs/modelle.log
+
+      - name: Android-Projekt ergänzen
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter --version | tee ../logs/flutter.log
+          flutter create --org app.fasan --project-name fasan_split --platforms android . 2>&1 | tee -a ../logs/flutter.log
+          python3 tool/patch_android.py 2>&1 | tee -a ../logs/flutter.log
+
+      - name: Analyse
+        id: analyze
+        continue-on-error: true
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter analyze --no-fatal-infos 2>&1 | tee ../logs/analyze.log
+
+      - name: Tests
+        id: tests
+        continue-on-error: true
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter test 2>&1 | tee ../logs/test.log
+
+      - name: Signaturschlüssel wählen
+        id: key
+        env:
+          KEY_B64: ${{ secrets.FASAN_KEYSTORE_B64 }}
+          KEY_PW: ${{ secrets.FASAN_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEY_B64" ] && [ -n "$KEY_PW" ]; then
+            printf '%s' "$KEY_B64" | base64 -d > "$RUNNER_TEMP/fasan-release.p12"
+            {
+              echo "FASAN_KEYSTORE=$RUNNER_TEMP/fasan-release.p12"
+              echo "FASAN_KEYSTORE_PASSWORD=$KEY_PW"
+              echo "FASAN_KEY_PASSWORD=$KEY_PW"
+              echo "FASAN_KEY_ALIAS=fasan"
+            } >> "$GITHUB_ENV"
+            echo "Release-Schlüssel aktiv" | tee logs/key.log
+          else
+            echo "Test-Schlüssel ci/fasan-split-test.p12 (öffentlich, nur für Tests)" | tee logs/key.log
+          fi
+
+      - name: APK bauen
+        working-directory: app
+        run: |
+          set -o pipefail
+          timeout 35m flutter build apk --release --target-platform android-arm64 \
+            --build-name "0.1.${GITHUB_RUN_NUMBER}" --build-number "$((100 + GITHUB_RUN_NUMBER))" 2>&1 | tee ../logs/build.log
+          cp build/app/outputs/flutter-apk/app-release.apk ../fasan-split.apk
+          ls -la ../fasan-split.apk | tee -a ../logs/build.log
+
+      - name: Signatur prüfen
+        run: |
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner"
+          "$apksigner" verify --print-certs fasan-split.apk | tee logs/signatur.log
+          aapt2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
+          "$aapt2" dump badging fasan-split.apk | grep -E "^package|^sdkVersion|^targetSdk|^application-label:" | tee -a logs/signatur.log
+
+      - name: Release „neueste“ aktualisieren
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete neueste -y --cleanup-tag || true
+          gh release create neueste fasan-split.apk --title "Fasan Split 0.1.${GITHUB_RUN_NUMBER} (Test)" \
+            --notes "Testversion aus ${GITHUB_SHA::7}. Mit Test-Schlüssel signiert, solange kein Release-Schlüssel hinterlegt ist." \
+            --prerelease --target "$GITHUB_SHA" 2>&1 | tee logs/release.log
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fasan-split-apk
+          path: fasan-split.apk
+          if-no-files-found: ignore
+
+      - name: Logs in Branch ci-logs ablegen
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash ci/push-logs.sh "analyse=${{ steps.analyze.outcome }} tests=${{ steps.tests.outcome }} job=${{ job.status }}"

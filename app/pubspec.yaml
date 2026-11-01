@@ -1,0 +1,40 @@
+name: fasan_split
+description: Fasan Split – Rechnungen in der Gruppe teilen. Freie App der Fasan-Familie (MPL-2.0).
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.5
+  flutter: '>=3.47.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  # Designpaket der Familie (MPL-2.0). Lokal über pubspec_overrides.yaml als Pfad ../../fasan_ui.
+  fasan_ui:
+    git:
+      url: https://github.com/fasan-app/fasan_ui.git
+      ref: main
+  # ONNX Runtime über dart:ffi (MIT); Android-Teil lädt com.microsoft.onnxruntime:onnxruntime-android (MIT).
+  onnxruntime_v2: 1.23.2+2
+  ffi: ^2.1.5               # BSD-3, native Puffer für ONNX-Tensoren
+  image: ^4.12.0            # MIT, Bilder dekodieren, skalieren, entzerren
+  zxing2: ^0.2.4            # BSD-3, QR-Codes auf Bons (Portugal: ATCUD)
+  image_picker: ^1.2.4      # BSD-3/Apache-2.0, Foto aus Galerie oder System-Kamera
+  shared_preferences: ^2.5.6 # BSD-3, Einstellungen und gespeicherte Rechnungen
+  share_plus: ^13.3.1       # BSD-3, CSV und Protokoll teilen
+  path_provider: ^2.1.6     # BSD-3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: false
+  assets:
+    # PaddleOCR PP-OCRv5 (Apache-2.0), aus Fasan-Karte/site/vendor/paddle (siehe assets/models/DATEIEN.txt)
+    - assets/models/
