@@ -34,8 +34,10 @@ void main() {
       final img = File('$root/data/img/$id.jpg');
       if (!img.existsSync()) continue;
       final truth = jsonDecode(File('$root/data/key/$id.json').readAsStringSync()) as Map<String, dynamic>;
-      // Wie sroie.mjs: Wahrheit in Cent, alles außer Ziffern und Punkt entfernt.
-      final want = (double.parse('${truth['total']}'.replaceAll(RegExp(r'[^0-9.]'), '')) * 100).round();
+      // Wie sroie.mjs: Wahrheit in Cent, alles außer Ziffern und Punkt entfernt, dann wie JavaScripts parseFloat
+      // (führende Zahl). Leere Wahrheit (z. B. 033) ergibt dort NaN und zählt als falsch; hier null, ebenso.
+      final lead = RegExp(r'^(\d+\.?\d*|\.\d+)').firstMatch('${truth['total']}'.replaceAll(RegExp(r'[^0-9.]'), ''));
+      final want = lead == null ? null : (double.parse(lead.group(0)!) * 100).round();
       final sw = Stopwatch()..start();
       int? got;
       var sure = false, items = 0, source = '';
