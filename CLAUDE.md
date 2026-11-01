@@ -8,7 +8,7 @@ Posten zuordnen, wer hat bezahlt, Export. Der Code zieht später in Fasan Karte.
 1. `STAND.md` in diesem Repo.
 2. `../fasan/ENTSCHEIDUNGEN.md`, `GRUNDSAETZE.md`, `ZUSTAENDE-UND-PROFILE.md` (Repo fasan-app/Fasan).
 3. `../fasan-karte/docs/PLAN-FLUTTER.md`, Abschnitte „Stile und Effekte“ und „Rechnung“.
-4. `../fasan-diagnose/tests/README.md` (Regression der Erkennung).
+4. `../fasan-diagnose/README.md` (Regression der Erkennung; Dart-Gegenstücke in `app/test/`).
 
 ## Regeln
 
