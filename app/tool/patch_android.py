@@ -32,7 +32,7 @@ android {{
         // Architekturen mit (~37 MB). Quelle: docs.flutter.dev/release/breaking-changes/default-abi-filters-android
         ndk {{
             abiFilters.clear()
-            abiFilters.addAll(listOf("arm64-v8a"))
+            abiFilters.addAll(listOf(System.getenv("FASAN_ABI") ?: "arm64-v8a")) // x86_64 only for emulator runs
         }}
     }}
     signingConfigs {{

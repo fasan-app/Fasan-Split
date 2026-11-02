@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'state/store.dart';
+import 'ui/demo.dart';
 import 'ui/home.dart';
 
 Future<void> main() async {
@@ -41,7 +42,7 @@ class SplitApp extends StatelessWidget {
             supportedLocales: const [Locale('de'), Locale('en')],
             // film effects over every screen; they pause by themselves when saving battery
             builder: (context, child) => FasanFilm(child: child ?? const SizedBox()),
-            home: home ?? const HomeScreen(),
+            home: home ?? (demoPage.isEmpty ? const HomeScreen() : const DemoLauncher()),
           ),
         ),
       ),
