@@ -1,4 +1,6 @@
-// Fasan Split – start: saved bills, scan button in the thumb zone. MPL-2.0
+// Fasan Split – start: three main tabs below (Rechnungen, Gruppen, Freunde), a floating plus for new bills, and on Rechnungen
+// three views above (Offen, Archiv, Papierkorb). One horizontal pager carries all five pages, so swiping moves through
+// them in order (Nutzer 02.11.). Research: fasan_ui docs/recherche/2026-11-02-navigation-layout-glas-ton.md. MPL-2.0
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -11,14 +13,17 @@ import '../main.dart';
 import '../model/bill.dart';
 import '../state/scan_queue.dart';
 import '../state/store.dart';
-import 'common.dart';
-import 'assign.dart';
-import 'flow.dart';
-import 'onboarding.dart';
-import 'update_ui.dart';
 import '../update.dart';
+import 'bill_tile.dart';
+import 'flow.dart';
+import 'groups.dart';
+import 'onboarding.dart';
 import 'scan_screen.dart';
 import 'settings_screen.dart';
+import 'update_ui.dart';
+
+/// Which list of bills a page shows.
+enum BillList { open, archive, trash }
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.queue});
@@ -35,9 +40,19 @@ class _HomeScreenState extends State<HomeScreen> {
   ScanQueue? _queue;
   bool _selecting = false;
   final Set<String> _selected = {};
+  final _pager = PageController();
+  int _page = 0; // 0 open, 1 archive, 2 trash, 3 groups, 4 friends
 
   /// Reads several photos one after the other; lives as long as the start page (which stays under every other page).
   ScanQueue get queue => _queue ??= widget.queue ?? ScanQueue(StoreScope.read(context));
+
+  BillList? get _list => _page <= 2 ? BillList.values[_page] : null;
+
+  @override
+  void dispose() {
+    _pager.dispose();
+    super.dispose();
+  }
 
   /// At most once a day, only if enabled (Settings → Updates); silent without network.
   Future<void> _checkUpdate() async {
@@ -63,6 +78,22 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // ---- paging ----
+
+  void _goTo(int page) {
+    if (page == _page) return;
+    FasanHaptics.of(context).tap();
+    if (_selecting) _exitSelect();
+    final m = FasanMotion.of(context);
+    if (m.enabled) {
+      _pager.animateToPage(page, duration: m.medium, curve: FasanCurves.medium);
+    } else {
+      _pager.jumpToPage(page);
+    }
+  }
+
+  // ---- adding bills ----
+
   Future<void> _pick(BuildContext context, ImageSource src) async {
     final nav = Navigator.of(context);
     XFile? f;
@@ -77,20 +108,20 @@ class _HomeScreenState extends State<HomeScreen> {
     nav.push(MaterialPageRoute(builder: (_) => ScanScreen(photo: bytes)));
   }
 
-  /// Gallery: one or many photos. One photo opens the scan page; several are saved and read one after the other
-  /// (Nutzer 02.11.: mehrere Bons auf einmal hochladen). Package source: `pickMultiImage` returns an empty list on cancel.
   /// Messages float above the glass bar at the bottom (otherwise it covers „Rückgängig“).
   SnackBar _msg(BuildContext context, String text, {SnackBarAction? action, Duration? duration}) => SnackBar(
         content: Text(text),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, 150 + MediaQuery.paddingOf(context).bottom),
         action: action,
-        // Flutter keeps a snack bar with an action on screen until it is dismissed (`persist` defaults to true then); the
-        // delete message has to run out, or the bills would never be removed for good.
+        // Flutter keeps a snack bar with an action on screen until it is dismissed (`persist` defaults to true then); it has
+        // to run out, or „Rückgängig“ would never end.
         persist: false,
         duration: duration ?? const Duration(seconds: 4),
       );
 
+  /// Gallery: one or many photos. One photo opens the scan page; several are saved and read one after the other
+  /// (Nutzer 02.11.: mehrere Bons auf einmal hochladen). Package source: `pickMultiImage` returns an empty list on cancel.
   Future<void> _pickMany(BuildContext context) async {
     final nav = Navigator.of(context), msg = ScaffoldMessenger.of(context), t = S.of(context), q = queue;
     List<XFile> files;
@@ -106,12 +137,62 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     await q.add(bytes);
-    if (context.mounted) msg.showSnackBar(_msg(context, t.queuedN(bytes.length)));
+    if (mounted) {
+      if (_page != 0) _goTo(0);
+      msg.showSnackBar(_msg(this.context, t.queuedN(bytes.length)));
+    }
   }
 
   void _manual(BuildContext context) {
     final b = Bill(id: DateTime.now().microsecondsSinceEpoch.toString(), created: DateTime.now(), items: []);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReviewScreen(bill: b)));
+  }
+
+  /// The plus: the second step asks how (Kamera, Galerie/Datei, ohne Bon).
+  Future<void> _addSheet(BuildContext context) async {
+    final t = S.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(leading: const Icon(Icons.photo_camera_outlined), title: Text(t.camera), onTap: () => Navigator.pop(ctx, 'camera')),
+          ListTile(leading: const Icon(Icons.photo_library_outlined), title: Text(t.galleryOrFile), onTap: () => Navigator.pop(ctx, 'gallery')),
+          ListTile(leading: const Icon(Icons.edit_note_rounded), title: Text(t.manual), onTap: () => Navigator.pop(ctx, 'manual')),
+          const SizedBox(height: FasanSpace.s),
+        ]),
+      ),
+    );
+    if (!context.mounted || choice == null) return;
+    switch (choice) {
+      case 'camera':
+        await _pick(context, ImageSource.camera);
+      case 'gallery':
+        await _pickMany(context);
+      case 'manual':
+        _manual(context);
+    }
+  }
+
+  Future<void> _plus(BuildContext context) async {
+    if (_page <= 2) return _addSheet(context);
+    final t = S.of(context);
+    final store = StoreScope.read(context);
+    final c = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(_page == 3 ? t.newGroup : t.newFriend),
+        content: TextField(controller: c, autofocus: true, textCapitalization: TextCapitalization.words, decoration: InputDecoration(hintText: _page == 3 ? t.groupName : t.friendName), onSubmitted: (v) => Navigator.pop(ctx, v)),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)), TextButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(t.ok))],
+      ),
+    );
+    c.dispose();
+    if (name == null || name.trim().isEmpty) return;
+    if (_page == 3) {
+      store.addGroup(name);
+    } else {
+      store.addFriend(name);
+    }
   }
 
   // ---- selection, groups, delete ----
@@ -120,7 +201,6 @@ class _HomeScreenState extends State<HomeScreen> {
     FasanHaptics.of(context).tap();
     setState(() {
       if (!_selected.remove(id)) _selected.add(id);
-      if (_selected.isEmpty) _selecting = false;
     });
   }
 
@@ -134,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _groupDialog(BuildContext context, List<Bill> list) async {
     final store = StoreScope.read(context), t = S.of(context);
     final c = TextEditingController(text: list.length == 1 ? list.first.group ?? '' : '');
-    final existing = store.groups;
+    final existing = store.allGroups;
     final r = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -164,126 +244,215 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Delete with „Rückgängig“: the bills disappear at once and are removed for good when the message runs out.
-  void _delete(BuildContext context, List<Bill> list) {
-    final store = StoreScope.read(context), t = S.of(context), msg = ScaffoldMessenger.of(context), q = queue;
-    store.hide(list);
+  /// A message with „Rückgängig“ for a change that moved bills.
+  void _undoable(BuildContext context, String text, VoidCallback undo) {
+    final msg = ScaffoldMessenger.of(context);
     msg.clearSnackBars();
-    msg
-        .showSnackBar(_msg(
-          context,
-          t.deletedN(list.length),
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(label: t.undo, onPressed: () => store.restore(list)),
-        ))
-        .closed
-        .then((reason) {
-      if (reason == SnackBarClosedReason.action) return;
-      for (final b in list) {
-        q.forget(b.id);
-      }
-      store.commit(list);
-    });
+    msg.showSnackBar(_msg(context, text, duration: const Duration(seconds: 5), action: SnackBarAction(label: S.of(context).undo, onPressed: undo)));
+  }
+
+  /// To the trash (nothing is lost: 7 or 30 days, or until emptied by hand).
+  void _toTrash(BuildContext context, List<Bill> list) {
+    final store = StoreScope.read(context), t = S.of(context);
+    for (final b in list) {
+      queue.forget(b.id);
+    }
+    store.trash(list);
+    _undoable(context, t.trashedN(list.length), () => store.untrash(list));
+  }
+
+  void _toArchive(BuildContext context, List<Bill> list, bool done) {
+    final store = StoreScope.read(context), t = S.of(context);
+    store.setDone(list, done);
+    _undoable(context, done ? t.archivedN(list.length) : t.reopenedN(list.length), () => store.setDone(list, !done));
+  }
+
+  Future<bool> _confirmForever(BuildContext context, int n) async {
+    final t = S.of(context);
+    final r = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.deleteForeverTitle),
+        content: Text(t.deleteForeverBody(n)),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.cancel)), TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(t.deleteForever))],
+      ),
+    );
+    return r ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
     final t = S.of(context);
     final store = StoreScope.of(context);
-    final tt = Theme.of(context).textTheme;
-    final all = [...store.inGroup(null), for (final g in store.groups) ...store.inGroup(g)];
     final selected = _picked(store);
-    final selecting = _selecting && selected.isNotEmpty;
-    return Scaffold(
-      appBar: selecting
-          ? AppBar(
-              leading: IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: _exitSelect),
-              title: Text(t.nSelected(selected.length)),
-              actions: [
-                IconButton(tooltip: t.groupTitle, icon: const Icon(Icons.folder_outlined), onPressed: () => _groupDialog(context, selected)),
-                IconButton(
-                  tooltip: selected.every((b) => b.done) ? t.markOpen : t.markDone,
-                  icon: Icon(selected.every((b) => b.done) ? Icons.undo_rounded : Icons.task_alt_rounded),
-                  onPressed: () {
-                    store.setDone(selected, !selected.every((b) => b.done));
-                    FasanHaptics.of(context).snap();
-                    _exitSelect();
-                  },
-                ),
-                IconButton(
-                  tooltip: t.delete,
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  onPressed: () {
-                    final list = selected;
-                    _exitSelect();
-                    _delete(context, list);
-                  },
-                ),
-              ],
-            )
-          : AppBar(
-              title: Text(t.appName),
-              actions: [
-                if (all.isNotEmpty)
-                  IconButton(tooltip: t.select, icon: const Icon(Icons.checklist_rounded), onPressed: () => setState(() => _selecting = true)),
-                IconButton(
-                  tooltip: t.settings,
-                  icon: const Icon(Icons.tune_rounded),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
-                ),
-              ],
-            ),
-      body: Stack(children: [
-        if (all.isEmpty && _update != null)
-          Positioned(left: FasanSpace.l, right: FasanSpace.l, top: FasanSpace.s, child: UpdateBanner(info: _update!, onClose: () => setState(() => _update = null))),
-        if (all.isEmpty)
-          Center(
+    final list = _list;
+    // The selection mode stays until it is left again: with the X, with the same icon, or with „Zurück“ (Nutzer 02.11.).
+    final selecting = _selecting && list != null;
+    final any = selected.isNotEmpty;
+    final inTrash = list == BillList.trash;
+    final inArchive = list == BillList.archive;
+    return PopScope(
+      canPop: !selecting && _page == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (selecting) {
+          _exitSelect();
+        } else {
+          _goTo(0);
+        }
+      },
+      child: Scaffold(
+        extendBody: true,
+        appBar: selecting
+            ? AppBar(
+                leading: IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: _exitSelect),
+                title: Text(any ? t.nSelected(selected.length) : t.selectHint),
+                actions: [
+                  if (inTrash) ...[
+                    IconButton(tooltip: t.restore, icon: const Icon(Icons.restore_from_trash_rounded), onPressed: !any ? null : () {
+                      store.untrash(selected);
+                      _exitSelect();
+                    }),
+                    IconButton(tooltip: t.deleteForever, icon: const Icon(Icons.delete_forever_outlined), onPressed: !any ? null : () async {
+                      final l = selected;
+                      if (await _confirmForever(context, l.length)) {
+                        store.deleteForever(l);
+                        _exitSelect();
+                      }
+                    }),
+                  ] else ...[
+                    IconButton(tooltip: t.groupTitle, icon: const Icon(Icons.folder_outlined), onPressed: any ? () => _groupDialog(context, selected) : null),
+                    IconButton(
+                      tooltip: inArchive ? t.markOpen : t.markDone,
+                      icon: Icon(inArchive ? Icons.unarchive_outlined : Icons.archive_outlined),
+                      onPressed: !any ? null : () {
+                        final l = selected;
+                        _exitSelect();
+                        _toArchive(context, l, !inArchive);
+                      },
+                    ),
+                    IconButton(
+                      tooltip: t.delete,
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      onPressed: !any ? null : () {
+                        final l = selected;
+                        _exitSelect();
+                        _toTrash(context, l);
+                      },
+                    ),
+                  ],
+                ],
+              )
+            : AppBar(
+                title: Text(_page <= 2 ? t.appName : (_page == 3 ? t.groupsTab : t.friendsTab)),
+                actions: [
+                  if (list != null && _hasAny(store, list))
+                    IconButton(tooltip: t.select, icon: const Icon(Icons.checklist_rounded), onPressed: () => setState(() => _selecting = true)),
+                  IconButton(
+                    tooltip: t.settings,
+                    icon: const Icon(Icons.tune_rounded),
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
+                  ),
+                ],
+              ),
+        body: Column(children: [
+          // the three views of Rechnungen: they appear and disappear smoothly when the page changes
+          FasanReveal(
+            show: _page <= 2 && !selecting,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(FasanSpace.xxl, 0, FasanSpace.xxl, 160),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.receipt_long_outlined, size: 56, color: FasanLook.of(context).textMuted),
-                const SizedBox(height: FasanSpace.l),
-                Text(t.emptyTitle, style: tt.titleLarge, textAlign: TextAlign.center),
-                const SizedBox(height: FasanSpace.s),
-                Text(t.emptyText, style: tt.bodyMedium!.copyWith(color: FasanLook.of(context).textMuted), textAlign: TextAlign.center),
-              ]),
-            ),
-          )
-        else
-          ListenableBuilder(
-            listenable: queue,
-            builder: (context, _) => ListView(
-              padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 200 + MediaQuery.paddingOf(context).bottom),
-              children: [
-                if (_update != null) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: UpdateBanner(info: _update!, onClose: () => setState(() => _update = null))),
-                for (final g in store.groups) _section(context, store, g, g, store.inGroup(g)),
-                _section(context, store, null, null, store.inGroup(null).where((b) => !b.done).toList(), title: t.drafts),
-                _section(context, store, null, null, store.inGroup(null).where((b) => b.done).toList(), title: t.finished),
-              ],
+              padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s),
+              child: FasanSegmented<int>(
+                values: const [0, 1, 2],
+                selected: _page.clamp(0, 2),
+                label: (i) => [t.listOpen, t.listArchive, t.listTrash][i],
+                onChanged: _goTo,
+              ),
             ),
           ),
-        Positioned(
-          left: FasanSpace.m,
-          right: FasanSpace.m,
-          bottom: FasanSpace.m + MediaQuery.paddingOf(context).bottom,
-          child: FasanGlass(
-            padding: const EdgeInsets.all(6),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Row(children: [
-                Expanded(child: FasanButton(label: t.camera, icon: Icons.photo_camera_outlined, expand: true, onPressed: () => _pick(context, ImageSource.camera))),
-                const SizedBox(width: 6),
-                Expanded(child: FasanButton(label: t.gallery, icon: Icons.photo_library_outlined, kind: FasanButtonKind.secondary, expand: true, onPressed: () => _pickMany(context))),
-              ]),
-              TextButton(onPressed: () => _manual(context), child: Text(t.manual)),
-            ]),
+          Expanded(
+            child: PageView(
+          controller: _pager,
+          onPageChanged: (p) {
+            FasanHaptics.of(context).tap();
+            setState(() {
+              _page = p;
+              _selecting = false;
+              _selected.clear();
+            });
+          },
+          children: [
+            _listPage(context, BillList.open),
+            _listPage(context, BillList.archive),
+            _listPage(context, BillList.trash),
+            GroupsPage(queue: queue),
+            const FriendsPage(),
+          ],
+            ),
           ),
+        ]),
+        floatingActionButton: selecting
+            ? null
+            : FasanGlow(
+                radius: 18,
+                child: FloatingActionButton(
+                  tooltip: _page <= 2 ? t.newBill : (_page == 3 ? t.newGroup : t.newFriend),
+                  onPressed: () => _plus(context),
+                  child: const Icon(Icons.add_rounded, size: 28),
+                ),
+              ),
+        bottomNavigationBar: _NavBar(
+          selected: _page <= 2 ? 0 : _page - 2,
+          onSelect: (i) => _goTo(i == 0 ? (_page <= 2 ? _page : 0) : i + 2),
         ),
-      ]),
+      ),
     );
   }
 
-  /// One block of the list. A group block (and the blocks without group) accepts bills that are dragged onto it.
-  Widget _section(BuildContext context, BillStore store, String? group, String? groupName, List<Bill> list, {String? title}) {
+  bool _hasAny(BillStore s, BillList l) => switch (l) {
+        BillList.open => s.drafts.isNotEmpty,
+        BillList.archive => s.finished.isNotEmpty,
+        BillList.trash => s.trashed.isNotEmpty,
+      };
+
+  // ---- the three bill lists ----
+
+  Widget _listPage(BuildContext context, BillList mode) {
+    final t = S.of(context), l = FasanLook.of(context);
+    final store = StoreScope.of(context);
+    final tt = Theme.of(context).textTheme;
+    final bottom = 150 + MediaQuery.paddingOf(context).bottom;
+    if (mode == BillList.trash) return _trashPage(context, store, bottom);
+    final done = mode == BillList.archive;
+    final groups = [for (final g in store.groups) (g, store.inGroup(g, done: done))].where((e) => e.$2.isNotEmpty).toList();
+    final loose = store.inGroup(null, done: done);
+    final empty = groups.isEmpty && loose.isEmpty;
+    final banner = !done && _update != null ? UpdateBanner(info: _update!, onClose: () => setState(() => _update = null)) : null;
+    if (empty) {
+      return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom), children: [
+        ?banner,
+        const SizedBox(height: 80),
+        Icon(done ? Icons.inventory_2_outlined : Icons.receipt_long_outlined, size: 56, color: l.textMuted),
+        const SizedBox(height: FasanSpace.l),
+        Text(done ? t.archiveEmptyTitle : t.emptyTitle, style: tt.titleLarge, textAlign: TextAlign.center),
+        const SizedBox(height: FasanSpace.s),
+        Text(done ? t.archiveEmptyText : t.emptyText, style: tt.bodyMedium!.copyWith(color: l.textMuted), textAlign: TextAlign.center),
+      ]);
+    }
+    return ListenableBuilder(
+      listenable: queue,
+      builder: (context, _) => ListView(
+        padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom),
+        children: [
+          if (banner != null) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: banner),
+          for (final (g, bills) in groups) _section(context, store, mode, g, g, bills),
+          _section(context, store, mode, null, null, loose, title: done ? t.finished : t.drafts),
+        ],
+      ),
+    );
+  }
+
+  /// One block of the list. A group block (and the block without group) accepts bills that are dragged onto it.
+  Widget _section(BuildContext context, BillStore store, BillList mode, String? group, String? groupName, List<Bill> list, {String? title}) {
     if (list.isEmpty) return const SizedBox.shrink();
     final t = S.of(context), l = FasanLook.of(context);
     final heading = groupName ?? title ?? '';
@@ -308,50 +477,39 @@ class _HomeScreenState extends State<HomeScreen> {
               if (groupName != null) Text('${list.length} · ${money(list.fold(0, (a, b) => a + b.effectiveTotal), de: t.de)} €', style: Theme.of(context).textTheme.bodySmall),
             ]),
           ),
-          for (final b in list)
-            Padding(
-              padding: const EdgeInsets.only(bottom: FasanSpace.s),
-              child: _row(context, store, b),
-            ),
+          for (final b in list) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: _row(context, store, mode, b)),
         ]),
       ),
     );
   }
 
-  /// A bill: tap opens it (or selects), swipe right sets „Fertig“/„Offen“, swipe left deletes with „Rückgängig“,
-  /// long press picks it up to drop it onto a group.
-  Widget _row(BuildContext context, BillStore store, Bill b) {
+  /// A bill: tap opens it (or selects), swipe right moves it to the archive (or back), swipe left to the trash with
+  /// „Rückgängig“, long press picks it up to drop it onto a group.
+  Widget _row(BuildContext context, BillStore store, BillList mode, Bill b) {
     final t = S.of(context), l = FasanLook.of(context);
-    final tile = _BillTile(
-      bill: b,
-      queue: queue,
-      selecting: _selecting,
-      selected: _selected.contains(b.id),
-      onToggle: () => _toggle(b.id),
-      onRetry: () => _retry(b),
-    );
+    final tile = BillTile(bill: b, queue: queue, selecting: _selecting, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () => _retry(b));
     if (_selecting) return tile;
+    final archive = mode == BillList.archive;
     return Dismissible(
-      key: ValueKey('bill-${b.id}'),
+      key: ValueKey('bill-${mode.name}-${b.id}'),
       direction: b.read == BillRead.ok ? DismissDirection.horizontal : DismissDirection.endToStart,
-      background: _swipeBackground(l, b.done ? Icons.undo_rounded : Icons.task_alt_rounded, b.done ? t.markOpen : t.markDone, Alignment.centerLeft, l.accent),
+      background: _swipeBackground(l, archive ? Icons.unarchive_outlined : Icons.archive_outlined, archive ? t.markOpen : t.markDone, Alignment.centerLeft, l.accent),
       secondaryBackground: _swipeBackground(l, Icons.delete_outline_rounded, t.delete, Alignment.centerRight, Colors.red.shade700),
-      confirmDismiss: (dir) async {
+      onDismissed: (dir) {
         if (dir == DismissDirection.startToEnd) {
-          store.setDone([b], !b.done);
-          FasanHaptics.of(context).snap();
-          return false; // the tile springs back, only its status changed
+          _toArchive(context, [b], !archive);
+        } else {
+          _toTrash(context, [b]);
         }
-        return true;
+        FasanHaptics.of(context).snap();
       },
-      onDismissed: (_) => _delete(context, [b]),
       child: LongPressDraggable<Bill>(
         data: b,
         delay: const Duration(milliseconds: 350),
         onDragStarted: () => FasanHaptics.of(context).tap(),
         feedback: Material(
           color: Colors.transparent,
-          child: SizedBox(width: MediaQuery.sizeOf(context).width - 2 * FasanSpace.l, child: Opacity(opacity: 0.9, child: _BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {}))),
+          child: SizedBox(width: MediaQuery.sizeOf(context).width - 2 * FasanSpace.l, child: Opacity(opacity: 0.9, child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {}))),
         ),
         childWhenDragging: Opacity(opacity: 0.35, child: tile),
         child: tile,
@@ -371,138 +529,116 @@ class _HomeScreenState extends State<HomeScreen> {
     if (path == null || !File(path).existsSync()) return;
     await queue.retry(b, await File(path).readAsBytes());
   }
-}
 
-class _BillTile extends StatelessWidget {
-  const _BillTile({required this.bill, required this.queue, required this.selecting, required this.selected, required this.onToggle, required this.onRetry});
+  // ---- trash ----
 
-  final Bill bill;
-  final ScanQueue queue;
-  final bool selecting, selected;
-  final VoidCallback onToggle, onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = FasanLook.of(context);
-    final t = S.of(context);
-    final tt = Theme.of(context).textTheme;
-    final date = '${bill.date.day}.${bill.date.month}.${bill.date.year}';
-    final r = l.radius * 0.7;
-    final waiting = bill.read == BillRead.queued || bill.read == BillRead.reading;
-    final failed = bill.read == BillRead.failed;
-    final String sub;
-    if (bill.read == BillRead.queued) {
-      sub = t.waiting;
-    } else if (bill.read == BillRead.reading) {
-      sub = queue.currentId == bill.id && queue.progress > 0 ? '${t.readingNow} · ${(queue.progress * 100).round()} %' : t.readingNow;
-    } else if (failed) {
-      sub = t.readFailedShort;
-    } else {
-      sub = bill.done ? '$date · ${bill.ps.length} ${t.de ? 'Personen' : 'people'}' : '$date · ${t.stepOf(bill.step)}';
+  Widget _trashPage(BuildContext context, BillStore store, double bottom) {
+    final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    final items = store.trashed;
+    final days = store.trashDays;
+    if (items.isEmpty) {
+      return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom), children: [
+        const SizedBox(height: 80),
+        Icon(Icons.delete_outline_rounded, size: 56, color: l.textMuted),
+        const SizedBox(height: FasanSpace.l),
+        Text(t.trashEmptyTitle, style: tt.titleLarge, textAlign: TextAlign.center),
+        const SizedBox(height: FasanSpace.s),
+        Text(days == 0 ? t.trashEmptyManual : t.trashEmptyText(days), style: tt.bodyMedium!.copyWith(color: l.textMuted), textAlign: TextAlign.center),
+      ]);
     }
-    Widget body(VoidCallback? open) => InkWell(
-          borderRadius: BorderRadius.circular(r),
-          onTap: selecting ? onToggle : open,
-          child: Container(
-            constraints: BoxConstraints(minHeight: l.minTap + 16),
-            padding: const EdgeInsets.all(FasanSpace.m),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(r),
-              border: Border.all(color: selected ? l.accent : l.hairline, width: selected ? 2 : 1),
-              color: selected ? l.accent.withValues(alpha: 0.08) : null,
-            ),
-            child: Row(children: [
-              if (selecting) ...[
-                Icon(selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded, color: selected ? l.accent : l.textMuted),
-                const SizedBox(width: FasanSpace.m),
-              ],
-              if (waiting)
-                SizedBox(width: 40, height: 52, child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, value: bill.read == BillRead.reading && queue.currentId == bill.id && queue.progress > 0 ? queue.progress : null))))
-              else if (bill.imagePath != null && File(bill.imagePath!).existsSync())
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.file(File(bill.imagePath!), width: 40, height: 52, fit: BoxFit.cover, cacheWidth: 120),
-                )
-              else
-                SizedBox(width: 40, height: 52, child: Icon(failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted)),
-              const SizedBox(width: FasanSpace.m),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(bill.purpose.isEmpty ? (waiting || failed ? t.photoBill : t.appName) : bill.purpose, style: tt.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Text(sub, style: tt.bodySmall),
-                ]),
-              ),
-              if (failed && !selecting)
-                TextButton(onPressed: onRetry, child: Text(t.readAgain))
-              else if (!waiting && !failed) ...[
-                FasanAvatarStack(people: [for (final p in bill.ps) (p.name, p.color)], size: 24, max: 3),
-                const SizedBox(width: FasanSpace.s),
-                Money(bill.effectiveTotal),
-              ],
-            ]),
-          ),
-        );
-    // Waiting, reading and failed photos have nothing to open yet.
-    if (waiting || failed || selecting) return body(null);
-    // Container transform: the card grows into the bill (fasan_ui GESTALTUNG.md §7). Unfinished bills continue where
-    // the user left (Karte 3.9: Schließen verwirft nie).
-    return FasanOpenContainer(
-      radius: r,
-      openBuilder: (_) => bill.done ? ResultScreen(bill: bill) : ResumeFlow(bill: bill),
-      closedBuilder: (context, open) => body(open),
-    );
+    return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom), children: [
+      Row(children: [
+        Expanded(child: Text(days == 0 ? t.trashInfoManual : t.trashInfo(days), style: tt.bodySmall)),
+        TextButton(
+          onPressed: () async {
+            if (await _confirmForever(context, items.length) && context.mounted) store.emptyTrash();
+          },
+          child: Text(t.emptyTrash),
+        ),
+      ]),
+      for (final b in items)
+        Padding(
+          padding: const EdgeInsets.only(bottom: FasanSpace.s),
+          child: _selecting
+              ? BillTile(bill: b, queue: queue, selecting: true, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () {}, subtitle: _trashSub(t, store, b))
+              : Dismissible(
+                  key: ValueKey('trash-${b.id}'),
+                  background: _swipeBackground(l, Icons.restore_from_trash_rounded, t.restore, Alignment.centerLeft, l.accent),
+                  secondaryBackground: _swipeBackground(l, Icons.delete_forever_outlined, t.deleteForever, Alignment.centerRight, Colors.red.shade700),
+                  confirmDismiss: (dir) async => dir == DismissDirection.startToEnd || await _confirmForever(context, 1),
+                  onDismissed: (dir) {
+                    if (dir == DismissDirection.startToEnd) {
+                      store.untrash([b]);
+                    } else {
+                      store.deleteForever([b]);
+                    }
+                    FasanHaptics.of(context).snap();
+                  },
+                  child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {}, subtitle: _trashSub(t, store, b), openable: false),
+                ),
+        ),
+    ]);
+  }
+
+  String _trashSub(S t, BillStore store, Bill b) {
+    final left = store.daysLeft(b);
+    final d = b.trashedAt!;
+    final when = '${d.day}.${d.month}.${d.year}';
+    return left == null ? t.trashedOn(when) : '${t.trashedOn(when)} · ${t.daysLeft(left)}';
   }
 }
 
-/// Screen of the step a draft was left on.
-Widget resumeScreen(Bill b) => _stepScreen(b, b.step);
+/// The three main places (Rechnungen, Gruppen, Freunde) as a glass bar at the bottom: icon and label, colour for the active
+/// one (no check marks; Nutzer 02.11.). Material 3: a navigation bar holds three to five destinations.
+class _NavBar extends StatelessWidget {
+  const _NavBar({required this.selected, required this.onSelect});
 
-Widget _stepScreen(Bill b, int s) => switch (s) {
-      2 => PeopleScreen(bill: b),
-      3 => AssignScreen(bill: b),
-      4 => PayScreen(bill: b),
-      _ => ReviewScreen(bill: b),
-    };
-
-/// A resumed draft opens on its last step, but with the earlier steps underneath, so „zurück“ leads to the previous
-/// step and not straight home (Nutzer 02.11.: angefangene Bons ließen sich teilweise nicht zurück bearbeiten – cause:
-/// only the last step was pushed). A nested Navigator holds steps 1…n; when it has nothing left, back closes the bill.
-class ResumeFlow extends StatefulWidget {
-  const ResumeFlow({super.key, required this.bill});
-
-  final Bill bill;
-
-  @override
-  State<ResumeFlow> createState() => _ResumeFlowState();
-}
-
-class _ResumeFlowState extends State<ResumeFlow> {
-  final _nav = GlobalKey<NavigatorState>();
+  final int selected;
+  final ValueChanged<int> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    final b = widget.bill;
-    final step = b.step.clamp(1, 4);
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        final n = _nav.currentState;
-        if (n != null && n.canPop()) {
-          n.pop();
-        } else {
-          Navigator.of(context).pop();
-        }
-      },
-      child: Navigator(
-        key: _nav,
-        onGenerateInitialRoutes: (_, _) => [
-          for (var s = 1; s <= step; s++) MaterialPageRoute<void>(builder: (_) => _stepScreen(b, s)),
-        ],
-        onGenerateRoute: (_) => null,
+    final t = S.of(context), l = FasanLook.of(context);
+    final items = [
+      (Icons.receipt_long_outlined, Icons.receipt_long_rounded, t.billsTab),
+      (Icons.folder_copy_outlined, Icons.folder_copy_rounded, t.groupsTab),
+      (Icons.people_outline_rounded, Icons.people_rounded, t.friendsTab),
+    ];
+    return Padding(
+      padding: EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, FasanSpace.s + MediaQuery.paddingOf(context).bottom),
+      // fixed height: the glass fills the space it is given, and the Scaffold gives its bottom bar all the height there is
+      child: SizedBox(
+        height: l.minTap + 32,
+        child: FasanGlass(
+        padding: const EdgeInsets.all(4),
+        child: Row(children: [
+          for (var i = 0; i < items.length; i++)
+            Expanded(
+              child: Semantics(
+                selected: i == selected,
+                button: true,
+                label: items[i].$3,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(l.radius * 0.7),
+                  onTap: () => onSelect(i),
+                  child: AnimatedContainer(
+                    duration: FasanMotion.of(context).short,
+                    curve: FasanCurves.short,
+                    constraints: BoxConstraints(minHeight: l.minTap + 8),
+                    decoration: BoxDecoration(color: i == selected ? l.accent.withValues(alpha: 0.14) : Colors.transparent, borderRadius: BorderRadius.circular(l.radius * 0.7)),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(i == selected ? items[i].$2 : items[i].$1, color: i == selected ? l.accent : l.textMuted, size: 24),
+                      const SizedBox(height: 2),
+                      Text(items[i].$3, style: Theme.of(context).textTheme.labelMedium!.copyWith(color: i == selected ? l.accent : l.textMuted, fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+        ]),
+        ),
       ),
     );
   }
-
 }

@@ -16,6 +16,7 @@ import 'recognition/model.dart';
 import 'recognition/onnx.dart';
 import 'recognition/paddle.dart';
 import 'recognition/pipeline.dart';
+import 'recognition/reader.dart' show suspiciousName;
 
 sealed class ScanEvent {}
 
@@ -45,6 +46,15 @@ class ScanWarp extends ScanEvent {
   final List<List<double>> quads;
 }
 
+/// First findings of the first pass: shop, address, date, total in cents.
+class ScanPartial extends ScanEvent {
+  ScanPartial(this.shop, this.address, this.dateIso, this.total);
+
+  final String shop;
+  final String? address, dateIso;
+  final int? total;
+}
+
 class ScanDone extends ScanEvent {
   ScanDone(this.result);
 
@@ -72,6 +82,8 @@ class ScanResultData {
     required this.advance,
     required this.log,
     required this.lines,
+    this.photoQuad,
+    this.photoAspect,
     this.date,
     this.address,
     this.taxId,
@@ -80,6 +92,10 @@ class ScanResultData {
   final List<BillItem> items;
   final int? total;
   final bool checked, contradiction;
+
+  /// Receipt corners in the photo as taken (8 numbers) and the photo's width / height; null without a cut-out.
+  final List<double>? photoQuad;
+  final double? photoAspect;
   final Uint8List display;
   final int width, height;
   final String shop, kind;
@@ -136,6 +152,8 @@ class RecognitionService {
                 job.add(ScanProgress(msg[2] as String, msg[3] as double));
               case 'preview':
                 job.add(ScanPreview((msg[2] as TransferableTypedData).materialize().asUint8List(), (msg[3] as List).cast<List<double>>(), msg[4] as bool));
+              case 'partial':
+                job.add(ScanPartial(msg[2] as String, msg[3] as String?, msg[4] as String?, msg[5] as int?));
               case 'warp':
                 job.add(ScanWarp((msg[2] as TransferableTypedData).materialize().asUint8List(), msg[3] as int, msg[4] as int, msg[5] as double,
                     msg[6] as double, (msg[7] as List).cast<double>(), (msg[8] as List).map((q) => (q as List).cast<double>()).toList()));
@@ -184,6 +202,8 @@ class RecognitionService {
       total: m['total'] as int?,
       checked: m['checked'] as bool,
       contradiction: m['contradiction'] as bool,
+      photoQuad: (m['photoQuad'] as List?)?.cast<double>(),
+      photoAspect: (m['photoAspect'] as num?)?.toDouble(),
       display: (m['display'] as TransferableTypedData).materialize().asUint8List(),
       width: m['width'] as int,
       height: m['height'] as int,
@@ -226,8 +246,10 @@ void _main(List<Object?> args) {
       final photo = (msg[2] as TransferableTypedData).materialize().asUint8List();
       var lastP = -1.0;
       final x = rec.recognize(photo, onProgress: (p) {
-        final w = p.warp;
-        if (w != null) {
+        final w = p.warp, pt = p.partial;
+        if (pt != null) {
+          out.send(['partial', id, pt.shop, pt.address, pt.date?.toIso8601String(), pt.total]);
+        } else if (w != null) {
           out.send(['warp', id, TransferableTypedData.fromList([w.jpeg]), w.cols, w.rows, w.preAspect, w.scanAspect, w.src, w.quads]);
         } else if (p.preview != null) {
           out.send(['preview', id, TransferableTypedData.fromList([p.preview!]), p.boxes ?? const <List<double>>[], p.straight]);
@@ -261,8 +283,8 @@ Map<String, Object?> _encode(Recognition x) {
       amount: p.amount,
       qty: p.qty >= 1 && p.qty == p.qty.roundToDouble() ? p.qty.toInt() : 1,
       unit: p.unit?.round(),
-      sure: p.sure,
-      certainty: p.certainty,
+      sure: p.sure && !suspiciousName(p.name),
+      certainty: suspiciousName(p.name) ? math.min(p.certainty ?? 100, 58) : p.certainty,
       suggestions: p.suggestions,
       boxes: boxes,
       snippet: p.snippet == null ? null : Uint8List.fromList(p.snippet!),
@@ -275,6 +297,8 @@ Map<String, Object?> _encode(Recognition x) {
     'total': r.total,
     'checked': r.check.ok,
     'contradiction': r.check.contradiction,
+    'photoQuad': x.photoQuad,
+    'photoAspect': x.photoAspect,
     'display': TransferableTypedData.fromList([disp]),
     'width': x.display.w,
     'height': x.display.h,

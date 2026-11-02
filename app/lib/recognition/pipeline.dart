@@ -26,7 +26,7 @@ import 'text_util.dart';
 /// Progress of the recognition: stage text, 0–1, optional preview (image with the verified lines found so far) or the
 /// straightening mesh for the end of the scan animation.
 class RecognitionProgress {
-  const RecognitionProgress(this.stage, this.progress, {this.preview, this.boxes, this.straight = false, this.warp});
+  const RecognitionProgress(this.stage, this.progress, {this.preview, this.boxes, this.straight = false, this.warp, this.partial});
 
   final String stage;
   final double progress;
@@ -38,6 +38,21 @@ class RecognitionProgress {
 
   /// Mesh that straightens the kinked receipt (scan_preview.dart).
   final WarpData? warp;
+
+  /// What the first pass already knows (shop, address, date, total), so a list can fill in while the rest is still reading.
+  final RecognitionPartial? partial;
+}
+
+/// First findings of the recognition (Nutzer 02.11.: Ort, Datum und Preis schon in der Übersicht zeigen).
+class RecognitionPartial {
+  const RecognitionPartial({this.shop = '', this.address, this.date, this.total});
+
+  final String shop;
+  final String? address;
+  final DateTime? date;
+
+  /// Cents; the printed total, else the sum of the items found so far.
+  final int? total;
 }
 
 class Recognition {
@@ -52,6 +67,8 @@ class Recognition {
     required this.width,
     required this.height,
     this.header,
+    this.photoQuad,
+    this.photoAspect,
   });
 
   final ReadResult result;
@@ -69,6 +86,14 @@ class Recognition {
 
   /// Shop name, address, date, tax id from the best read header of all passes (place.dart bestHeader).
   final ReceiptHeader? header;
+
+  /// The receipt's four corners in the photo as taken (top left, top right, bottom right, bottom left; x, y normalised
+  /// to 0–1), null if the receipt was not cut out. Lets the „Original“ view place the item rows (Nutzer 02.11.:
+  /// im Original keinen Posten auswählen).
+  final List<double>? photoQuad;
+
+  /// Width / height of the photo as taken.
+  final double? photoAspect;
 }
 
 /// Marker to leave the straightening block early once the result is settled.
@@ -122,10 +147,11 @@ class Recognizer {
       final f = ReceiptImage.find(photo);
       if (f != null) {
         var ec = f.corners;
-        // add a margin: the found paper edge often lies inside (shadow, fold) and cut the line starts (4 % / 3 % outwards)
+        // add a margin: the found paper edge often lies inside (shadow, fold) and cut the line starts (6 % / 3 % outwards; 4 % cut
+        // the first letters of the shop name on a curved receipt)
         final mx = ec.fold<double>(0, (a, p) => a + p[0]) / 4, my = ec.fold<double>(0, (a, p) => a + p[1]) / 4;
         ec = [
-          for (final p in ec) [(mx + (p[0] - mx) * 1.08).clamp(0, photo.w - 1.0), (my + (p[1] - my) * 1.03).clamp(0, photo.h - 1.0)]
+          for (final p in ec) [(mx + (p[0] - mx) * 1.12).clamp(0, photo.w - 1.0), (my + (p[1] - my) * 1.03).clamp(0, photo.h - 1.0)]
         ];
         var e = ReceiptImage.rectify(photo, ec);
         var sc = ReceiptImage.straighten(e.image);
@@ -224,6 +250,13 @@ class Recognizer {
               preview: look.jpeg(80), boxes: verifiedQuads(r, z.lines, W0.toDouble(), H0.toDouble()), straight: sc != null));
         } catch (_) {/* preview is display only */}
       }
+      if (all.length == 1 && onProgress != null) {
+        try {
+          final h = bestHeader([[for (final l in z.lines) l.text]], qrDate: qr?.date, qrNif: qr?.nif);
+          final tot = r.total ?? (r.items.isNotEmpty ? r.sum : null);
+          onProgress(RecognitionProgress('Erste Angaben gelesen', 0, partial: RecognitionPartial(shop: h.shop, address: h.meta.address, date: h.meta.date, total: tot)));
+        } catch (_) {/* display only */}
+      }
       if (best == null || g > best!.g) best = e;
       readable = words.isNotEmpty ? words.where((x) => x.conf > 80).length / words.length : 0;
       return g;
@@ -290,14 +323,14 @@ class Recognizer {
       if (s1 != null) {
         scans[s1.image] = s1;
         scanSrc[s1.image] = basis.canvas;
-        run(s1.image, 'gerade', null, stage('Bon wird begradigt wie gescannt', 0.36, 0.42), straightArg: true);
+        run(s1.image, 'gerade', basis.corners, stage('Bon wird begradigt wie gescannt', 0.36, 0.42), straightArg: true);
         final e1 = all.last;
         final s2 = straighten(s1.image, e1.lines.lines, smooth: 0.05);
         _log('gerade', {'stufe': 2, 'ok': s2 != null, 'grund': s2 == null ? scanLastError : null, ...?s2?.stats});
         if (s2 != null) {
           scans[s2.image] = s2;
           scanSrc[s2.image] = s1.image;
-          run(s2.image, 'gerade2', null, stage('Feinere Begradigung', 0.42, 0.46), straightArg: true);
+          run(s2.image, 'gerade2', basis.corners, stage('Feinere Begradigung', 0.42, 0.46), straightArg: true);
         }
       }
     } on _Settled {
@@ -409,7 +442,18 @@ class Recognizer {
     final header = bestHeader([for (final p in all) [for (final l in p.lines.lines) l.text]], qrDate: qr?.date, qrNif: qr?.nif);
     _log('kopf', {'geschaeft': header.shop, 'adresse': header.meta.address, 'nif': header.meta.taxId, 'datum': header.meta.date?.toIso8601String()});
     _sw.stop();
+    // corners of the winner in the photo (a 180° pass was read upside down: the corners turn with it)
+    List<double>? photoQuad;
+    final cs = end.corners;
+    if (cs != null && cs.length == 4) {
+      final k = end.name.startsWith('ausschnitt180') ? 2 : 0;
+      photoQuad = [
+        for (var i = 0; i < 4; i++) ...[(cs[(i + k) % 4][0] / photo.w).clamp(0.0, 1.0), (cs[(i + k) % 4][1] / photo.h).clamp(0.0, 1.0)]
+      ];
+    }
     return Recognition(
+      photoQuad: photoQuad,
+      photoAspect: photo.w / photo.h,
       header: header,
       result: r,
       display: display,

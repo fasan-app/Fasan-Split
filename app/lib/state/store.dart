@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -32,6 +33,7 @@ class BillStore extends ChangeNotifier {
         }
       }
     } catch (_) {/* damaged data: start empty, never crash */}
+    s.purgeTrash();
     return s;
   }
 
@@ -147,22 +149,83 @@ class BillStore extends ChangeNotifier {
     if (_prefs != null) _debounce = Timer(const Duration(milliseconds: 400), () => _write());
   }
 
-  /// Bills hidden for a moment while „Rückgängig“ is on offer after a delete; removed for good when it runs out.
-  final Set<String> _hidden = {};
+  /// Visible = not in the trash.
+  bool _show(Bill b) => b.trashedAt == null;
 
-  bool _show(Bill b) => !_hidden.contains(b.id);
+  bool _real(Bill b) => b.done || b.read != BillRead.ok || b.its.isNotEmpty || b.total != null || b.ps.isNotEmpty;
 
-  List<Bill> get drafts => [
-        for (final b in bills)
-          if (_show(b) && !b.done && (b.read != BillRead.ok || b.its.isNotEmpty || b.total != null || b.ps.isNotEmpty)) b
-      ]..sort((a, b) => b.updated.compareTo(a.updated));
+  /// In progress (not finished, not in the trash).
+  List<Bill> get drafts => [for (final b in bills) if (_show(b) && !b.done && _real(b)) b]..sort((a, b) => b.updated.compareTo(a.updated));
+
+  /// Archive: bills finished with „Fertig“ (Nutzer 02.11.).
   List<Bill> get finished => [for (final b in bills) if (_show(b) && b.done) b]..sort((a, b) => b.created.compareTo(a.created));
 
-  /// All visible bills of one group, newest first; `null` = bills without a group.
-  List<Bill> inGroup(String? g) => [
+  /// Trash, most recently deleted first.
+  List<Bill> get trashed => [for (final b in bills) if (b.trashedAt != null) b]..sort((a, b) => b.trashedAt!.compareTo(a.trashedAt!));
+
+  /// Visible bills of one group (null = without group), newest first; [done] picks the archive (true), the open ones (false)
+  /// or both (null).
+  List<Bill> inGroup(String? g, {bool? done}) => [
         for (final b in bills)
-          if (_show(b) && b.group == g && (b.done || b.read != BillRead.ok || b.its.isNotEmpty || b.total != null || b.ps.isNotEmpty)) b
+          if (_show(b) && b.group == g && _real(b) && (done == null || b.done == done)) b
       ]..sort((a, b) => b.updated.compareTo(a.updated));
+
+  /// Groups created by hand (they exist without bills) and friends added by hand.
+  List<String> get _extraGroups => [...?(_app['groupsExtra'] as List?)?.cast<String>()];
+  List<String> get _extraFriends => [...?(_app['friendsExtra'] as List?)?.cast<String>()];
+
+  /// Groups with and without bills, alphabetical.
+  List<String> get allGroups => ({...groups, ..._extraGroups}.toList()..sort());
+
+  void addGroup(String name) {
+    final n = name.trim();
+    if (n.isEmpty || allGroups.contains(n)) return;
+    _setApp('groupsExtra', [..._extraGroups, n]);
+  }
+
+  /// Removes the group; its bills stay, without group.
+  void deleteGroup(String name) {
+    for (final b in bills) {
+      if (b.group == name) b.group = null;
+    }
+    _setApp('groupsExtra', _extraGroups.where((g) => g != name).toList());
+    _persist();
+  }
+
+  void addFriend(String name) {
+    final n = name.trim();
+    if (n.isEmpty) return;
+    _setApp('forgotten', forgotten.where((x) => x != n).toList());
+    if (!_extraFriends.contains(n)) _setApp('friendsExtra', [..._extraFriends, n]);
+  }
+
+  void forgetFriend(String name) {
+    _setApp('friendsExtra', _extraFriends.where((x) => x != name).toList());
+    forget(name);
+  }
+
+  /// People with their number of bills, what they consumed in total (cents) and their colour: from the bills (not in the
+  /// trash) and the ones added by hand, minus the ones removed.
+  List<({String name, int bills, int sum, int color})> get friends {
+    final gone = forgotten;
+    final map = <String, ({int bills, int sum, int color})>{};
+    for (final b in bills) {
+      if (!_show(b)) continue;
+      final pp = b.perPerson();
+      for (var i = 0; i < b.ps.length; i++) {
+        final p = b.ps[i];
+        if (gone.contains(p.name)) continue;
+        final old = map[p.name];
+        map[p.name] = (bills: (old?.bills ?? 0) + 1, sum: (old?.sum ?? 0) + (pp[i] ?? 0), color: old?.color ?? p.color);
+      }
+    }
+    for (final n in _extraFriends) {
+      if (!gone.contains(n)) map.putIfAbsent(n, () => (bills: 0, sum: 0, color: map.length));
+    }
+    final out = [for (final e in map.entries) (name: e.key, bills: e.value.bills, sum: e.value.sum, color: e.value.color)]
+      ..sort((a, b) => b.bills != a.bills ? b.bills.compareTo(a.bills) : a.name.compareTo(b.name));
+    return out;
+  }
 
   /// Group names in use, alphabetical.
   List<String> get groups => ({for (final b in bills) if (_show(b) && b.group != null && b.group!.isNotEmpty) b.group!}.toList()..sort());
@@ -177,7 +240,7 @@ class BillStore extends ChangeNotifier {
     _persist();
   }
 
-  /// Marks bills as finished or open again (status on the overview).
+  /// Marks bills as finished (archive) or open again.
   void setDone(Iterable<Bill> list, bool done) {
     for (final b in list) {
       b.done = done;
@@ -186,22 +249,56 @@ class BillStore extends ChangeNotifier {
     _persist();
   }
 
-  /// Hides bills at once; [commit] removes them for good (call when „Rückgängig“ ran out), [restore] shows them again.
-  void hide(Iterable<Bill> list) {
-    _hidden.addAll(list.map((b) => b.id));
-    notifyListeners();
+  // ---- Papierkorb (Nutzer 02.11.: Löschen landet im Papierkorb; Fristen 7 / 30 Tage / nur manuell) ----
+
+  /// Days until the trash empties itself: 7, 30 or 0 = only by hand. Default 30 (Apple „Zuletzt gelöscht“, Google Drive/Gmail).
+  int get trashDays => const [7, 30, 0].contains(_app['trashDays']) ? _app['trashDays'] as int : 30;
+  set trashDays(int v) => _setApp('trashDays', v);
+
+  /// Moves bills to the trash.
+  void trash(Iterable<Bill> list) {
+    final now = DateTime.now();
+    for (final b in list) {
+      b.trashedAt = now;
+    }
+    _persist();
   }
 
-  void restore(Iterable<Bill> list) {
-    _hidden.removeAll(list.map((b) => b.id));
-    notifyListeners();
+  /// Takes bills out of the trash again („Rückgängig“, „Wiederherstellen“).
+  void untrash(Iterable<Bill> list) {
+    for (final b in list) {
+      b.trashedAt = null;
+      b.updated = DateTime.now();
+    }
+    _persist();
   }
 
-  void commit(Iterable<Bill> list) {
+  /// Removes bills for good (files included).
+  void deleteForever(Iterable<Bill> list) {
     for (final b in list.toList()) {
-      _hidden.remove(b.id);
       remove(b);
     }
+  }
+
+  /// Empties the trash.
+  void emptyTrash() => deleteForever(trashed);
+
+  /// Removes what has been in the trash longer than [trashDays]; returns how many bills went. Does nothing in „nur manuell“.
+  int purgeTrash({DateTime? now}) {
+    final days = trashDays;
+    if (days == 0) return 0;
+    final limit = (now ?? DateTime.now()).subtract(Duration(days: days));
+    final old = [for (final b in bills) if (b.trashedAt != null && b.trashedAt!.isBefore(limit)) b];
+    deleteForever(old);
+    return old.length;
+  }
+
+  /// Days left before a bill in the trash is removed; null in „nur manuell“.
+  int? daysLeft(Bill b, {DateTime? now}) {
+    final days = trashDays;
+    if (days == 0 || b.trashedAt == null) return null;
+    final end = b.trashedAt!.add(Duration(days: days));
+    return math.max(0, (end.difference(now ?? DateTime.now()).inHours + 23) ~/ 24); // rounded up: 27½ days left = 28
   }
 
   void upsert(Bill b) {

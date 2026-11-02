@@ -34,6 +34,8 @@ Future<Bill> billFromScan(ScanResultData r, Uint8List photo,
     logPath: log,
     originalPath: orig,
     group: group,
+    originalQuad: r.photoQuad,
+    originalAspect: r.photoAspect,
   );
 }
 

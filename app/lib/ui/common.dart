@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
+import '../recognition/reader.dart' show nameAlternatives;
 import 'receipt_view.dart';
 
 /// Screen of the bill flow: title, step, content; the main action sits in a glass bar in the thumb zone
@@ -197,6 +198,33 @@ Future<bool> editItem(BuildContext context, BillItem it, {VoidCallback? onDelete
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         if (it.snippet case final s?) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Snippet(s, height: 40)),
         TextField(controller: name, decoration: InputDecoration(labelText: t.name), textInputAction: TextInputAction.next),
+        // reading confidence and other readings: errors are caught here, before they do harm (Nutzer 02.11.)
+        Builder(builder: (context) {
+          final pct = it.certainty ?? (it.sure ? null : 50);
+          final alts = nameAlternatives(it.name);
+          if (pct == null && alts.isEmpty) return const SizedBox.shrink();
+          final l = FasanLook.of(context);
+          final unsure = !it.sure || (pct != null && pct < 70);
+          return Padding(
+            padding: const EdgeInsets.only(top: FasanSpace.s),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              if (pct != null)
+                Row(children: [
+                  Icon(unsure ? Icons.help_outline : Icons.check_circle_outline, size: 16, color: unsure ? Theme.of(context).colorScheme.error : l.textMuted),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(unsure ? '${t.confidence(pct)} · ${t.checkThis}' : t.confidence(pct), style: Theme.of(context).textTheme.bodySmall)),
+                ]),
+              if (alts.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                    Text(t.otherNames, style: Theme.of(context).textTheme.bodySmall),
+                    for (final a in alts) ActionChip(label: Text(a), onPressed: () => name.text = a),
+                  ]),
+                ),
+            ]),
+          );
+        }),
         const SizedBox(height: FasanSpace.s),
         Row(children: [
           Expanded(

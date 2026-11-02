@@ -47,6 +47,51 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
       : (StoreScope.read(context).receiptLayer == 'original' && b.originalPath != null ? ReceiptLayer.original : ReceiptLayer.scan);
   (DateTime, Offset, int?)? _lastTap;
 
+  // swiping between the views (Nutzer 02.11.): direction of the last change and the drag measured inside the viewer
+  bool _back = false;
+  double _dx = 0, _dy = 0;
+  bool _multi = false;
+
+  List<ReceiptLayer> _layers(bool hasScan, bool hasOriginal) => [if (hasScan) ReceiptLayer.scan, if (hasOriginal) ReceiptLayer.original, ReceiptLayer.digital];
+
+  /// Goes to the next (+1) or previous (-1) view; no-op at the ends.
+  void _swipeLayer(int dir) {
+    final b = this.b;
+    final list = _layers(b.imagePath != null && File(b.imagePath!).existsSync(), b.originalPath != null && File(b.originalPath!).existsSync());
+    final i = list.indexOf(layer) + dir;
+    if (i < 0 || i >= list.length) return;
+    FasanHaptics.of(context).tap();
+    setState(() {
+      _back = dir < 0;
+      layer = list[i];
+      _tc.value = Matrix4.identity();
+    });
+  }
+
+  void _dragStart() {
+    _dx = 0;
+    _dy = 0;
+    _multi = false;
+  }
+
+  void _dragUpdate(ScaleUpdateDetails d) {
+    if (d.pointerCount == 1 && (d.scale - 1).abs() < 0.02) {
+      _dx += d.focalPointDelta.dx;
+      _dy += d.focalPointDelta.dy;
+    } else {
+      _multi = true;
+    }
+  }
+
+  /// A clearly horizontal one-finger drag on the unzoomed receipt changes the view.
+  void _dragEnd() {
+    final swipe = !_multi && _scale <= 1.01 && _dx.abs() > 80 && _dx.abs() > 2.2 * _dy.abs();
+    final dir = _dx < 0 ? 1 : -1;
+    _dragStart();
+    setState(() {});
+    if (swipe) _swipeLayer(dir);
+  }
+
   Bill get b => widget.bill;
 
   @override
@@ -170,6 +215,8 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
               selected: layer,
               label: (v) => switch (v) { ReceiptLayer.scan => t.layerScan, ReceiptLayer.original => t.layerOriginal, ReceiptLayer.digital => t.layerDigital },
               onChanged: (v) => setState(() {
+                final order = _layers(hasScan, hasOriginal);
+                _back = order.indexOf(v) < order.indexOf(layer);
                 layer = v;
                 _tc.value = Matrix4.identity();
               }),
@@ -183,11 +230,18 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
           final content = switch (layer) {
             ReceiptLayer.scan => _scan(view),
             ReceiptLayer.original => _original(view),
-            ReceiptLayer.digital => DigitalReceipt(bill: b, selected: sel, onTap: _tapItem),
+            ReceiptLayer.digital => GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragEnd: (d) {
+                  final v = d.primaryVelocity ?? 0;
+                  if (v.abs() > 450) _swipeLayer(v < 0 ? 1 : -1);
+                },
+                child: DigitalReceipt(bill: b, selected: sel, onTap: _tapItem),
+              ),
           };
           return Stack(children: [
             // fade through between the three views of the same receipt (fasan_ui GESTALTUNG.md §7)
-            Positioned.fill(child: FasanFadeThrough(child: KeyedSubtree(key: ValueKey(layer), child: content))),
+            Positioned.fill(child: FasanSlideSwitch(reverse: _back, child: KeyedSubtree(key: ValueKey(layer), child: content))),
             if (layer != ReceiptLayer.digital)
               Positioned(
                 right: FasanSpace.m,
@@ -226,10 +280,12 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
 
   Widget _scan(Size view) {
     final aspect = b.imageAspect ?? 0.4;
-    // a gutter on the right holds the avatars, so they never cover the amounts printed on the receipt
-    const gutter = 44.0;
-    final w = view.width - gutter, h = w / aspect;
+    // The receipt always fills the full width (Nutzer 02.11.: „muss immer auf die volle Breite gezogen werden“). The avatars
+    // sit in the paper's right margin, right of the text, so they do not cover the amounts.
+    final w = view.width, h = w / aspect;
     final rows = _rows();
+    final textRight = rows.where((r) => r != Rect.zero).map((r) => r.right).fold<double>(0, math.max);
+    final margin = ((1 - textRight) * w - 4).clamp(14.0, 40.0).toDouble();
     // start at the items, not at the shop header (the header stays reachable by scrolling up)
     if (!_placed) {
       _placed = true;
@@ -245,7 +301,9 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
       minScale: 1,
       maxScale: 4,
       boundaryMargin: EdgeInsets.only(bottom: bottomBarSpace(context) + 180),
-      onInteractionEnd: (_) => setState(() {}),
+      onInteractionStart: (_) => _dragStart(),
+      onInteractionUpdate: _dragUpdate,
+      onInteractionEnd: (_) => _dragEnd(),
       child: GestureDetector(
         // Taps act at once (no 300 ms double-tap wait). A second tap within 300 ms at the same spot is a double tap:
         // it undoes the first tap and toggles zoom 1× ↔ 2.5× (Regel 3.7/3.8).
@@ -289,8 +347,8 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
             for (var k = 0; k < rows.length; k++)
               if (rows[k] != Rect.zero && b.its[k].assigned)
                 Positioned(
-                  left: w + 4,
-                  width: gutter - 6,
+                  left: w - margin - 2,
+                  width: margin,
                   top: rows[k].top * h + (rows[k].height * h - 18) / 2,
                   child: IgnorePointer(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: ShareAvatars(bill: b, item: b.its[k], size: 18))),
                 ),
@@ -300,16 +358,94 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
     );
   }
 
+  /// Normalised scan point (u, v) → normalised photo point, bilinear between the receipt corners (quad: TL, TR, BR, BL).
+  static Offset _toPhoto(List<double> q, double u, double v) {
+    double mix(int k) => (1 - v) * ((1 - u) * q[k] + u * q[2 + k]) + v * ((1 - u) * q[6 + k] + u * q[4 + k]);
+    return Offset(mix(0), mix(1));
+  }
+
+  /// Largest rectangle with [aspect] centred in [view] (what `BoxFit.contain` shows).
+  static Rect _fitRect(double aspect, Size view) {
+    var w = view.width, h = w / aspect;
+    if (h > view.height) {
+      h = view.height;
+      w = h * aspect;
+    }
+    return Rect.fromCenter(center: Offset(view.width / 2, view.height / 2), width: w, height: h);
+  }
+
+  /// The item rows as polygons in view pixels (original view); empty if the corners in the photo are unknown.
+  List<Path?> _originalRows(Size view) {
+    final q = b.originalQuad, ar = b.originalAspect;
+    if (q == null || q.length != 8 || ar == null) return const [];
+    final area = _fitRect(ar, view);
+    return [
+      for (final r in _rows())
+        if (r == Rect.zero)
+          null
+        else
+          (Path()
+            ..addPolygon([
+              for (final (u, v) in [(r.left, r.top), (r.right, r.top), (r.right, r.bottom), (r.left, r.bottom)])
+                () {
+                  final p = _toPhoto(q, u, v);
+                  return Offset(area.left + p.dx * area.width, area.top + p.dy * area.height);
+                }()
+            ], true)),
+    ];
+  }
+
   Widget _original(Size view) {
     final t = S.of(context);
+    final polys = _originalRows(view);
     return Stack(children: [
       Positioned.fill(
         child: InteractiveViewer(
           transformationController: _tc,
           minScale: 1,
           maxScale: 5,
-          onInteractionEnd: (_) => setState(() {}),
-          child: Image.file(File(b.originalPath!), fit: BoxFit.contain, filterQuality: FilterQuality.medium),
+          onInteractionStart: (_) => _dragStart(),
+          onInteractionUpdate: _dragUpdate,
+          onInteractionEnd: (_) => _dragEnd(),
+          child: GestureDetector(
+            onTapUp: polys.isEmpty
+                ? null
+                : (d) {
+                    // inside a row polygon, else the nearest row within about 1.5 row heights (snapping like in the scan)
+                    int? hit;
+                    var best = double.infinity;
+                    for (var k = 0; k < polys.length; k++) {
+                      final p = polys[k];
+                      if (p == null) continue;
+                      if (p.contains(d.localPosition)) {
+                        hit = k;
+                        break;
+                      }
+                      final bb = p.getBounds();
+                      final dist = d.localPosition.dy < bb.top ? bb.top - d.localPosition.dy : (d.localPosition.dy > bb.bottom ? d.localPosition.dy - bb.bottom : 0.0);
+                      if (dist < best && dist < 1.5 * bb.height) {
+                        best = dist;
+                        hit = k;
+                      }
+                    }
+                    if (hit != null) _tapItem(hit);
+                  },
+            child: SizedBox(
+              width: view.width,
+              height: view.height,
+              child: Stack(children: [
+                Positioned.fill(child: Image.file(File(b.originalPath!), fit: BoxFit.contain, filterQuality: FilterQuality.medium)),
+                if (polys.isNotEmpty)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: CustomPaint(
+                        painter: _PolyRowsPainter(polys: polys, bill: b, selected: sel, look: FasanLook.of(context), error: Theme.of(context).colorScheme.error),
+                      ),
+                    ),
+                  ),
+              ]),
+            ),
+          ),
         ),
       ),
       Positioned(
@@ -574,4 +710,48 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
       body: ReceiptAssign(bill: widget.bill, readOnly: true, initialLayer: widget.initialLayer, onChanged: () => setState(() {})),
     );
   }
+}
+
+/// The same item rows as [_RowsPainter], but as polygons (the receipt is not upright in the original photo).
+class _PolyRowsPainter extends CustomPainter {
+  _PolyRowsPainter({required this.polys, required this.bill, required this.selected, required this.look, required this.error});
+
+  final List<Path?> polys;
+  final Bill bill;
+  final int? selected;
+  final FasanLook look;
+  final Color error;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var k = 0; k < polys.length; k++) {
+      final p = polys[k];
+      if (p == null || k >= bill.its.length) continue;
+      final it = bill.its[k];
+      if (it.assigned) {
+        final first = it.shares.keys.where((x) => (it.shares[x] ?? 0) > 0).fold<int?>(null, (a, x) => a == null || x < a ? x : a)!;
+        final c = FasanPeople.color(bill.ps[first].color, look.brightness);
+        canvas.drawPath(p, Paint()..color = c.withValues(alpha: 0.2));
+        canvas.drawPath(p, Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2
+          ..color = c.withValues(alpha: 0.8));
+      } else {
+        canvas.drawPath(p, Paint()..color = error.withValues(alpha: 0.06));
+        canvas.drawPath(p, Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = error.withValues(alpha: 0.55));
+      }
+      if (k == selected) {
+        canvas.drawPath(p, Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..color = look.accent);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PolyRowsPainter old) => true;
 }

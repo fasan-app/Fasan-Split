@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import '../model/bill.dart';
 import '../model/scan_bill.dart';
 import '../recognition_service.dart';
+import 'scan_live.dart';
 import 'store.dart';
 
 class ScanQueue extends ChangeNotifier {
@@ -20,6 +21,10 @@ class ScanQueue extends ChangeNotifier {
 
   final List<(String id, Uint8List photo)> _waiting = [];
   bool _running = false;
+
+  /// Preview, boxes and straightening of the bill that is being read now: the list tile plays the scan animation with it.
+  ScanLive? _live;
+  ScanLive? liveFor(String id) => id == currentId ? _live : null;
 
   /// Progress 0–1 and stage text of the bill that is being read now (not saved).
   String? currentId;
@@ -81,6 +86,9 @@ class ScanQueue extends ChangeNotifier {
 
   Future<void> _readOne(Bill placeholder, Uint8List photo) async {
     final done = Completer<void>();
+    final live = ScanLive();
+    _live = live;
+    notifyListeners();
     late StreamSubscription<ScanEvent> sub;
     sub = _recognize(photo).listen((e) async {
       switch (e) {
@@ -89,7 +97,18 @@ class ScanQueue extends ChangeNotifier {
           progress = e.progress;
           notifyListeners();
         case ScanPreview() || ScanWarp():
-          break; // the animation belongs to the single-photo screen
+          live.onEvent(e);
+          notifyListeners();
+        case ScanPartial():
+          // shop, date and total are known after the first pass: the tile shows them while the rest is still reading
+          final cur = store.bills.where((x) => x.id == placeholder.id).firstOrNull;
+          if (cur != null && cur.read == BillRead.reading) {
+            if (e.shop.isNotEmpty) cur.purpose = titleCase(e.shop);
+            cur.receiptDate = DateTime.tryParse(e.dateIso ?? '') ?? cur.receiptDate;
+            cur.placeAddress = e.address ?? cur.placeAddress;
+            cur.total = e.total ?? cur.total;
+            store.upsert(cur);
+          }
         case ScanDone():
           try {
             // deleted while it was being read: nothing to fill in

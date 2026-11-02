@@ -162,6 +162,9 @@ class Bill {
     this.taxId,
     this.group,
     this.read = BillRead.ok,
+    this.originalQuad,
+    this.originalAspect,
+    this.trashedAt,
     DateTime? updated,
   }) : updated = updated ?? created;
 
@@ -202,6 +205,14 @@ class Bill {
 
   /// Reading state of a photo that was added with others: see [BillRead]. Bills made by hand or read in one go are `ok`.
   String read;
+
+  /// Receipt corners in the original photo (8 numbers: top left, top right, bottom right, bottom left, x y in 0–1) and the
+  /// photo's width / height. They place the item rows in the „Original“ view; null for older bills.
+  List<double>? originalQuad;
+  double? originalAspect;
+
+  /// When the bill was moved to the trash (Papierkorb); null = not in the trash.
+  DateTime? trashedAt;
 
   /// The date that matters for the user: printed date, else when it was captured.
   DateTime get date => receiptDate ?? created;
@@ -285,6 +296,9 @@ class Bill {
         'taxId': taxId,
         'group': group,
         'read': read,
+        'originalQuad': originalQuad,
+        'originalAspect': originalAspect,
+        'trashedAt': trashedAt?.toIso8601String(),
         'updated': updated.toIso8601String(),
       };
 
@@ -310,6 +324,9 @@ class Bill {
         taxId: j['taxId'] as String?,
         group: j['group'] as String?,
         read: j['read'] as String? ?? BillRead.ok,
+        originalQuad: (j['originalQuad'] as List?)?.map((x) => (x as num).toDouble()).toList(),
+        originalAspect: (j['originalAspect'] as num?)?.toDouble(),
+        trashedAt: DateTime.tryParse(j['trashedAt'] as String? ?? ''),
         updated: DateTime.tryParse(j['updated'] as String? ?? ''),
       );
 }

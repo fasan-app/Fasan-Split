@@ -2,7 +2,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
@@ -50,6 +52,12 @@ Future<void> shareRecognitionLog(BuildContext context, Bill bill) async {
   final doc = {
     'app': 'app.fasan.split',
     'geraet': {'os': Platform.operatingSystem, 'version': Platform.operatingSystemVersion, 'kerne': Platform.numberOfProcessors},
+    // what the screen can draw (Nutzer 02.11.: „Glas ist kein Glas“): the result of the glass probe and whether the grain
+    // shader and its template loaded. Lets the next version be built from facts, not guesses.
+    'darstellung': {
+      'glas': {'stufe': FasanGlassShader.tier.value.name, 'grund': FasanGlassShader.reason, 'shaderFilter': ui.ImageFilter.isShaderFilterSupported},
+      'korn': {'programm': FasanFilm.grainProgram != null, 'vorlage': FasanFilm.grainTemplate != null},
+    },
     'erkennung': log,
     'rechnung': {
       'summe': bill.total,

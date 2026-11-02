@@ -79,46 +79,93 @@ void main() {
       expect(store.inGroup(null).map((b) => b.id), ['c']);
     });
 
-    testWidgets('Wischen nach rechts setzt Fertig und wieder Offen', (tester) async {
+    testWidgets('Auswahlmodus bleibt auch ohne Auswahl und endet mit dem X', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen')]);
+      await app(tester, store, idle(store));
+      await tester.tap(find.byTooltip('Auswählen'));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Bons auswählen'), findsOneWidget);
+      await tester.tap(find.text('Frühstück'));
+      await tester.tap(find.text('Frühstück'));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Bons auswählen'), findsOneWidget, reason: 'bleibt, auch wenn nichts mehr gewählt ist');
+      await tester.tap(find.byTooltip('Abbrechen'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Bons auswählen'), findsNothing);
+      expect(find.byTooltip('Auswählen'), findsOneWidget);
+    });
+
+    testWidgets('Wischen nach rechts schiebt ins Archiv, Rückgängig holt zurück', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück')]);
       await app(tester, store, idle(store));
-      await tester.drag(find.byKey(const ValueKey('bill-a')), const Offset(500, 0));
-      await tester.pump(const Duration(milliseconds: 600));
+      await tester.drag(find.byKey(const ValueKey('bill-open-a')), const Offset(500, 0));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
       expect(store.bills.single.done, isTrue);
-      await tester.drag(find.byKey(const ValueKey('bill-a')), const Offset(500, 0));
-      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.text('Ins Archiv verschoben'), findsOneWidget);
+      await tester.tap(find.text('Rückgängig'));
+      await tester.pump(const Duration(milliseconds: 400));
       expect(store.bills.single.done, isFalse);
     });
 
-    testWidgets('Wischen nach links löscht mit Rückgängig', (tester) async {
+    testWidgets('Wischen nach links: Papierkorb mit Rückgängig; der Bon bleibt gespeichert', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Taxi')]);
       await app(tester, store, idle(store));
-      await tester.drag(find.byKey(const ValueKey('bill-a')), const Offset(-600, 0));
-      await tester.pump(const Duration(milliseconds: 600));
-      await tester.pump(const Duration(milliseconds: 600));
-      expect(find.text('Bon gelöscht'), findsOneWidget);
-      expect(store.drafts.map((b) => b.id), ['b'], reason: 'sofort ausgeblendet');
+      await tester.drag(find.byKey(const ValueKey('bill-open-a')), const Offset(-600, 0));
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
+      expect(find.text('Bon im Papierkorb'), findsOneWidget);
+      expect(store.drafts.map((b) => b.id), ['b']);
+      expect(store.trashed.map((b) => b.id), ['a']);
+      expect(store.bills.length, 2, reason: 'nichts ist endgültig gelöscht');
       await tester.tap(find.text('Rückgängig'));
       await tester.pump(const Duration(milliseconds: 400));
+      expect(store.trashed, isEmpty);
       expect(store.drafts.map((b) => b.id).toSet(), {'a', 'b'});
     });
 
-    testWidgets('Ohne Rückgängig wird nach der Meldung endgültig gelöscht', (tester) async {
-      final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Taxi')]);
+    testWidgets('Reiter: Archiv und Papierkorb zeigen ihre Bons, Wiederherstellen und Leeren', (tester) async {
+      final done = _bill('d', 'Taxi', done: true);
+      final gone = _bill('t', 'Kino')..trashedAt = DateTime.now().subtract(const Duration(days: 2));
+      final store = BillStore.memory([_bill('a', 'Frühstück'), done, gone]);
       await app(tester, store, idle(store));
-      await tester.drag(find.byKey(const ValueKey('bill-b')), const Offset(-600, 0));
+      expect(find.text('Frühstück'), findsOneWidget);
+      expect(find.text('Taxi'), findsNothing);
+      await tester.tap(find.text('Archiv'));
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
-      expect(find.text('Bon gelöscht'), findsOneWidget);
-      expect(store.bills.length, 2, reason: 'noch nicht endgültig');
-      for (var i = 0; i < 160; i++) {
+      expect(find.text('Taxi'), findsOneWidget);
+      await tester.tap(find.text('Papierkorb'));
+      for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
-      expect(store.bills.map((b) => b.id), ['a']);
+      expect(find.text('Kino'), findsOneWidget);
+      expect(find.textContaining('noch 28 Tage'), findsOneWidget);
+      await tester.drag(find.byKey(const ValueKey('trash-t')), const Offset(500, 0));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(store.trashed, isEmpty);
+      expect(store.bills.firstWhere((b) => b.id == 't').trashedAt, isNull);
+    });
+
+    testWidgets('Untere Leiste: Gruppen und Freunde haben eigene Bildschirme', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück', group: 'Urlaub')]);
+      await app(tester, store, idle(store));
+      await tester.tap(find.text('Gruppen').last);
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Urlaub'), findsOneWidget);
+      expect(find.text('1 Bon'), findsOneWidget);
+      await tester.tap(find.text('Freunde').last);
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Noch keine Freunde'), findsOneWidget);
     });
 
     testWidgets('Foto in der Warteschlange: wartet, wird gelesen, ohne Öffnen; fehlgeschlagen bietet „Nochmal lesen“', (tester) async {
@@ -175,6 +222,32 @@ void main() {
       expect(store.bills.first.read, BillRead.ok);
     });
 
+    test('Erste Angaben (Ort, Datum, Preis) stehen in der Übersicht, bevor der Bon fertig gelesen ist', () async {
+      final store = BillStore.memory();
+      final gate = Completer<void>();
+      final q = ScanQueue(store, recognize: (_) async* {
+        yield ScanPartial('RESTAURANTE DA SE', 'CRUZES DA SE 31A, 1100-192 LISBOA', '2026-10-24T00:00:00.000', 8500);
+        await gate.future;
+        yield ScanDone(_result('RESTAURANTE DA SE'));
+      });
+      await q.add([Uint8List(3)]);
+      while (store.bills.single.purpose.isEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      final b = store.bills.single;
+      expect(b.read, BillRead.reading);
+      expect(b.purpose, 'Restaurante Da Se');
+      expect(b.total, 8500);
+      expect(b.receiptDate, DateTime(2026, 10, 24));
+      expect(b.placeAddress, startsWith('CRUZES'));
+      expect(q.liveFor(b.id), isNotNull, reason: 'die Kachel spielt die Scan-Animation');
+      gate.complete();
+      while (q.open > 0) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(store.bills.single.read, BillRead.ok);
+    });
+
     test('während des Lesens gelöscht: kommt nicht zurück', () async {
       final store = BillStore.memory();
       final gate = Completer<void>();
@@ -189,6 +262,57 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 10));
       }
       expect(store.bills, isEmpty);
+    });
+  });
+
+  group('Papierkorb, Archiv, Gruppen, Freunde (Speicher)', () {
+    test('Frist 7 Tage, 30 Tage oder nur manuell', () {
+      final now = DateTime(2026, 11, 2);
+      Bill gone(String id, int days) => _bill(id, id)..trashedAt = now.subtract(Duration(days: days));
+      List<String> run(int days) {
+        final store = BillStore.memory([gone('a8', 8), gone('b5', 5), gone('c1', 1), gone('z90', 90)]);
+        store.trashDays = days;
+        store.purgeTrash(now: now);
+        return store.bills.map((b) => b.id).toList()..sort();
+      }
+
+      expect(run(7), ['b5', 'c1']);
+      expect(run(30), ['a8', 'b5', 'c1']);
+      expect(run(0), ['a8', 'b5', 'c1', 'z90'], reason: 'nur manuell: nichts verschwindet von selbst');
+    });
+
+    test('Standard ist 30 Tage; Restzeit zählt herunter', () {
+      final now = DateTime(2026, 11, 2);
+      final store = BillStore.memory([_bill('a', 'a')..trashedAt = now.subtract(const Duration(days: 2))]);
+      expect(store.trashDays, 30);
+      expect(store.daysLeft(store.bills.single, now: now), 28);
+      store.trashDays = 0;
+      expect(store.daysLeft(store.bills.single, now: now), isNull);
+    });
+
+    test('Archiv = Fertig, Papierkorb ist getrennt; Wiederherstellen bringt zurück', () {
+      final store = BillStore.memory([_bill('o', 'offen'), _bill('d', 'fertig', done: true)]);
+      expect(store.drafts.map((b) => b.id), ['o']);
+      expect(store.finished.map((b) => b.id), ['d']);
+      store.trash([store.bills.first]);
+      expect(store.drafts, isEmpty);
+      expect(store.trashed.map((b) => b.id), ['o']);
+      store.untrash(store.trashed);
+      expect(store.drafts.map((b) => b.id), ['o']);
+    });
+
+    test('Gruppen ohne Bons, Gruppe löschen lässt die Bons bestehen, Freunde aus Bons und von Hand', () {
+      final b = _bill('a', 'a', group: 'Urlaub')..people = [Person('Anna', 1), Person('Jo', 2)];
+      final store = BillStore.memory([b]);
+      store.addGroup('Leer');
+      expect(store.allGroups, ['Leer', 'Urlaub']);
+      expect(store.groups, ['Urlaub']);
+      store.deleteGroup('Urlaub');
+      expect(store.bills.single.group, isNull);
+      store.addFriend('Mia');
+      expect(store.friends.map((f) => f.name).toSet(), {'Anna', 'Jo', 'Mia'});
+      store.forgetFriend('Jo');
+      expect(store.friends.map((f) => f.name).toSet(), {'Anna', 'Mia'});
     });
   });
 

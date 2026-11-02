@@ -63,7 +63,8 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(title: Text(t.settings)),
       body: ListView(padding: EdgeInsets.only(bottom: FasanSpace.xxl + MediaQuery.paddingOf(context).bottom), children: [
         head(t.setBill),
-        SwitchListTile(
+        FasanSwitchTile(
+          padded: true,
           secondary: const Icon(Icons.translate_rounded),
           title: Text(t.setPlainNames),
           subtitle: Text(t.setPlainNamesSub),
@@ -123,6 +124,17 @@ class SettingsScreen extends StatelessWidget {
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingScreen())),
         ),
         head(t.setData),
+        ListTile(
+          leading: const Icon(Icons.auto_delete_outlined),
+          title: Text(t.setTrash),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: FasanSpace.s),
+            child: FasanSegmented<int>(values: const [7, 30, 0], selected: store.trashDays, label: t.trashAfter, onChanged: (v) {
+              store.trashDays = v;
+              store.purgeTrash();
+            }),
+          ),
+        ),
         ListTile(
           leading: const Icon(Icons.lock_outline_rounded),
           title: Text(t.setLocal),
@@ -186,7 +198,8 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
         ),
-        SwitchListTile(
+        FasanSwitchTile(
+          padded: true,
           secondary: const Icon(Icons.update_rounded),
           title: Text(t.autoUpdate),
           subtitle: Text(t.autoUpdateSub),

@@ -445,7 +445,9 @@ int lettersIn(String t) => countMatches(_az, foldLower(t).replaceAll(_unitsWord,
 
 // „Uni“ as OCR reads it: Uni, Un1, Unl, Unt, Unf, Unj, Uní, Um, Jni (protocols 02.11.: „Unf CANECA“, „í Cesta de pao“ –
 // \b treats „í“ as non-word, so „Un“ was cut and „í“ stayed). Ends only where no letter follows.
-final _n2 = RegExp(r'^\s*(u[nm][il1tfjíìĩ|!]?|jni|und|unid|unidade|uds?|stk|pcs|pc)(?![A-Za-zÀ-ÿ])\.?\s*', caseSensitive: false);
+// A smudge or fold in front of the unit column is read as one or two stray characters („2 P Uni PIZZA PEPPERONI“, Nutzer
+// 02.11.: „P Pizza Peperoni“ wurde erkannt); they are dropped only when a unit word follows.
+final _n2 = RegExp(r'^\s*(?:[^\s\d]{1,2}\s+(?=(?:u[nm][il1tfjíìĩ|!]?|jni)(?![A-Za-zÀ-ÿ])))?(u[nm][il1tfjíìĩ|!]?|jni|und|unid|unidade|uds?|stk|pcs|pc)(?![A-Za-zÀ-ÿ])\.?\s*', caseSensitive: false);
 final _n3 = RegExp(r'\b\d{1,2}\s*%');
 final _n4 = RegExp(
     r'[€$£¥₩₹]|(?<![\p{L}])(euro|eur|usd|chf|gbp|jpy|fr\.|kr|zł|kč|rm|myr|sgd|thb|idr|php|vnd|aud|nzd|cad|hkd|cny|rmb|krw|inr|try|pln|czk|huf|sek|nok|dkk|brl|mxn|zar|aed)(?![\p{L}])',
@@ -457,6 +459,34 @@ final _n7 = RegExp(r'\s+\d{1,3}\s\d{2}\s*[A-D]?\s*\*?\s*$');
 final _n8 = RegExp(r'\s+[A-Z0-9*]{1,2}\s*$');
 final _n9 = RegExp(r'^[^\wÀ-ÿ]+|[^\wÀ-ÿ.)]+$');
 final _ws = RegExp(r'\s+');
+
+/// A name that probably contains a reading error: a stray single consonant in front („P PIZZA PEPPERONI“) or several junk
+/// symbols. Such items are marked unsure at once, so the user checks them before they do harm (Nutzer 02.11.).
+bool suspiciousName(String n) {
+  final t = n.trim();
+  final tokens = t.split(RegExp(r'\s+'));
+  if (tokens.length >= 2 && RegExp(r'^[B-DF-HJ-NP-TV-XZ]$').hasMatch(tokens.first)) return true;
+  return RegExp(r"[^\p{L}\d\s.,'&/()+\-–%*]", unicode: true).allMatches(t).length >= 2;
+}
+
+/// Other plausible readings of an item name (without the stray front character, no truncated last letter, readable case).
+List<String> nameAlternatives(String n) {
+  final t = n.trim();
+  if (t.isEmpty) return const [];
+  final out = <String>[];
+  void add(String s) {
+    final x = s.trim();
+    if (x.isNotEmpty && x != t && !out.contains(x)) out.add(x);
+  }
+  final tokens = t.split(RegExp(r'\s+'));
+  if (tokens.length >= 2 && tokens.first.length == 1) add(tokens.skip(1).join(' '));
+  if (tokens.length >= 3 && tokens.last.length == 1) add(tokens.take(tokens.length - 1).join(' '));
+  final base = out.isNotEmpty ? out.first : t;
+  if (base == base.toUpperCase() && RegExp(r'[A-ZÀ-Þ]{3}').hasMatch(base)) {
+    add(base.split(' ').map((w) => w.isEmpty ? w : w[0] + w.substring(1).toLowerCase()).join(' '));
+  }
+  return out.take(3).toList();
+}
 
 /// Item name from the text left of the amount [nameAus].
 String nameFrom(String t) {
@@ -1839,7 +1869,8 @@ double quality(ReadResult r, List<Word> words) {
 double displayBonus(String name, bool straight) {
   if (name.startsWith('gerade2')) return 110;
   if (name.startsWith('gerade')) return 100;
-  if (RegExp(r'^entfaltet(?!-foto)').hasMatch(name)) return 45;
-  if (name.startsWith('entfaltet')) return 40;
+  // UVDoc images no longer win ties: on tall receipts its grid stretches and squashes the sheet (Nutzer 02.11.: der Scan war
+  // schief und verformt, das Original gerader). The cut-out keeps the proportions; UVDoc has to be clearly better.
+  if (name.startsWith('entfaltet')) return 0;
   return straight && name != 'foto' ? 30 : 0;
 }

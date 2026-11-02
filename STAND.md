@@ -1,6 +1,6 @@
 # Stand Fasan Split
 
-**Version 0.2** (CI-Build `0.1.<Lauf>`), APK unter Releases → `neueste`, nur arm64, 82,5 MB, mit
+**Version 0.2** (CI-Build `0.1.<Lauf>`; Stand der Beschreibung unten: 0.1.23), APK unter Releases → `neueste`, nur arm64, 82,5 MB, mit
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
@@ -192,23 +192,62 @@ Offen (Recherche liegt vor, Umsetzung nächste Sitzung):
 - Offen aus Paket 3: Mitbearbeiter (hängt an Nostr, braucht Freigabe zum Schreiben), Status „fertig“ als eigene Ansicht, Gruppe beim Hochladen
   wählen, mehrere Bons in einem Foto.
 
-## Noch offen – Reihenfolge (selbst priorisiert, Stand 02.11. 22 Uhr; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
+## Sitzung 02.11. nachts (0.1.23): Rückmeldungen vom S23 und Navigation
 
-Abweichung von der Nutzerreihenfolge: Erst Absicherung (1), dann die Rückmeldung (2) und Mehrfach-Upload (3), weil ein Erkennungsfehler alles
-danach entwertet und die Probe auf dem Handy nur der Nutzer machen kann (läuft parallel).
-1. Absicherung Paket 1: erledigt für synthetisch und echt (siehe oben); offen: SROIE nachmessen, CI grün, S23-Laufzeit.
-2. Paket 2 auf dem S23 abnehmen (Probe-Knöpfe, siehe oben).
-3. Paket 3 (umgesetzt, Rest siehe dort): Mehrfach-Upload (`pickMultiImage`, Warteschlange mit Fortschritt), Startseite mit Mehrfachauswahl, Gruppieren, Löschen, Status
-   sehen und setzen; Wischgesten; Drag and Drop. Mitbearbeiter hängt an der Gruppe (Nostr) und braucht ausdrückliche Freigabe zum Schreiben.
-4. Paket 4: Korn (AV1 Film Grain Synthesis: AR-Muster, Versatz je Block, Helligkeitsabhängigkeit; Quelle libaom BSD-2/dav1d) und Film
-   (Hintergrund neutral statt rötlich, Glow/Halation/Überstrahlen sichtbar oder entfernen).
-5. Paket 5: Glas mit Brechung, Durchsicht, Reflexion (`toImageSync`, Vorbild fluid_glass/fresnel_shader MIT).
-6. Kleine Gewinne zwischendurch: globale Overlays folgen dem Stil (SnackBarTheme fehlt, schwarzer Kasten; GESTALTUNG §9.7), „Pão“ als „PAD“,
-   „Pica-Pau“ ohne Klarnamen, `de-discount.png`.
-7. Soll-Liste (❌ oben): Rückgängig/Wiederholen, mehrere Zahler und Anzahlung, Ausgaben ohne Bon, Lesesicherheit je Posten und mehrdeutige
-   Lesungen mit Prozent, Korrekturen lernen, Wörterbücher je Sprache, Fremdwährung, PDF, Gruppe über Nostr, Einführung/Profile/Wiederherstellen.
-8. Gestaltung §9: Lebendig/Warten, Glas 3D, Papier, Braun-Technik, Kino-Stile, Leistungstest, Overlays; Stufen-Abnahme A/B/C auf dem S23.
-9. Technik: APK-Größe (`uvdoc.onnx` 31,6 MB, fp16?), Release-Schlüssel als Secret, Akku mit laufendem Korn messen, Bon-Variante Zoom/Querformat.
+Recherche: `fasan_ui/docs/recherche/2026-11-02-navigation-layout-glas-ton.md` (Reiter-Konzept, Apple-Vorgaben für Layoutänderungen,
+Papierkorb-Fristen, verschlüsselte Nostr-Relays, AV1-Korn, Glas, Ton).
+
+Behoben (Ursache belegt):
+- Korn und Hintergrund liefen nach „Weniger Bewegung“ nicht mehr: Beim Neustart des Tickers zählte die Zeit von null, der Takt-Vergleich blieb
+  negativ (`film.dart`, `backdrop.dart`). Behoben, aber nur im Code geprüft, nicht auf dem Gerät.
+- Menü sprang bei Stilwechsel (Häkchen machte Chips breiter) und beim Einschalten der Vignette: Häkchen weg (Farbe zeigt die Auswahl), weiches Ein-
+  und Ausblenden mit `FasanReveal` (AnimatedSize + AnimatedSwitcher, ohne Bewegung ohne AnimatedSize, sonst Assertion).
+- Dunkle Block-Overlays: SnackBar-, Dialog-, Menü-, Tooltip- und Chip-Theme im Stil (Fläche, Haarlinie, Radius des Stils).
+- Schalter im Menü blieben still: `FasanSwitchTile` mit Haptik und Ton, in den Einstellungen von fasan_ui und Split.
+- Auswahlmodus blieb hängen: bleibt bis zum X, zum gleichen Symbol oder „Zurück“.
+- Scan nicht auf voller Breite (44 dp Rand für Avatare): Scan füllt die Breite, Avatare im rechten Papierrand.
+- Scan verformt: Ein UVDoc-Bild gewann Gleichstände (guete 16851 gegen 16841) und streckt hohe Bons. `displayBonus` für „entfaltet“ ist 0, der
+  Ausschnitt behält die Proportionen. Rand des Ausschnitts links 8 % → 12 % (Buchstaben am Rand wurden abgeschnitten). Nicht behoben: Der Scan
+  verformt Bereiche ohne Text (QR-Code) leicht und hat unten links einen dunklen Keil (an Estrela do Bairro gesehen).
+- „P Pizza Peperoni“: Ein Fleck vor „Uni“ blieb im Namen (`_n2`). Verdächtige Namen (einzelner Konsonant vorn, Sonderzeichen) sind sofort „unsicher“.
+  Bearbeiten zeigt Lesesicherheit in % und andere Lesungen als Chips (`nameAlternatives`).
+- Original: Posten sind wählbar (Ecken des Bons im Foto aus der Erkennung, bilinear auf die Zeilen; nur genähert). Wischen zwischen Scan, Original
+  und Digital (Shared Axis); im Scan nur bei unverzoomtem Bon und einem Finger.
+
+Neu:
+- Navigation: unten drei Reiter (Rechnungen, Gruppen, Freunde), schwebendes Plus (Kamera, Galerie/Datei, ohne Bon), auf Rechnungen oben Offen, Archiv,
+  Papierkorb. Ein Pager trägt fünf Seiten, Wischen geht der Reihe nach durch. „Fertig“ = Archiv; Löschen = Papierkorb (7 Tage, 30 Tage Standard, nur
+  manuell; Einstellungen → Daten); Wischen rechts = Archiv, links = Papierkorb mit Rückgängig; Ziehen auf Gruppen.
+- Gruppen (auch leere), Gruppenseite, Freunde (aus Bons und von Hand), Einladungsentwurf mit Link, frischem Schlüssel und QR (zxing2-Encoder). Es wird
+  nichts gesendet (Beschluss 02.11.).
+- Mehrfach-Upload: Miniatur sofort, Ort, Datum und Preis erscheinen nach dem ersten Durchlauf (`ScanPartial`), die Kachel spielt die Scan-Animation
+  in klein (`ScanStage`, `ScanLive`).
+- Korn nach AV1-Synthese (82×73-Vorlage per AR-Filter in Dart, 32×32-Blöcke mit zufälligem Versatz je Bild, Überlappung, Helligkeitsfunktion);
+  Wärme standardmäßig aus, Glow/Halation/Überstrahlen stärker (Einstellungen Version 4: alte Werte werden zurückgesetzt).
+- Eigene Töne (audioplayers, Sinus mit Hüllkurve, Nutzungsart „assistanceSonification“), Rückfall auf den Systemklick.
+- Glas: Glanz und Kaustik am Rand, dünne Innenkante (überall sichtbar). Protokoll hat jetzt `darstellung` (Glas-Stufe, Grund, Korn-Vorlage).
+
+Messungen (hier in der Cloud-Sitzung): echte Bons 13/13, Posten 98/98, Datum 12/13, PLZ 11/13; synthetisch PNG 10/11, JPG 30/30, Posten 247/247;
+`flutter test`: 90 bestanden, 52 übersprungen (E2E/SROIE); fasan_ui 61 bestanden. Shader mit `impellerc` (GLES, Vulkan) übersetzt: grain.frag und
+glass.frag ohne Fehler.
+
+NICHT geprüft: alles auf dem S23 (Bedienung, Wischen zwischen Seiten und Konflikt mit dem Wischen auf Kacheln, Ziehen auf Gruppen, Ton, Korn, Glanz,
+Begradigung); SROIE; Original-Zeilen bei stark gewölbten Bons (Näherung).
+
+## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11. 01 Uhr; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
+
+1. Rückmeldung vom S23 zu 0.1.23: Probe-Knöpfe (System-Haptik, Vibrator, Ton), Korn, Glanz, Navigation und Wischen. Das Protokoll zeigt jetzt die Glas-Stufe.
+2. Glas echt (Paket 5, Rest): Hintergrund per `OffsetLayer.toImageSync` erfassen und im Fragment-Shader brechen (Vorbild fluid_glass, Lizenz „unknown“:
+   nur als Vorbild); erst nach dem Protokoll-Befund, welche Stufe das S23 wählt, und mit Wahl „Glas: Auto/Echt/Einfach“.
+3. Scan-Begradigung weiter verbessern: QR-Bereich, dunkler Keil unten links, Papierkante; ein Verformungsmaß, das bei zu starker Verzerrung auf den
+   Ausschnitt zurückfällt (mit echten Bons messen).
+4. Original-Zeilen genauer (Abbildung Scan → Foto statt Eckenbilinear), Lesesicherheit je Posten aus den Wortkonfidenzen, echte alternative Lesungen
+   mit Prozent (nicht nur Regeln), Korrekturen lernen, Wörterbücher je Sprache.
+5. Gruppe über Nostr (verschlüsselt, NIP-44/59/17): gebaut gegen lokalen Relay in der Sitzung; öffentliche Relays nur nach ausdrücklicher Freigabe
+   für den jeweiligen Test (Ereignisse lassen sich nicht sicher löschen). Mitbearbeiter, Rechte, Original-Foto verschlüsselt (Blossom).
+6. Soll-Liste (❌ oben): Rückgängig/Wiederholen, mehrere Zahler und Anzahlung, Ausgaben ohne Bon, Fremdwährung, PDF, Einführung/Profile/Wiederherstellen.
+7. Gestaltung §9: Lebendig/Warten, Glas 3D, Papier, Braun-Technik, Kino-Stile, Leistungstest, Stufen-Abnahme A/B/C auf dem S23.
+8. Technik: APK-Größe (`uvdoc.onnx` 31,6 MB), Release-Schlüssel als Secret, Akku mit laufendem Korn, SROIE nachmessen, `de-discount.png`.
 
 ## Offen
 
