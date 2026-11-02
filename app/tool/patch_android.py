@@ -43,6 +43,11 @@ android {{
             keyPassword = System.getenv("FASAN_KEY_PASSWORD") ?: "fasan-split-test"
         }}
     }}
+    // ota_update 7.x requires core library desugaring (its README „Migrating to 7.0.0+“; the plugin itself uses
+    // desugar_jdk_libs 2.1.4). Java source/target level stays as flutter create set it.
+    compileOptions {{
+        isCoreLibraryDesugaringEnabled = true
+    }}
     buildTypes {{
         getByName("release") {{
             signingConfig = signingConfigs.getByName("fasan")
@@ -51,6 +56,9 @@ android {{
             signingConfig = signingConfigs.getByName("fasan")
         }}
     }}
+}}
+dependencies {{
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }}
 '''
 
