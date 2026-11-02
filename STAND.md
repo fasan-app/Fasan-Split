@@ -1,6 +1,6 @@
 # Stand Fasan Split
 
-**Version 0.1** (CI-Build `0.1.<Lauf>`, zuletzt 0.1.2), APK unter Releases → `neueste`, nur arm64, 82,5 MB, mit
+**Version 0.2** (CI-Build `0.1.<Lauf>`), APK unter Releases → `neueste`, nur arm64, 82,5 MB, mit
 öffentlichem Test-Schlüssel signiert, ohne Internet-Berechtigung.
 Stand 01.11.2026.
 
@@ -55,7 +55,7 @@ Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEI
 - ◐ Posten antippen: Korrekturleiste mit Zeilenbild, zuordnen, bearbeiten/löschen; Tipp neben Kasten rastet ein (0.2); ❌ ausblenden, andere Zeilen übernehmen
 - ❌ Ladeanzeige ist der Bon selbst (Lichtband, aufleuchtende Zeilen)
 - ✅ Zeilenkasten über die ganze Textbreite inkl. Mengenspalte (0.2)
-- ✅ mehrzeilige Posten als eine Form; ✅ Avatare in eigener Spalte; ❌ Schraffur je Person, Okabe-Ito-Farben, eindeutige Kürzel
+- ✅ mehrzeilige Posten als eine Form; ✅ Avatare in eigener Spalte; ❌ Schraffur je Person; ❓ Farben: fasan_ui nutzt eine eigene kontraststarke Palette statt Okabe-Ito (Karte 3.8). Okabe-Gelb hat mit weißem Kürzel zu wenig Kontrast. Entscheidung offen
 
 ### Erkennung und Daten
 - ✅ Leser 3.19 nach Dart (Messwerte oben)
@@ -75,14 +75,14 @@ Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEI
 
 ### Design und Einstellungen
 - ❌ Stile deutlich unterscheidbar (Rams/Ive/Bauhaus, Recherchen in Fasan-Karte und Kamera)
-- ◐ Korn jetzt merkbar (0.2); ❌ dunkler Kasten oben links: Ursache nicht belegt (siehe unten)
+- ◐ Korn jetzt merkbar (0.2). Dunkler Kasten: Ursache ist der Glow/Halation-Filter (`ImageFilter.shader`); im Emulator (Impeller OpenGLES) stand damit die ganze App kopfüber. Filter aus, Regler ausgeblendet, bis er auf GLES und Vulkan nachweislich stimmt (fasan_ui `FasanFilm.bloomVerified`). Emulator danach: richtig herum, kein Kasten. S23 (Vulkan) noch zu prüfen
 - ◐ Einstellungen nach Recherche (`docs/recherche/2026-11-02-einstellungen.md`): Rechnung, Personen, Aussehen, Einführung, Daten (Export, Fotos/alles löschen), Diagnose, Über (0.2); ❌ Währung, Profile, Wiederherstellen
 - ✅ Karten: Knopfreihe über der Leiste; Meldungen über der Leiste statt über „Weiter“ (0.2)
 - ❌ Eigene Kamera-Ansicht mit Live-Begradigung
 
 ### Prüfen
 - ✅ Echte Bons: 13 Fotos in `fasan-diagnose/tests/echt`, 12/13. Fehlschlag: McDonald's (keine Summe, keine Posten). Ferreiras richtig „nicht geprüft“ (7,90 € ohne Postenzeile)
-- ❌ Emulator-Bildschirmfotos mit echtem Bon in der CI
+- ✅ Emulator-Bildschirmfotos mit echtem Bon: Workflow „Emulator-Bilder“ im privaten fasan-diagnose (Bilder im Zweig `bilder`), Vorführmodus `--dart-define=FASAN_DEMO`
 
 ## Bildschirmfotos
 
