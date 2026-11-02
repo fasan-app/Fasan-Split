@@ -9,7 +9,10 @@ import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class UpdateInfo {
-  const UpdateInfo({required this.run, required this.name, required this.url, required this.sha256, required this.size});
+  const UpdateInfo({required this.run, required this.name, required this.url, required this.sha256, required this.size, this.changes = const []});
+
+  /// Commit subjects newer than this build, newest first (release notes written by the CI, see android.yml).
+  final List<String> changes;
 
   /// CI run number N of version 0.1.N (build number = 100 + N, see .github/workflows/android.yml).
   final int run;
@@ -65,12 +68,25 @@ class Updates {
         url: asset['browser_download_url'] as String,
         sha256: digest != null && digest.startsWith('sha256:') ? digest.substring(7) : null,
         size: (asset['size'] as num?)?.toInt() ?? 0,
+        changes: changesSince(j['body'] as String? ?? '', const String.fromEnvironment('FASAN_SHA')),
       );
     } catch (_) {
       return null;
     } finally {
       client.close(force: true);
     }
+  }
+
+  /// Lines „- `sha` `subject`“ of the release notes above the commit this app was built from. Without a known build
+  /// commit all lines are shown.
+  static List<String> changesSince(String body, String ownSha) {
+    final out = <String>[];
+    for (final m in RegExp(r'^- ([0-9a-f]{7,40}) (.+)$', multiLine: true).allMatches(body)) {
+      final sha = m[1]!;
+      if (ownSha.isNotEmpty && (sha.startsWith(ownSha) || ownSha.startsWith(sha))) break;
+      out.add(m[2]!.trim());
+    }
+    return out;
   }
 
   /// Newer than the installed one?

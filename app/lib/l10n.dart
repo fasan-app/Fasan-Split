@@ -155,7 +155,15 @@ class S {
   String get placeUnknownShort => de ? 'Ort eintragen' : 'Add place';
   String get osmSearch => de ? 'In OpenStreetMap suchen' : 'Search in OpenStreetMap';
   String updateAvailable(String n) => de ? 'Neue Version: $n' : 'New version: $n';
+  String get showUpdate => de ? 'Ansehen' : 'View';
   String get install => de ? 'Installieren' : 'Install';
+  String updateSize(int mb) => de ? 'Download: $mb MB' : 'Download: $mb MB';
+  String get updateChanges => de ? 'Was ist neu' : 'What\'s new';
+  String get updateLoad => de ? 'Laden und installieren' : 'Download and install';
+  String get later => de ? 'Später' : 'Later';
+  String get updateWhole => de
+      ? 'Android lädt noch die ganze App. Teil-Updates sind in Arbeit.'
+      : 'Android still downloads the whole app. Partial updates are in progress.';
   String updateDownloading(int mb) => de ? 'Lädt herunter ($mb MB) und prüft die Prüfsumme …' : 'Downloading ($mb MB) and verifying the checksum …';
   String get updateInstalling => de ? 'Android fragt jetzt, ob du installieren willst.' : 'Android now asks whether to install.';
   String get updateDone => de ? 'Installiert.' : 'Installed.';

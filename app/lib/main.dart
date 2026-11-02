@@ -38,6 +38,9 @@ class SplitApp extends StatelessWidget {
             theme: ui.theme(Brightness.light),
             darkTheme: ui.theme(Brightness.dark),
             themeMode: ui.themeMode,
+            // style changes morph instead of jumping (fasan_ui Norm): colours, radii and glow are interpolated
+            themeAnimationDuration: const Duration(milliseconds: 380),
+            themeAnimationCurve: Curves.easeInOutCubic,
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
             supportedLocales: const [Locale('de'), Locale('en')],
             // Layer 0 (ground with gradient, grain, weave, light) behind all pages; FasanFilm adds grain over the whole

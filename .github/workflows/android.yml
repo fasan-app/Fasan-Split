@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 40   # change list for the in-app update (release notes)
 
       - name: Platz schaffen
         run: |
@@ -89,7 +91,8 @@ jobs:
         run: |
           set -o pipefail
           timeout 35m flutter build apk --release --target-platform android-arm64 \
-            --build-name "0.1.${GITHUB_RUN_NUMBER}" --build-number "$((100 + GITHUB_RUN_NUMBER))" 2>&1 | tee ../logs/build.log
+            --build-name "0.1.${GITHUB_RUN_NUMBER}" --build-number "$((100 + GITHUB_RUN_NUMBER))" \
+            --dart-define=FASAN_SHA="${GITHUB_SHA::7}" 2>&1 | tee ../logs/build.log
           cp build/app/outputs/flutter-apk/app-release.apk ../fasan-split.apk
           ls -la ../fasan-split.apk | tee -a ../logs/build.log
 
@@ -107,8 +110,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete neueste -y --cleanup-tag || true
+          # Change list for the app (lib/update.dart): one line per commit, „- <sha7> <subject>“, newest first.
+          # The app shows the lines above its own build commit (FASAN_SHA).
+          { echo "Testversion aus ${GITHUB_SHA::7}. Mit Test-Schlüssel signiert, solange kein Release-Schlüssel hinterlegt ist."; echo; \
+            git log -30 --no-merges --pretty='- %h %s'; } > notes.md
           gh release create neueste fasan-split.apk --title "Fasan Split 0.1.${GITHUB_RUN_NUMBER} (Test)" \
-            --notes "Testversion aus ${GITHUB_SHA::7}. Mit Test-Schlüssel signiert, solange kein Release-Schlüssel hinterlegt ist." \
+            --notes-file notes.md \
             --prerelease --target "$GITHUB_SHA" 2>&1 | tee logs/release.log
 
       - uses: actions/upload-artifact@v4
