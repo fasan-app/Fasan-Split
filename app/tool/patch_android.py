@@ -69,7 +69,34 @@ m = manifest.read_text()
 m, n = re.subn(r'android:label="[^"]*"', 'android:label="${fasanLabel}"', m, count=1)
 if n != 1:
     sys.exit('android:label nicht gefunden im Manifest')
+# In-app updates (ota_update, MIT; README „Android“): FileProvider + install result receiver inside <application>,
+# res/xml/filepaths.xml for files/ota_update/. Permissions the plugin declares but Fasan Split does not need are removed
+# (we download into the app's own files dir, and we are no system app): WRITE_EXTERNAL_STORAGE, INSTALL_PACKAGES,
+# ACCESS_WIFI_STATE. Kept: INTERNET, ACCESS_NETWORK_STATE, REQUEST_INSTALL_PACKAGES (user confirms every install).
+if 'ota_update_provider' not in m:
+    m = m.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android"',
+                  '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"', 1)
+    remove = ''.join(f'    <uses-permission android:name="android.permission.{p}" tools:node="remove"/>\n'
+                     for p in ('WRITE_EXTERNAL_STORAGE', 'INSTALL_PACKAGES', 'ACCESS_WIFI_STATE'))
+    m = re.sub(r'(<manifest[^>]*>\n)', lambda x: x.group(1) + remove, m, count=1)
+    provider = '''        <provider
+            android:name="sk.fourq.otaupdate.OtaUpdateFileProvider"
+            android:authorities="${applicationId}.ota_update_provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/filepaths" />
+        </provider>
+        <receiver android:name="sk.fourq.otaupdate.InstallResultReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="${applicationId}.ACTION_INSTALL_COMPLETE"/>
+            </intent-filter>
+        </receiver>
+'''
+    m = m.replace('</application>', provider + '    </application>', 1)
 manifest.write_text(m)
+xml = root / 'src' / 'main' / 'res' / 'xml'
+xml.mkdir(parents=True, exist_ok=True)
+(xml / 'filepaths.xml').write_text('<?xml version="1.0" encoding="utf-8"?>\n<paths xmlns:android="http://schemas.android.com/apk/res/android">\n    <files-path name="internal_apk_storage" path="ota_update/"/>\n</paths>\n')
 print('Manifest angepasst')
 
 icons = app / 'assets' / 'icon'

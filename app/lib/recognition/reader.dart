@@ -1809,8 +1809,19 @@ int contradictions(ReadResult r) {
 
 /// Quality of a pass: checked total, consistent assignment, sure items [guete].
 double quality(ReadResult r, List<Word> words) {
+  // A pass that found no item at all must never win over one that found items (McDonald's 02.11.: the whole-photo pass
+  // read all items and the total correctly but scored −384 after penalties; an empty pass with 10 garbage words won
+  // with +45). Among empty passes the order stays as before.
+  if (r.items.isEmpty) return -100000.0 + math.min(words.length, 400) * 0.1 + (r.total != null ? 10 : 0);
   final sure = r.items.where((p) => p.sure).length, good = words.where((x) => x.conf > 70).length;
-  final nameless = r.items.where((p) => p.nameUncertain && !p.missing).length, orphans = r.lines.where((z) => z.type == 'unklar').length;
+  // unclear lines only count from the item block on: header lines above the first item (cashier id, „REG 30 date“,
+  // column header, masked NIF) cannot be forgotten items. McDonald's 02.11.: four such lines zeroed a checked pass.
+  final firstItem = r.lines.indexWhere((z) => z.type == 'posten');
+  var orphans = 0;
+  for (var i = firstItem < 0 ? 0 : firstItem; i < r.lines.length; i++) {
+    if (r.lines[i].type == 'unklar') orphans++;
+  }
+  final nameless = r.items.where((p) => p.nameUncertain && !p.missing).length;
   final c = contradictions(r);
   final consistent = math.max(0, 1 - 0.3 * (nameless + orphans) - 0.5 * c);
   return (r.check.ok ? 10000 * consistent : 0) +

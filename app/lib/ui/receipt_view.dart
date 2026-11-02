@@ -75,12 +75,24 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
     final all = [for (final it in b.its) ...it.boxes];
     if (all.isEmpty) return const [];
     final x0 = all.map((x) => x.x0).reduce(math.min), x1 = all.map((x) => x.x1).reduce(math.max);
-    return [
+    final rows = [
       for (final it in b.its)
         it.boxes.isEmpty
             ? Rect.zero
             : Rect.fromLTRB(x0, it.boxes.map((x) => x.y0).reduce(math.min), x1, it.boxes.map((x) => x.y1).reduce(math.max)),
     ];
+    // Neighbouring rows must not overlap (price lines reach into the next item): they share the border in the middle
+    // of their overlap (Nutzer 02.11.: „unschön überlappende Kästen“). Taps then hit exactly one row.
+    final order = [for (var k = 0; k < rows.length; k++) if (rows[k] != Rect.zero) k]..sort((a, c) => rows[a].top.compareTo(rows[c].top));
+    for (var i = 0; i + 1 < order.length; i++) {
+      final a = rows[order[i]], c = rows[order[i + 1]];
+      if (a.bottom > c.top) {
+        final mid = (a.bottom + c.top) / 2;
+        rows[order[i]] = Rect.fromLTRB(a.left, a.top, a.right, mid);
+        rows[order[i + 1]] = Rect.fromLTRB(c.left, mid, c.right, c.bottom);
+      }
+    }
+    return rows;
   }
 
   /// Item at a normalised point: inside a row, else the nearest row within 1.5 row heights (snapping).
@@ -140,16 +152,19 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
       Padding(
         padding: const EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.xs, FasanSpace.l, FasanSpace.xs),
         child: Row(children: [
-          Expanded(
-            child: Text(
-              widget.readOnly ? t.receiptHintView : (person == null ? t.receiptHintPick : t.receiptHintPerson(b.ps[person!].name)),
-              style: Theme.of(context).textTheme.bodySmall!.copyWith(color: l.textMuted),
-              maxLines: 2,
+          // viewing only: no hint, the switch takes the row (space for the receipt, Nutzer 02.11.)
+          if (!widget.readOnly) ...[
+            Expanded(
+              child: Text(
+                person == null ? t.receiptHintPick : t.receiptHintPerson(b.ps[person!].name),
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(color: l.textMuted),
+                maxLines: 2,
+              ),
             ),
-          ),
-          const SizedBox(width: FasanSpace.s),
+            const SizedBox(width: FasanSpace.s),
+          ],
           SizedBox(
-            width: 210,
+            width: widget.readOnly ? MediaQuery.sizeOf(context).width - 2 * FasanSpace.l : 210,
             child: FasanSegmented<ReceiptLayer>(
               values: [if (hasScan) ReceiptLayer.scan, if (hasOriginal) ReceiptLayer.original, ReceiptLayer.digital],
               selected: layer,
@@ -329,7 +344,8 @@ class _RowsPainter extends CustomPainter {
     for (var k = 0; k < rows.length; k++) {
       final n = rows[k];
       if (n == Rect.zero) continue;
-      final r = Rect.fromLTRB(n.left * size.width - 4, n.top * size.height - 2, n.right * size.width + 4, n.bottom * size.height + 2);
+      // 1.5 px inside the shared border: a visible gap between neighbours, no overlap
+      final r = Rect.fromLTRB(n.left * size.width - 4, n.top * size.height + 1.5, n.right * size.width + 4, n.bottom * size.height - 1.5);
       final rr = RRect.fromRectAndRadius(r, const Radius.circular(6));
       final it = bill.its[k];
       if (it.assigned) {
@@ -491,13 +507,11 @@ class DigitalReceipt extends StatelessWidget {
         DecoratedBox(
           decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.radius * 0.6), border: Border.all(color: l.hairline)),
           child: Padding(
-            padding: const EdgeInsets.all(FasanSpace.l),
+            padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.m, FasanSpace.m, FasanSpace.l),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text(bill.purpose.isEmpty ? t.appName : bill.purpose, style: tt.titleLarge, textAlign: TextAlign.center),
-              const SizedBox(height: 4),
-              if (bill.placeAddress != null) Text(bill.placeAddress!, style: tt.bodySmall, textAlign: TextAlign.center),
-              if (bill.taxId != null) Text('${t.taxIdLabel} ${bill.taxId}', style: tt.bodySmall, textAlign: TextAlign.center),
-              Text(date, style: tt.bodySmall, textAlign: TextAlign.center),
+              // small head: the items are what matters (Nutzer 02.11.)
+              Text(bill.purpose.isEmpty ? t.appName : bill.purpose, style: tt.titleMedium, textAlign: TextAlign.center),
+              Text([date, ?bill.placeAddress].join(' · '), style: tt.bodySmall!.copyWith(color: l.textMuted), textAlign: TextAlign.center),
               const SizedBox(height: FasanSpace.m),
               Divider(color: l.hairline),
               for (var k = 0; k < bill.its.length; k++)
@@ -506,7 +520,9 @@ class DigitalReceipt extends StatelessWidget {
                   child: Container(
                     constraints: BoxConstraints(minHeight: l.minTap),
                     padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                    decoration: k == selected ? BoxDecoration(border: Border.all(color: l.accent, width: 2), borderRadius: BorderRadius.circular(6)) : null,
+                    // same border on every row (transparent unless selected): Container adds the border width to the
+                    // padding, so a border only on the selected row shifted its text (Nutzer 02.11.)
+                    decoration: BoxDecoration(border: Border.all(color: k == selected ? l.accent : Colors.transparent, width: 2), borderRadius: BorderRadius.circular(6)),
                     child: Row(children: [
                       Expanded(child: ItemTitle(bill.its[k])),
                       if (bill.its[k].assigned) Padding(padding: const EdgeInsets.only(right: 8), child: ShareAvatars(bill: bill, item: bill.its[k], size: 18)),

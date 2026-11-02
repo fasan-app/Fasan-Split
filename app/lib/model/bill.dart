@@ -94,7 +94,8 @@ class BillItem {
   String get title {
     final f = food;
     final base = f != null ? '${f.symbol} ${f.name}' : cleanName;
-    return qty > 1 ? '$qty × $base' : base;
+    // quantity always shown, also 1 (Nutzer 02.11.: „1“ vom Bon fehlte)
+    return '$qty × $base';
   }
 
   /// Receipt name shown small under the plain name (only when it differs).

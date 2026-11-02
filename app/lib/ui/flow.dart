@@ -60,21 +60,31 @@ class _ReviewScreenState extends State<ReviewScreen> {
       body: ListView(
         padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context)),
         children: [
-          TextField(controller: _purpose, decoration: InputDecoration(labelText: t.purpose, hintText: t.purposeHint), textInputAction: TextInputAction.next),
+          // compact head: the items are the main thing, purpose/total/date/place take two rows (Nutzer 02.11.)
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(
+              flex: 3,
+              child: TextField(controller: _purpose, decoration: InputDecoration(labelText: t.purpose, hintText: t.purposeHint), textInputAction: TextInputAction.next),
+            ),
+            const SizedBox(width: FasanSpace.s),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: _total,
+                textAlign: TextAlign.end,
+                decoration: InputDecoration(labelText: t.total, suffixText: '€'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: tt.titleLarge,
+                onChanged: (v) => setState(() {
+                  b.total = parseMoney(v);
+                  b.checked = false;
+                }),
+              ),
+            ),
+          ]),
           const SizedBox(height: FasanSpace.s),
-          TextField(
-            controller: _total,
-            decoration: InputDecoration(labelText: t.total, suffixText: '€'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: tt.headlineSmall,
-            onChanged: (v) => setState(() {
-              b.total = parseMoney(v);
-              b.checked = false;
-            }),
-          ),
-          if (status != null) ...[const SizedBox(height: FasanSpace.m), status],
-          const SizedBox(height: FasanSpace.m),
-          WhenWhere(bill: b, onChanged: () => setState(() {})),
+          WhenWhere(bill: b, compact: true, onChanged: () => setState(() {})),
+          if (status != null) ...[const SizedBox(height: FasanSpace.xs), status],
           const SizedBox(height: FasanSpace.l),
           Row(children: [
             FasanLabel('${t.items} · ${b.its.length}'),
@@ -120,13 +130,13 @@ class _Status extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = FasanLook.of(context);
-    return Container(
-      padding: const EdgeInsets.all(FasanSpace.m),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(l.radius * 0.6)),
+    // one small line, not a big box (space belongs to the items)
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: l.radius * 0.2, vertical: 4),
       child: Row(children: [
-        Icon(icon, color: color, size: 22),
+        Icon(icon, color: color, size: 18),
         const SizedBox(width: FasanSpace.s),
-        Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
+        Expanded(child: Text(text, style: Theme.of(context).textTheme.bodySmall)),
       ]),
     );
   }
@@ -144,28 +154,33 @@ class _ItemRow extends StatelessWidget {
     final t = S.of(context);
     final tt = Theme.of(context).textTheme;
     final unsure = !item.sure || (item.certainty != null && item.certainty! < 60);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        constraints: BoxConstraints(minHeight: l.minTap),
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: l.hairline))),
-        child: Row(children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              ItemTitle(item),
+    // Each item is one card: name, amount and its line picture share one region, with clear gaps between items
+    // (Common Region; 0.2 showed the picture between two names and it was unclear which it belonged to).
+    return Padding(
+      padding: const EdgeInsets.only(bottom: FasanSpace.s),
+      child: Material(
+        color: l.surfaceAlt,
+        borderRadius: BorderRadius.circular(l.radius * 0.5),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(l.radius * 0.5),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(FasanSpace.m, 10, FasanSpace.m, 10),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(child: ItemTitle(item)),
+                if (unsure)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6, top: 2),
+                    child: Tooltip(message: t.unsure, child: Icon(Icons.help_outline, size: 18, color: Theme.of(context).colorScheme.error)),
+                  ),
+                Money(item.amount),
+              ]),
               if (item.note != null) Text(item.note!, style: tt.bodySmall),
-              if (item.snippet != null) Padding(padding: const EdgeInsets.only(top: 4), child: Snippet(item.snippet, height: 22)),
+              if (item.snippet != null) Padding(padding: const EdgeInsets.only(top: 6), child: Snippet(item.snippet, height: 24)),
             ]),
           ),
-          if (unsure)
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: Tooltip(message: t.unsure, child: Icon(Icons.help_outline, size: 18, color: Theme.of(context).colorScheme.error)),
-            ),
-          Money(item.amount),
-        ]),
+        ),
       ),
     );
   }

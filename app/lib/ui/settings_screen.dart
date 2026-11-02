@@ -12,6 +12,8 @@ import '../main.dart';
 import 'common.dart';
 import 'diagnose.dart';
 import 'onboarding.dart';
+import 'update_ui.dart';
+import '../update.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -162,6 +164,34 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(withLog.isEmpty ? t.noLogYet : t.setLogSub(withLog.first.purpose.isEmpty ? t.appName : withLog.first.purpose)),
           enabled: withLog.isNotEmpty,
           onTap: withLog.isEmpty ? null : () => shareRecognitionLog(context, withLog.first),
+        ),
+        head(t.setUpdates),
+        FutureBuilder<String>(
+          future: Updates.currentVersion(),
+          builder: (context, v) => ListTile(
+            leading: const Icon(Icons.system_update_rounded),
+            title: Text(t.checkNow),
+            subtitle: Text(t.version(v.data ?? '…')),
+            onTap: () async {
+              final u = await Updates.latest();
+              final cur = await Updates.currentRun();
+              if (!context.mounted) return;
+              if (u == null) {
+                showNote(context, t.noConnection);
+              } else if (cur != null && u.run <= cur) {
+                showNote(context, t.upToDate);
+              } else {
+                showUpdateSheet(context, u);
+              }
+            },
+          ),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.update_rounded),
+          title: Text(t.autoUpdate),
+          subtitle: Text(t.autoUpdateSub),
+          value: store.autoUpdate,
+          onChanged: (v) => store.autoUpdate = v,
         ),
         head(t.about),
         ListTile(

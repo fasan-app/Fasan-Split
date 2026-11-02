@@ -328,6 +328,15 @@ class Recognizer {
       final b = p.frame ?? (p.line >= 0 && p.line < r.lines.length ? r.lines[p.line].box : null);
       p.snippet = snippet(display, b);
     }
+    // Menu parts without a price right below an item („1 M Agridoce“ under „1 MG Veggie Nug 5.75“) belong to that item
+    // (Karte 3.13: Menü-Bestandteile); a separate 0 € item only confuses the assignment.
+    for (var i = r.items.length - 1; i > 0; i--) {
+      final p = r.items[i], prev = r.items[i - 1];
+      if (p.amount == 0 && p.extras.isEmpty && p.line == prev.line + 1 && p.name.trim().isNotEmpty) {
+        prev.name = '${prev.name} (mit ${p.name.replaceFirst(RegExp(r'^\s*\d+\s+'), '').trim()})';
+        r.items.removeAt(i);
+      }
+    }
     // winner with a contradiction in a line: never "checked", even if the total adds up
     if (r.check.ok && contradictions(r) > 0) r.check = Check(ok: false, source: r.check.source, corrected: r.check.corrected, targets: r.check.targets, contradiction: true);
     _log('ergebnis', {

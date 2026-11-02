@@ -55,7 +55,7 @@ Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEI
 - ◐ Posten antippen: Korrekturleiste mit Zeilenbild, zuordnen, bearbeiten/löschen; Tipp neben Kasten rastet ein (0.2); ❌ ausblenden, andere Zeilen übernehmen
 - ❌ Ladeanzeige ist der Bon selbst (Lichtband, aufleuchtende Zeilen)
 - ✅ Zeilenkasten über die ganze Textbreite inkl. Mengenspalte (0.2)
-- ✅ mehrzeilige Posten als eine Form; ✅ Avatare in eigener Spalte; ❌ Schraffur je Person; ❓ Farben: fasan_ui nutzt eine eigene kontraststarke Palette statt Okabe-Ito (Karte 3.8). Okabe-Gelb hat mit weißem Kürzel zu wenig Kontrast. Entscheidung offen
+- ✅ mehrzeilige Posten als eine Form; ✅ Avatare in eigener Spalte; ❌ Schraffur je Person; ❓ Farben: fasan_ui nutzt eine eigene kontraststarke Palette statt Okabe-Ito (Karte 3.8). Okabe-Gelb hat mit weißem Kürzel zu wenig Kontrast. später klären (Nutzer 02.11.)
 
 ### Erkennung und Daten
 - ✅ Leser 3.19 nach Dart (Messwerte oben)

@@ -18,6 +18,8 @@ Posten zuordnen, wer hat bezahlt, Export. Der Code zieht später in Fasan Karte.
 
 ## Regeln
 
+- Nie in fremde Dienste schreiben: keine Uploads, Nostr-Ereignisse, POST/PUT an Dritte, auch nicht zum Testen; Recherche nur lesend; Ausnahme nur mit ausdrücklicher Freigabe (Beschluss 02.11.). Jeder Agent-Auftrag nennt das wörtlich.
+
 - Nichts raten: Vor System-APIs, Plugins und Shadern die offizielle Doku lesen (api.flutter.dev, pub.dev,
   developer.android.com, onnxruntime.ai). Annahmen mit Quelle oder als „nicht geprüft“.
 - Englische Bezeichner, Kommentare für spätere Bearbeiter, modular. Lizenz MPL-2.0, keine GPL-Bausteine.

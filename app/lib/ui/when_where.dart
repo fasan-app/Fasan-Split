@@ -10,10 +10,13 @@ import '../model/bill.dart';
 import 'common.dart';
 
 class WhenWhere extends StatelessWidget {
-  const WhenWhere({super.key, required this.bill, required this.onChanged});
+  const WhenWhere({super.key, required this.bill, required this.onChanged, this.compact = false});
 
   final Bill bill;
   final VoidCallback onChanged;
+
+  /// One row (date · place · OSM) above the items; the full card is for detail views.
+  final bool compact;
 
   Future<void> _pickDate(BuildContext context) async {
     final d = await showDatePicker(context: context, initialDate: bill.date, firstDate: DateTime(2000), lastDate: DateTime.now().add(const Duration(days: 1)));
@@ -75,6 +78,27 @@ class WhenWhere extends StatelessWidget {
             ]),
           ),
         );
+    if (compact) {
+      final place = bill.placeAddress == null ? t.placeUnknownShort : bill.placeAddress!.split(', ').last;
+      Widget chip(IconData icon, String text, VoidCallback onTap, {bool muted = false}) => InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: l.minTap),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(icon, size: 18, color: l.textMuted),
+                const SizedBox(width: 6),
+                Flexible(child: Text(text, style: tt.bodyMedium!.copyWith(color: muted ? l.textMuted : null), maxLines: 1, overflow: TextOverflow.ellipsis)),
+              ]),
+            ),
+          );
+      return Row(children: [
+        chip(Icons.event_outlined, date, () => _pickDate(context)),
+        const SizedBox(width: FasanSpace.m),
+        Expanded(child: chip(Icons.place_outlined, place, () => _editPlace(context), muted: bill.placeAddress == null)),
+        IconButton(tooltip: t.osmSearch, icon: const Icon(Icons.map_outlined, size: 20), onPressed: () => _osm(context)),
+      ]);
+    }
     return DecoratedBox(
       decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
       child: Padding(

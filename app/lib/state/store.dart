@@ -67,6 +67,13 @@ class BillStore extends ChangeNotifier {
   String get receiptLayer => _app['receiptLayer'] as String? ?? 'scan';
   set receiptLayer(String v) => _setApp('receiptLayer', v);
 
+  /// Look for a new version once a day (talks to api.github.com). Default on (Nutzer 02.11.: Updates in der App).
+  bool get autoUpdate => _app['autoUpdate'] as bool? ?? true;
+  set autoUpdate(bool v) => _setApp('autoUpdate', v);
+
+  DateTime? get lastUpdateCheck => DateTime.tryParse(_app['lastUpdateCheck'] as String? ?? '');
+  set lastUpdateCheck(DateTime? v) => _setApp('lastUpdateCheck', v?.toIso8601String());
+
   /// The introduction was seen or skipped.
   bool get onboarded => _app['onboarded'] as bool? ?? false;
   set onboarded(bool v) => _setApp('onboarded', v);

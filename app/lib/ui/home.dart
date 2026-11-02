@@ -12,6 +12,8 @@ import 'common.dart';
 import 'assign.dart';
 import 'flow.dart';
 import 'onboarding.dart';
+import 'update_ui.dart';
+import '../update.dart';
 import 'scan_screen.dart';
 import 'settings_screen.dart';
 
@@ -23,9 +25,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  UpdateInfo? _update;
+
+  /// At most once a day, only if enabled (Settings → Updates); silent without network.
+  Future<void> _checkUpdate() async {
+    final store = StoreScope.read(context);
+    final last = store.lastUpdateCheck;
+    if (!store.autoUpdate || (last != null && DateTime.now().difference(last) < const Duration(hours: 20))) return;
+    store.lastUpdateCheck = DateTime.now();
+    final u = await Updates.available();
+    if (mounted && u != null) setState(() => _update = u);
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkUpdate());
     // first start: introduction (skippable, Beschluss 02.11.)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -74,6 +89,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: Stack(children: [
+        if (bills.isEmpty && _update != null)
+          Positioned(left: FasanSpace.l, right: FasanSpace.l, top: FasanSpace.s, child: UpdateBanner(info: _update!, onClose: () => setState(() => _update = null))),
         if (bills.isEmpty)
           Center(
             child: Padding(
@@ -91,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ListView(
             padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 200 + MediaQuery.paddingOf(context).bottom),
             children: [
+              if (_update != null) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: UpdateBanner(info: _update!, onClose: () => setState(() => _update = null))),
               for (final (title, list) in [(t.drafts, drafts), (t.finished, done)])
                 if (list.isNotEmpty) ...[
                   Padding(padding: const EdgeInsets.fromLTRB(4, FasanSpace.m, 4, FasanSpace.s), child: FasanLabel(title)),
