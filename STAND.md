@@ -39,32 +39,32 @@ Aufrufe stehen jeweils im Kopf der Testdatei. E2E und SROIE brauchen `libonnxrun
 Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEIDUNGEN.md` (Bon 3.5–3.19, Kosten 2), Nutzer 02.11.
 
 ### Ablauf und Speichern
-- ❌ Speichern nach jeder Änderung, Liste „Angefangen“, Schließen verwirft nie, großer Speichern-Knopf in jedem Schritt
+- ✅ Speichern nach jeder Änderung, Liste „Angefangen“, Schließen verwirft nie, großer Speichern-Knopf in jedem Schritt (0.2)
 - ❌ Rückgängig/Wiederholen beliebig vieler Schritte
-- ❌ Einführung beim ersten Start + Beispiel-Bon, beides überspringbar
+- ✅ Einführung beim ersten Start + Beispiel-Bon, beides überspringbar (0.2)
 - ◐ Wer war dabei; ❌ gleich oder nach Posten, feste Beträge, Anteile
 - ◐ Wer hat bezahlt; ❌ mehrere Zahler, Anzahlung, Trinkgeld/Rundung anteilig
 - ✅ Cent nach größten Resten; ◐ Ausgleich mit wenigsten Überweisungen (prüfen: exakt, nicht gierig)
 - ❌ Ausgaben ohne Kassenzettel (Formular)
-- ❌ Gruppen-Knopf oben rechts ohne Funktion
+- ✅ Gruppen-Knopf war „alles gleich teilen“ ohne Beschriftung: jetzt Menü „Mehr“ mit Rückgängig (0.2)
 
 ### Bon-Ansicht
-- ❌ Drei Ansichten: Original unverändert, bereinigt, digital nachgebaut (auch PDF); Nebeneinander
-- ❌ Immer der ganze Bon, Kopf/Fuß blasser; Zoom zwei Finger, Doppeltippen 1×↔2,5×, „Ganze Breite“
-- ❌ Modus „Person wählen, Zeilen antippen“; laufende Summen je Person oben fest; Personen als Leiste
-- ❌ Posten antippen: korrigieren, zuordnen, ausblenden, löschen, andere Zeilen übernehmen; Tipp neben Kasten rastet ein
+- ◐ Drei Ansichten: Scan, Original unverändert, Digital (0.2); ❌ PDF, Nebeneinander
+- ✅ Immer der ganze Bon, Kopf/Fuß blasser; Zoom zwei Finger, Doppeltippen 1×↔2,5×, Knöpfe, „Ganze Breite“ (0.2)
+- ✅ Modus „Person wählen, Zeilen antippen“; laufende Summen je Person oben fest; Personen als Leiste (0.2)
+- ◐ Posten antippen: Korrekturleiste mit Zeilenbild, zuordnen, bearbeiten/löschen; Tipp neben Kasten rastet ein (0.2); ❌ ausblenden, andere Zeilen übernehmen
 - ❌ Ladeanzeige ist der Bon selbst (Lichtband, aufleuchtende Zeilen)
-- ❌ Zeilenkasten umfasst die Mengenspalte (in 0.1.2 abgeschnitten); Menge × Preis bleibt ein Posten
-- ✅ mehrzeilige Posten als eine Form; ◐ Avatare (zu klein); ❌ Schraffur je Person, Okabe-Ito-Farben, eindeutige Kürzel
+- ✅ Zeilenkasten über die ganze Textbreite inkl. Mengenspalte (0.2)
+- ✅ mehrzeilige Posten als eine Form; ✅ Avatare in eigener Spalte; ❌ Schraffur je Person, Okabe-Ito-Farben, eindeutige Kürzel
 
 ### Erkennung und Daten
 - ✅ Leser 3.19 nach Dart (Messwerte oben)
-- ❌ Klarnamen mit Symbol (speisen, 7 Sprachen), Bon-Name klein darunter (in 0.1.2 „Unj Torrada“)
+- ✅ Klarnamen mit Symbol, Bon-Name bereinigt klein darunter, abschaltbar (0.2)
 - ❌ Lesesicherheit je Posten sichtbar, andere Lesungen wählbar, Korrektur lernt Lesefehler
 - ❌ Bon-Art (Restaurant, Café, Einkauf …) füllt „Wofür?“
 - ❌ Datum und Ort aus dem Bon (Name, Adresse, NIF), OSM-Abgleich auf Knopfdruck
 - ❌ Fremdwährung, EZB-Kurs auf Knopfdruck
-- ◐ Protokoll je Erkennung (Durchläufe, Zeiten, Zwischenbilder, optional Foto) teilbar; ❌ in Einstellungen gut sichtbar
+- ✅ Protokoll teilen in Einstellungen → Diagnose, Originalfoto nur auf Wunsch, ohne Namen (0.2)
 - ✅ CSV; ❌ Volltext, PDF des digitalen Bons
 
 ### Gruppe (Web und App gemeinsam)
@@ -75,9 +75,9 @@ Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEI
 
 ### Design und Einstellungen
 - ❌ Stile deutlich unterscheidbar (Rams/Ive/Bauhaus, Recherchen in Fasan-Karte und Kamera)
-- ❌ Effekte im Standard merkbar; dunkler Kasten oben links (Shader-Fehler)
-- ❌ Einstellungen vollständig (Recherche: ganze Fasan-Familie, Karte)
-- ❌ Knöpfe überschneiden sich (Karten: Zurück/Weiter an der Leiste)
+- ◐ Korn jetzt merkbar (0.2); ❌ dunkler Kasten oben links: Ursache nicht belegt (siehe unten)
+- ◐ Einstellungen nach Recherche (`docs/recherche/2026-11-02-einstellungen.md`): Rechnung, Personen, Aussehen, Einführung, Daten (Export, Fotos/alles löschen), Diagnose, Über (0.2); ❌ Währung, Profile, Wiederherstellen
+- ✅ Karten: Knopfreihe über der Leiste; Meldungen über der Leiste statt über „Weiter“ (0.2)
 - ❌ Eigene Kamera-Ansicht mit Live-Begradigung
 
 ### Prüfen

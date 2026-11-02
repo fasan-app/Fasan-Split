@@ -1,6 +1,5 @@
 // Fasan Split – the bill flow: 1 total and purpose, 2 who was there, 3 assign, 4 who paid + result. MPL-2.0
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -13,6 +12,7 @@ import '../model/bill.dart';
 import '../recognition_service.dart';
 import 'assign.dart';
 import 'common.dart';
+import 'diagnose.dart';
 
 // ---------------------------------------------------------------------------------------------------------------------
 // 1. total and purpose
@@ -363,40 +363,6 @@ class ResultScreen extends StatelessWidget {
     return b.toString();
   }
 
-  Future<void> _shareLog(BuildContext context) async {
-    final t = S.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.shareLog),
-        content: Text(t.logConsent),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t.cancel)),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(t.share)),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    Map<String, Object?> log = {};
-    if (bill.logPath != null && File(bill.logPath!).existsSync()) {
-      try {
-        log = (jsonDecode(File(bill.logPath!).readAsStringSync()) as Map).cast<String, Object?>();
-      } catch (_) {}
-    }
-    final doc = {
-      'app': 'app.fasan.split',
-      'geraet': {'os': Platform.operatingSystem, 'version': Platform.operatingSystemVersion, 'kerne': Platform.numberOfProcessors},
-      'erkennung': log,
-      'rechnung': {
-        'summe': bill.total,
-        'posten': [for (final p in bill.its) {'t': p.name, 'b': p.amount, 'menge': p.qty, 'sicher': p.sure}],
-      },
-    };
-    await SharePlus.instance.share(ShareParams(files: [
-      XFile.fromData(Uint8List.fromList(utf8.encode(const JsonEncoder.withIndent(' ').convert(doc))), mimeType: 'application/json', name: 'fasan-split-protokoll.json'),
-    ]));
-  }
-
   @override
   Widget build(BuildContext context) {
     final t = S.of(context);
@@ -412,7 +378,7 @@ class ResultScreen extends StatelessWidget {
           ),
           PopupMenuButton<String>(
             onSelected: (v) {
-              if (v == 'log') _shareLog(context);
+              if (v == 'log') shareRecognitionLog(context, bill);
               if (v == 'del') {
                 store.remove(bill);
                 Navigator.of(context).maybePop();

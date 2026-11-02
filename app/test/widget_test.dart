@@ -76,7 +76,7 @@ void main() {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.75;
     addTearDown(tester.view.reset);
-    final store = BillStore.memory();
+    final store = BillStore.memory()..onboarded = true;
     final b = demoBill();
     final ui = FasanController(settings: const FasanSettings(reduceMotion: true));
     await tester.pumpWidget(SplitApp(store: store, ui: ui));
@@ -132,5 +132,36 @@ void main() {
     await tester.pump();
     expect(b.its[1].shares, {0: 1.0});
     expect(changed, 2);
+  });
+
+  testWidgets('Erster Start: Einführung erscheint, Überspringen führt zur leeren Startseite und bleibt gemerkt', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    final store = BillStore.memory();
+    await tester.pumpWidget(SplitApp(store: store, ui: FasanController(settings: const FasanSettings(reduceMotion: true))));
+    await tester.pumpAndSettle();
+    expect(find.text('Photograph the receipt'), findsOneWidget);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Try an example'), findsOneWidget);
+    await tester.tap(find.text('Skip'));
+    await tester.pumpAndSettle();
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(store.onboarded, isTrue);
+  });
+
+  testWidgets('Bon ohne Fotos (gelöscht oder aus 0.1) stürzt nicht ab, zeigt Digital', (tester) async {
+    final b = demoBill()..people = [Person('Anna', 0)];
+    await tester.pumpWidget(SplitApp(
+      store: BillStore.memory()..onboarded = true,
+      ui: FasanController(settings: const FasanSettings(reduceMotion: true)),
+      home: ReceiptScreen(bill: b, initialLayer: ReceiptLayer.original),
+    ));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(DigitalReceipt), findsOneWidget);
   });
 }

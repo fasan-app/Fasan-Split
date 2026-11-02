@@ -77,8 +77,12 @@ class BillItem {
   FoodMatch? _food;
   String? _foodFor;
 
+  /// Setting „Klarnamen“ (on by default); set by the store.
+  static bool plainNames = true;
+
   /// German plain name with symbol from the dictionary (Karte 3.8, speisen.js), or null.
   FoodMatch? get food {
+    if (!plainNames) return null;
     if (_foodFor != name) {
       _foodFor = name;
       _food = Speisen.recognise(name);

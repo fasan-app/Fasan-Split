@@ -16,6 +16,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../main.dart';
 import '../model/bill.dart';
 import 'assign.dart' show PeoplePicker;
 import 'common.dart';
@@ -41,7 +42,9 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
   final _tc = TransformationController();
   int? person; // chosen person (person-first mode)
   int? sel; // selected item (correction bar)
-  late ReceiptLayer layer = widget.initialLayer;
+  late ReceiptLayer layer = widget.initialLayer != ReceiptLayer.scan
+      ? widget.initialLayer
+      : (StoreScope.read(context).receiptLayer == 'original' && b.originalPath != null ? ReceiptLayer.original : ReceiptLayer.scan);
   (DateTime, Offset, int?)? _lastTap;
 
   Bill get b => widget.bill;
@@ -127,6 +130,10 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
     final t = S.of(context);
     final l = FasanLook.of(context);
     final hasOriginal = b.originalPath != null && File(b.originalPath!).existsSync();
+    final hasScan = b.imagePath != null && File(b.imagePath!).existsSync();
+    // fall back to what exists (bills from 0.1 have no original; „Bonfotos löschen“ removes both)
+    if (layer == ReceiptLayer.original && !hasOriginal) layer = hasScan ? ReceiptLayer.scan : ReceiptLayer.digital;
+    if (layer == ReceiptLayer.scan && !hasScan) layer = hasOriginal ? ReceiptLayer.original : ReceiptLayer.digital;
     final it = sel == null || sel! >= b.its.length ? null : b.its[sel!];
     return Column(children: [
       if (!widget.readOnly) _PersonBar(bill: b, selected: person, sumOf: _sumOf, onSelect: (p) => setState(() => person = person == p ? null : p)),
@@ -144,7 +151,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
           SizedBox(
             width: 210,
             child: FasanSegmented<ReceiptLayer>(
-              values: [ReceiptLayer.scan, if (hasOriginal) ReceiptLayer.original, ReceiptLayer.digital],
+              values: [if (hasScan) ReceiptLayer.scan, if (hasOriginal) ReceiptLayer.original, ReceiptLayer.digital],
               selected: layer,
               label: (v) => switch (v) { ReceiptLayer.scan => t.layerScan, ReceiptLayer.original => t.layerOriginal, ReceiptLayer.digital => t.layerDigital },
               onChanged: (v) => setState(() {

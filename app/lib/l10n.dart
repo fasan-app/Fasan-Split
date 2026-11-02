@@ -104,4 +104,45 @@ class S {
   String get originalNote => de ? 'Original, unverändert' : 'Original, unchanged';
   String get close => de ? 'Schließen' : 'Close';
   String get showReceipt => de ? 'Bon' : 'Receipt';
+  String get logWithPhoto => de ? 'Originalfoto mitschicken' : 'Include the original photo';
+  // settings (docs/recherche/2026-11-02-einstellungen.md)
+  String get setBill => de ? 'Rechnung' : 'Bill';
+  String get setPlainNames => de ? 'Klarnamen' : 'Plain names';
+  String get setPlainNamesSub => de ? 'Posten mit deutschem Namen und Symbol, Bon-Name klein darunter' : 'Items with a plain name and symbol, receipt name below';
+  String get setReceiptLayer => de ? 'Bon zuerst zeigen als' : 'Show receipt first as';
+  String get setPeople => de ? 'Personen' : 'People';
+  String get meTitle => de ? 'Ich bin' : 'I am';
+  String get meUnset => de ? 'Nicht festgelegt. Erscheint dann zuerst bei „Wer war dabei?“' : 'Not set. Then shown first under “Who was there?”';
+  String get setRemembered => de ? 'Gemerkte Namen' : 'Remembered names';
+  String setRememberedSub(int n) => de ? '$n Namen, nur auf diesem Handy' : '$n names, only on this phone';
+  String get forget => de ? 'Vergessen' : 'Forget';
+  String get setLook => de ? 'Aussehen und Bedienung' : 'Look and controls';
+  String get setIntro => de ? 'Einführung zeigen' : 'Show introduction';
+  String get setIntroSub => de ? 'Mit Beispiel-Bon zum Ausprobieren' : 'With an example receipt to try';
+  String get setData => de ? 'Daten' : 'Data';
+  String get setLocal => de ? 'Alles bleibt auf diesem Handy' : 'Everything stays on this phone';
+  String get setLocalSub => de ? 'Kein Konto, keine Telemetrie. Geteilt wird nur, was du teilst.' : 'No account, no telemetry. Only what you share leaves the phone.';
+  String get setExport => de ? 'Alles exportieren' : 'Export everything';
+  String get setExportSub => de ? 'Rechnungen und Einstellungen als Datei (JSON)' : 'Bills and settings as a file (JSON)';
+  String get setDeletePhotos => de ? 'Bonfotos löschen' : 'Delete receipt photos';
+  String get setDeletePhotosSub => de ? 'Rechnungen bleiben, die Fotos sind danach weg.' : 'Bills stay, the photos are gone afterwards.';
+  String photosDeleted(int n) => de ? '$n Fotos gelöscht' : '$n photos deleted';
+  String get setDeleteAll => de ? 'Alle Rechnungen löschen' : 'Delete all bills';
+  String setDeleteAllSub(int n) => de ? '$n Rechnungen mit Fotos. Das lässt sich nicht rückgängig machen.' : '$n bills with photos. This cannot be undone.';
+  String get setDiagnose => de ? 'Diagnose' : 'Diagnostics';
+  String get noLogYet => de ? 'Noch kein Bon gelesen' : 'No receipt read yet';
+  String setLogSub(String n) => de ? 'Letzte Erkennung: $n. Nur nach Rückfrage, ohne Namen.' : 'Last recognition: $n. Only after asking, without names.';
+  String get setFewNote => de ? 'Bewusst wenige Einstellungen: Die Standards passen für die meisten. Hell und Dunkel, Schriftgröße und „Animationen entfernen“ folgen dem System.' : 'Few settings on purpose: the defaults fit most people. Light and dark, text size and “Remove animations” follow the system.';
+  // introduction
+  String get skip => de ? 'Überspringen' : 'Skip';
+  String get tryExample => de ? 'Beispiel ausprobieren' : 'Try an example';
+  String get letsGo => de ? 'Los geht’s' : 'Let’s go';
+  String get intro1Title => de ? 'Bon fotografieren' : 'Photograph the receipt';
+  String get intro1Text => de ? 'Fasan Split liest Posten und Summe und prüft, ob alles aufgeht. Alles bleibt auf deinem Handy.' : 'Fasan Split reads items and total and checks that they add up. Everything stays on your phone.';
+  String get intro2Title => de ? 'Wer war dabei?' : 'Who was there?';
+  String get intro2Text => de ? 'Namen eingeben. Das Handy merkt sie sich für das nächste Mal.' : 'Enter names. The phone remembers them for next time.';
+  String get intro3Title => de ? 'Zuordnen' : 'Assign';
+  String get intro3Text => de ? 'Person wählen, dann ihre Posten im Bon antippen. Oder alles gleich auf alle teilen.' : 'Pick a person, then tap their items on the receipt. Or split everything evenly.';
+  String get intro4Title => de ? 'Wer hat bezahlt?' : 'Who paid?';
+  String get intro4Text => de ? 'Fasan Split rechnet aus, wer wem wie viel schuldet. Teilen als Text oder Tabelle.' : 'Fasan Split works out who owes whom. Share as text or table.';
 }

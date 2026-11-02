@@ -20,6 +20,7 @@ class BillStore extends ChangeNotifier {
   static Future<BillStore> load() async {
     final p = await SharedPreferences.getInstance();
     final s = BillStore(p);
+    s._loadApp();
     try {
       final raw = p.getString(_key);
       if (raw != null) {
@@ -35,14 +36,89 @@ class BillStore extends ChangeNotifier {
   static BillStore memory([List<Bill> bills = const []]) => BillStore(null)..bills.addAll(bills);
 
   String? get settingsJson => _prefs?.getString('fasan_ui.settings');
+
+  // ---- Split settings (docs/recherche/2026-11-02-einstellungen.md): few, with defaults for most people ----
+  Map<String, Object?> _app = {};
+  void _loadApp() {
+    try {
+      _app = (jsonDecode(_prefs?.getString('split.settings') ?? '{}') as Map).cast<String, Object?>();
+    } catch (_) {
+      _app = {};
+    }
+    BillItem.plainNames = plainNames;
+  }
+
+  void _setApp(String k, Object? v) {
+    _app[k] = v;
+    _prefs?.setString('split.settings', jsonEncode(_app));
+    BillItem.plainNames = plainNames;
+    notifyListeners();
+  }
+
+  /// Who uses this phone (shown first in „Wer war dabei?“); empty = not set.
+  String get me => _app['me'] as String? ?? '';
+  set me(String v) => _setApp('me', v.trim());
+
+  /// Plain German names with symbol for items (Karte 3.8). Default on.
+  bool get plainNames => _app['plainNames'] as bool? ?? true;
+  set plainNames(bool v) => _setApp('plainNames', v);
+
+  /// Receipt layer shown first: 'scan' or 'original'.
+  String get receiptLayer => _app['receiptLayer'] as String? ?? 'scan';
+  set receiptLayer(String v) => _setApp('receiptLayer', v);
+
+  /// The introduction was seen or skipped.
+  bool get onboarded => _app['onboarded'] as bool? ?? false;
+  set onboarded(bool v) => _setApp('onboarded', v);
+
+  /// Names the user removed from the suggestions.
+  Set<String> get forgotten => {...?(_app['forgotten'] as List?)?.cast<String>()};
+  void forget(String name) => _setApp('forgotten', [...forgotten, name]);
+
+  /// Everything as one JSON document (bills, settings; photos stay files) for „Alles exportieren“.
+  String exportJson() => const JsonEncoder.withIndent(' ').convert({
+        'app': 'app.fasan.split',
+        'version': 1,
+        'exportiert': DateTime.now().toIso8601String(),
+        'einstellungen': _app,
+        'rechnungen': [for (final b in bills) b.toJson()],
+      });
+
+  /// Deletes all bills and their files (after confirmation in the UI).
+  void removeAll() {
+    for (final b in [...bills]) {
+      remove(b);
+    }
+  }
+
+  /// Deletes only the photos, bills stay (Bon-Ansicht then shows the digital receipt).
+  int removePhotos() {
+    var n = 0;
+    for (final b in bills) {
+      for (final f in [b.imagePath, b.originalPath]) {
+        if (f != null) {
+          try {
+            File(f).deleteSync();
+            n++;
+          } catch (_) {}
+        }
+      }
+      b.imagePath = null;
+      b.originalPath = null;
+    }
+    _persist();
+    return n;
+  }
   void saveSettings(String s) => _prefs?.setString('fasan_ui.settings', s);
 
   /// Names of people from earlier bills (most recent first).
   List<String> get recentNames {
     final out = <String>[];
+    final gone = forgotten;
+    if (me.isNotEmpty) out.add(me);
     for (final b in bills.reversed) {
       for (final p in b.ps) {
-        if (!out.contains(p.name)) out.add(p.name);
+        if (!out.contains(p.name) && !gone.contains(p.name)) out.add(p.name);
       }
     }
     return out.take(12).toList();

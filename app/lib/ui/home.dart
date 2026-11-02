@@ -11,11 +11,30 @@ import '../model/bill.dart';
 import 'common.dart';
 import 'assign.dart';
 import 'flow.dart';
+import 'onboarding.dart';
 import 'scan_screen.dart';
 import 'settings_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // first start: introduction (skippable, Beschluss 02.11.)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final store = StoreScope.read(context);
+      if (!store.onboarded && store.bills.isEmpty) {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingScreen()));
+      }
+    });
+  }
 
   Future<void> _pick(BuildContext context, ImageSource src) async {
     final nav = Navigator.of(context);

@@ -11,6 +11,8 @@ import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/assign.dart';
 import 'package:fasan_split/ui/flow.dart';
 import 'package:fasan_split/ui/home.dart';
+import 'package:fasan_split/ui/onboarding.dart';
+import 'package:fasan_split/ui/settings_screen.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -128,6 +130,7 @@ void main() {
   final out = Platform.environment['FASAN_SCREENS'];
   final echt = Platform.environment['FASAN_ECHT'];
   final screens = <String, Widget Function(Bill)>{
+    '0-einfuehrung': (_) => const OnboardingScreen(),
     '1-start': (_) => const HomeScreen(),
     '2-summe': (b) => ReviewScreen(bill: b),
     '3-personen': (b) => PeopleScreen(bill: b),
@@ -139,6 +142,7 @@ void main() {
     '4f-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
     '5-bezahlt': (b) => PayScreen(bill: b..payer = 1),
     '6-ergebnis': (b) => ResultScreen(bill: b..payer = 1),
+    '7-einstellungen': (_) => const SettingsScreen(),
   };
   for (final dark in [false, true]) {
     for (final land in [false, true]) {
@@ -163,7 +167,7 @@ void main() {
           } else {
             bill = _bill(path, bx, assigned: !e.key.startsWith('4a'));
           }
-          final store = BillStore.memory([_bill(path, bx)..payer = 1]);
+          final store = BillStore.memory([_bill(path, bx)..payer = 1])..onboarded = true;
           final ctl = FasanController(
               settings: FasanSettings(reduceMotion: true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light));
           final key = GlobalKey();
