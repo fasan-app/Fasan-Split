@@ -128,6 +128,12 @@ Nächste Sitzung (Token sparen: 80 % der Woche verbraucht am 02.11.): Reihenfolg
 - Korrekturen lernen: Wählt der Nutzer eine Lesart, gilt sie künftig bei ähnlich verlesenen Wörtern (lokal, ohne Netz).
 - Größere Wörterbücher sinnvoller Texte und Wörter je erkannter oder angegebener Sprache (PT, DE, EN …), Lizenz prüfen.
 
+Übersicht und Ablauf (Nutzer 02.11., Soll):
+- Mehrere Bons auf einmal hochladen und nacheinander erkennen (Warteschlange mit Fortschritt).
+- Startseite: Bons auswählen (Mehrfachauswahl), gruppieren, löschen, Status sehen und setzen.
+- Mitbearbeiter sehen und auffordern (hängt an der Gruppe über Nostr, siehe Soll-Liste „Gruppe“).
+- 0.1.20 scheiterte am 02.11. nur am NDK-Download der CI (Tests grün); Lauf neu gestartet.
+
 Offen (Recherche liegt vor, Umsetzung nächste Sitzung):
 - Stil Papier (`fasan_ui/docs/recherche/2026-11-02-stil-papier.md`), Stil Braun-Technik (`…-stil-braun-technik.md`).
 - Lebendig/Warten (`…-lebendig-warten.md`): Scan zeigt echte Arbeit (Zeilen erscheinen, Schrittzähler), Hinweis-Impulse.
