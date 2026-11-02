@@ -72,7 +72,7 @@ class S {
   String get notAssigned => de ? 'Nicht zugeordnet' : 'Not assigned';
   String get exportCsv => de ? 'Als Tabelle teilen (CSV)' : 'Share as table (CSV)';
   String get shareText => de ? 'Ergebnis teilen' : 'Share result';
-  String get shareLog => de ? 'Protokoll teilen' : 'Share log';
+  String get shareLog => de ? 'Protokoll teilen oder speichern' : 'Share or save log';
   String get logConsent => de
       ? 'Das Protokoll enthält die gelesenen Zeilen, Zeiten und Gerätedaten, kein Foto. Du entscheidest, wohin es geht.'
       : 'The log contains the lines read, timings and device data, no photo. You decide where it goes.';
@@ -168,4 +168,6 @@ class S {
   String get autoUpdateSub => de ? 'Fragt bei GitHub nach der neuesten Version. GitHub sieht dabei deine IP-Adresse, sonst nichts.' : 'Asks GitHub for the newest version. GitHub sees your IP address, nothing else.';
   String get upToDate => de ? 'Du hast die neueste Version.' : 'You have the newest version.';
   String get noConnection => de ? 'Keine Verbindung zu GitHub.' : 'No connection to GitHub.';
+  String get saveFile => de ? 'Speichern' : 'Save';
+  String get savedFile => de ? 'Gespeichert' : 'Saved';
 }

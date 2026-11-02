@@ -324,9 +324,14 @@ class Recognizer {
       display = canvas;
       _err('scanbild', e);
     }
-    for (final p in r.items) {
-      final b = p.frame ?? (p.line >= 0 && p.line < r.lines.length ? r.lines[p.line].box : null);
-      p.snippet = snippet(display, b);
+    // Line pictures span the common text width of all items, so the quantity column is always inside (Nutzer 02.11.:
+    // „1“ mal sichtbar, mal nicht – the item frame sometimes started at the name).
+    final frames = [for (final p in r.items) p.frame ?? (p.line >= 0 && p.line < r.lines.length ? r.lines[p.line].box : null)];
+    final real = frames.whereType<Box>().toList();
+    final left = real.isEmpty ? 0.0 : real.map((b) => b.x0).reduce(math.min), right = real.isEmpty ? 0.0 : real.map((b) => b.x1).reduce(math.max);
+    for (var i = 0; i < r.items.length; i++) {
+      final b = frames[i];
+      r.items[i].snippet = snippet(display, b == null ? null : Box(left, b.y0, right, b.y1));
     }
     // Menu parts without a price right below an item („1 M Agridoce“ under „1 MG Veggie Nug 5.75“) belong to that item
     // (Karte 3.13: Menü-Bestandteile); a separate 0 € item only confuses the assignment.
