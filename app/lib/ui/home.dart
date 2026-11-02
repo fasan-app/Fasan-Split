@@ -9,6 +9,7 @@ import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import 'common.dart';
+import 'assign.dart';
 import 'flow.dart';
 import 'scan_screen.dart';
 import 'settings_screen.dart';
@@ -40,7 +41,8 @@ class HomeScreen extends StatelessWidget {
     final t = S.of(context);
     final store = StoreScope.of(context);
     final tt = Theme.of(context).textTheme;
-    final bills = store.bills.reversed.toList();
+    final drafts = store.drafts, done = store.finished;
+    final bills = [...drafts, ...done];
     return Scaffold(
       appBar: AppBar(
         title: Text(t.appName),
@@ -67,11 +69,15 @@ class HomeScreen extends StatelessWidget {
             ),
           )
         else
-          ListView.separated(
+          ListView(
             padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 200 + MediaQuery.paddingOf(context).bottom),
-            itemCount: bills.length,
-            separatorBuilder: (_, _) => const SizedBox(height: FasanSpace.s),
-            itemBuilder: (context, i) => _BillTile(bill: bills[i]),
+            children: [
+              for (final (title, list) in [(t.drafts, drafts), (t.finished, done)])
+                if (list.isNotEmpty) ...[
+                  Padding(padding: const EdgeInsets.fromLTRB(4, FasanSpace.m, 4, FasanSpace.s), child: FasanLabel(title)),
+                  for (final b in list) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: _BillTile(bill: b)),
+                ],
+            ],
           ),
         Positioned(
           left: FasanSpace.m,
@@ -110,7 +116,8 @@ class _BillTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(l.radius * 0.7),
       child: InkWell(
         borderRadius: BorderRadius.circular(l.radius * 0.7),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ResultScreen(bill: bill))),
+        // unfinished bills continue where the user left (Karte 3.9: Schließen verwirft nie)
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => bill.done ? ResultScreen(bill: bill) : resumeScreen(bill))),
         child: Container(
           constraints: BoxConstraints(minHeight: l.minTap + 16),
           padding: const EdgeInsets.all(FasanSpace.m),
@@ -128,7 +135,7 @@ class _BillTile extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(bill.purpose.isEmpty ? t.appName : bill.purpose, style: tt.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
-                Text('$date · ${bill.ps.length} ${t.de ? 'Personen' : 'people'}', style: tt.bodySmall),
+                Text(bill.done ? '$date · ${bill.ps.length} ${t.de ? 'Personen' : 'people'}' : '$date · ${t.stepOf(bill.step)}', style: tt.bodySmall),
               ]),
             ),
             FasanAvatarStack(people: [for (final p in bill.ps) (p.name, p.color)], size: 24, max: 3),
@@ -140,3 +147,11 @@ class _BillTile extends StatelessWidget {
     );
   }
 }
+
+/// Screen of the step a draft was left on.
+Widget resumeScreen(Bill b) => switch (b.step) {
+      2 => PeopleScreen(bill: b),
+      3 => AssignScreen(bill: b),
+      4 => PayScreen(bill: b),
+      _ => ReviewScreen(bill: b),
+    };

@@ -1,4 +1,5 @@
 // Fasan Split – saved bills and settings (shared_preferences; images and logs as files in the app folder). MPL-2.0
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -47,7 +48,25 @@ class BillStore extends ChangeNotifier {
     return out.take(12).toList();
   }
 
+  Timer? _debounce;
+
+  /// Saves after every change, debounced (Beschluss Karte 3.9: angefangene Rechnungen nach jeder Änderung speichern).
+  void touch(Bill b) {
+    b.updated = DateTime.now();
+    final i = bills.indexWhere((x) => x.id == b.id);
+    if (i < 0) bills.add(b);
+    // no notifyListeners here: screens that read the store would rebuild and save again, forever.
+    // Listeners hear about it on upsert (leaving a step, „Speichern“, „Fertig“).
+    _debounce?.cancel();
+    if (_prefs != null) _debounce = Timer(const Duration(milliseconds: 400), () => _write());
+  }
+
+  List<Bill> get drafts => [for (final b in bills) if (!b.done && (b.its.isNotEmpty || b.total != null || b.ps.isNotEmpty)) b]
+    ..sort((a, b) => b.updated.compareTo(a.updated));
+  List<Bill> get finished => [for (final b in bills) if (b.done) b]..sort((a, b) => b.created.compareTo(a.created));
+
   void upsert(Bill b) {
+    b.updated = DateTime.now();
     final i = bills.indexWhere((x) => x.id == b.id);
     if (i >= 0) {
       bills[i] = b;
@@ -59,7 +78,7 @@ class BillStore extends ChangeNotifier {
 
   void remove(Bill b) {
     bills.removeWhere((x) => x.id == b.id);
-    for (final f in [b.imagePath, b.logPath]) {
+    for (final f in [b.imagePath, b.logPath, b.originalPath]) {
       if (f != null) {
         try {
           File(f).deleteSync();
@@ -71,8 +90,10 @@ class BillStore extends ChangeNotifier {
 
   void _persist() {
     notifyListeners();
-    _prefs?.setString(_key, jsonEncode(bills.map((b) => b.toJson()).toList()));
+    _write();
   }
+
+  void _write() => _prefs?.setString(_key, jsonEncode(bills.map((b) => b.toJson()).toList()));
 
   static Future<String?> saveFile(String name, Uint8List bytes) async {
     try {

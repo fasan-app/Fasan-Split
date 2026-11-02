@@ -53,4 +53,8 @@ class StoreScope extends InheritedNotifier<BillStore> {
   const StoreScope({super.key, required BillStore store, required super.child}) : super(notifier: store);
 
   static BillStore of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<StoreScope>()!.notifier!;
+
+  /// Without registering a dependency: for saving from build-triggered callbacks (otherwise save → notify → rebuild →
+  /// save loops forever).
+  static BillStore read(BuildContext context) => context.getInheritedWidgetOfExactType<StoreScope>()!.notifier!;
 }

@@ -4,6 +4,7 @@ import 'package:fasan_split/model/bill.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/assign.dart';
 import 'package:fasan_split/ui/flow.dart';
+import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,7 +50,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: label);
     }
-    await tester.tap(find.byIcon(Icons.groups_2_outlined)); // split everything evenly
+    await tester.tap(find.byIcon(Icons.more_vert_rounded)); // menu „Mehr“ → split everything evenly
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Split everything evenly'));
     await tester.pumpAndSettle();
     expect(b.unassigned, 0);
     await tester.tap(find.byType(FasanButton).last);
@@ -63,6 +66,32 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(ResultScreen), findsOneWidget);
     expect(store.bills.single.id, 'demo');
+    expect(store.bills.single.done, isTrue);
+  });
+
+  testWidgets('Angefangen: Speichern und schließen behält die Rechnung, Fortsetzen am letzten Schritt', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    final store = BillStore.memory();
+    final b = demoBill();
+    final ui = FasanController(settings: const FasanSettings(reduceMotion: true));
+    await tester.pumpWidget(SplitApp(store: store, ui: ui));
+    await tester.pumpAndSettle();
+    Navigator.of(tester.element(find.byType(HomeScreen))).push(MaterialPageRoute(builder: (_) => PeopleScreen(bill: b)));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Anna');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(store.drafts.single.id, 'demo');
+    expect(store.drafts.single.step, 2);
+    expect(find.text('In progress'), findsOneWidget);
+    await tester.tap(find.text('Abendessen'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PeopleScreen), findsOneWidget);
   });
 
   test('Zoom im Bon: jede Zeile mindestens 48 dp', () {

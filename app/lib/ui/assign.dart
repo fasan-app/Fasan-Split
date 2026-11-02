@@ -34,12 +34,23 @@ class _AssignScreenState extends State<AssignScreen> {
 
   void _changed() => setState(() {});
 
+  /// Bulk action with a visible label and undo (0.1.2 had an unlabelled icon that silently overwrote everything).
   void _evenly() {
+    final before = [for (final it in b.its) Map<int, double>.of(it.shares)];
     for (final it in b.its) {
       it.shares = {for (var i = 0; i < b.ps.length; i++) i: 1};
     }
     FasanHaptics.of(context).confirm();
     setState(() {});
+    final t = S.of(context);
+    showNote(context, t.splitEvenlyDone, actionLabel: t.undo, duration: const Duration(seconds: 6), onAction: () {
+      if (!mounted) return;
+      setState(() {
+        for (var k = 0; k < b.its.length && k < before.length; k++) {
+          b.its[k].shares = before[k];
+        }
+      });
+    });
   }
 
   @override
@@ -58,12 +69,20 @@ class _AssignScreenState extends State<AssignScreen> {
     return StepScaffold(
       title: t.assign,
       step: 3,
+      bill: b,
       action: open == 0 ? t.next : t.open(open),
       onAction: () {
-        StoreScope.of(context).upsert(b);
+        StoreScope.read(context).upsert(b);
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => PayScreen(bill: b)));
       },
-      actions: [IconButton(tooltip: t.evenly, icon: const Icon(Icons.groups_2_outlined), onPressed: _evenly)],
+      actions: [
+        PopupMenuButton<int>(
+          tooltip: t.more,
+          icon: const Icon(Icons.more_vert_rounded),
+          onSelected: (_) => _evenly(),
+          itemBuilder: (_) => [PopupMenuItem(value: 0, child: ListTile(leading: const Icon(Icons.groups_2_outlined), title: Text(t.splitEvenly)))],
+        ),
+      ],
       body: Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s),
@@ -542,7 +561,8 @@ class _CardsAssignState extends State<CardsAssign> {
         ),
       ),
       Padding(
-        padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context) - 24),
+        // full bar height plus a gap: with -24 the row slid under the bar (0.1.2)
+        padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context) + FasanSpace.s),
         child: Row(children: [
           Expanded(child: FasanButton(label: t.back, icon: Icons.chevron_left, kind: FasanButtonKind.secondary, expand: true, onPressed: page > 0 ? () => _go(-1) : null)),
           const SizedBox(width: FasanSpace.s),

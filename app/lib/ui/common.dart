@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n.dart';
+import '../main.dart';
 import '../model/bill.dart';
 
 /// Screen of the bill flow: title, step, content; the main action sits in a glass bar in the thumb zone
@@ -15,6 +16,7 @@ class StepScaffold extends StatelessWidget {
     required this.title,
     required this.step,
     required this.body,
+    this.bill,
     this.action,
     this.onAction,
     this.secondary,
@@ -24,6 +26,9 @@ class StepScaffold extends StatelessWidget {
 
   final String title;
   final int step; // 1–4
+
+  /// The bill being edited: saved after every rebuild (= every change) and via „Speichern und schließen“.
+  final Bill? bill;
   final Widget body;
   final String? action;
   final VoidCallback? onAction;
@@ -35,14 +40,42 @@ class StepScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = FasanLook.of(context);
     final bottom = MediaQuery.paddingOf(context).bottom;
-    return Scaffold(
+    final b = bill;
+    if (b != null) {
+      final store = StoreScope.read(context);
+      // every setState of a flow screen rebuilds this scaffold: save then (debounced in the store)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!b.done) b.step = step;
+        store.touch(b);
+      });
+    }
+    final t = S.of(context);
+    final scaffold = Scaffold(
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           FasanLabel('$step / 4'),
           Text(title),
         ]),
         toolbarHeight: 72,
-        actions: actions,
+        actions: [
+          ...?actions,
+          if (b != null)
+            Padding(
+              padding: const EdgeInsets.only(right: FasanSpace.s),
+              child: TextButton.icon(
+                style: TextButton.styleFrom(minimumSize: Size(l.minTap, l.minTap)),
+                icon: const Icon(Icons.check_rounded, size: 20),
+                label: Text(t.saveClose),
+                onPressed: () {
+                  if (!b.done) b.step = step;
+                  StoreScope.read(context).upsert(b);
+                  FasanHaptics.of(context).confirm();
+                  Navigator.of(context).popUntil((r) => r.isFirst);
+                  showNote(context, b.done ? t.saved : t.savedDraft);
+                },
+              ),
+            ),
+        ],
       ),
       body: Stack(children: [
         Positioned.fill(child: body),
@@ -65,6 +98,14 @@ class StepScaffold extends StatelessWidget {
           ),
       ]),
       backgroundColor: l.background,
+    );
+    if (b == null) return scaffold;
+    // leaving a step (back gesture, arrow) saves and lets the start page update its lists
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) StoreScope.read(context).upsert(b);
+      },
+      child: scaffold,
     );
   }
 }
@@ -188,4 +229,17 @@ Future<bool> editItem(BuildContext context, BillItem it, {VoidCallback? onDelete
   if (q != null && q >= 1) it.qty = q;
   it.sure = true;
   return true;
+}
+
+/// Message above the bottom bar, never over the main action (0.1.2 snack bars covered „Weiter“).
+void showNote(BuildContext context, String text, {String? actionLabel, VoidCallback? onAction, Duration duration = const Duration(seconds: 4)}) {
+  ScaffoldMessenger.maybeOf(context)
+    ?..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      content: Text(text),
+      duration: duration,
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, bottomBarSpace(context) + FasanSpace.s),
+      action: actionLabel == null ? null : SnackBarAction(label: actionLabel, onPressed: onAction ?? () {}),
+    ));
 }

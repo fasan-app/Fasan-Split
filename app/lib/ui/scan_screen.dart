@@ -1,5 +1,6 @@
 // Fasan Split – reading the receipt: the straightened receipt appears, lines light up as they are read. MPL-2.0
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -67,7 +68,10 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
   Future<void> _finish(ScanResultData r) async {
     final id = DateTime.now().microsecondsSinceEpoch.toString();
     final img = await BillStore.saveFile('$id.jpg', r.display);
-    final log = await BillStore.saveFile('$id.log.json', Uint8List.fromList(r.log.codeUnits));
+    // utf8, not codeUnits (UTF-16 units broke every character outside Latin-1 in 0.1.2)
+    final log = await BillStore.saveFile('$id.log.json', Uint8List.fromList(utf8.encode(r.log)));
+    // the photo exactly as taken (Beschluss 02.11.: Original immer sichtbar, für alle)
+    final orig = await BillStore.saveFile('$id.orig.jpg', widget.photo);
     final bill = Bill(
       id: id,
       created: DateTime.now(),
@@ -79,6 +83,7 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
       checked: r.checked && !r.contradiction,
       advance: r.advance,
       logPath: log,
+      originalPath: orig,
     );
     if (!mounted) return;
     FasanHaptics.of(context).confirm();

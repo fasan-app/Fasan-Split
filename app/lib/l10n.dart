@@ -83,4 +83,15 @@ class S {
   String perPerson(String n) => de ? '$n hatte' : '$n had';
   String get deleteBill => de ? 'Rechnung löschen' : 'Delete bill';
   String get edit => de ? 'Bearbeiten' : 'Edit';
+  String get saveClose => de ? 'Speichern' : 'Save';
+  String get saved => de ? 'Gespeichert' : 'Saved';
+  String get savedDraft => de ? 'Gespeichert. Unter „Angefangen“ geht es weiter.' : 'Saved. Continue under “In progress”.';
+  String get drafts => de ? 'Angefangen' : 'In progress';
+  String get finished => de ? 'Fertig' : 'Done';
+  String get continueBill => de ? 'Weiter bearbeiten' : 'Continue';
+  String get splitEvenly => de ? 'Alles gleich auf alle teilen' : 'Split everything evenly';
+  String get splitEvenlyDone => de ? 'Alle Posten auf alle verteilt' : 'All items split between everyone';
+  String get undo => de ? 'Rückgängig' : 'Undo';
+  String get more => de ? 'Mehr' : 'More';
+  String stepOf(int s) => de ? 'Schritt $s von 4' : 'Step $s of 4';
 }

@@ -103,7 +103,11 @@ class Bill {
     this.checked = false,
     this.advance = 0,
     this.logPath,
-  });
+    this.step = 1,
+    this.done = false,
+    this.originalPath,
+    DateTime? updated,
+  }) : updated = updated ?? created;
 
   final String id;
   final DateTime created;
@@ -119,6 +123,16 @@ class Bill {
   bool checked;
   int advance;
   String? logPath;
+
+  /// Last flow step the user was on (1 total, 2 people, 3 assign, 4 paid); resumes there.
+  int step;
+
+  /// Finished with „Fertig“. Unfinished bills are listed under „Angefangen“ and never discarded on close.
+  bool done;
+
+  /// The photo exactly as taken, untouched (Beschluss 02.11.: Original immer sichtbar). imagePath is the cleaned scan.
+  String? originalPath;
+  DateTime updated;
 
   List<BillItem> get its => items ??= [];
   List<Person> get ps => people ??= [];
@@ -191,6 +205,10 @@ class Bill {
         'checked': checked,
         'advance': advance,
         'logPath': logPath,
+        'step': step,
+        'done': done,
+        'originalPath': originalPath,
+        'updated': updated.toIso8601String(),
       };
 
   static Bill fromJson(Map<String, dynamic> j) => Bill(
@@ -206,6 +224,11 @@ class Bill {
         checked: j['checked'] as bool? ?? false,
         advance: (j['advance'] as num?)?.toInt() ?? 0,
         logPath: j['logPath'] as String?,
+        step: (j['step'] as num?)?.toInt() ?? 4,
+        // bills saved before 0.2 were only stored on „Fertig“
+        done: j['done'] as bool? ?? true,
+        originalPath: j['originalPath'] as String?,
+        updated: DateTime.tryParse(j['updated'] as String? ?? ''),
       );
 }
 

@@ -47,12 +47,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
     return StepScaffold(
       title: t.totalAndPurpose,
       step: 1,
+      bill: b,
       action: t.next,
       onAction: b.its.isEmpty && b.total == null
           ? null
           : () {
               b.purpose = _purpose.text.trim();
-              StoreScope.of(context).upsert(b);
+              StoreScope.read(context).upsert(b);
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => PeopleScreen(bill: b)));
             },
       body: ListView(
@@ -203,11 +204,12 @@ class _PeopleScreenState extends State<PeopleScreen> {
     return StepScaffold(
       title: t.whoWasThere,
       step: 2,
+      bill: b,
       action: b.ps.length < 2 ? t.needPeople : t.next,
       onAction: b.ps.length < 2
           ? null
           : () {
-              StoreScope.of(context).upsert(b);
+              StoreScope.read(context).upsert(b);
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssignScreen(bill: b)));
             },
       body: ListView(
@@ -266,11 +268,13 @@ class _PayScreenState extends State<PayScreen> {
     return StepScaffold(
       title: t.whoPaid,
       step: 4,
+      bill: b,
       action: t.done,
       onAction: b.payer == null
           ? null
           : () {
-              StoreScope.of(context).upsert(b);
+              b.done = true;
+              StoreScope.read(context).upsert(b);
               Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => ResultScreen(bill: b)), (r) => r.isFirst);
             },
       body: ListView(
