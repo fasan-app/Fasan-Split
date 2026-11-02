@@ -154,6 +154,18 @@ Offen (Recherche liegt vor, Umsetzung nächste Sitzung):
 - NICHT gemessen: Wirkung des Abbruchs auf die Trefferquote (E2E 40/41, SROIE 55/60, echte Bons 13/13) und die Laufzeit auf dem
   S23. Vergleich mit `FASAN_EARLYSTOP=0` steht aus. Das Zeichnen der Begradigung ist nur im Widget-Test gelaufen, nicht auf dem Gerät.
 
+## Paket 2 (02.11. abends): Haptik und Klang – Befund, noch keine Umsetzung
+
+- APK 0.1.21 (Release `neueste`, gelesen mit androguard): Berechtigungen nur ACCESS_NETWORK_STATE, INTERNET, REQUEST_INSTALL_PACKAGES.
+  Weder VIBRATE noch eine „Geräte in der Nähe“-Berechtigung sind deklariert; der Eintrag auf dem S23 ist aus dem Manifest nicht erklärbar.
+- Doku: Flutter `HapticFeedback` ruft laut api.flutter.dev „default platform behavior“ auf (Android: `performHapticFeedback`; selectionClick →
+  CLOCK_TICK, vibrate → LONG_PRESS, medium → KEYBOARD_TAP, heavy → CONTEXT_CLICK laut Flutter-Engine-Test). Seit Android 13 dürfen nur
+  privilegierte Apps die Nutzer-Einstellung für Touch-Rückmeldung übergehen (`FLAG_IGNORE_GLOBAL_SETTING` veraltet, developer.android.com).
+  AOSP schaltet Touch-Rückmeldung im Lautlos-Modus ab und wendet die Vibrationsstärke des Nutzers an (Commits Lais Andrade 2021/22).
+  Folge: Ist auf dem S23 Lautlos aktiv oder Touch-Vibration/Berührungsrückmeldung aus, bleibt `HapticFeedback` stumm, und eine
+  Vibrator-API mit VIBRATE würde die Einstellung nur mit einer anderen Nutzungsart (nicht Touch) umgehen. Nicht geprüft auf One UI.
+- Nächster Schritt: Auf dem S23 Lautlos aus und Touch-Vibration an, dann Effekt-Testseite. Erst wenn es danach noch still bleibt, Vibrator-Kanal.
+
 ## Offen
 
 - Auf dem Handy testen (S23): Kamera, Galerie, Erkennungszeit, Akku mit laufendem Korn (siehe unten).
