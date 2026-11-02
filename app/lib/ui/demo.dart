@@ -32,8 +32,11 @@ class _DemoLauncherState extends State<DemoLauncher> {
   @override
   void initState() {
     super.initState();
-    StoreScope.read(context).onboarded = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _go());
+    // after the first frame: setting onboarded notifies the store, which must not happen during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      StoreScope.read(context).onboarded = true;
+      _go();
+    });
   }
 
   Future<void> _go() async {
@@ -44,6 +47,7 @@ class _DemoLauncherState extends State<DemoLauncher> {
     if (accent.isNotEmpty) ui.update((o) => o.copyWith(accent: accent.first, style: FasanStyle.calmGlass));
     if (demoPage == 'lab') {
       nav.pushReplacement(MaterialPageRoute(builder: (_) => const FasanEffectLab()));
+      debugPrint('FASAN_DEMO_READY');
       return;
     }
     if (demoPage == 'gallery') {
