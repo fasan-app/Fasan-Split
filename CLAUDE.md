@@ -9,6 +9,12 @@ Posten zuordnen, wer hat bezahlt, Export. Der Code zieht später in Fasan Karte.
 2. `../fasan/ENTSCHEIDUNGEN.md`, `GRUNDSAETZE.md`, `ZUSTAENDE-UND-PROFILE.md` (Repo fasan-app/Fasan).
 3. `../fasan-karte/docs/PLAN-FLUTTER.md`, Abschnitte „Stile und Effekte“ und „Rechnung“.
 4. `../fasan-diagnose/README.md` (Regression der Erkennung; Dart-Gegenstücke in `app/test/`).
+5. `../fasan-karte/docs/ENTSCHEIDUNGEN.md`: alle Beschlüsse zu Bon und Kosten. Das ist der Soll-Umfang dieser App.
+6. Vor Design- und Bedienarbeit die Kurzfassungen der Recherchen: `../fasan-karte/docs/recherche/` (gestaltung-psychologie,
+   ui-design-2026, natives-gefuehl, rechnung-teilen-ux, gemeinsam-bearbeiten, bon-ansicht-und-farben, scan-und-bedienung,
+   kosten-und-fuehrung), `../fasan-camera/docs/recherche/` (psychologie-bedienung, gestaltung-start-einstellungen, haptik),
+   `../fasan_ui/docs/recherche/`. Details per grep.
+7. Prüfen heißt: Emulator-Bildschirmfotos mit echtem Bon (aus `fasan-diagnose`) ansehen, nicht nur grep.
 
 ## Regeln
 
