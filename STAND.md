@@ -80,8 +80,11 @@ Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEI
   (wählbar „ganzes Bild“), Lichteinfall, Überstrahlen; Glas mit Lichtkante nach Neigung (Game Rotation Vector, eigener
   Kanal), zwei Schatten, Berührungslicht, Materialisieren; Glow + Halation am Hauptknopf, Ring-Impuls wenn die Summe
   stimmt; Übergänge Shared Axis, Container Transform (Startkarte → Rechnung), Fade Through (Bon-Ansichten); Paletten
-  A/B/C über den Akzent; Effekt-Testseite (Einstellungen → Aussehen → Effekte prüfen). ❌ Abnahme: Emulator-Bilder A/B/C,
-  dann S23 (Neigung, Bildrate, Akku). Linse am Glasrand fehlt noch (braucht Bildlesen, erst nach Gerätetest)
+  A/B/C über den Akzent; Effekt-Testseite (Einstellungen → Aussehen → Effekte prüfen). Emulator-Bilder A/B/C liegen vor
+  (fasan-diagnose, Zweig `bilder`): Korn nach erstem Lauf auf 1 px/0,22 gesenkt; Neigungssensor läuft im Emulator
+  (game_rotation_vector, 30 Hz). Emulator rendert per Software (~1 Bild/s), daher Zeitlücken in den Fotos; Bildrate
+  auf dem S23 offen. Verlaufsflecken kaum sichtbar. Größte Lücke: Aufbau der Seiten (Zuordnen-Kopf 4 Zeilen) – die
+  Effekte allein machen es nicht ruhiger. ❌ Abnahme S23, Wahl A/B/C. Linse am Glasrand fehlt noch (braucht Bildlesen, erst nach Gerätetest)
 - ◐ Korn jetzt merkbar (0.2). Dunkler Kasten: Ursache ist der Glow/Halation-Filter (`ImageFilter.shader`); im Emulator (Impeller OpenGLES) stand damit die ganze App kopfüber. Filter aus, Regler ausgeblendet, bis er auf GLES und Vulkan nachweislich stimmt (fasan_ui `FasanFilm.bloomVerified`). Emulator danach: richtig herum. Der Kasten auf dem S23 kam aber vom Korn-Shader: mediump (16 Bit) lief im Hash ab ~250 dp über, Korn nur oben links. Jetzt highp + kleine Hash-Eingaben. S23 noch zu prüfen
 - ◐ Einstellungen nach Recherche (`docs/recherche/2026-11-02-einstellungen.md`): Rechnung, Personen, Aussehen, Einführung, Daten (Export, Fotos/alles löschen), Diagnose, Über (0.2); ❌ Währung, Profile, Wiederherstellen
 - ✅ Karten: Knopfreihe über der Leiste; Meldungen über der Leiste statt über „Weiter“ (0.2)
