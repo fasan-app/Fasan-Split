@@ -126,12 +126,14 @@ class ReceiptHeader {
   final String shop;
   final ReceiptMeta meta;
 
-  /// Shop name plus a valid tax id or a cleanly read address (street and postcode line). With a checked total this is the
-  /// signal to stop reading further passes (Nutzer 02.11.: 46,5 s, obwohl Lauf 2 schon ok war).
+  /// Shop name, a valid tax id (PT NIF or DE USt-ID) AND a cleanly read address (street and postcode line). With a checked
+  /// total this is the signal to stop reading further passes (Nutzer 02.11.: 46,5 s, obwohl Lauf 2 schon ok war).
+  /// Measured on the 13 real receipts: „Name + USt-ID“ alone stopped too early (Aldi: wrong postcode from the first pass,
+  /// REWE: no postcode), so the address has to be complete as well.
   bool get complete {
     if (shop.isEmpty) return false;
     final nif = meta.taxId;
-    if (nif != null && (validNifPt(nif) || RegExp(r'^DE\s?\d{9}$').hasMatch(nif))) return true;
+    if (nif == null || !(validNifPt(nif) || RegExp(r'^DE\s?\d{9}$').hasMatch(nif))) return false;
     final street = meta.street, city = meta.postcodeCity;
     return street != null && city != null && lineQuality(street) >= 0.7 && lineQuality(city) >= 0.7;
   }

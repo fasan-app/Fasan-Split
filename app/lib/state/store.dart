@@ -25,7 +25,10 @@ class BillStore extends ChangeNotifier {
       final raw = p.getString(_key);
       if (raw != null) {
         for (final j in jsonDecode(raw) as List) {
-          s.bills.add(Bill.fromJson((j as Map).cast<String, dynamic>()));
+          final b = Bill.fromJson((j as Map).cast<String, dynamic>());
+          // a photo still waiting or being read when the app was closed: it has to be read again (nothing is lost, the photo is saved)
+          if (b.read == BillRead.queued || b.read == BillRead.reading) b.read = BillRead.failed;
+          s.bills.add(b);
         }
       }
     } catch (_) {/* damaged data: start empty, never crash */}
@@ -144,9 +147,62 @@ class BillStore extends ChangeNotifier {
     if (_prefs != null) _debounce = Timer(const Duration(milliseconds: 400), () => _write());
   }
 
-  List<Bill> get drafts => [for (final b in bills) if (!b.done && (b.its.isNotEmpty || b.total != null || b.ps.isNotEmpty)) b]
-    ..sort((a, b) => b.updated.compareTo(a.updated));
-  List<Bill> get finished => [for (final b in bills) if (b.done) b]..sort((a, b) => b.created.compareTo(a.created));
+  /// Bills hidden for a moment while „Rückgängig“ is on offer after a delete; removed for good when it runs out.
+  final Set<String> _hidden = {};
+
+  bool _show(Bill b) => !_hidden.contains(b.id);
+
+  List<Bill> get drafts => [
+        for (final b in bills)
+          if (_show(b) && !b.done && (b.read != BillRead.ok || b.its.isNotEmpty || b.total != null || b.ps.isNotEmpty)) b
+      ]..sort((a, b) => b.updated.compareTo(a.updated));
+  List<Bill> get finished => [for (final b in bills) if (_show(b) && b.done) b]..sort((a, b) => b.created.compareTo(a.created));
+
+  /// All visible bills of one group, newest first; `null` = bills without a group.
+  List<Bill> inGroup(String? g) => [
+        for (final b in bills)
+          if (_show(b) && b.group == g && (b.done || b.read != BillRead.ok || b.its.isNotEmpty || b.total != null || b.ps.isNotEmpty)) b
+      ]..sort((a, b) => b.updated.compareTo(a.updated));
+
+  /// Group names in use, alphabetical.
+  List<String> get groups => ({for (final b in bills) if (_show(b) && b.group != null && b.group!.isNotEmpty) b.group!}.toList()..sort());
+
+  /// Puts bills into a group (null or empty = take out of the group).
+  void setGroup(Iterable<Bill> list, String? group) {
+    final g = group == null || group.trim().isEmpty ? null : group.trim();
+    for (final b in list) {
+      b.group = g;
+      b.updated = DateTime.now();
+    }
+    _persist();
+  }
+
+  /// Marks bills as finished or open again (status on the overview).
+  void setDone(Iterable<Bill> list, bool done) {
+    for (final b in list) {
+      b.done = done;
+      b.updated = DateTime.now();
+    }
+    _persist();
+  }
+
+  /// Hides bills at once; [commit] removes them for good (call when „Rückgängig“ ran out), [restore] shows them again.
+  void hide(Iterable<Bill> list) {
+    _hidden.addAll(list.map((b) => b.id));
+    notifyListeners();
+  }
+
+  void restore(Iterable<Bill> list) {
+    _hidden.removeAll(list.map((b) => b.id));
+    notifyListeners();
+  }
+
+  void commit(Iterable<Bill> list) {
+    for (final b in list.toList()) {
+      _hidden.remove(b.id);
+      remove(b);
+    }
+  }
 
   void upsert(Bill b) {
     b.updated = DateTime.now();

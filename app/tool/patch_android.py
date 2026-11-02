@@ -86,7 +86,10 @@ if 'ota_update_provider' not in m:
                   '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"', 1)
     remove = ''.join(f'    <uses-permission android:name="android.permission.{p}" tools:node="remove"/>\n'
                      for p in ('WRITE_EXTERNAL_STORAGE', 'READ_EXTERNAL_STORAGE', 'INSTALL_PACKAGES', 'ACCESS_WIFI_STATE'))
-    m = re.sub(r'(<manifest[^>]*>\n)', lambda x: x.group(1) + remove, m, count=1)
+    # VIBRATE (normal permission, granted at install, never shown in the permission screen): the `vibration` plugin of fasan_ui
+    # needs it in the app manifest (pub.dev/packages/vibration, Nutzer 02.11.: Systemhaptik blieb auf dem S23 stumm).
+    grant = '    <uses-permission android:name="android.permission.VIBRATE"/>\n'
+    m = re.sub(r'(<manifest[^>]*>\n)', lambda x: x.group(1) + remove + grant, m, count=1)
     provider = '''        <provider
             android:name="sk.fourq.otaupdate.OtaUpdateFileProvider"
             android:authorities="${applicationId}.ota_update_provider"

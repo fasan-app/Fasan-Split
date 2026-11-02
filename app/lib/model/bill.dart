@@ -132,6 +132,14 @@ class BillItem {
       );
 }
 
+/// Reading state of a bill that comes from a photo in the queue (several photos at once).
+abstract final class BillRead {
+  static const ok = 'ok';
+  static const queued = 'queued';
+  static const reading = 'reading';
+  static const failed = 'failed';
+}
+
 class Bill {
   Bill({
     required this.id,
@@ -152,6 +160,8 @@ class Bill {
     this.receiptDate,
     this.placeAddress,
     this.taxId,
+    this.group,
+    this.read = BillRead.ok,
     DateTime? updated,
   }) : updated = updated ?? created;
 
@@ -186,6 +196,12 @@ class Bill {
   /// Address printed on the receipt (street, postcode city) and the shop's tax number (NIF / USt-ID).
   String? placeAddress;
   String? taxId;
+
+  /// Name of the group the bill was put into on the overview (null = none). Nutzer 02.11.: gruppieren.
+  String? group;
+
+  /// Reading state of a photo that was added with others: see [BillRead]. Bills made by hand or read in one go are `ok`.
+  String read;
 
   /// The date that matters for the user: printed date, else when it was captured.
   DateTime get date => receiptDate ?? created;
@@ -267,6 +283,8 @@ class Bill {
         'receiptDate': receiptDate?.toIso8601String(),
         'placeAddress': placeAddress,
         'taxId': taxId,
+        'group': group,
+        'read': read,
         'updated': updated.toIso8601String(),
       };
 
@@ -290,6 +308,8 @@ class Bill {
         receiptDate: DateTime.tryParse(j['receiptDate'] as String? ?? ''),
         placeAddress: j['placeAddress'] as String?,
         taxId: j['taxId'] as String?,
+        group: j['group'] as String?,
+        read: j['read'] as String? ?? BillRead.ok,
         updated: DateTime.tryParse(j['updated'] as String? ?? ''),
       );
 }

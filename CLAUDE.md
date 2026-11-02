@@ -26,6 +26,7 @@ Posten zuordnen, wer hat bezahlt, Export. Der Code zieht später in Fasan Karte.
 - Oberfläche Deutsch und Englisch, Du-Form, kurze Sätze. Keine Telemetrie; Diagnose nur nach Zustimmung.
 - Echte Bonfotos nie ins Repo und nie in den Code; bekannte Test-Bons nicht in der App hinterlegen.
 - Tippfläche ≥ 48 dp (Profil „Einfach“ 60 dp), Bewegung folgt „Animationen entfernen“ und der App-Einstellung.
+- Backlog: `STAND.md`, Abschnitt „Noch offen – Reihenfolge“, ist die Liste von allem, was fehlt. Nach jedem Paket aktualisieren, nie etwas still fallen lassen. Die Priorität setzt die Sitzung selbst; weicht sie von der Reihenfolge des Nutzers ab, steht der Grund im Abschnitt und in der Antwort (Nutzer 02.11.).
 - Token sparen: große Dateien nur per grep lesen; nach jedem Arbeitspaket `STAND.md` aktualisieren.
 - Commits als `Fasan <fasan@christopherziehm.de>`.
 

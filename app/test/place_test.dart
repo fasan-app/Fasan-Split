@@ -71,7 +71,7 @@ void main() {
 
   // Abbruchkriterium der Erkennung: Name plus gültige Steuernummer oder sauber gelesene Adresse.
   group('ReceiptHeader.complete', () {
-    test('Name und gültige NIF genügen', () {
+    test('Name, gültige NIF und saubere Adresse genügen', () {
       final h = bestHeader([
         ['RESTAURANTE DA SE', 'DINASTIA VALIDA LDA', 'NIF: 515713139', 'CRUZES DA SE 31A', '1100-192 LISBOA', '2026-10-24 FATURA-RECIBO N:', 'QTD UNI DESCRICAO IVA LOR'],
       ], now: now);
@@ -90,11 +90,21 @@ void main() {
       expect(h.shop, '');
       expect(h.complete, isFalse);
     });
-    test('deutsche Adresse ohne USt-ID genügt, wenn sauber', () {
-      final h = bestHeader([
+    test('Adresse ohne Steuernummer reicht nicht, mit USt-ID schon (Aldi/REWE: erst die ganze Adresse)', () {
+      final ohne = bestHeader([
         ['Bäckerei Sonnenschein', 'Hasengasse 9', '60311 Frankfurt am Main', '16.07.2026, 16:33'],
       ], now: now);
-      expect(h.complete, isTrue);
+      expect(ohne.complete, isFalse);
+      final mit = bestHeader([
+        ['Green Soul CBD, Head & Grow Shop', 'Hasengasse 9', '60311 Frankfurt am Main', 'Ust.ID Nr: DE335161612'],
+      ], now: now);
+      expect(mit.complete, isTrue);
+    });
+    test('USt-ID ohne Postleitzahl reicht nicht (REWE Heide 2024)', () {
+      final h = bestHeader([
+        ['REWE', 'Heidestr.137', 'UID Nr.: DE812706034', '11.04.2026 23:08 Bon-Nr.:5257'],
+      ], now: now);
+      expect(h.complete, isFalse);
     });
   });
 }

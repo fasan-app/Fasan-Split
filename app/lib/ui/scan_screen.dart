@@ -1,6 +1,5 @@
 // Fasan Split – reading the receipt: the straightened receipt appears, lines light up as they are read. MPL-2.0
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -9,9 +8,8 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import '../model/bill.dart';
-import '../recognition/place.dart';
+import '../model/scan_bill.dart';
 import '../recognition_service.dart';
-import '../state/store.dart';
 import 'flow.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -103,40 +101,11 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
     final playing = _warpDone;
     if (playing != null) await playing.timeout(const Duration(seconds: 5), onTimeout: () {});
     if (!mounted) return;
-    final id = DateTime.now().microsecondsSinceEpoch.toString();
-    final img = await BillStore.saveFile('$id.jpg', r.display);
-    // utf8, not codeUnits (UTF-16 units broke every character outside Latin-1 in 0.1.2)
-    final log = await BillStore.saveFile('$id.log.json', Uint8List.fromList(utf8.encode(r.log)));
-    // the photo exactly as taken (Beschluss 02.11.: Original immer sichtbar, für alle)
-    final orig = await BillStore.saveFile('$id.orig.jpg', widget.photo);
-    // header from the best read pass (bestHeader); the winner's lines only as fallback
-    final meta = extractMeta([for (final l in r.lines) l.$1]);
-    final bill = Bill(
-      id: id,
-      receiptDate: r.date ?? meta.date,
-      placeAddress: r.address ?? meta.address,
-      taxId: r.taxId ?? meta.taxId,
-      created: DateTime.now(),
-      purpose: r.shop.isNotEmpty ? _title(r.shop) : r.kind,
-      total: r.total,
-      items: r.items,
-      imagePath: img,
-      imageAspect: r.width / r.height,
-      checked: r.checked && !r.contradiction,
-      advance: r.advance,
-      logPath: log,
-      originalPath: orig,
-    );
+    final bill = await billFromScan(r, widget.photo);
     if (!mounted) return;
     FasanHaptics.of(context).confirm();
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => ReviewScreen(bill: bill, scan: r)));
   }
-
-  static String _title(String s) => s
-      .toLowerCase()
-      .split(' ')
-      .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
-      .join(' ');
 
   @override
   void dispose() {

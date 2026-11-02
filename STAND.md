@@ -151,10 +151,15 @@ Offen (Recherche liegt vor, Umsetzung nächste Sitzung):
   `drawVertices`), die Kästen drehen mit. Ohne Bewegung (Animationen entfernt) erscheint sofort der gerade Bon.
 - Tests: `place_test.dart` (Abbruchkriterium), `scan_preview_test.dart` (Kästen, Gitter, ScanScreen mit/ohne Bewegung).
   `flutter test`: 69 bestanden, 54 übersprungen (E2E/SROIE brauchen Modelle, `libonnxruntime` und das private fasan-diagnose).
-- NICHT gemessen: Wirkung des Abbruchs auf die Trefferquote (E2E 40/41, SROIE 55/60, echte Bons 13/13) und die Laufzeit auf dem
-  S23. Vergleich mit `FASAN_EARLYSTOP=0` steht aus. Das Zeichnen der Begradigung ist nur im Widget-Test gelaufen, nicht auf dem Gerät.
+- Gemessen (02.11. abends, hier in der Cloud-Sitzung, 2 CPU-Kerne): Mit dem ersten Kriterium („Name + USt-ID“) fielen bei Aldi und REWE Heide 2024
+  die Postleitzahl weg (Abbruch zu früh). Darum verlangt `complete` jetzt Name + gültige NIF/USt-ID + saubere Straße + PLZ-Zeile.
+  Danach: echte Bons 13/13 komplett richtig, Posten 98/98, Datum 12/13, PLZ 11/13 (identisch zum Lauf ohne Abbruch); 277 s gegen 560 s ohne
+  Abbruch (der Lauf ohne Abbruch lief teils parallel zu Builds, die Zeiten sind nur grob vergleichbar). Synthetisch mit Abbruch: PNG 10/11,
+  JPG 30/30, Posten 247/247 (wie vorher; `de-discount.png` bleibt der bekannte Fehlschlag).
+- NICHT gemessen: SROIE 0–59 (Bons ohne vollständigen Kopf laufen unverändert zu Ende, aber nicht nachgemessen), Laufzeit auf dem S23, und die
+  Begradigung als Animation auf dem Gerät (nur Widget-Test).
 
-## Paket 2 (02.11. abends): Haptik und Klang – Befund, noch keine Umsetzung
+## Paket 2 (02.11. abends): Haptik und Klang
 
 - APK 0.1.21 (Release `neueste`, gelesen mit androguard): Berechtigungen nur ACCESS_NETWORK_STATE, INTERNET, REQUEST_INSTALL_PACKAGES.
   Weder VIBRATE noch eine „Geräte in der Nähe“-Berechtigung sind deklariert; der Eintrag auf dem S23 ist aus dem Manifest nicht erklärbar.
@@ -164,7 +169,46 @@ Offen (Recherche liegt vor, Umsetzung nächste Sitzung):
   AOSP schaltet Touch-Rückmeldung im Lautlos-Modus ab und wendet die Vibrationsstärke des Nutzers an (Commits Lais Andrade 2021/22).
   Folge: Ist auf dem S23 Lautlos aktiv oder Touch-Vibration/Berührungsrückmeldung aus, bleibt `HapticFeedback` stumm, und eine
   Vibrator-API mit VIBRATE würde die Einstellung nur mit einer anderen Nutzungsart (nicht Touch) umgehen. Nicht geprüft auf One UI.
-- Nächster Schritt: Auf dem S23 Lautlos aus und Touch-Vibration an, dann Effekt-Testseite. Erst wenn es danach noch still bleibt, Vibrator-Kanal.
+- Nutzer 02.11. 21:24: Ton und Vibration sind am S23 eingeschaltet, trotzdem keine Veränderung → die Systemschalter sind nicht die Ursache.
+- Umgesetzt (fasan_ui 38d0816, hier VIBRATE im Manifest): `FasanHaptics` vibriert standardmäßig direkt über den Vibrator-Dienst
+  (Plugin `vibration`, BSD-2; Doku pub.dev: VIBRATE im Manifest nötig), mit Rückfall auf `HapticFeedback`; „Direkte Vibration“ ist
+  abschaltbar. Klick-Ton über `SystemSound.play(click)` bei Tipp und Einrasten, abschaltbar. Auf Android gibt es laut Flutter-Doku nur
+  `click` (`alert` nur Desktop); hörbar nur, wenn die Touch-Töne des Handys an sind (Drittquelle, nicht auf One UI geprüft).
+  Einstellungen → Aussehen: Schalter „Direkte Vibration“, „Klick-Ton“ und drei Probe-Knöpfe (System-Haptik, Vibrator, Klick-Ton).
+- Offen: Auf dem S23 die drei Probe-Knöpfe drücken und melden, welcher spürbar/hörbar ist. Bleibt auch der Vibrator stumm, ist die
+  Ursache nicht Software der App (dann Samsung-Vibrationsintensität „Touch-Interaktion“ prüfen, nicht geprüft).
+
+## Paket 3 (02.11. abends): Mehrfach-Upload und Übersicht
+
+- „Foto wählen“ nimmt mehrere Fotos (`pickMultiImage`, Quelle: Paketcode image_picker 1.2): Bei einem Foto wie bisher, bei mehreren werden sie
+  gespeichert, als „Wartet auf das Lesen“ gelistet und nacheinander gelesen (`state/scan_queue.dart`, Fortschritt in der Kachel). Fehler oder
+  Abbruch (App geschlossen): Zustand „fehlgeschlagen“ mit „Nochmal lesen“ aus dem gespeicherten Original.
+- Übersicht (`ui/home.dart`): Auswählen (Mehrfachauswahl) mit Gruppieren, Fertig/Offen setzen, Löschen; Gruppen mit Anzahl und Summe;
+  Wischen nach rechts = Fertig/Offen, nach links = Löschen mit „Rückgängig“; langes Drücken und auf eine Gruppe ziehen (Drag and Drop).
+  Meldungen schweben über der Glasleiste. Lehre aus dem Test: Flutter lässt eine Meldung mit Aktion standardmäßig stehen (`persist`), deshalb
+  `persist: false`, sonst würden gelöschte Bons nie endgültig entfernt.
+- Tests: `test/home_test.dart` (9: Auswahl/Gruppe, Wischen, Löschen mit/ohne Rückgängig, Warteschlange, Lesefehler, Löschen während des Lesens,
+  Start nach Abbruch). Nicht auf dem Gerät geprüft: Ziehen auf Gruppen (nur Code, kein Test), Bedienbarkeit auf dem S23, Speicher bei vielen Fotos.
+- Offen aus Paket 3: Mitbearbeiter (hängt an Nostr, braucht Freigabe zum Schreiben), Status „fertig“ als eigene Ansicht, Gruppe beim Hochladen
+  wählen, mehrere Bons in einem Foto.
+
+## Noch offen – Reihenfolge (selbst priorisiert, Stand 02.11. 22 Uhr; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
+
+Abweichung von der Nutzerreihenfolge: Erst Absicherung (1), dann die Rückmeldung (2) und Mehrfach-Upload (3), weil ein Erkennungsfehler alles
+danach entwertet und die Probe auf dem Handy nur der Nutzer machen kann (läuft parallel).
+1. Absicherung Paket 1: erledigt für synthetisch und echt (siehe oben); offen: SROIE nachmessen, CI grün, S23-Laufzeit.
+2. Paket 2 auf dem S23 abnehmen (Probe-Knöpfe, siehe oben).
+3. Paket 3 (umgesetzt, Rest siehe dort): Mehrfach-Upload (`pickMultiImage`, Warteschlange mit Fortschritt), Startseite mit Mehrfachauswahl, Gruppieren, Löschen, Status
+   sehen und setzen; Wischgesten; Drag and Drop. Mitbearbeiter hängt an der Gruppe (Nostr) und braucht ausdrückliche Freigabe zum Schreiben.
+4. Paket 4: Korn (AV1 Film Grain Synthesis: AR-Muster, Versatz je Block, Helligkeitsabhängigkeit; Quelle libaom BSD-2/dav1d) und Film
+   (Hintergrund neutral statt rötlich, Glow/Halation/Überstrahlen sichtbar oder entfernen).
+5. Paket 5: Glas mit Brechung, Durchsicht, Reflexion (`toImageSync`, Vorbild fluid_glass/fresnel_shader MIT).
+6. Kleine Gewinne zwischendurch: globale Overlays folgen dem Stil (SnackBarTheme fehlt, schwarzer Kasten; GESTALTUNG §9.7), „Pão“ als „PAD“,
+   „Pica-Pau“ ohne Klarnamen, `de-discount.png`.
+7. Soll-Liste (❌ oben): Rückgängig/Wiederholen, mehrere Zahler und Anzahlung, Ausgaben ohne Bon, Lesesicherheit je Posten und mehrdeutige
+   Lesungen mit Prozent, Korrekturen lernen, Wörterbücher je Sprache, Fremdwährung, PDF, Gruppe über Nostr, Einführung/Profile/Wiederherstellen.
+8. Gestaltung §9: Lebendig/Warten, Glas 3D, Papier, Braun-Technik, Kino-Stile, Leistungstest, Overlays; Stufen-Abnahme A/B/C auf dem S23.
+9. Technik: APK-Größe (`uvdoc.onnx` 31,6 MB, fp16?), Release-Schlüssel als Secret, Akku mit laufendem Korn messen, Bon-Variante Zoom/Querformat.
 
 ## Offen
 
