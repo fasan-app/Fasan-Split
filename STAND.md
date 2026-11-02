@@ -105,6 +105,29 @@ INSTALL_PACKAGES, ACCESS_WIFI_STATE entfernt. Funktioniert nur, solange alle Ver
 
 `FASAN_SCREENS=<ordner> flutter test test/screens_test.dart`: 9 Ansichten × hoch/quer × hell/dunkel, erfundener Bon.
 
+## Nutzer-Rückmeldung 02.11. abends (S23, 0.1.15) und Stand danach
+
+Erledigt (Ursache belegt):
+- Name/Adresse/NIF „Unfug“: Kopf kam aus dem Posten-Gewinner (Da Sé: Gewinner begann bei „CONSUMIDOR FINAL“;
+  Estrela: Gewinner las „Vara fiario de Noticias“). Jetzt `bestHeader` über alle Durchläufe, NIF-Prüfziffer Modulo 11,
+  Zeilen-Sauberkeit (place.dart). Tests mit den Zeilen aus den Protokollen.
+- „Unf/Uní …“ blieben im Namen: Lesarten von „Uni“ (reader.dart `_n2`, bill.dart).
+- Angefangene Bons: Zurück ging nicht zum vorigen Schritt (nur letzter Schritt geöffnet). Jetzt `ResumeFlow` mit allen
+  früheren Schritten.
+- Korn wanderte diagonal (Hash-Feld verschoben). Jetzt je Bild/Ort unabhängiges Gauß-Korn, fein einstellbar; alter Film
+  (Flackern, Staub, Kratzer, Vignette, warm) nur in Kino-Stilen an (Nutzer). Recherche fasan_ui `2026-11-02-filmkorn-alter-film.md`.
+- Springen beim Stilwechsel: gleiche Textmaße in allen Stilen, Knopf-Radius/Glow im Look, Theme überblendet 380 ms.
+- Echtes Glas S0 (Brechung am Rand, Glanz, Fresnel, Neigung) mit Selbsttest beim Start, sonst S2. Ergebnis auf der
+  Effekt-Testseite („Glas: refract/blur“). Recherche `2026-11-02-echtes-glas-flutter.md`. Nicht auf Gerät geprüft.
+- Update: erst Größe + Änderungen, Laden nur auf Tipp. Teil-Updates: Recherche `docs/recherche/2026-11-02-updates-delta.md`
+  empfiehlt Modelle als eigene Dateien (Nutzer entscheidet nach Recherche; widerspricht „alles offline ab Installation“).
+
+Offen (Recherche liegt vor, Umsetzung nächste Sitzung):
+- Stil Papier (`fasan_ui/docs/recherche/2026-11-02-stil-papier.md`), Stil Braun-Technik (`…-stil-braun-technik.md`).
+- Lebendig/Warten (`…-lebendig-warten.md`): Scan zeigt echte Arbeit (Zeilen erscheinen, Schrittzähler), Hinweis-Impulse.
+- Kino-Stile (Maschine, Sci-Fi, Spionage): eigene Recherche fehlt noch. Nutzer: alle Stile bleiben, die Familie bekommt mehr.
+- „Pão“ als „PAD“ gelesen, „Pica-Pau“ ohne Klarnamen.
+
 ## Offen
 
 - Auf dem Handy testen (S23): Kamera, Galerie, Erkennungszeit, Akku mit laufendem Korn (siehe unten).
