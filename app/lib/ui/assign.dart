@@ -2,7 +2,6 @@
 // Fokus (one line large), Liste mit Zeilenbild, Bon (zoomed so every line is ≥ 48 dp), Karten (swipe).
 // A multi-line item is one continuous shape; shared items show avatars, never colour stripes. MPL-2.0
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import 'common.dart';
+import 'receipt_view.dart';
 import 'flow.dart';
 
 enum AssignMode { focus, list, receipt, cards }
@@ -243,7 +243,7 @@ class _FocusAssignState extends State<FocusAssign> {
                 if (it.snippet != null) Snippet(it.snippet, height: 52),
                 const SizedBox(height: FasanSpace.m),
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Expanded(child: Text(it.qty > 1 ? '${it.qty} × ${it.name}' : it.name, style: tt.headlineSmall)),
+                  Expanded(child: ItemTitle(it, style: tt.headlineSmall)),
                   Money(it.amount, style: tt.headlineSmall),
                 ]),
                 if (it.note != null) Text(it.note!, style: tt.bodySmall),
@@ -286,7 +286,7 @@ class ListAssign extends StatelessWidget {
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
               if (it.snippet != null) Snippet(it.snippet, height: 40),
               const SizedBox(height: FasanSpace.s),
-              Row(children: [Expanded(child: Text(it.name, style: Theme.of(context).textTheme.titleMedium)), Money(it.amount)]),
+              Row(children: [Expanded(child: ItemTitle(it, style: Theme.of(context).textTheme.titleMedium)), Money(it.amount)]),
               const SizedBox(height: FasanSpace.l),
               PeoplePicker(bill: bill, item: it, onChanged: () {
                 onChanged();
@@ -300,7 +300,6 @@ class ListAssign extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = FasanLook.of(context);
-    final tt = Theme.of(context).textTheme;
     return ListView.builder(
       padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context)),
       itemCount: bill.its.length,
@@ -315,8 +314,8 @@ class ListAssign extends StatelessWidget {
             child: Row(children: [
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  if (it.snippet != null) Snippet(it.snippet, height: 26) else Text(it.name, style: tt.bodyLarge),
-                  if (it.snippet != null) Text(it.qty > 1 ? '${it.qty} × ${it.name}' : it.name, style: tt.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ItemTitle(it, maxLines: 1),
+                  if (it.snippet != null) Padding(padding: const EdgeInsets.only(top: 4), child: Snippet(it.snippet, height: 26)),
                 ]),
               ),
               const SizedBox(width: FasanSpace.s),
@@ -333,160 +332,6 @@ class ListAssign extends StatelessWidget {
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Bon direkt: zoomed so that every item line is at least 48 dp high; tap the continuous item shape
-
-class ReceiptAssign extends StatefulWidget {
-  const ReceiptAssign({super.key, required this.bill, required this.onChanged});
-
-  final Bill bill;
-  final VoidCallback onChanged;
-
-  @override
-  State<ReceiptAssign> createState() => _ReceiptAssignState();
-}
-
-/// Zoom of the receipt view (Plan: „Bon direkt, automatisch gezoomt, sodass jede Zeile mindestens 48 dp hoch ist“).
-abstract final class ReceiptAssignZoom {
-  /// Display width so that every item line box is ≥ [minLine] dp high: box_dp = h_norm × width / aspect.
-  /// Boxes under half the median height are treated as detection noise and do not drive the zoom.
-  static double width(Bill b, double screenW, double minLine) {
-    final hs = [for (final it in b.its) for (final x in it.boxes) x.y1 - x.y0]..sort();
-    if (hs.isEmpty) return screenW;
-    final h = math.max(hs.first, 0.5 * hs[hs.length >> 1]), aspect = b.imageAspect ?? 0.4;
-    return math.max(screenW, minLine * aspect / math.max(h, 0.002));
-  }
-}
-
-class _ReceiptAssignState extends State<ReceiptAssign> {
-  int? sel;
-  final _tc = TransformationController();
-  bool _placed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final b = widget.bill;
-    final l = FasanLook.of(context);
-    final t = S.of(context);
-    return LayoutBuilder(builder: (context, c) {
-      final W = ReceiptAssignZoom.width(b, c.maxWidth, l.minTap);
-      final H = W / (b.imageAspect ?? 0.4);
-      if (!_placed && b.its.isNotEmpty && b.its.first.boxes.isNotEmpty) {
-        // start at the first item, left edge
-        final y0 = b.its.first.boxes.first.y0 * H - 24;
-        final x0 = math.max(0.0, b.its.first.boxes.first.x0 * W - 12);
-        _tc.value = Matrix4.translationValues(-x0, -math.max(0.0, y0), 0);
-        _placed = true;
-      }
-      final it = sel == null ? null : b.its[sel!];
-      return Stack(children: [
-        Positioned.fill(
-          child: InteractiveViewer(
-            transformationController: _tc,
-            constrained: false,
-            minScale: math.min(1.0, c.maxWidth / W),
-            maxScale: 3,
-            boundaryMargin: EdgeInsets.only(bottom: bottomBarSpace(context, extra: true)),
-            child: SizedBox(
-              width: W,
-              height: H,
-              child: Stack(children: [
-                Positioned.fill(child: Image.file(File(b.imagePath!), fit: BoxFit.fill, filterQuality: FilterQuality.medium)),
-                for (var k = 0; k < b.its.length; k++)
-                  if (b.its[k].boxes.isNotEmpty) _ItemShape(bill: b, index: k, size: Size(W, H), selected: sel == k, onTap: () => setState(() => sel = sel == k ? null : k)),
-              ]),
-            ),
-          ),
-        ),
-        Positioned(
-          left: FasanSpace.m,
-          right: FasanSpace.m,
-          bottom: 84 + MediaQuery.paddingOf(context).bottom,
-          child: FasanGlass(
-            child: it == null
-                ? Text(t.tapItem, style: Theme.of(context).textTheme.bodyMedium)
-                : Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                    Row(children: [Expanded(child: Text(it.name, style: Theme.of(context).textTheme.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis)), Money(it.amount)]),
-                    const SizedBox(height: FasanSpace.s),
-                    PeoplePicker(bill: b, item: it, onChanged: () {
-                      widget.onChanged();
-                      setState(() {});
-                    }),
-                  ]),
-          ),
-        ),
-      ]);
-    });
-  }
-}
-
-/// One item drawn as a continuous shape over all its lines (gaps between its lines are filled).
-class _ItemShape extends StatelessWidget {
-  const _ItemShape({required this.bill, required this.index, required this.size, required this.selected, required this.onTap});
-
-  final Bill bill;
-  final int index;
-  final Size size;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final it = bill.its[index];
-    final l = FasanLook.of(context);
-    final rects = [for (final x in it.boxes) Rect.fromLTRB(x.x0 * size.width, x.y0 * size.height, x.x1 * size.width, x.y1 * size.height)]..sort((a, b) => a.top.compareTo(b.top));
-    final bounds = rects.reduce((a, b) => a.expandToInclude(b));
-    final color = it.assigned ? l.accent : Theme.of(context).colorScheme.error;
-    return Positioned.fromRect(
-      rect: bounds.inflate(4),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          FasanHaptics.of(context).tap();
-          onTap();
-        },
-        child: CustomPaint(
-          painter: _ShapePainter([for (final r in rects) r.shift(-bounds.topLeft + const Offset(4, 4))], color, selected),
-          child: Align(
-            alignment: Alignment.topRight,
-            child: Padding(padding: const EdgeInsets.all(2), child: it.assigned ? ShareAvatars(bill: bill, item: it, size: math.min(24, bounds.height)) : const SizedBox()),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ShapePainter extends CustomPainter {
-  _ShapePainter(this.rects, this.color, this.selected);
-
-  final List<Rect> rects;
-  final Color color;
-  final bool selected;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // each line rect is stretched down to the next one, then all are united → one outline, no separate boxes
-    var path = Path();
-    for (var i = 0; i < rects.length; i++) {
-      var r = rects[i];
-      if (i + 1 < rects.length) r = Rect.fromLTRB(r.left, r.top, r.right, math.max(r.bottom, rects[i + 1].top + 1));
-      path = Path.combine(PathOperation.union, path, Path()..addRRect(RRect.fromRectAndRadius(r.inflate(2), const Radius.circular(6))));
-    }
-    canvas.drawPath(path, Paint()..color = color.withValues(alpha: selected ? 0.22 : 0.08));
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color.withValues(alpha: selected ? 0.9 : 0.45)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = selected ? 2 : 1,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_ShapePainter o) => o.selected != selected || o.color != color || o.rects != rects;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Karten wischen
 
 class CardsAssign extends StatefulWidget {
   const CardsAssign({super.key, required this.bill, required this.onChanged});
@@ -546,7 +391,7 @@ class _CardsAssignState extends State<CardsAssign> {
                     const SizedBox(height: FasanSpace.s),
                     if (it.snippet != null) Snippet(it.snippet, height: 44),
                     const SizedBox(height: FasanSpace.m),
-                    Text(it.qty > 1 ? '${it.qty} × ${it.name}' : it.name, style: tt.titleLarge),
+                    ItemTitle(it, style: tt.titleLarge),
                     Money(it.amount, style: tt.titleLarge),
                     const SizedBox(height: FasanSpace.l),
                     PeoplePicker(bill: b, item: it, onChanged: () {

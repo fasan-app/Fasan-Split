@@ -8,6 +8,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 
 import 'model/bill.dart';
@@ -150,6 +151,10 @@ class RecognitionService {
     }();
     return c.stream;
   }
+
+  /// Same result as the worker sends, built in this isolate (tests, screenshots with real receipts).
+  @visibleForTesting
+  static ScanResultData fromRecognition(Recognition x) => _decode(_encode(x));
 
   static ScanResultData _decode(Map m) {
     final items = [for (final j in (m['items'] as List)) BillItem.fromJson((j as Map).cast<String, dynamic>())];

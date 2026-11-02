@@ -17,6 +17,11 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:fasan_split/recognition/onnx.dart';
+import 'package:fasan_split/recognition/paddle.dart';
+import 'package:fasan_split/recognition/pipeline.dart';
+import 'package:fasan_split/recognition_service.dart';
+import 'package:fasan_split/ui/receipt_view.dart';
 
 const _lines = [
   ('Flammkuchen', '12,50'),
@@ -90,8 +95,38 @@ Future<void> _fonts() async {
   await load('MaterialIcons', ['${Platform.environment['FLUTTER_ROOT']}/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf']);
 }
 
+/// Real receipt (FASAN_ECHT=Pfad zum JPG aus fasan-diagnose/tests/echt): the real recognition runs once, like on the phone.
+Bill? _real;
+Bill _realBill(String photo, Directory dir) {
+  if (_real != null) return _real!;
+  final uv = File('assets/models/uvdoc.onnx');
+  final ocr = PaddleOcr(
+    OnnxModel.fromBytes(File('assets/models/det.onnx').readAsBytesSync(), threads: 2),
+    OnnxModel.fromBytes(File('assets/models/rec-latin.onnx').readAsBytesSync(), threads: 2),
+    File('assets/models/dict-latin.txt').readAsStringSync(),
+    uvdoc: uv.existsSync() ? OnnxModel.fromBytes(uv.readAsBytesSync(), threads: 2) : null,
+  );
+  final bytes = File(photo).readAsBytesSync();
+  final r = RecognitionService.fromRecognition(Recognizer(ocr).recognize(bytes));
+  final scan = File('${dir.path}/echt-scan.png')..writeAsBytesSync(r.display);
+  final orig = File('${dir.path}/echt-orig.jpg')..writeAsBytesSync(bytes);
+  return _real = Bill(
+    id: 'echt',
+    created: DateTime(2026, 10, 24, 11, 52),
+    purpose: r.shop.isEmpty ? r.kind : r.shop,
+    total: r.total,
+    items: r.items,
+    imagePath: scan.path,
+    originalPath: orig.path,
+    imageAspect: r.width / r.height,
+    checked: r.checked && !r.contradiction,
+    people: [for (final (i, n) in ['Angi', 'Alexis', 'Emmi', 'Bine', 'Achim', 'Chris'].indexed) Person(n, i)],
+  );
+}
+
 void main() {
   final out = Platform.environment['FASAN_SCREENS'];
+  final echt = Platform.environment['FASAN_ECHT'];
   final screens = <String, Widget Function(Bill)>{
     '1-start': (_) => const HomeScreen(),
     '2-summe': (b) => ReviewScreen(bill: b),
@@ -100,6 +135,8 @@ void main() {
     '4b-liste': (b) => AssignScreen(bill: b, initialMode: AssignMode.list),
     '4c-bon': (b) => AssignScreen(bill: b, initialMode: AssignMode.receipt),
     '4d-karten': (b) => AssignScreen(bill: b, initialMode: AssignMode.cards),
+    '4e-bon-digital': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.digital),
+    '4f-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
     '5-bezahlt': (b) => PayScreen(bill: b..payer = 1),
     '6-ergebnis': (b) => ResultScreen(bill: b..payer = 1),
   };
@@ -116,7 +153,16 @@ void main() {
           addTearDown(tester.platformDispatcher.clearLocalesTestValue);
           final dir = Directory(out!)..createSync(recursive: true);
           final (path, bx) = await tester.runAsync(() async => _receipt(dir)) ?? ('', <NBox>[]);
-          final bill = _bill(path, bx, assigned: !e.key.startsWith('4a'));
+          Bill bill;
+          if (echt != null) {
+            bill = (await tester.runAsync(() async => _realBill(echt, dir)))!;
+            final n = bill.ps.length;
+            for (final (k, it) in bill.its.indexed) {
+              it.shares = e.key.startsWith('4a') || k.isOdd ? {} : {k % n: 1, (k + 1) % n: 1};
+            }
+          } else {
+            bill = _bill(path, bx, assigned: !e.key.startsWith('4a'));
+          }
           final store = BillStore.memory([_bill(path, bx)..payer = 1]);
           final ctl = FasanController(
               settings: FasanSettings(reduceMotion: true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light));
@@ -124,7 +170,8 @@ void main() {
           await tester.pumpWidget(RepaintBoundary(key: key, child: SplitApp(store: store, ui: ctl, home: e.value(bill))));
           // Bon-Foto und Shader laden echt asynchron; danach ein paar Bilder ohne Dauer-Animation.
           await tester.runAsync(() async {
-            await precacheImage(FileImage(File(path)), key.currentContext!);
+            await precacheImage(FileImage(File(bill.imagePath ?? path)), key.currentContext!);
+            if (bill.originalPath != null) await precacheImage(FileImage(File(bill.originalPath!)), key.currentContext!);
             await Future<void>.delayed(const Duration(milliseconds: 300));
           });
           for (var i = 0; i < 10; i++) {
@@ -141,4 +188,24 @@ void main() {
       }
     }
   }
+}
+
+/// Receipt screen with a given layer preselected (screenshots of „Original“ and „Digital“).
+class _ReceiptLayerProbe extends StatefulWidget {
+  const _ReceiptLayerProbe({required this.bill, required this.layer});
+  final Bill bill;
+  final ReceiptLayer layer;
+  @override
+  State<_ReceiptLayerProbe> createState() => _ReceiptLayerProbeState();
+}
+
+class _ReceiptLayerProbeState extends State<_ReceiptLayerProbe> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => mounted ? setState(() {}) : null);
+  }
+
+  @override
+  Widget build(BuildContext context) => ReceiptScreen(bill: widget.bill, initialLayer: widget.layer);
 }

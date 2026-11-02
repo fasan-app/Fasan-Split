@@ -1,5 +1,7 @@
 // Fasan Split – shared widgets of the flow screens. MPL-2.0
 
+import 'dart:io';
+
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
+import 'receipt_view.dart';
 
 /// Screen of the bill flow: title, step, content; the main action sits in a glass bar in the thumb zone
 /// (Bergstrom-Lehtovirta & Oulasvirta 2014, GRUNDSAETZE.md).
@@ -58,23 +61,13 @@ class StepScaffold extends StatelessWidget {
         ]),
         toolbarHeight: 72,
         actions: [
-          ...?actions,
-          if (b != null)
-            Padding(
-              padding: const EdgeInsets.only(right: FasanSpace.s),
-              child: TextButton.icon(
-                style: TextButton.styleFrom(minimumSize: Size(l.minTap, l.minTap)),
-                icon: const Icon(Icons.check_rounded, size: 20),
-                label: Text(t.saveClose),
-                onPressed: () {
-                  if (!b.done) b.step = step;
-                  StoreScope.read(context).upsert(b);
-                  FasanHaptics.of(context).confirm();
-                  Navigator.of(context).popUntil((r) => r.isFirst);
-                  showNote(context, b.done ? t.saved : t.savedDraft);
-                },
-              ),
+          if (b != null && step != 3 && b.imagePath != null && File(b.imagePath!).existsSync())
+            IconButton(
+              tooltip: t.showReceipt,
+              icon: const Icon(Icons.receipt_long_outlined),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReceiptScreen(bill: b))),
             ),
+          ...?actions,
         ],
       ),
       body: Stack(children: [
@@ -91,6 +84,23 @@ class StepScaffold extends StatelessWidget {
                 if (action != null)
                   Row(children: [
                     if (secondary != null) ...[secondary!, const SizedBox(width: 6)],
+                    // Karte 3.13: großer Speichern-Knopf in jedem Schritt, in der Daumenzone neben der Hauptaktion
+                    if (secondary == null && b != null) ...[
+                      FasanButton(
+                        label: t.saveClose,
+                        icon: Icons.check_rounded,
+                        kind: FasanButtonKind.secondary,
+                        onPressed: () {
+                          if (!b.done) b.step = step;
+                          StoreScope.read(context).upsert(b);
+                          FasanHaptics.of(context).confirm();
+                          final note = b.done ? t.saved : t.savedDraft;
+                          Navigator.of(context).popUntil((r) => r.isFirst);
+                          showNote(context, note);
+                        },
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     Expanded(child: FasanButton(label: action!, onPressed: onAction, expand: true)),
                   ]),
               ]),
@@ -242,4 +252,23 @@ void showNote(BuildContext context, String text, {String? actionLabel, VoidCallb
       margin: EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, bottomBarSpace(context) + FasanSpace.s),
       action: actionLabel == null ? null : SnackBarAction(label: actionLabel, onPressed: onAction ?? () {}),
     ));
+}
+
+/// Item name: plain German name with symbol (or cleaned receipt name), receipt name small below (Karte 3.8).
+class ItemTitle extends StatelessWidget {
+  const ItemTitle(this.item, {super.key, this.style, this.maxLines = 2});
+
+  final BillItem item;
+  final TextStyle? style;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final sub = item.subtitle;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+      Text(item.title, style: style ?? tt.bodyLarge, maxLines: maxLines, overflow: TextOverflow.ellipsis),
+      if (sub != null) Text(sub, style: tt.bodySmall!.copyWith(color: FasanLook.of(context).textMuted), maxLines: 1, overflow: TextOverflow.ellipsis),
+    ]);
+  }
 }

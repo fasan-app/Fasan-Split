@@ -94,4 +94,14 @@ class S {
   String get undo => de ? 'Rückgängig' : 'Undo';
   String get more => de ? 'Mehr' : 'More';
   String stepOf(int s) => de ? 'Schritt $s von 4' : 'Step $s of 4';
+  String get receiptHintPick => de ? 'Person wählen, dann Posten antippen.' : 'Pick a person, then tap items.';
+  String receiptHintPerson(String n) => de ? 'Tippe, was $n hatte.' : 'Tap what $n had.';
+  String get receiptHintView => de ? 'Posten antippen für Details.' : 'Tap an item for details.';
+  String get layerScan => de ? 'Scan' : 'Scan';
+  String get layerOriginal => de ? 'Original' : 'Original';
+  String get layerDigital => de ? 'Digital' : 'Digital';
+  String get fullWidth => de ? 'Ganze Breite' : 'Full width';
+  String get originalNote => de ? 'Original, unverändert' : 'Original, unchanged';
+  String get close => de ? 'Schließen' : 'Close';
+  String get showReceipt => de ? 'Bon' : 'Receipt';
 }

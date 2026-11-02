@@ -151,7 +151,7 @@ class _ItemRow extends StatelessWidget {
         child: Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(item.qty > 1 ? '${item.qty} × ${item.name}' : item.name, style: tt.bodyLarge, maxLines: 2, overflow: TextOverflow.ellipsis),
+              ItemTitle(item),
               if (item.note != null) Text(item.note!, style: tt.bodySmall),
               if (item.snippet != null) Padding(padding: const EdgeInsets.only(top: 4), child: Snippet(item.snippet, height: 22)),
             ]),
@@ -340,7 +340,7 @@ class ResultBody extends StatelessWidget {
         ),
       if (open.isNotEmpty) ...[
         const SizedBox(height: FasanSpace.l),
-        Text('${t.notAssigned}: ${open.map((p) => p.name).join(', ')}', style: tt.bodySmall!.copyWith(color: Theme.of(context).colorScheme.error)),
+        Text('${t.notAssigned}: ${open.map((p) => p.title).join(', ')}', style: tt.bodySmall!.copyWith(color: Theme.of(context).colorScheme.error)),
       ],
     ]);
   }

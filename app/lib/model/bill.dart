@@ -5,6 +5,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../recognition/speisen.dart';
+
 class Person {
   Person(this.name, this.color);
 
@@ -57,6 +59,42 @@ class BillItem {
 
   /// person index → weight
   Map<int, double> shares;
+
+  // Leading till words in front of the name ("2 Uni", "1 Unj", "Un."): OCR variants of „Unidade“ (PT tills).
+  static final _tillPrefix = RegExp(r'^\s*(\d+([.,]00)?\s+)?(uni|unj|unl|un|und|unid|unidade)\.?\s+', caseSensitive: false);
+  static final _cutTail = RegExp(r'\s+(c/?|[a-z])$', caseSensitive: false);
+
+  /// Name as printed, without till prefixes and cut-off one-letter tails; ALL CAPS in title case.
+  String get cleanName {
+    var n = name.replaceFirst(_tillPrefix, '').replaceFirst(_cutTail, '').trim();
+    if (n.isEmpty) return name.trim();
+    if (n == n.toUpperCase() && n.contains(RegExp(r'[A-Z]{3}'))) {
+      n = n.toLowerCase().split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
+    }
+    return n;
+  }
+
+  FoodMatch? _food;
+  String? _foodFor;
+
+  /// German plain name with symbol from the dictionary (Karte 3.8, speisen.js), or null.
+  FoodMatch? get food {
+    if (_foodFor != name) {
+      _foodFor = name;
+      _food = Speisen.recognise(name);
+    }
+    return _food;
+  }
+
+  /// Title shown in lists: plain name with symbol if known, else the cleaned receipt name; with quantity.
+  String get title {
+    final f = food;
+    final base = f != null ? '${f.symbol} ${f.name}' : cleanName;
+    return qty > 1 ? '$qty × $base' : base;
+  }
+
+  /// Receipt name shown small under the plain name (only when it differs).
+  String? get subtitle => food != null ? cleanName : null;
 
   bool get assigned => shares.values.any((w) => w > 0);
 
@@ -256,7 +294,7 @@ String billCsv(Bill b, {bool de = true}) {
   rows.add([q(de ? 'Posten' : 'Item'), q(de ? 'Menge' : 'Qty'), q(de ? 'Betrag' : 'Amount'), for (final p in people) q(p.name)].join(';'));
   for (final it in b.its) {
     final parts = Bill.split(it.amount, it.shares);
-    rows.add([q(it.name), '${it.qty}', money(it.amount, de: de), for (var i = 0; i < people.length; i++) money(parts[i] ?? 0, de: de)].join(';'));
+    rows.add([q(it.subtitle == null ? it.cleanName : '${it.food!.name} (${it.cleanName})'), '${it.qty}', money(it.amount, de: de), for (var i = 0; i < people.length; i++) money(parts[i] ?? 0, de: de)].join(';'));
   }
   final pp = b.perPerson();
   if (b.difference != 0) rows.add([q(de ? 'Differenz zum Bon' : 'Difference to receipt'), '', money(b.difference, de: de), for (var i = 0; i < people.length; i++) ''].join(';'));

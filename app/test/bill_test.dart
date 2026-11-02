@@ -37,7 +37,8 @@ void main() {
     final b = Bill(id: '1', created: DateTime(2026), people: [Person('Anna', 0), Person('Jo', 1)], items: [BillItem(name: 'Sumo "Laranja"', amount: 350, shares: {0: 1, 1: 1})])..payer = 1;
     final csv = billCsv(b);
     expect(csv.startsWith('﻿'), isTrue);
-    expect(csv, contains('"Sumo ""Laranja""";1;3,50;1,75;1,75'));
+    // plain name with the receipt name in brackets (Karte 3.8), quotes doubled
+    expect(csv, contains('"Saft (Sumo ""Laranja"")";1;3,50;1,75;1,75'));
     expect(csv, contains('"Bezahlt von";;"Jo"'));
   });
 

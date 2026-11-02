@@ -8,6 +8,9 @@ import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
+import 'dart:io';
+import 'package:fasan_split/ui/receipt_view.dart';
 
 Bill demoBill() => Bill(id: 'demo', created: DateTime(2026, 11, 1), purpose: 'Abendessen', total: 4890, checked: true, items: [
       BillItem(name: 'Bacalhau à Brás', amount: 1850, boxes: const [NBox(0.05, 0.30, 0.95, 0.34)]),
@@ -94,14 +97,40 @@ void main() {
     expect(find.byType(PeopleScreen), findsOneWidget);
   });
 
-  test('Zoom im Bon: jede Zeile mindestens 48 dp', () {
-    final b = demoBill()..imageAspect = 0.4;
-    final w = ReceiptAssignZoom.width(b, 393, 48);
-    final h = w / 0.4;
-    for (final it in b.its) {
-      for (final x in it.boxes) {
-        expect((x.y1 - x.y0) * h, greaterThanOrEqualTo(48 - 1e-6));
-      }
-    }
+  testWidgets('Bon-Ansicht: Person wählen, Zeile antippen ordnet zu; Tipp daneben rastet ein; Mengenspalte im Kasten', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    final dir = Directory.systemTemp.createTempSync('bon');
+    final f = File('${dir.path}/bon.png')..writeAsBytesSync(img.encodePng(img.Image(width: 400, height: 1000)..clear(img.ColorRgb8(250, 250, 250))));
+    final b = demoBill()
+      ..imagePath = f.path
+      ..imageAspect = 0.4
+      ..people = [Person('Anna', 0), Person('Jo', 1)];
+    var changed = 0;
+    await tester.pumpWidget(SplitApp(
+      store: BillStore.memory(),
+      ui: FasanController(settings: const FasanSettings(reduceMotion: true)),
+      home: Scaffold(body: ReceiptAssign(bill: b, onChanged: () => changed++)),
+    ));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await tester.pump();
+    await tester.tap(find.text('Anna'));
+    await tester.pump();
+    // the receipt is fitted to the width: x/y in the image map 1:1 onto the area below the bars
+    final area = tester.getTopLeft(find.byType(InteractiveViewer));
+    final w = tester.getSize(find.byType(InteractiveViewer)).width - 44, h = w / 0.4; // 44 dp avatar gutter
+    // the view starts near the first item row (clamped at the end of a short receipt): read the real shift
+    final shift = tester.widget<InteractiveViewer>(find.byType(InteractiveViewer)).transformationController!.value.getTranslation();
+    final at = area + Offset(0, shift.y);
+    // first item row is y 0.30–0.34; tap the far left (quantity column, outside the old name box)
+    await tester.tapAt(at + Offset(0.06 * w, 0.32 * h));
+    await tester.pump();
+    expect(b.its[0].shares, {0: 1.0});
+    // a tap just below the second row (0.39–0.40 is the gap to the third) snaps to the nearer second row
+    await tester.tapAt(at + Offset(0.5 * w, 0.392 * h));
+    await tester.pump();
+    expect(b.its[1].shares, {0: 1.0});
+    expect(changed, 2);
   });
 }

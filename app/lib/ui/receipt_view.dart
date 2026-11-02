@@ -1,0 +1,551 @@
+// Fasan Split – the receipt as the work surface (REGELWERK-OBERFLAECHE §3/§4, Karte 3.8–3.19, Nutzer 02.11.). MPL-2.0
+//
+// - Always the whole receipt, fitted to the width; header and footer only paler (Regel 3.1).
+// - Person bar on top with running sums: choose a person, then tap lines (Regel 4.1/4.3). Without a person a tap opens
+//   the correction bar (line picture, name, people, edit) (Regel 3.6).
+// - A tap next to a box snaps to the nearest line (Regel 3.5). Item rows span the full text width so the quantity
+//   column belongs to the row (0.1.2 cut off the leading „1“).
+// - Zoom: two fingers, double tap 1× ↔ 2.5×, plus/minus buttons as visible twin, „Ganze Breite“ only when zoomed
+//   (Regel 3.7).
+// - Three views: Scan (cleaned, with boxes), Original (photo exactly as taken), Digital (rebuilt by the app)
+//   (Beschluss 02.11.).
+import 'dart:io';
+import 'dart:math' as math;
+
+import 'package:fasan_ui/fasan_ui.dart';
+import 'package:flutter/material.dart';
+
+import '../l10n.dart';
+import '../model/bill.dart';
+import 'assign.dart' show PeoplePicker;
+import 'common.dart';
+
+enum ReceiptLayer { scan, original, digital }
+
+class ReceiptAssign extends StatefulWidget {
+  const ReceiptAssign({super.key, required this.bill, required this.onChanged, this.readOnly = false, this.initialLayer = ReceiptLayer.scan});
+
+  final ReceiptLayer initialLayer;
+
+  final Bill bill;
+  final VoidCallback onChanged;
+
+  /// Viewing only (opened from other steps): no person bar, taps only select.
+  final bool readOnly;
+
+  @override
+  State<ReceiptAssign> createState() => _ReceiptAssignState();
+}
+
+class _ReceiptAssignState extends State<ReceiptAssign> {
+  final _tc = TransformationController();
+  int? person; // chosen person (person-first mode)
+  int? sel; // selected item (correction bar)
+  late ReceiptLayer layer = widget.initialLayer;
+  (DateTime, Offset, int?)? _lastTap;
+
+  Bill get b => widget.bill;
+
+  @override
+  void dispose() {
+    _tc.dispose();
+    super.dispose();
+  }
+
+  double get _scale => _tc.value.getMaxScaleOnAxis();
+
+  void _zoom(double to, {Offset? focus, Size? viewport}) {
+    final f = focus ?? (viewport == null ? Offset.zero : Offset(viewport.width / 2, viewport.height / 2));
+    final s = to.clamp(1.0, 4.0);
+    // keep the point under the finger in place: translate so that f maps to itself after scaling
+    final m = Matrix4.identity()
+      ..translateByDouble(f.dx, f.dy, 0, 1)
+      ..scaleByDouble(s / _scale, s / _scale, 1, 1)
+      ..translateByDouble(-f.dx, -f.dy, 0, 1);
+    setState(() => _tc.value = m * _tc.value);
+  }
+
+  void _fit() => setState(() => _tc.value = Matrix4.identity());
+
+  /// Rows of all items in normalised coordinates, widened to the full text width (quantity column included).
+  List<Rect> _rows() {
+    final all = [for (final it in b.its) ...it.boxes];
+    if (all.isEmpty) return const [];
+    final x0 = all.map((x) => x.x0).reduce(math.min), x1 = all.map((x) => x.x1).reduce(math.max);
+    return [
+      for (final it in b.its)
+        it.boxes.isEmpty
+            ? Rect.zero
+            : Rect.fromLTRB(x0, it.boxes.map((x) => x.y0).reduce(math.min), x1, it.boxes.map((x) => x.y1).reduce(math.max)),
+    ];
+  }
+
+  /// Item at a normalised point: inside a row, else the nearest row within 1.5 row heights (snapping).
+  int? _hit(Offset n, List<Rect> rows) {
+    int? best;
+    var bestD = double.infinity;
+    for (var k = 0; k < rows.length; k++) {
+      final r = rows[k];
+      if (r == Rect.zero) continue;
+      if (r.contains(n)) return k;
+      final d = n.dy < r.top ? r.top - n.dy : (n.dy > r.bottom ? n.dy - r.bottom : 0.0);
+      if (d < bestD && d < 1.5 * r.height) {
+        bestD = d;
+        best = k;
+      }
+    }
+    return best;
+  }
+
+  void _tapItem(int k) {
+    final it = b.its[k];
+    final h = FasanHaptics.of(context);
+    if (person != null && !widget.readOnly) {
+      final p = person!;
+      setState(() {
+        if ((it.shares[p] ?? 0) > 0) {
+          it.shares.remove(p);
+        } else {
+          it.shares[p] = 1;
+        }
+      });
+      h.tap();
+      widget.onChanged();
+    } else {
+      h.tap();
+      setState(() => sel = sel == k ? null : k);
+    }
+  }
+
+  int _sumOf(int p) {
+    final per = b.perPerson();
+    return per[p] ?? 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    final l = FasanLook.of(context);
+    final hasOriginal = b.originalPath != null && File(b.originalPath!).existsSync();
+    final it = sel == null || sel! >= b.its.length ? null : b.its[sel!];
+    return Column(children: [
+      if (!widget.readOnly) _PersonBar(bill: b, selected: person, sumOf: _sumOf, onSelect: (p) => setState(() => person = person == p ? null : p)),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.xs, FasanSpace.l, FasanSpace.xs),
+        child: Row(children: [
+          Expanded(
+            child: Text(
+              widget.readOnly ? t.receiptHintView : (person == null ? t.receiptHintPick : t.receiptHintPerson(b.ps[person!].name)),
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(color: l.textMuted),
+              maxLines: 2,
+            ),
+          ),
+          const SizedBox(width: FasanSpace.s),
+          SizedBox(
+            width: 210,
+            child: FasanSegmented<ReceiptLayer>(
+              values: [ReceiptLayer.scan, if (hasOriginal) ReceiptLayer.original, ReceiptLayer.digital],
+              selected: layer,
+              label: (v) => switch (v) { ReceiptLayer.scan => t.layerScan, ReceiptLayer.original => t.layerOriginal, ReceiptLayer.digital => t.layerDigital },
+              onChanged: (v) => setState(() {
+                layer = v;
+                _tc.value = Matrix4.identity();
+              }),
+            ),
+          ),
+        ]),
+      ),
+      Expanded(
+        child: LayoutBuilder(builder: (context, c) {
+          final view = Size(c.maxWidth, c.maxHeight);
+          final content = switch (layer) {
+            ReceiptLayer.scan => _scan(view),
+            ReceiptLayer.original => _original(view),
+            ReceiptLayer.digital => DigitalReceipt(bill: b, selected: sel, onTap: _tapItem),
+          };
+          return Stack(children: [
+            Positioned.fill(child: content),
+            if (layer != ReceiptLayer.digital)
+              Positioned(
+                right: FasanSpace.m,
+                bottom: (it == null ? 0 : 170) + bottomBarSpace(context) + FasanSpace.s,
+                child: _ZoomButtons(
+                  zoomed: _scale > 1.01,
+                  onIn: () => _zoom(_scale * 1.6, viewport: view),
+                  onOut: () => _zoom(_scale / 1.6, viewport: view),
+                  onFit: _fit,
+                  fitLabel: t.fullWidth,
+                ),
+              ),
+            if (it != null)
+              Positioned(
+                left: FasanSpace.m,
+                right: FasanSpace.m,
+                bottom: bottomBarSpace(context) + FasanSpace.s,
+                child: _CorrectionBar(
+                  bill: b,
+                  item: it,
+                  readOnly: widget.readOnly,
+                  onChanged: () {
+                    setState(() {});
+                    widget.onChanged();
+                  },
+                  onClose: () => setState(() => sel = null),
+                ),
+              ),
+          ]);
+        }),
+      ),
+    ]);
+  }
+
+  bool _placed = false;
+
+  Widget _scan(Size view) {
+    final aspect = b.imageAspect ?? 0.4;
+    // a gutter on the right holds the avatars, so they never cover the amounts printed on the receipt
+    const gutter = 44.0;
+    final w = view.width - gutter, h = w / aspect;
+    final rows = _rows();
+    // start at the items, not at the shop header (the header stays reachable by scrolling up)
+    if (!_placed) {
+      _placed = true;
+      final first = rows.where((r) => r != Rect.zero).map((r) => r.top).fold<double?>(null, (a, y) => a == null || y < a ? y : a);
+      if (first != null) {
+        final y = (first * h - 48).clamp(0.0, math.max(0.0, h - view.height)).toDouble();
+        _tc.value = Matrix4.translationValues(0, -y, 0);
+      }
+    }
+    return InteractiveViewer(
+      transformationController: _tc,
+      constrained: false,
+      minScale: 1,
+      maxScale: 4,
+      boundaryMargin: EdgeInsets.only(bottom: bottomBarSpace(context) + 180),
+      onInteractionEnd: (_) => setState(() {}),
+      child: GestureDetector(
+        // Taps act at once (no 300 ms double-tap wait). A second tap within 300 ms at the same spot is a double tap:
+        // it undoes the first tap and toggles zoom 1× ↔ 2.5× (Regel 3.7/3.8).
+        onTapUp: (d) {
+          final now = DateTime.now();
+          final last = _lastTap;
+          if (last != null && now.difference(last.$1) < const Duration(milliseconds: 300) && (d.localPosition - last.$2).distance < 40) {
+            _lastTap = null;
+            if (last.$3 != null) _tapItem(last.$3!); // undo
+            if (_scale > 1.01) {
+              _fit();
+            } else {
+              _zoom(2.5, focus: MatrixUtils.transformPoint(_tc.value, d.localPosition));
+            }
+            return;
+          }
+          final k = _hit(Offset(d.localPosition.dx / w, d.localPosition.dy / h), rows);
+          _lastTap = (now, d.localPosition, k);
+          if (k != null) _tapItem(k);
+        },
+        child: SizedBox(
+          width: view.width,
+          height: h,
+          child: Stack(children: [
+            Positioned(left: 0, top: 0, width: w, height: h, child: Image.file(File(b.imagePath!), fit: BoxFit.fill, filterQuality: FilterQuality.medium)),
+            Positioned(
+              left: 0,
+              top: 0,
+              width: w,
+              height: h,
+              child: CustomPaint(
+                painter: _RowsPainter(
+                  rows: rows,
+                  bill: b,
+                  selected: sel,
+                  look: FasanLook.of(context),
+                  error: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ),
+            for (var k = 0; k < rows.length; k++)
+              if (rows[k] != Rect.zero && b.its[k].assigned)
+                Positioned(
+                  left: w + 4,
+                  width: gutter - 6,
+                  top: rows[k].top * h + (rows[k].height * h - 18) / 2,
+                  child: IgnorePointer(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: ShareAvatars(bill: b, item: b.its[k], size: 18))),
+                ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _original(Size view) {
+    final t = S.of(context);
+    return Stack(children: [
+      Positioned.fill(
+        child: InteractiveViewer(
+          transformationController: _tc,
+          minScale: 1,
+          maxScale: 5,
+          onInteractionEnd: (_) => setState(() {}),
+          child: Image.file(File(b.originalPath!), fit: BoxFit.contain, filterQuality: FilterQuality.medium),
+        ),
+      ),
+      Positioned(
+        left: FasanSpace.l,
+        top: FasanSpace.s,
+        child: IgnorePointer(child: FasanGlass(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), child: Text(t.originalNote, style: Theme.of(context).textTheme.bodySmall))),
+      ),
+    ]);
+  }
+}
+
+/// Item rows: thin outline; assigned = colour of the first person as soft fill plus a bar on the left;
+/// unassigned = dashed-looking thin outline in the error colour; header and footer of the receipt paler.
+class _RowsPainter extends CustomPainter {
+  _RowsPainter({required this.rows, required this.bill, required this.selected, required this.look, required this.error});
+
+  final List<Rect> rows;
+  final Bill bill;
+  final int? selected;
+  final FasanLook look;
+  final Color error;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final real = [for (final r in rows) if (r != Rect.zero) r];
+    if (real.isEmpty) return;
+    final top = real.map((r) => r.top).reduce(math.min) * size.height - 6;
+    final bottom = real.map((r) => r.bottom).reduce(math.max) * size.height + 6;
+    // Regel 3.1: header/footer stay visible, only paler
+    final veil = Paint()..color = look.background.withValues(alpha: 0.45);
+    canvas.drawRect(Rect.fromLTRB(0, 0, size.width, math.max(0, top)), veil);
+    canvas.drawRect(Rect.fromLTRB(0, bottom, size.width, size.height), veil);
+    for (var k = 0; k < rows.length; k++) {
+      final n = rows[k];
+      if (n == Rect.zero) continue;
+      final r = Rect.fromLTRB(n.left * size.width - 4, n.top * size.height - 2, n.right * size.width + 4, n.bottom * size.height + 2);
+      final rr = RRect.fromRectAndRadius(r, const Radius.circular(6));
+      final it = bill.its[k];
+      if (it.assigned) {
+        final first = it.shares.keys.where((p) => (it.shares[p] ?? 0) > 0).fold<int?>(null, (a, p) => a == null || p < a ? p : a)!;
+        final c = FasanPeople.color(bill.ps[first].color, look.brightness);
+        canvas.drawRRect(rr, Paint()..color = c.withValues(alpha: 0.16));
+        canvas.drawRRect(
+          RRect.fromRectAndCorners(Rect.fromLTWH(r.left, r.top, 4, r.height), topLeft: const Radius.circular(6), bottomLeft: const Radius.circular(6)),
+          Paint()..color = c,
+        );
+      } else {
+        canvas.drawRRect(rr, Paint()..color = error.withValues(alpha: 0.06));
+        canvas.drawRRect(rr, Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = error.withValues(alpha: 0.55));
+      }
+      if (k == selected) {
+        canvas.drawRRect(rr.inflate(2), Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..color = look.accent);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RowsPainter old) => true; // cheap; shares change in place
+}
+
+/// People as a bar with running sums; the chosen one is the only filled chip (Regel 4.3).
+class _PersonBar extends StatelessWidget {
+  const _PersonBar({required this.bill, required this.selected, required this.sumOf, required this.onSelect});
+
+  final Bill bill;
+  final int? selected;
+  final int Function(int) sumOf;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context);
+    final de = S.of(context).de;
+    return SizedBox(
+      height: math.max(l.minTap, 48) + 16,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l, vertical: 8),
+        itemCount: bill.ps.length,
+        separatorBuilder: (_, _) => const SizedBox(width: FasanSpace.s),
+        itemBuilder: (context, p) {
+          final on = selected == p;
+          final c = FasanPeople.color(bill.ps[p].color, l.brightness);
+          return Semantics(
+            selected: on,
+            button: true,
+            child: Material(
+              color: on ? c.withValues(alpha: 0.22) : l.surfaceAlt,
+              shape: StadiumBorder(side: BorderSide(color: on ? c : l.hairline, width: on ? 2 : 1)),
+              child: InkWell(
+                customBorder: const StadiumBorder(),
+                onTap: () => onSelect(p),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(6, 4, 14, 4),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    FasanAvatar(name: bill.ps[p].name, index: bill.ps[p].color, size: 28),
+                    const SizedBox(width: 8),
+                    Text(bill.ps[p].name, style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(width: 8),
+                    Text('${money(sumOf(p), de: de)} €', style: Theme.of(context).textTheme.labelMedium),
+                  ]),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ZoomButtons extends StatelessWidget {
+  const _ZoomButtons({required this.zoomed, required this.onIn, required this.onOut, required this.onFit, required this.fitLabel});
+
+  final bool zoomed;
+  final VoidCallback onIn, onOut, onFit;
+  final String fitLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context);
+    // solid surface: glass vanished over the white receipt (0.2 screenshots)
+    return Material(
+      color: l.surface,
+      elevation: 3,
+      shape: StadiumBorder(side: BorderSide(color: l.hairline)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (zoomed) TextButton(onPressed: onFit, child: Text(fitLabel)),
+        IconButton(tooltip: '−', onPressed: zoomed ? onOut : null, icon: const Icon(Icons.remove_rounded)),
+        IconButton(tooltip: '+', onPressed: onIn, icon: const Icon(Icons.add_rounded)),
+      ]),
+    );
+  }
+}
+
+/// After a tap: line picture, name, amount, people, edit (Regel 3.6).
+class _CorrectionBar extends StatelessWidget {
+  const _CorrectionBar({required this.bill, required this.item, required this.onChanged, required this.onClose, required this.readOnly});
+
+  final Bill bill;
+  final BillItem item;
+  final VoidCallback onChanged, onClose;
+  final bool readOnly;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    return FasanGlass(
+      padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.s, FasanSpace.s, FasanSpace.m),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+        Row(children: [
+          Expanded(child: ItemTitle(item, style: Theme.of(context).textTheme.titleMedium, maxLines: 1)),
+          Money(item.amount),
+          IconButton(
+            tooltip: t.edit,
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () async {
+              if (await editItem(context, item, onDelete: () => bill.its.remove(item))) onChanged();
+              if (!bill.its.contains(item)) onClose();
+            },
+          ),
+          IconButton(tooltip: t.close, icon: const Icon(Icons.close_rounded), onPressed: onClose),
+        ]),
+        if (item.snippet != null) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: Snippet(item.snippet, height: 30)),
+        if (!readOnly) PeoplePicker(bill: bill, item: item, onChanged: onChanged),
+      ]),
+    );
+  }
+}
+
+/// The receipt rebuilt by the app: shop, date, items with plain names, total and check (Beschluss 02.11.).
+class DigitalReceipt extends StatelessWidget {
+  const DigitalReceipt({super.key, required this.bill, this.selected, this.onTap});
+
+  final Bill bill;
+  final int? selected;
+  final ValueChanged<int>? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context);
+    final t = S.of(context);
+    final tt = Theme.of(context).textTheme;
+    final mono = tt.bodyMedium!.copyWith(fontFamily: l.monoFamily == null ? null : 'packages/${l.fontPackage}/${l.monoFamily}', fontFeatures: const [FontFeature.tabularFigures()]);
+    final date = '${bill.created.day.toString().padLeft(2, '0')}.${bill.created.month.toString().padLeft(2, '0')}.${bill.created.year}';
+    return ListView(
+      padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottomBarSpace(context) + 190),
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.radius * 0.6), border: Border.all(color: l.hairline)),
+          child: Padding(
+            padding: const EdgeInsets.all(FasanSpace.l),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text(bill.purpose.isEmpty ? t.appName : bill.purpose, style: tt.titleLarge, textAlign: TextAlign.center),
+              const SizedBox(height: 4),
+              Text(date, style: tt.bodySmall, textAlign: TextAlign.center),
+              const SizedBox(height: FasanSpace.m),
+              Divider(color: l.hairline),
+              for (var k = 0; k < bill.its.length; k++)
+                InkWell(
+                  onTap: onTap == null ? null : () => onTap!(k),
+                  child: Container(
+                    constraints: BoxConstraints(minHeight: l.minTap),
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    decoration: k == selected ? BoxDecoration(border: Border.all(color: l.accent, width: 2), borderRadius: BorderRadius.circular(6)) : null,
+                    child: Row(children: [
+                      Expanded(child: ItemTitle(bill.its[k])),
+                      if (bill.its[k].assigned) Padding(padding: const EdgeInsets.only(right: 8), child: ShareAvatars(bill: bill, item: bill.its[k], size: 18)),
+                      Text('${money(bill.its[k].amount, de: t.de)} €', style: mono),
+                    ]),
+                  ),
+                ),
+              Divider(color: l.hairline),
+              Row(children: [
+                Expanded(child: Text(t.total, style: tt.titleMedium)),
+                Text('${money(bill.effectiveTotal, de: t.de)} €', style: mono.copyWith(fontWeight: FontWeight.w700, fontSize: 18)),
+              ]),
+              if (bill.difference != 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(t.diff('${money(bill.difference.abs(), de: t.de)} €'), style: tt.bodySmall!.copyWith(color: Theme.of(context).colorScheme.error)),
+                ),
+              if (bill.checked && bill.difference == 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(children: [Icon(Icons.verified_outlined, size: 16, color: l.accent), const SizedBox(width: 6), Text(t.checked, style: tt.bodySmall)]),
+                ),
+            ]),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Full-screen receipt from any step (Regel 3.2): scan, original, digital.
+class ReceiptScreen extends StatefulWidget {
+  const ReceiptScreen({super.key, required this.bill, this.initialLayer = ReceiptLayer.scan});
+
+  final Bill bill;
+  final ReceiptLayer initialLayer;
+
+  @override
+  State<ReceiptScreen> createState() => _ReceiptScreenState();
+}
+
+class _ReceiptScreenState extends State<ReceiptScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.bill.purpose.isEmpty ? t.showReceipt : widget.bill.purpose)),
+      body: ReceiptAssign(bill: widget.bill, readOnly: true, initialLayer: widget.initialLayer, onChanged: () => setState(() {})),
+    );
+  }
+}
