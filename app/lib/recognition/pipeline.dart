@@ -16,6 +16,7 @@ import 'package:zxing2/qrcode.dart';
 import 'image.dart';
 import 'model.dart';
 import 'paddle.dart';
+import 'place.dart';
 import 'reader.dart';
 import 'receipt_image.dart';
 import 'scan.dart';
@@ -45,6 +46,7 @@ class Recognition {
     required this.log,
     required this.width,
     required this.height,
+    this.header,
   });
 
   final ReadResult result;
@@ -59,6 +61,9 @@ class Recognition {
   /// Protocol of the steps (shared only on request; contains no image).
   final Map<String, Object?> log;
   final int width, height;
+
+  /// Shop name, address, date, tax id from the best read header of all passes (place.dart bestHeader).
+  final ReceiptHeader? header;
 }
 
 class _Pass {
@@ -352,8 +357,11 @@ class Recognizer {
       'gesamtOk': r.check.ok,
       'zeilen': [for (final x in r.lines) '${x.type}|${x.text}'],
     });
+    final header = bestHeader([for (final p in all) [for (final l in p.lines.lines) l.text]], qrDate: qr?.date, qrNif: qr?.nif);
+    _log('kopf', {'geschaeft': header.shop, 'adresse': header.meta.address, 'nif': header.meta.taxId, 'datum': header.meta.date?.toIso8601String()});
     _sw.stop();
     return Recognition(
+      header: header,
       result: r,
       display: display,
       original: identical(display, canvas) ? null : canvas,

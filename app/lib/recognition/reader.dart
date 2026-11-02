@@ -443,7 +443,9 @@ final _unitsWord = RegExp(r'\b(x|kg|eur|euro|usd|chf|gbp|un|uni|stk|st|pcs|l|cl|
 final _az = RegExp(r'[a-z]');
 int lettersIn(String t) => countMatches(_az, foldLower(t).replaceAll(_unitsWord, '')); // [buchst]
 
-final _n2 = RegExp(r'^\s*(uni|un|jni|unl|und|unid|uds?|stk|pcs|pc)\b\.?\s*', caseSensitive: false);
+// „Uni“ as OCR reads it: Uni, Un1, Unl, Unt, Unf, Unj, Uní, Um, Jni (protocols 02.11.: „Unf CANECA“, „í Cesta de pao“ –
+// \b treats „í“ as non-word, so „Un“ was cut and „í“ stayed). Ends only where no letter follows.
+final _n2 = RegExp(r'^\s*(u[nm][il1tfjíìĩ|!]?|jni|und|unid|unidade|uds?|stk|pcs|pc)(?![A-Za-zÀ-ÿ])\.?\s*', caseSensitive: false);
 final _n3 = RegExp(r'\b\d{1,2}\s*%');
 final _n4 = RegExp(
     r'[€$£¥₩₹]|(?<![\p{L}])(euro|eur|usd|chf|gbp|jpy|fr\.|kr|zł|kč|rm|myr|sgd|thb|idr|php|vnd|aud|nzd|cad|hkd|cny|rmb|krw|inr|try|pln|czk|huf|sek|nok|dkk|brl|mxn|zar|aed)(?![\p{L}])',

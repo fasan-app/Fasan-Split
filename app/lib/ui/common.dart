@@ -52,8 +52,11 @@ class StepScaffold extends StatelessWidget {
       });
     }
     final t = S.of(context);
+    // first step of a resumed draft sits at the bottom of a nested Navigator (ResumeFlow): back then closes the bill
+    final nested = (ModalRoute.of(context)?.isFirst ?? false) && Navigator.of(context, rootNavigator: true).canPop();
     final scaffold = Scaffold(
       appBar: AppBar(
+        leading: nested ? BackButton(onPressed: () => Navigator.of(context, rootNavigator: true).maybePop()) : null,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           FasanLabel('$step / 4'),
           Text(title),
@@ -94,7 +97,8 @@ class StepScaffold extends StatelessWidget {
                           StoreScope.read(context).upsert(b);
                           FasanHaptics.of(context).confirm();
                           final note = b.done ? t.saved : t.savedDraft;
-                          Navigator.of(context).popUntil((r) => r.isFirst);
+                          // root navigator: a resumed draft runs in a nested one (ResumeFlow)
+                          Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
                           showNote(context, note);
                         },
                       ),

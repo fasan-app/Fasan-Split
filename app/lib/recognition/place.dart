@@ -7,6 +7,8 @@
 // - NIF/VAT: PT „NIF“, „Contribuinte“, „N. Contrib.“ with 9 digits (the customer's „Consumidor final“ is skipped),
 //   DE „USt-ID/UID DE…“.
 
+import 'dart:math' as math;
+
 class ReceiptMeta {
   const ReceiptMeta({this.date, this.street, this.postcodeCity, this.taxId});
 
@@ -101,4 +103,94 @@ ReceiptMeta extractMeta(List<String> lines, {String? qrDate, String? qrNif, Date
     }
   }
   return ReceiptMeta(date: date, street: street, postcodeCity: city, taxId: tax);
+}
+
+/// Portuguese NIF check digit: weights 9…2 on the first 8 digits, check = 11 − (sum mod 11), 10 and 11 become 0
+/// (Business::PT::NIF README; jsvat portugal.ts; atractor.pt „The check digit of Portuguese ID Card“).
+/// A misread digit fails this test with probability ~10/11, so a valid NIF marks a cleanly read header.
+bool validNifPt(String nif) {
+  if (!RegExp(r'^\d{9}$').hasMatch(nif)) return false;
+  var sum = 0;
+  for (var i = 0; i < 8; i++) {
+    sum += int.parse(nif[i]) * (9 - i);
+  }
+  var c = 11 - sum % 11;
+  if (c > 9) c = 0;
+  return c == int.parse(nif[8]);
+}
+
+/// Shop name, address, date and tax id of a receipt, taken from the best read header among all recognition passes.
+class ReceiptHeader {
+  const ReceiptHeader({required this.shop, required this.meta});
+
+  final String shop;
+  final ReceiptMeta meta;
+}
+
+// Lines that are never the shop name: customer block, document type, table, tax and contact lines.
+final _notShopName = RegExp(
+    r'\d{4}|tel|nif|www|@|rua |str\.|avenida|street|consumidor|contribuinte|fatura|factura|recibo|original|tal[aã]o|mesa|atcud|'
+    r'qtd|descri|iva\b|total|operador|caixa|documento|ust|steuer|beleg|bon\b|kasse',
+    caseSensitive: false);
+
+/// How cleanly a line is read: share of tokens that look like words or numbers, not „5lu88zeg7“ or „Lis00.c“.
+double lineQuality(String s) {
+  final tokens = s.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
+  if (tokens.isEmpty) return 0;
+  var good = 0;
+  for (final t in tokens) {
+    final x = t.replaceAll(RegExp(r'^[^\wÀ-ÿ]+|[^\wÀ-ÿ]+$'), '');
+    if (RegExp(r'^[A-Za-zÀ-ÿ][a-zà-ÿ]*$|^[A-ZÀ-Þ]+$|^[A-Za-zÀ-ÿ]{1,3}\.?$').hasMatch(x) || RegExp(r'^[\d.,/:\-]+$').hasMatch(x)) good++;
+  }
+  return good / tokens.length;
+}
+
+/// Picks the header from all passes (Nutzer 02.11.: „Wofür, Ort, Adresse, Restaurantname kompletter Unfug“). Cause in the
+/// logs: the item winner was used for the header too, although it was cut below the header (Restaurante da Sé: winner began
+/// at „CONSUMIDOR FINAL“) or read it garbled (Estrela do Bairro: „Vara fiario de Noticias hobo R/C“, while another pass
+/// read „Rua Diario de Noticias no66 R/C“). Now every pass is scored: valid NIF check digit, clean postcode line,
+/// clean shop line; the best pass gives address and name. QR data (AT code) wins for NIF and date.
+ReceiptHeader bestHeader(List<List<String>> passes, {String? qrDate, String? qrNif, DateTime? now}) {
+  ReceiptMeta? bestMeta;
+  var bestScore = -1.0;
+  String shop = '';
+  var shopScore = 0.0;
+  DateTime? anyDate;
+  String? anyNif = qrNif != null && validNifPt(qrNif) ? qrNif : null;
+  for (final lines in passes) {
+    // the header ends at the item table
+    final end = lines.indexWhere((l) => RegExp(r'\b(qtd|descri[cç][aã]o|artikel|menge)\b', caseSensitive: false).hasMatch(l));
+    final head = lines.take(end > 0 ? end : math.min(lines.length, 16)).toList();
+    final m = extractMeta(head, qrDate: qrDate, qrNif: qrNif, now: now);
+    anyDate ??= m.date ?? extractMeta(lines, now: now).date;
+    var score = 0.0;
+    final nif = m.taxId;
+    if (nif != null && validNifPt(nif)) {
+      score += 4;
+      anyNif ??= nif;
+    }
+    if (m.postcodeCity != null) score += 2 * lineQuality(m.postcodeCity!);
+    if (m.street != null) score += 1.5 * lineQuality(m.street!);
+    if (score > bestScore) {
+      bestScore = score;
+      bestMeta = m;
+    }
+    for (final l in head.take(6)) {
+      final t = l.trim();
+      final letters = RegExp(r'[A-Za-zÀ-ÿ]').allMatches(t).length;
+      if (letters < 5 || _notShopName.hasMatch(t)) continue;
+      // earlier lines are more likely the name; clean reading counts most
+      final s = lineQuality(t) * 3 + (head.indexOf(l) == 0 ? 1 : 0) + math.min(letters, 20) / 20;
+      if (s > shopScore) {
+        shopScore = s;
+        shop = t.replaceAll(RegExp(r'[,.;:]+$'), '');
+      }
+      break; // only the first candidate of each pass
+    }
+  }
+  final m = bestMeta ?? const ReceiptMeta();
+  return ReceiptHeader(
+    shop: shopScore >= 2.5 ? shop : '',
+    meta: ReceiptMeta(date: m.date ?? anyDate, street: m.street, postcodeCity: m.postcodeCity, taxId: anyNif ?? m.taxId),
+  );
 }

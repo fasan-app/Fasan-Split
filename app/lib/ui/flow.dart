@@ -305,7 +305,7 @@ class _PayScreenState extends State<PayScreen> {
           : () {
               b.done = true;
               StoreScope.read(context).upsert(b);
-              Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => ResultScreen(bill: b)), (r) => r.isFirst);
+              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => ResultScreen(bill: b)), (r) => r.isFirst);
             },
       body: ListView(
         padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context)),

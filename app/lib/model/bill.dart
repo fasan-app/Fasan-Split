@@ -61,7 +61,7 @@ class BillItem {
   Map<int, double> shares;
 
   // Leading till words in front of the name ("2 Uni", "1 Unj", "Un."): OCR variants of „Unidade“ (PT tills).
-  static final _tillPrefix = RegExp(r'^\s*(\d+([.,]00)?\s+)?(uni|unj|unl|unt|un1|un|und|unid|unidade)\.?\s+', caseSensitive: false);
+  static final _tillPrefix = RegExp(r'^\s*(\d+([.,]00)?\s+)?(u[nm][il1tfjíìĩ|!]?|und|unid|unidade)(?![A-Za-zÀ-ÿ])\.?\s+', caseSensitive: false);
   static final _cutTail = RegExp(r'\s+(c/?|[a-z])$', caseSensitive: false);
 
   /// Name as printed, without till prefixes and cut-off one-letter tails; ALL CAPS in title case.

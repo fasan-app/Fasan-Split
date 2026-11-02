@@ -61,6 +61,9 @@ class ScanResultData {
     required this.advance,
     required this.log,
     required this.lines,
+    this.date,
+    this.address,
+    this.taxId,
   });
 
   final List<BillItem> items;
@@ -74,6 +77,10 @@ class ScanResultData {
 
   /// All lines with type (for the receipt view): (text, box, type, item index or -1).
   final List<(String, NBox, String, int)> lines;
+
+  /// From the best read header of all passes (place.dart bestHeader), not only the item winner.
+  final DateTime? date;
+  final String? address, taxId;
 }
 
 class RecognitionService {
@@ -167,6 +174,9 @@ class RecognitionService {
       width: m['width'] as int,
       height: m['height'] as int,
       shop: m['shop'] as String,
+      date: DateTime.tryParse(m['date'] as String? ?? ''),
+      address: m['address'] as String?,
+      taxId: m['taxId'] as String?,
       kind: m['kind'] as String,
       advance: m['advance'] as int,
       log: m['log'] as String,
@@ -251,7 +261,11 @@ Map<String, Object?> _encode(Recognition x) {
     'display': TransferableTypedData.fromList([disp]),
     'width': x.display.w,
     'height': x.display.h,
-    'shop': r.kind?.shop ?? '',
+    // the header of all passes beats the winner's first line (Nutzer 02.11.: Name und Adresse „Unfug“)
+    'shop': (x.header?.shop.isNotEmpty ?? false) ? x.header!.shop : '',
+    'date': x.header?.meta.date?.toIso8601String(),
+    'address': x.header?.meta.address,
+    'taxId': x.header?.meta.taxId,
     'kind': r.kind?.name ?? '',
     'advance': r.advance,
     'log': jsonEncode(x.log),

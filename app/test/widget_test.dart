@@ -95,6 +95,15 @@ void main() {
     await tester.tap(find.text('Abendessen'));
     await tester.pumpAndSettle();
     expect(find.byType(PeopleScreen), findsOneWidget);
+    // back from a resumed step leads to the previous step, then home (Nutzer 02.11.)
+    await tester.tap(find.byType(BackButton).last);
+    await tester.pumpAndSettle();
+    expect(find.byType(ReviewScreen), findsOneWidget);
+    expect(find.byType(PeopleScreen), findsNothing);
+    await tester.tap(find.byType(BackButton).last);
+    await tester.pumpAndSettle();
+    expect(find.byType(ReviewScreen), findsNothing);
+    expect(find.byType(HomeScreen), findsOneWidget);
   });
 
   testWidgets('Bon-Ansicht: Person wählen, Zeile antippen ordnet zu; Tipp daneben rastet ein; Mengenspalte im Kasten', (tester) async {

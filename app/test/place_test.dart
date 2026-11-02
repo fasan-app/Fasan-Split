@@ -36,4 +36,36 @@ void main() {
   test('Unmögliche Daten und Zukunft werden verworfen', () {
     expect(extractMeta(['31.02.2026', '01.01.2031'], now: now).date, isNull);
   });
+
+  test('NIF-Prüfziffer (Modulo 11)', () {
+    expect(validNifPt('515713139'), isTrue);
+    expect(validNifPt('510882897'), isTrue);
+    expect(validNifPt('510882898'), isFalse);
+    expect(validNifPt('5108828'), isFalse);
+  });
+
+  // Zeilen aus den Protokollen 02.11. (S23): der Gewinner für die Posten hatte keinen oder einen verlesenen Kopf.
+  test('Kopf aus dem besten Durchlauf, nicht aus dem Posten-Gewinner (Restaurante da Sé)', () {
+    final h = bestHeader([
+      ['CONSUMIDOR FINAL', 'Contribuinte:Consumidor final.', 'QTD UNI DESCRICAO VA 3,50 VALOR', 'Un1 TULIPA 23% 3,50'],
+      ['RESTAURANTE DA SE', 'DINASTIA VALIDA LDA', 'NIF: 515713139', 'CRUZES DA SE 31A', '1100-192 LISBOA', 'TELF: 218 862 886',
+        '2026-10-24 FATURA-RECIBO N:', 'Original FT 1A2601/11114', 'CONSUMIDOR FINAL', 'QTD UNI DESCRICAO IVA LOR'],
+    ], now: now);
+    expect(h.shop, 'RESTAURANTE DA SE');
+    expect(h.meta.taxId, '515713139');
+    expect(h.meta.address, 'CRUZES DA SE 31A, 1100-192 LISBOA');
+    expect(h.meta.date, DateTime(2026, 10, 24));
+  });
+
+  test('Verlesener Kopf verliert gegen sauberen (Estrela do Bairro)', () {
+    final h = bestHeader([
+      ['ATOUD IRSTYOKV-1417', 'Estrela do Bairro,', 'Varela e Mestre,tidia', 'Vara fiario de Noticias hobo R/C', '1200-145 Lis00.c',
+        'Centribuinte: 5lu88zeg7', 'TALAO DE CONTROLO N:', '2026-10-23', 'QTD UNI DESCRICÃO IVA VALOR'],
+      ['ATCUD:J66TX9KV-1417', 'Estrela do Bairro', 'Varela e Mestre, Lda.', 'Rua Diario de Noticias no66 R/C', '1200-145 Lisboa',
+        'Tel. 920230989 chamada para a rede fixa', 'Contribuinte: 510882897', '2026-10-23 TALÃO DE CONTROLO N:', 'QTD UNI DESCRICAO'],
+    ], now: now);
+    expect(h.shop, 'Estrela do Bairro');
+    expect(h.meta.taxId, '510882897');
+    expect(h.meta.address, 'Rua Diario de Noticias no66 R/C, 1200-145 Lisboa');
+  });
 }

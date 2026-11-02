@@ -73,12 +73,13 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
     final log = await BillStore.saveFile('$id.log.json', Uint8List.fromList(utf8.encode(r.log)));
     // the photo exactly as taken (Beschluss 02.11.: Original immer sichtbar, für alle)
     final orig = await BillStore.saveFile('$id.orig.jpg', widget.photo);
+    // header from the best read pass (bestHeader); the winner's lines only as fallback
     final meta = extractMeta([for (final l in r.lines) l.$1]);
     final bill = Bill(
       id: id,
-      receiptDate: meta.date,
-      placeAddress: meta.address,
-      taxId: meta.taxId,
+      receiptDate: r.date ?? meta.date,
+      placeAddress: r.address ?? meta.address,
+      taxId: r.taxId ?? meta.taxId,
       created: DateTime.now(),
       purpose: r.shop.isNotEmpty ? _title(r.shop) : r.kind,
       total: r.total,
