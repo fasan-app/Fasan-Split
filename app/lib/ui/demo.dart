@@ -13,7 +13,7 @@ import 'assign.dart';
 import 'flow.dart';
 import 'home.dart';
 
-/// gallery | receipt | tour (start page → total → receipt → result, one screen every 7 s) | lab (effect test page)
+/// gallery | receipt | tour (start page → total → receipt → result, one screen every 17 s) | lab (effect test page)
 const demoPage = String.fromEnvironment('FASAN_DEMO');
 
 /// Palette for design drafts A/B/C: signal | cobalt | sage (empty = the user's setting).
@@ -87,9 +87,9 @@ class _DemoLauncherState extends State<DemoLauncher> {
             () => ResultScreen(bill: b),
           ];
           for (final (i, next) in screens.indexed) {
-            await Future<void>.delayed(const Duration(seconds: 7));
+            await Future<void>.delayed(const Duration(seconds: 14));
             nav.push(MaterialPageRoute(builder: (_) => next()));
-            await Future<void>.delayed(const Duration(seconds: 2));
+            await Future<void>.delayed(const Duration(seconds: 3));
             debugPrint('FASAN_DEMO_STEP ${i + 1}');
           }
           return;
