@@ -1,7 +1,7 @@
 # Stand Fasan Split
 
 **Version 0.2** (CI-Build `0.1.<Lauf>`), APK unter Releases → `neueste`, nur arm64, 82,5 MB, mit
-öffentlichem Test-Schlüssel signiert, ohne Internet-Berechtigung.
+öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
 ## Was da ist
@@ -20,14 +20,14 @@ Stand 01.11.2026.
 |---|---|---|
 | Einheit (`test/reader_test.dart`) | 30/30 | 30/30 |
 | Synthetisch (`test/e2e_test.dart`) | 40/41 komplett richtig (PNG 10/11, JPG 30/30) | 41/41 |
-| SROIE 0–59 (`test/sroie_test.dart`) | 54/60 nach Web-Zählweise | 55/60 |
-| Echte Bons (`FASAN_BONORDNER=fasan-diagnose/tests/echt`), 02.11. | 12/13 komplett richtig, Posten 95/98; Datum 12/13, PLZ 11/13 | – |
+| SROIE 0–59 (`test/sroie_test.dart`) | 55/60 nach Web-Zählweise (02.11. mittags; vorher 54) | 55/60 |
+| Echte Bons (`FASAN_BONORDNER=fasan-diagnose/tests/echt`), 02.11. mittags | 13/13 komplett richtig, Posten 98/98; Datum 13/13, PLZ 12/13 | – |
 | Widget- und Modelltests (`flutter test`) | 37/37 | – |
 
 Bekannter Fehlschlag: `de-discount.png` liest „Storno Chips Paprika“ als Unsinn, darum bleiben Chips und Storno als
 zwei Posten stehen (Summe stimmt, „geprüft“ ja). Ursache der Lese-Abweichung zum Web nicht geprüft.
 
-SROIE: echte Fehler 003, 008, 020, 034, 041, alle als „nicht geprüft“ gemeldet. 033 zählt formal als falsch und
+SROIE: echte Fehler 008, 020, 034, 041 (003 seit 02.11. mittags richtig), alle als „nicht geprüft“ gemeldet. 033 zählt formal als falsch und
 „geprüft“, weil der Datensatz dort keine Summe hat; das Bild zeigt „Total Amount $8.20“, Dart liest 8,20 (richtig).
 Welche Bons im Web scheitern, ist nicht dokumentiert; ein Einzelvergleich steht aus.
 
@@ -75,14 +75,21 @@ Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEI
 
 ### Design und Einstellungen
 - ❌ Stile deutlich unterscheidbar (Rams/Ive/Bauhaus, Recherchen in Fasan-Karte und Kamera)
-- ◐ Korn jetzt merkbar (0.2). Dunkler Kasten: Ursache ist der Glow/Halation-Filter (`ImageFilter.shader`); im Emulator (Impeller OpenGLES) stand damit die ganze App kopfüber. Filter aus, Regler ausgeblendet, bis er auf GLES und Vulkan nachweislich stimmt (fasan_ui `FasanFilm.bloomVerified`). Emulator danach: richtig herum, kein Kasten. S23 (Vulkan) noch zu prüfen
+- ◐ Korn jetzt merkbar (0.2). Dunkler Kasten: Ursache ist der Glow/Halation-Filter (`ImageFilter.shader`); im Emulator (Impeller OpenGLES) stand damit die ganze App kopfüber. Filter aus, Regler ausgeblendet, bis er auf GLES und Vulkan nachweislich stimmt (fasan_ui `FasanFilm.bloomVerified`). Emulator danach: richtig herum. Der Kasten auf dem S23 kam aber vom Korn-Shader: mediump (16 Bit) lief im Hash ab ~250 dp über, Korn nur oben links. Jetzt highp + kleine Hash-Eingaben. S23 noch zu prüfen
 - ◐ Einstellungen nach Recherche (`docs/recherche/2026-11-02-einstellungen.md`): Rechnung, Personen, Aussehen, Einführung, Daten (Export, Fotos/alles löschen), Diagnose, Über (0.2); ❌ Währung, Profile, Wiederherstellen
 - ✅ Karten: Knopfreihe über der Leiste; Meldungen über der Leiste statt über „Weiter“ (0.2)
 - ❌ Eigene Kamera-Ansicht mit Live-Begradigung
 
 ### Prüfen
-- ✅ Echte Bons: 13 Fotos in `fasan-diagnose/tests/echt`, 12/13. Fehlschlag: McDonald's (keine Summe, keine Posten). Ferreiras richtig „nicht geprüft“ (7,90 € ohne Postenzeile)
+- ✅ Echte Bons: 13 Fotos in `fasan-diagnose/tests/echt`, 13/13. McDonald's war ein Auswahlfehler (leerer Durchlauf gewann; Kopfzeilen zählten als unklar), kein Lesefehler. Ferreiras richtig „nicht geprüft“ (7,90 € ohne Postenzeile)
 - ✅ Emulator-Bildschirmfotos mit echtem Bon: Workflow „Emulator-Bilder“ im privaten fasan-diagnose (Bilder im Zweig `bilder`), Vorführmodus `--dart-define=FASAN_DEMO`
+
+## Updates in der App (0.2.1)
+
+Prüft `releases/tags/neueste` über die GitHub-API (einmal am Tag, abschaltbar, oder auf Tipp in Einstellungen → Updates),
+lädt die APK, prüft SHA-256 (`digest` der API) und startet den Android-Installer (ota_update, MIT). Berechtigungen:
+INTERNET, ACCESS_NETWORK_STATE, REQUEST_INSTALL_PACKAGES; Plugin-Berechtigungen WRITE_EXTERNAL_STORAGE,
+INSTALL_PACKAGES, ACCESS_WIFI_STATE entfernt. Funktioniert nur, solange alle Versionen mit demselben Schlüssel signiert sind.
 
 ## Bildschirmfotos
 
