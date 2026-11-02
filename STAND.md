@@ -122,6 +122,12 @@ Erledigt (Ursache belegt):
 - Update: erst Größe + Änderungen, Laden nur auf Tipp. Teil-Updates: Recherche `docs/recherche/2026-11-02-updates-delta.md`
   empfiehlt Modelle als eigene Dateien (Nutzer entscheidet nach Recherche; widerspricht „alles offline ab Installation“).
 
+Nächste Sitzung (Token sparen: 80 % der Woche verbraucht am 02.11.): Reihenfolge und Aufträge in
+`../fasan_ui/docs/GESTALTUNG.md` §9. Updates bleiben ganze APK (Beschluss). Für die Erkennung neu (Nutzer 02.11.):
+- Mehrdeutige Lesungen direkt im Posten zur Auswahl anbieten, mit Wahrscheinlichkeit in Prozent.
+- Korrekturen lernen: Wählt der Nutzer eine Lesart, gilt sie künftig bei ähnlich verlesenen Wörtern (lokal, ohne Netz).
+- Größere Wörterbücher sinnvoller Texte und Wörter je erkannter oder angegebener Sprache (PT, DE, EN …), Lizenz prüfen.
+
 Offen (Recherche liegt vor, Umsetzung nächste Sitzung):
 - Stil Papier (`fasan_ui/docs/recherche/2026-11-02-stil-papier.md`), Stil Braun-Technik (`…-stil-braun-technik.md`).
 - Lebendig/Warten (`…-lebendig-warten.md`): Scan zeigt echte Arbeit (Zeilen erscheinen, Schrittzähler), Hinweis-Impulse.
