@@ -15,7 +15,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   final diag = Platform.environment['FASAN_DIAGNOSE'] ?? '../../fasan-diagnose/tests';
-  final dir = Directory('$diag/bons');
+  // FASAN_BONORDNER: anderer Ordner, z. B. fasan-diagnose/tests/echt (echte Bons, nur dort).
+  final dir = Directory(Platform.environment['FASAN_BONORDNER'] ?? '$diag/bons');
   final ready = dir.existsSync() && File('assets/models/det.onnx').existsSync();
   test('e2e synthetische Bons', () {
     final threads = int.tryParse(Platform.environment['FASAN_THREADS'] ?? '') ?? 2;

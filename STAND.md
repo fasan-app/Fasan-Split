@@ -21,6 +21,7 @@ Stand 01.11.2026.
 | Einheit (`test/reader_test.dart`) | 30/30 | 30/30 |
 | Synthetisch (`test/e2e_test.dart`) | 40/41 komplett richtig (PNG 10/11, JPG 30/30) | 41/41 |
 | SROIE 0–59 (`test/sroie_test.dart`) | 54/60 nach Web-Zählweise | 55/60 |
+| Echte Bons (`FASAN_BONORDNER=fasan-diagnose/tests/echt`), 02.11. | 12/13 komplett richtig, Posten 95/98 | – |
 | Widget- und Modelltests (`flutter test`) | 37/37 | – |
 
 Bekannter Fehlschlag: `de-discount.png` liest „Storno Chips Paprika“ als Unsinn, darum bleiben Chips und Storno als
@@ -32,6 +33,56 @@ Welche Bons im Web scheitern, ist nicht dokumentiert; ein Einzelvergleich steht 
 
 Aufrufe stehen jeweils im Kopf der Testdatei. E2E und SROIE brauchen `libonnxruntime.so.1.22.0` im
 `LD_LIBRARY_PATH` und laufen ~20 s je Bon; in der CI werden sie übersprungen.
+
+## Soll-Liste (Beschluss 02.11.: alles aus der Web-App + Punkte vom 02.11.)
+
+Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEIDUNGEN.md` (Bon 3.5–3.19, Kosten 2), Nutzer 02.11.
+
+### Ablauf und Speichern
+- ❌ Speichern nach jeder Änderung, Liste „Angefangen“, Schließen verwirft nie, großer Speichern-Knopf in jedem Schritt
+- ❌ Rückgängig/Wiederholen beliebig vieler Schritte
+- ❌ Einführung beim ersten Start + Beispiel-Bon, beides überspringbar
+- ◐ Wer war dabei; ❌ gleich oder nach Posten, feste Beträge, Anteile
+- ◐ Wer hat bezahlt; ❌ mehrere Zahler, Anzahlung, Trinkgeld/Rundung anteilig
+- ✅ Cent nach größten Resten; ◐ Ausgleich mit wenigsten Überweisungen (prüfen: exakt, nicht gierig)
+- ❌ Ausgaben ohne Kassenzettel (Formular)
+- ❌ Gruppen-Knopf oben rechts ohne Funktion
+
+### Bon-Ansicht
+- ❌ Drei Ansichten: Original unverändert, bereinigt, digital nachgebaut (auch PDF); Nebeneinander
+- ❌ Immer der ganze Bon, Kopf/Fuß blasser; Zoom zwei Finger, Doppeltippen 1×↔2,5×, „Ganze Breite“
+- ❌ Modus „Person wählen, Zeilen antippen“; laufende Summen je Person oben fest; Personen als Leiste
+- ❌ Posten antippen: korrigieren, zuordnen, ausblenden, löschen, andere Zeilen übernehmen; Tipp neben Kasten rastet ein
+- ❌ Ladeanzeige ist der Bon selbst (Lichtband, aufleuchtende Zeilen)
+- ❌ Zeilenkasten umfasst die Mengenspalte (in 0.1.2 abgeschnitten); Menge × Preis bleibt ein Posten
+- ✅ mehrzeilige Posten als eine Form; ◐ Avatare (zu klein); ❌ Schraffur je Person, Okabe-Ito-Farben, eindeutige Kürzel
+
+### Erkennung und Daten
+- ✅ Leser 3.19 nach Dart (Messwerte oben)
+- ❌ Klarnamen mit Symbol (speisen, 7 Sprachen), Bon-Name klein darunter (in 0.1.2 „Unj Torrada“)
+- ❌ Lesesicherheit je Posten sichtbar, andere Lesungen wählbar, Korrektur lernt Lesefehler
+- ❌ Bon-Art (Restaurant, Café, Einkauf …) füllt „Wofür?“
+- ❌ Datum und Ort aus dem Bon (Name, Adresse, NIF), OSM-Abgleich auf Knopfdruck
+- ❌ Fremdwährung, EZB-Kurs auf Knopfdruck
+- ◐ Protokoll je Erkennung (Durchläufe, Zeiten, Zwischenbilder, optional Foto) teilbar; ❌ in Einstellungen gut sichtbar
+- ✅ CSV; ❌ Volltext, PDF des digitalen Bons
+
+### Gruppe (Web und App gemeinsam)
+- ❌ Einladen per Link/QR, Mitmachen im Browser und in der App
+- ❌ Nostr wie `site/funk.js` (NIP-01, AES-GCM), öffentliche Relays
+- ❌ Gleiche Rechte, beschränkbar; Rechnung nur für Beteiligte (Schlüssel je Gerät und Rechnung)
+- ❌ Original-Bonfoto für alle sichtbar (verschlüsselt auf Blossom-Server)
+
+### Design und Einstellungen
+- ❌ Stile deutlich unterscheidbar (Rams/Ive/Bauhaus, Recherchen in Fasan-Karte und Kamera)
+- ❌ Effekte im Standard merkbar; dunkler Kasten oben links (Shader-Fehler)
+- ❌ Einstellungen vollständig (Recherche: ganze Fasan-Familie, Karte)
+- ❌ Knöpfe überschneiden sich (Karten: Zurück/Weiter an der Leiste)
+- ❌ Eigene Kamera-Ansicht mit Live-Begradigung
+
+### Prüfen
+- ✅ Echte Bons: 13 Fotos in `fasan-diagnose/tests/echt`, 12/13. Fehlschlag: McDonald's (keine Summe, keine Posten). Ferreiras richtig „nicht geprüft“ (7,90 € ohne Postenzeile)
+- ❌ Emulator-Bildschirmfotos mit echtem Bon in der CI
 
 ## Bildschirmfotos
 
