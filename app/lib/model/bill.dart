@@ -148,6 +148,9 @@ class Bill {
     this.step = 1,
     this.done = false,
     this.originalPath,
+    this.receiptDate,
+    this.placeAddress,
+    this.taxId,
     DateTime? updated,
   }) : updated = updated ?? created;
 
@@ -175,6 +178,16 @@ class Bill {
   /// The photo exactly as taken, untouched (Beschluss 02.11.: Original immer sichtbar). imagePath is the cleaned scan.
   String? originalPath;
   DateTime updated;
+
+  /// Date printed on the receipt (Beschluss 02.11.: aus dem Bon, nicht aus dem Erfassungszeitpunkt).
+  DateTime? receiptDate;
+
+  /// Address printed on the receipt (street, postcode city) and the shop's tax number (NIF / USt-ID).
+  String? placeAddress;
+  String? taxId;
+
+  /// The date that matters for the user: printed date, else when it was captured.
+  DateTime get date => receiptDate ?? created;
 
   List<BillItem> get its => items ??= [];
   List<Person> get ps => people ??= [];
@@ -250,6 +263,9 @@ class Bill {
         'step': step,
         'done': done,
         'originalPath': originalPath,
+        'receiptDate': receiptDate?.toIso8601String(),
+        'placeAddress': placeAddress,
+        'taxId': taxId,
         'updated': updated.toIso8601String(),
       };
 
@@ -270,6 +286,9 @@ class Bill {
         // bills saved before 0.2 were only stored on „Fertig“
         done: j['done'] as bool? ?? true,
         originalPath: j['originalPath'] as String?,
+        receiptDate: DateTime.tryParse(j['receiptDate'] as String? ?? ''),
+        placeAddress: j['placeAddress'] as String?,
+        taxId: j['taxId'] as String?,
         updated: DateTime.tryParse(j['updated'] as String? ?? ''),
       );
 }

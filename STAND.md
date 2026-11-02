@@ -21,7 +21,7 @@ Stand 01.11.2026.
 | Einheit (`test/reader_test.dart`) | 30/30 | 30/30 |
 | Synthetisch (`test/e2e_test.dart`) | 40/41 komplett richtig (PNG 10/11, JPG 30/30) | 41/41 |
 | SROIE 0–59 (`test/sroie_test.dart`) | 54/60 nach Web-Zählweise | 55/60 |
-| Echte Bons (`FASAN_BONORDNER=fasan-diagnose/tests/echt`), 02.11. | 12/13 komplett richtig, Posten 95/98 | – |
+| Echte Bons (`FASAN_BONORDNER=fasan-diagnose/tests/echt`), 02.11. | 12/13 komplett richtig, Posten 95/98; Datum 12/13, PLZ 11/13 | – |
 | Widget- und Modelltests (`flutter test`) | 37/37 | – |
 
 Bekannter Fehlschlag: `de-discount.png` liest „Storno Chips Paprika“ als Unsinn, darum bleiben Chips und Storno als
@@ -62,7 +62,7 @@ Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEI
 - ✅ Klarnamen mit Symbol, Bon-Name bereinigt klein darunter, abschaltbar (0.2)
 - ❌ Lesesicherheit je Posten sichtbar, andere Lesungen wählbar, Korrektur lernt Lesefehler
 - ❌ Bon-Art (Restaurant, Café, Einkauf …) füllt „Wofür?“
-- ❌ Datum und Ort aus dem Bon (Name, Adresse, NIF), OSM-Abgleich auf Knopfdruck
+- ✅ Datum und Ort aus dem Bon (Adresse, NIF/USt-ID), änderbar, OSM-Suche auf Knopfdruck im Browser (0.2). Echte Bons: Datum 12/13, PLZ 11/13
 - ❌ Fremdwährung, EZB-Kurs auf Knopfdruck
 - ✅ Protokoll teilen in Einstellungen → Diagnose, Originalfoto nur auf Wunsch, ohne Namen (0.2)
 - ✅ CSV; ❌ Volltext, PDF des digitalen Bons

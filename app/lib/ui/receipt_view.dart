@@ -484,7 +484,7 @@ class DigitalReceipt extends StatelessWidget {
     final t = S.of(context);
     final tt = Theme.of(context).textTheme;
     final mono = tt.bodyMedium!.copyWith(fontFamily: l.monoFamily == null ? null : 'packages/${l.fontPackage}/${l.monoFamily}', fontFeatures: const [FontFeature.tabularFigures()]);
-    final date = '${bill.created.day.toString().padLeft(2, '0')}.${bill.created.month.toString().padLeft(2, '0')}.${bill.created.year}';
+    final date = '${bill.date.day.toString().padLeft(2, '0')}.${bill.date.month.toString().padLeft(2, '0')}.${bill.date.year}';
     return ListView(
       padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottomBarSpace(context) + 190),
       children: [
@@ -495,6 +495,8 @@ class DigitalReceipt extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Text(bill.purpose.isEmpty ? t.appName : bill.purpose, style: tt.titleLarge, textAlign: TextAlign.center),
               const SizedBox(height: 4),
+              if (bill.placeAddress != null) Text(bill.placeAddress!, style: tt.bodySmall, textAlign: TextAlign.center),
+              if (bill.taxId != null) Text('${t.taxIdLabel} ${bill.taxId}', style: tt.bodySmall, textAlign: TextAlign.center),
               Text(date, style: tt.bodySmall, textAlign: TextAlign.center),
               const SizedBox(height: FasanSpace.m),
               Divider(color: l.hairline),

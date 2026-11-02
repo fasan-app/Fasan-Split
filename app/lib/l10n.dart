@@ -145,4 +145,11 @@ class S {
   String get intro3Text => de ? 'Person wählen, dann ihre Posten im Bon antippen. Oder alles gleich auf alle teilen.' : 'Pick a person, then tap their items on the receipt. Or split everything evenly.';
   String get intro4Title => de ? 'Wer hat bezahlt?' : 'Who paid?';
   String get intro4Text => de ? 'Fasan Split rechnet aus, wer wem wie viel schuldet. Teilen als Text oder Tabelle.' : 'Fasan Split works out who owes whom. Share as text or table.';
+  String get place => de ? 'Ort' : 'Place';
+  String get address => de ? 'Adresse' : 'Address';
+  String get placeUnknown => de ? 'Nicht auf dem Bon gefunden. Tippen zum Eintragen.' : 'Not found on the receipt. Tap to enter.';
+  String get dateOnReceipt => de ? 'Datum laut Bon' : 'Date on receipt';
+  String get dateCaptured => de ? 'Datum (erfasst)' : 'Date (captured)';
+  String get taxIdLabel => de ? 'Steuernr.' : 'Tax no.';
+  String get noBrowser => de ? 'Kein Browser gefunden' : 'No browser found';
 }

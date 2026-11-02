@@ -11,6 +11,8 @@ import 'dart:io';
 import 'package:fasan_split/recognition/onnx.dart';
 import 'package:fasan_split/recognition/paddle.dart';
 import 'package:fasan_split/recognition/pipeline.dart';
+import 'package:fasan_split/recognition/place.dart';
+import 'package:fasan_split/recognition_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -31,12 +33,25 @@ void main() {
     final files = (dir.listSync().whereType<File>().map((f) => f.path).where((p) => RegExp(r'\.(png|jpg)$').hasMatch(p) && pick.hasMatch(p)).toList()..sort());
     final groups = <String, List<int>>{'png': [0, 0], 'jpg': [0, 0]};
     var postenOk = 0, postenAll = 0;
+    final metaHits = [0, 0, 0];
     final rec = Recognizer(ocr);
     for (final f in files) {
       final truth = jsonDecode(File(f.replaceFirst(RegExp(r'(-mild|-hart|-extrem|-kopf|-quer)?\.(png|jpg)$'), '.json')).readAsStringSync()) as Map<String, dynamic>;
       final sw = Stopwatch()..start();
       final x = rec.recognize(File(f).readAsBytesSync());
       final r = x.result;
+      // date and place from the printed lines (only for truths that carry them: tests/echt)
+      if (truth['datum'] != null) {
+        final meta = extractMeta(RecognitionService.fromRecognition(x).lines.map((l) => l.$1).toList());
+        final d = meta.date == null ? null : '${meta.date!.year}-${meta.date!.month.toString().padLeft(2, '0')}-${meta.date!.day.toString().padLeft(2, '0')}';
+        final post = RegExp(r'\d{4}-\d{3}|\b\d{5}\b').firstMatch('${(truth['ort'] as Map)['adresse']}')?.group(0);
+        final dOk = d == truth['datum'], pOk = post == null || (meta.postcodeCity ?? '').contains(post);
+        metaHits[0] += dOk ? 1 : 0;
+        metaHits[1] += pOk ? 1 : 0;
+        metaHits[2]++;
+        // ignore: avoid_print
+        print('    Ort/Datum: ${dOk ? 'Datum ok' : 'Datum $d≠${truth['datum']}'} · ${pOk ? 'PLZ ok' : 'PLZ ${meta.postcodeCity}≠$post'} · ${meta.street ?? '-'} · ${meta.taxId ?? '-'}');
+      }
       final ist = <int>[
         for (final q in r.items)
           if (q.extras.isNotEmpty) ...[q.amount - q.extras.fold<int>(0, (a, z) => a + z.amount), ...q.extras.map((z) => z.amount)] else q.amount
@@ -65,6 +80,8 @@ void main() {
         print('    ${r.items.map((q) => '${q.name}=${q.amount}${q.sure ? '' : '?'}').join(' | ')}');
       }
     }
+    // ignore: avoid_print
+    if (metaHits[2] > 0) print('GESAMT Ort/Datum: Datum ${metaHits[0]}/${metaHits[2]}, PLZ ${metaHits[1]}/${metaHits[2]}');
     // ignore: avoid_print
     print('GESAMT dart: png ${groups['png']![0]}/${groups['png']![1]}, jpg ${groups['jpg']![0]}/${groups['jpg']![1]} komplett richtig, Posten $postenOk/$postenAll');
   }, skip: ready ? false : 'Testbons oder Modelle fehlen', timeout: const Timeout(Duration(hours: 3)));

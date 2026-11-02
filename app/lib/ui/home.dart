@@ -129,7 +129,7 @@ class _BillTile extends StatelessWidget {
     final l = FasanLook.of(context);
     final t = S.of(context);
     final tt = Theme.of(context).textTheme;
-    final date = '${bill.created.day}.${bill.created.month}.${bill.created.year}';
+    final date = '${bill.date.day}.${bill.date.month}.${bill.date.year}';
     return Material(
       color: l.surface,
       borderRadius: BorderRadius.circular(l.radius * 0.7),

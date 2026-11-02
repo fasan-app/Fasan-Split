@@ -12,6 +12,7 @@ import '../model/bill.dart';
 import '../recognition_service.dart';
 import 'assign.dart';
 import 'common.dart';
+import 'when_where.dart';
 import 'diagnose.dart';
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -72,6 +73,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
             }),
           ),
           if (status != null) ...[const SizedBox(height: FasanSpace.m), status],
+          const SizedBox(height: FasanSpace.m),
+          WhenWhere(bill: b, onChanged: () => setState(() {})),
           const SizedBox(height: FasanSpace.l),
           Row(children: [
             FasanLabel('${t.items} · ${b.its.length}'),
