@@ -41,7 +41,6 @@ class StepScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = FasanLook.of(context);
     final bottom = MediaQuery.paddingOf(context).bottom;
     final b = bill;
     if (b != null) {
@@ -107,7 +106,6 @@ class StepScaffold extends StatelessWidget {
             ),
           ),
       ]),
-      backgroundColor: l.background,
     );
     if (b == null) return scaffold;
     // leaving a step (back gesture, arrow) saves and lets the start page update its lists

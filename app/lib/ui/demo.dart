@@ -10,9 +10,14 @@ import '../model/bill.dart';
 import '../recognition_service.dart';
 import '../state/store.dart';
 import 'assign.dart';
+import 'flow.dart';
+import 'home.dart';
 
-/// gallery | receipt | home
+/// gallery | receipt | tour (start page → total → receipt → result, one screen every 7 s) | lab (effect test page)
 const demoPage = String.fromEnvironment('FASAN_DEMO');
+
+/// Palette for design drafts A/B/C: signal | cobalt | sage (empty = the user's setting).
+const demoAccent = String.fromEnvironment('FASAN_ACCENT');
 
 class DemoLauncher extends StatefulWidget {
   const DemoLauncher({super.key});
@@ -33,6 +38,14 @@ class _DemoLauncherState extends State<DemoLauncher> {
 
   Future<void> _go() async {
     final nav = Navigator.of(context);
+    final ui = FasanScope.of(context);
+    final store = StoreScope.read(context);
+    final accent = FasanAccent.values.where((a) => a.name == demoAccent);
+    if (accent.isNotEmpty) ui.update((o) => o.copyWith(accent: accent.first, style: FasanStyle.calmGlass));
+    if (demoPage == 'lab') {
+      nav.pushReplacement(MaterialPageRoute(builder: (_) => const FasanEffectLab()));
+      return;
+    }
     if (demoPage == 'gallery') {
       nav.pushReplacement(MaterialPageRoute(builder: (_) => const FasanGalleryPage()));
       return;
@@ -61,6 +74,25 @@ class _DemoLauncherState extends State<DemoLauncher> {
         );
         for (final (k, it) in b.its.indexed) {
           if (k.isEven) it.shares = {k % 6: 1, (k + 1) % 6: 1};
+        }
+        if (demoPage == 'tour') {
+          b.payer = 0;
+          store.upsert(b);
+          nav.pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+          debugPrint('FASAN_DEMO_READY');
+          // the CI script photographs after each marker
+          final screens = <Widget Function()>[
+            () => ReviewScreen(bill: b),
+            () => AssignScreen(bill: b, initialMode: AssignMode.receipt),
+            () => ResultScreen(bill: b),
+          ];
+          for (final (i, next) in screens.indexed) {
+            await Future<void>.delayed(const Duration(seconds: 7));
+            nav.push(MaterialPageRoute(builder: (_) => next()));
+            await Future<void>.delayed(const Duration(seconds: 2));
+            debugPrint('FASAN_DEMO_STEP ${i + 1}');
+          }
+          return;
         }
         // marker for the CI script: recognition finished
         debugPrint('FASAN_DEMO_READY');

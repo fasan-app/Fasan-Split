@@ -74,7 +74,14 @@ Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEI
 - ❌ Original-Bonfoto für alle sichtbar (verschlüsselt auf Blossom-Server)
 
 ### Design und Einstellungen
-- ❌ Stile deutlich unterscheidbar (Rams/Ive/Bauhaus, Recherchen in Fasan-Karte und Kamera)
+- ◐ Gestaltungssystem (02.11.): Spezifikation `../fasan_ui/docs/GESTALTUNG.md`, Recherche Glas/Neigung/Übergänge
+  `../fasan_ui/docs/recherche/2026-11-02-glas-neigung-bewegung.md` (WWDC25 Session 219). Umgesetzt in fasan_ui:
+  Schichten (Grund → Inhalt → Glas → Rückmeldung), Grund mit animiertem Verlauf, Korn/Wackeln nur im Hintergrund
+  (wählbar „ganzes Bild“), Lichteinfall, Überstrahlen; Glas mit Lichtkante nach Neigung (Game Rotation Vector, eigener
+  Kanal), zwei Schatten, Berührungslicht, Materialisieren; Glow + Halation am Hauptknopf, Ring-Impuls wenn die Summe
+  stimmt; Übergänge Shared Axis, Container Transform (Startkarte → Rechnung), Fade Through (Bon-Ansichten); Paletten
+  A/B/C über den Akzent; Effekt-Testseite (Einstellungen → Aussehen → Effekte prüfen). ❌ Abnahme: Emulator-Bilder A/B/C,
+  dann S23 (Neigung, Bildrate, Akku). Linse am Glasrand fehlt noch (braucht Bildlesen, erst nach Gerätetest)
 - ◐ Korn jetzt merkbar (0.2). Dunkler Kasten: Ursache ist der Glow/Halation-Filter (`ImageFilter.shader`); im Emulator (Impeller OpenGLES) stand damit die ganze App kopfüber. Filter aus, Regler ausgeblendet, bis er auf GLES und Vulkan nachweislich stimmt (fasan_ui `FasanFilm.bloomVerified`). Emulator danach: richtig herum. Der Kasten auf dem S23 kam aber vom Korn-Shader: mediump (16 Bit) lief im Hash ab ~250 dp über, Korn nur oben links. Jetzt highp + kleine Hash-Eingaben. S23 noch zu prüfen
 - ◐ Einstellungen nach Recherche (`docs/recherche/2026-11-02-einstellungen.md`): Rechnung, Personen, Aussehen, Einführung, Daten (Export, Fotos/alles löschen), Diagnose, Über (0.2); ❌ Währung, Profile, Wiederherstellen
 - ✅ Karten: Knopfreihe über der Leiste; Meldungen über der Leiste statt über „Weiter“ (0.2)
@@ -82,7 +89,7 @@ Status: ✅ da · ◐ teilweise · ❌ fehlt. Quelle: `Fasan-Karte/docs/ENTSCHEI
 
 ### Prüfen
 - ✅ Echte Bons: 13 Fotos in `fasan-diagnose/tests/echt`, 13/13. McDonald's war ein Auswahlfehler (leerer Durchlauf gewann; Kopfzeilen zählten als unklar), kein Lesefehler. Ferreiras richtig „nicht geprüft“ (7,90 € ohne Postenzeile)
-- ✅ Emulator-Bildschirmfotos mit echtem Bon: Workflow „Emulator-Bilder“ im privaten fasan-diagnose (Bilder im Zweig `bilder`), Vorführmodus `--dart-define=FASAN_DEMO`
+- ✅ Emulator-Bildschirmfotos mit echtem Bon: Workflow „Emulator-Bilder“ im privaten fasan-diagnose (Bilder im Zweig `bilder`), Vorführmodus `--dart-define=FASAN_DEMO`; Modus `entwuerfe`: A/B/C × hell/dunkel × Start/Summe/Bon/Ergebnis + Effekt-Testseite (`FASAN_DEMO=tour|lab`, `FASAN_ACCENT`)
 
 ## Updates in der App (0.2.1)
 
@@ -100,8 +107,8 @@ INSTALL_PACKAGES, ACCESS_WIFI_STATE entfernt. Funktioniert nur, solange alle Ver
 - Auf dem Handy testen (S23): Kamera, Galerie, Erkennungszeit, Akku mit laufendem Korn (siehe unten).
 - Bon-Variante: Der Zoom macht den Bon breiter als den Bildschirm; Beträge und Avatare liegen rechts, man muss
   seitlich schieben. Im Querformat verdecken Hinweisfeld und Leiste viel. Am Gerät beurteilen.
-- Korn und Bildstandwackeln laufen in Akku-Stufe „Voll“ dauerhaft mit 24 Hz über den ganzen Bildschirm, auch im
-  Leerlauf. Verbrauch nicht gemessen.
+- Grund (Verlauf, Korn, Wackeln, Licht) läuft in Akku-Stufe „Voll“ dauerhaft mit 24 Hz, auch im Leerlauf; Neigung
+  30 Hz nur bei sichtbarem Glas. Verbrauch nicht gemessen (Effekt-Testseite zeigt Bildrate und Sensortakt).
 - `de-discount.png` und SROIE einzeln gegen Web vergleichen.
 - APK-Größe: `uvdoc.onnx` allein 31,6 MB; kleinere Variante (z. B. fp16) prüfen.
 - Release-Schlüssel als Secret hinterlegen (`FASAN_KEYSTORE_B64`, `FASAN_KEYSTORE_PASSWORD`).

@@ -148,17 +148,19 @@ class _BillTile extends StatelessWidget {
     final t = S.of(context);
     final tt = Theme.of(context).textTheme;
     final date = '${bill.date.day}.${bill.date.month}.${bill.date.year}';
-    return Material(
-      color: l.surface,
-      borderRadius: BorderRadius.circular(l.radius * 0.7),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(l.radius * 0.7),
-        // unfinished bills continue where the user left (Karte 3.9: Schließen verwirft nie)
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => bill.done ? ResultScreen(bill: bill) : resumeScreen(bill))),
+    final r = l.radius * 0.7;
+    // Container transform: the card grows into the bill (fasan_ui GESTALTUNG.md §7). Unfinished bills continue where
+    // the user left (Karte 3.9: Schließen verwirft nie).
+    return FasanOpenContainer(
+      radius: r,
+      openBuilder: (_) => bill.done ? ResultScreen(bill: bill) : resumeScreen(bill),
+      closedBuilder: (context, open) => InkWell(
+        borderRadius: BorderRadius.circular(r),
+        onTap: open,
         child: Container(
           constraints: BoxConstraints(minHeight: l.minTap + 16),
           padding: const EdgeInsets.all(FasanSpace.m),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(l.radius * 0.7), border: Border.all(color: l.hairline)),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(r), border: Border.all(color: l.hairline)),
           child: Row(children: [
             if (bill.imagePath != null && File(bill.imagePath!).existsSync())
               ClipRRect(

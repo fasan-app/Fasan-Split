@@ -40,8 +40,9 @@ class SplitApp extends StatelessWidget {
             themeMode: ui.themeMode,
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
             supportedLocales: const [Locale('de'), Locale('en')],
-            // film effects over every screen; they pause by themselves when saving battery
-            builder: (context, child) => FasanFilm(child: child ?? const SizedBox()),
+            // Layer 0 (ground with gradient, grain, weave, light) behind all pages; FasanFilm adds grain over the whole
+            // picture only if the user chooses „ganzes Bild“ (fasan_ui docs/GESTALTUNG.md §2). Both pause when saving.
+            builder: (context, child) => FasanBackdrop(child: FasanFilm(child: child ?? const SizedBox())),
             home: home ?? (demoPage.isEmpty ? const HomeScreen() : const DemoLauncher()),
           ),
         ),

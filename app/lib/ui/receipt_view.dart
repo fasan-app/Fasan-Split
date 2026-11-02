@@ -186,7 +186,8 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
             ReceiptLayer.digital => DigitalReceipt(bill: b, selected: sel, onTap: _tapItem),
           };
           return Stack(children: [
-            Positioned.fill(child: content),
+            // fade through between the three views of the same receipt (fasan_ui GESTALTUNG.md §7)
+            Positioned.fill(child: FasanFadeThrough(child: KeyedSubtree(key: ValueKey(layer), child: content))),
             if (layer != ReceiptLayer.digital)
               Positioned(
                 right: FasanSpace.m,

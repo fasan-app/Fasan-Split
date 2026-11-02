@@ -33,6 +33,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   late final _total = TextEditingController(text: widget.bill.total == null ? '' : money(widget.bill.total!));
 
   Bill get b => widget.bill;
+  int _pulse = 0;
+  bool _wasOk = false;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +42,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final l = FasanLook.of(context);
     final tt = Theme.of(context).textTheme;
     final diff = b.difference;
+    // The total matches the items: one ring pulse around the total and a light haptic (attention rules: once).
+    final ok = b.total != null && diff == 0 && b.its.isNotEmpty;
+    if (ok && !_wasOk) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _pulse++);
+        FasanHaptics.of(context).confirm();
+      });
+    }
+    _wasOk = ok;
     final status = b.checked && diff == 0
         ? _Status(icon: Icons.verified_outlined, text: t.checked, color: l.accent)
         : (diff != 0 && b.total != null
@@ -69,7 +81,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             const SizedBox(width: FasanSpace.s),
             Expanded(
               flex: 2,
-              child: TextField(
+              child: FasanGlow(pulse: _pulse, strength: 0, radius: 6, child: TextField(
                 controller: _total,
                 textAlign: TextAlign.end,
                 decoration: InputDecoration(labelText: t.total, suffixText: '€'),
@@ -79,7 +91,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   b.total = parseMoney(v);
                   b.checked = false;
                 }),
-              ),
+              )),
             ),
           ]),
           const SizedBox(height: FasanSpace.s),
