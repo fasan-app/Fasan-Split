@@ -34,6 +34,17 @@ class ScanPreview extends ScanEvent {
   final bool straight;
 }
 
+/// End of the scan animation: the kinked receipt (JPEG) straightens along a mesh; verified line boxes turn with it.
+class ScanWarp extends ScanEvent {
+  ScanWarp(this.jpeg, this.cols, this.rows, this.preAspect, this.scanAspect, this.src, this.quads);
+
+  final Uint8List jpeg;
+  final int cols, rows;
+  final double preAspect, scanAspect;
+  final List<double> src;
+  final List<List<double>> quads;
+}
+
 class ScanDone extends ScanEvent {
   ScanDone(this.result);
 
@@ -125,6 +136,9 @@ class RecognitionService {
                 job.add(ScanProgress(msg[2] as String, msg[3] as double));
               case 'preview':
                 job.add(ScanPreview((msg[2] as TransferableTypedData).materialize().asUint8List(), (msg[3] as List).cast<List<double>>(), msg[4] as bool));
+              case 'warp':
+                job.add(ScanWarp((msg[2] as TransferableTypedData).materialize().asUint8List(), msg[3] as int, msg[4] as int, msg[5] as double,
+                    msg[6] as double, (msg[7] as List).cast<double>(), (msg[8] as List).map((q) => (q as List).cast<double>()).toList()));
               case 'done':
                 job.add(ScanDone(_decode(msg[2] as Map)));
                 job.close();
@@ -212,7 +226,10 @@ void _main(List<Object?> args) {
       final photo = (msg[2] as TransferableTypedData).materialize().asUint8List();
       var lastP = -1.0;
       final x = rec.recognize(photo, onProgress: (p) {
-        if (p.preview != null) {
+        final w = p.warp;
+        if (w != null) {
+          out.send(['warp', id, TransferableTypedData.fromList([w.jpeg]), w.cols, w.rows, w.preAspect, w.scanAspect, w.src, w.quads]);
+        } else if (p.preview != null) {
           out.send(['preview', id, TransferableTypedData.fromList([p.preview!]), p.boxes ?? const <List<double>>[], p.straight]);
         } else if (p.progress - lastP >= 0.01 || p.progress >= 1) {
           lastP = p.progress;

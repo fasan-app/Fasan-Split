@@ -34,7 +34,7 @@ void main() {
     final groups = <String, List<int>>{'png': [0, 0], 'jpg': [0, 0]};
     var postenOk = 0, postenAll = 0;
     final metaHits = [0, 0, 0];
-    final rec = Recognizer(ocr);
+    final rec = Recognizer(ocr, earlyStop: Platform.environment['FASAN_EARLYSTOP'] != '0');
     for (final f in files) {
       final truth = jsonDecode(File(f.replaceFirst(RegExp(r'(-mild|-hart|-extrem|-kopf|-quer)?\.(png|jpg)$'), '.json')).readAsStringSync()) as Map<String, dynamic>;
       final sw = Stopwatch()..start();

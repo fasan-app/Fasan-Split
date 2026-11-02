@@ -125,6 +125,16 @@ class ReceiptHeader {
 
   final String shop;
   final ReceiptMeta meta;
+
+  /// Shop name plus a valid tax id or a cleanly read address (street and postcode line). With a checked total this is the
+  /// signal to stop reading further passes (Nutzer 02.11.: 46,5 s, obwohl Lauf 2 schon ok war).
+  bool get complete {
+    if (shop.isEmpty) return false;
+    final nif = meta.taxId;
+    if (nif != null && (validNifPt(nif) || RegExp(r'^DE\s?\d{9}$').hasMatch(nif))) return true;
+    final street = meta.street, city = meta.postcodeCity;
+    return street != null && city != null && lineQuality(street) >= 0.7 && lineQuality(city) >= 0.7;
+  }
 }
 
 // Lines that are never the shop name: customer block, document type, table, tax and contact lines.

@@ -140,6 +140,20 @@ Offen (Recherche liegt vor, Umsetzung nächste Sitzung):
 - Kino-Stile (Maschine, Sci-Fi, Spionage): eigene Recherche fehlt noch. Nutzer: alle Stile bleiben, die Familie bekommt mehr.
 - „Pão“ als „PAD“ gelesen, „Pica-Pau“ ohne Klarnamen.
 
+## Paket 1 (02.11. abends, Code geprüft, nicht nur STAND): Erkennungsabbruch und Scan-Animation
+
+- Abbruch (`pipeline.dart`, `Recognizer.earlyStop`, Test-Schalter `FASAN_EARLYSTOP=0`): Sobald die Summe stimmt (ohne Widerspruch)
+  und der Kopf vollständig ist (`ReceiptHeader.complete`: Name plus gültige NIF/USt-ID oder sauber gelesene Straße und PLZ-Zeile),
+  laufen kein Ganzfoto-Durchlauf, kein UVDoc, keine Begradigungsläufe und kein Betrags-Nachlesen mehr. Das Protokoll hat dazu
+  den Eintrag `abbruch`. Bons ohne vollständigen Kopf (z. B. SROIE) laufen wie bisher bis zum Ende.
+- Scan-Animation: ein gedrehter Kasten je Zeile entlang der Zeile (`scan_preview.dart`, `lineQuad`), nur für Zeilen, die die
+  Summe bestätigt hat (`verifiedLines`); am Ende begradigt sich der geknickte Bon entlang des Entzerrungsgitters (`ScanWarp`,
+  `drawVertices`), die Kästen drehen mit. Ohne Bewegung (Animationen entfernt) erscheint sofort der gerade Bon.
+- Tests: `place_test.dart` (Abbruchkriterium), `scan_preview_test.dart` (Kästen, Gitter, ScanScreen mit/ohne Bewegung).
+  `flutter test`: 69 bestanden, 54 übersprungen (E2E/SROIE brauchen Modelle, `libonnxruntime` und das private fasan-diagnose).
+- NICHT gemessen: Wirkung des Abbruchs auf die Trefferquote (E2E 40/41, SROIE 55/60, echte Bons 13/13) und die Laufzeit auf dem
+  S23. Vergleich mit `FASAN_EARLYSTOP=0` steht aus. Das Zeichnen der Begradigung ist nur im Widget-Test gelaufen, nicht auf dem Gerät.
+
 ## Offen
 
 - Auf dem Handy testen (S23): Kamera, Galerie, Erkennungszeit, Akku mit laufendem Korn (siehe unten).

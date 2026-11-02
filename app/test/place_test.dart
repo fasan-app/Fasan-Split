@@ -68,4 +68,33 @@ void main() {
     expect(h.meta.taxId, '510882897');
     expect(h.meta.address, 'Rua Diario de Noticias no66 R/C, 1200-145 Lisboa');
   });
+
+  // Abbruchkriterium der Erkennung: Name plus gültige Steuernummer oder sauber gelesene Adresse.
+  group('ReceiptHeader.complete', () {
+    test('Name und gültige NIF genügen', () {
+      final h = bestHeader([
+        ['RESTAURANTE DA SE', 'DINASTIA VALIDA LDA', 'NIF: 515713139', 'CRUZES DA SE 31A', '1100-192 LISBOA', '2026-10-24 FATURA-RECIBO N:', 'QTD UNI DESCRICAO IVA LOR'],
+      ], now: now);
+      expect(h.complete, isTrue);
+    });
+    test('verlesene NIF und verlesene Adresse: nicht vollständig (Estrela, schlechter Durchlauf)', () {
+      final h = bestHeader([
+        ['ATOUD IRSTYOKV-1417', 'Estrela do Bairro,', 'Vara fiario de Noticias hobo R/C', '1200-145 Lis00.c', 'Centribuinte: 5lu88zeg7', '2026-10-23', 'QTD UNI DESCRICÃO IVA VALOR'],
+      ], now: now);
+      expect(h.complete, isFalse);
+    });
+    test('ohne Namen nie vollständig', () {
+      final h = bestHeader([
+        ['NIF: 515713139', '1100-192 LISBOA', '2026-10-24 12:03', 'QTD UNI DESCRICAO IVA LOR'],
+      ], now: now);
+      expect(h.shop, '');
+      expect(h.complete, isFalse);
+    });
+    test('deutsche Adresse ohne USt-ID genügt, wenn sauber', () {
+      final h = bestHeader([
+        ['Bäckerei Sonnenschein', 'Hasengasse 9', '60311 Frankfurt am Main', '16.07.2026, 16:33'],
+      ], now: now);
+      expect(h.complete, isTrue);
+    });
+  });
 }

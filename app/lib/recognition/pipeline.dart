@@ -20,19 +20,24 @@ import 'place.dart';
 import 'reader.dart';
 import 'receipt_image.dart';
 import 'scan.dart';
+import 'scan_preview.dart';
 import 'text_util.dart';
 
-/// Progress of the recognition: stage text, 0–1, optional preview (straightened image with the boxes found so far).
+/// Progress of the recognition: stage text, 0–1, optional preview (image with the verified lines found so far) or the
+/// straightening mesh for the end of the scan animation.
 class RecognitionProgress {
-  const RecognitionProgress(this.stage, this.progress, {this.preview, this.boxes, this.straight = false});
+  const RecognitionProgress(this.stage, this.progress, {this.preview, this.boxes, this.straight = false, this.warp});
 
   final String stage;
   final double progress;
   final Uint8List? preview;
 
-  /// Boxes normalised to 0–1 of the preview.
+  /// Rotated boxes along the verified lines, 8 numbers each (four corners), normalised to 0–1 of the preview.
   final List<List<double>>? boxes;
   final bool straight;
+
+  /// Mesh that straightens the kinked receipt (scan_preview.dart).
+  final WarpData? warp;
 }
 
 class Recognition {
@@ -66,6 +71,11 @@ class Recognition {
   final ReceiptHeader? header;
 }
 
+/// Marker to leave the straightening block early once the result is settled.
+class _Settled implements Exception {
+  const _Settled();
+}
+
 class _Pass {
   _Pass(this.g, this.r, this.canvas, this.read, this.name, this.corners, this.lines, this.straight);
 
@@ -81,11 +91,16 @@ class _Pass {
 }
 
 class Recognizer {
-  Recognizer(this.ocr);
+  Recognizer(this.ocr, {this.earlyStop = true});
 
   final PaddleOcr ocr;
+
+  /// Stop reading further passes as soon as the total is checked and the header is complete (see [ReceiptHeader.complete]).
+  /// Tests can switch it off to compare against the full run.
+  final bool earlyStop;
   final _sw = Stopwatch();
   late List<Map<String, Object?>> _steps, _errors;
+  int? _stoppedAt;
 
   void _log(String type, [Map<String, Object?> d = const {}]) => _steps.add({'t': _sw.elapsedMilliseconds, 'typ': type, ...d});
   void _err(String where, Object e) => _errors.add({'t': _sw.elapsedMilliseconds, 'wo': where, 'text': '$e'});
@@ -135,6 +150,7 @@ class Recognizer {
     final tries = <String>[], all = <_Pass>[];
     _Pass? best;
     final scans = <Img, ScanResult>{};
+    final scanSrc = <Img, Img>{}; // scan image → the image it was straightened from (for the straightening animation)
     var readable = 0.0;
     double run(Img canvas, String name, List<List<double>>? corners, void Function(double) progress, {Img? display, bool? straightArg}) {
       final straight = straightArg ?? name != 'foto';
@@ -205,7 +221,7 @@ class Recognizer {
           final sc = scans[shown];
           final look = sc != null ? documentLook(small, textHeight: jsRound(sc.textHeightOut * f)) : small;
           onProgress(RecognitionProgress(fullName.startsWith('gerade') ? 'Bon wird begradigt wie gescannt' : 'Zeilen gefunden', 0,
-              preview: look.jpeg(80), boxes: [for (final x in words.take(400)) [x.box.x0 / W0, x.box.y0 / H0, x.box.x1 / W0, x.box.y1 / H0]], straight: sc != null));
+              preview: look.jpeg(80), boxes: verifiedQuads(r, z.lines, W0.toDouble(), H0.toDouble()), straight: sc != null));
         } catch (_) {/* preview is display only */}
       }
       if (best == null || g > best!.g) best = e;
@@ -213,12 +229,26 @@ class Recognizer {
       return g;
     }
 
+    // Stop criterion: checked total without a contradiction and a complete header from the passes so far.
+    bool settled() {
+      final b = best;
+      if (!earlyStop || b == null || !b.r.check.ok || contradictions(b.r) > 0) return false;
+      final h = bestHeader([for (final p in all) [for (final l in p.lines.lines) l.text]], qrDate: qr?.date, qrNif: qr?.nif);
+      if (!h.complete) return false;
+      if (_stoppedAt == null) {
+        _stoppedAt = all.length;
+        _log('abbruch', {'laeufe': all.length, 'gewinner': b.name, 'kopf': h.shop});
+      }
+      return true;
+    }
+
+    _stoppedAt = null;
     // 2. straight cut-out, rotated by 180° if unreadable, last the whole photo
     if (cut != null) {
       final g1 = run(cut.canvas, 'ausschnitt', cut.corners, stage('Bon wird gelesen', 0.14, 0.4));
       if (g1 < 5000 && readable < 0.5) run(cut.canvas.rotated180(), 'ausschnitt180', cut.corners, stage('Bon wird gedreht gelesen', 0.14, 0.4));
     }
-    if (best == null || best!.g < 5000) {
+    if ((best == null || best!.g < 5000) && !settled()) {
       final fl = fitLongest(photo);
       run(fl, 'foto', null, stage('Ganzes Foto wird gelesen', 0.14, 0.3));
       // receipt from the text position, rectify and read again in full resolution
@@ -232,7 +262,7 @@ class Recognizer {
       }
     }
     // 2a. unfold (UVDoc): whole photo first, then the best rectified pass
-    if (ocr.uvdoc != null) {
+    if (ocr.uvdoc != null && !settled()) {
       try {
         final ef = _unfold(fitLongest(photo), photo);
         if (ef != null) run(ef, 'entfaltet-foto', null, stage('Blatt wird erkannt und entfaltet', 0.3, 0.33), straightArg: true);
@@ -240,7 +270,7 @@ class Recognizer {
         _err('uvdoc-foto', e);
       }
       final b = best!;
-      if (b.straight && !b.name.startsWith('entfaltet')) {
+      if (b.straight && !b.name.startsWith('entfaltet') && !settled()) {
         try {
           final ef = _unfold(b.read, b.read);
           if (ef != null) run(ef, 'entfaltet', b.corners, stage('Knicke und Wölbung werden entfaltet', 0.33, 0.37), straightArg: true);
@@ -253,20 +283,25 @@ class Recognizer {
     final bases = stableSorted<_Pass>(all.where((e) => !e.name.startsWith('entfaltet')), (a, b) => numAsc(b.g, a.g));
     final basis = bases.isNotEmpty ? bases.first : best!;
     try {
+      if (settled()) throw const _Settled();
       final ts = _sw.elapsedMilliseconds;
       final s1 = straighten(basis.canvas, basis.lines.lines, smooth: 0.05);
       _log('gerade', {'stufe': 1, 'quelle': basis.name, 'ms': _sw.elapsedMilliseconds - ts, 'ok': s1 != null, 'grund': s1 == null ? scanLastError : null, ...?s1?.stats});
       if (s1 != null) {
         scans[s1.image] = s1;
+        scanSrc[s1.image] = basis.canvas;
         run(s1.image, 'gerade', null, stage('Bon wird begradigt wie gescannt', 0.36, 0.42), straightArg: true);
         final e1 = all.last;
         final s2 = straighten(s1.image, e1.lines.lines, smooth: 0.05);
         _log('gerade', {'stufe': 2, 'ok': s2 != null, 'grund': s2 == null ? scanLastError : null, ...?s2?.stats});
         if (s2 != null) {
           scans[s2.image] = s2;
+          scanSrc[s2.image] = s1.image;
           run(s2.image, 'gerade2', null, stage('Feinere Begradigung', 0.42, 0.46), straightArg: true);
         }
       }
+    } on _Settled {
+      // checked total and complete header: no further straightening pass; the winner is straightened for display below
     } catch (e) {
       _err('gerade', e);
     }
@@ -278,8 +313,11 @@ class Recognizer {
       if (!best!.r.check.ok) run(improve(src, 'dunkel'), 'dunkel', corners, stage('Blasser Druck wird verstärkt gelesen', 0.55, 0.64), display: src, straightArg: straight);
     }
     // 4. read every amount of the item block several times; on the first (original) pass and on the best
-    final cands = <_Pass>[all.first];
-    if (!identical(best, all.first)) cands.add(best!);
+    final cands = <_Pass>[];
+    if (!settled()) {
+      cands.add(all.first);
+      if (!identical(best, all.first)) cands.add(best!);
+    }
     var end = best!;
     for (var ki = 0; ki < cands.length; ki++) {
       final pass = cands[ki];
@@ -314,12 +352,23 @@ class Recognizer {
               if (x.frame != null) x.frame = s3.boxToScan(x.frame!);
             }
           }
+          scanSrc[s3.image] = end.canvas;
           canvas = s3.image;
           scan = s3;
           name = '$name→gerade';
         }
       } catch (e) {
         _err('gerade-anzeige', e);
+      }
+    }
+    // end of the scan animation: the kinked receipt straightens along the dewarp mesh, verified line boxes turn with it
+    if (onProgress != null && scan != null) {
+      try {
+        final pre = scanSrc[scan.image];
+        final wd = pre == null ? null : straighteningWarp(scan, pre, r);
+        if (wd != null) onProgress(RecognitionProgress('Bon wird begradigt', 0.99, warp: wd));
+      } catch (e) {
+        _err('warp', e);
       }
     }
     Img display = canvas;

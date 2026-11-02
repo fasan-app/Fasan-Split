@@ -26,7 +26,7 @@ void main() {
       File('assets/models/dict-latin.txt').readAsStringSync(),
       uvdoc: uv.existsSync() && env['FASAN_UVDOC'] != '0' ? OnnxModel.fromBytes(uv.readAsBytesSync(), threads: threads) : null,
     );
-    final rec = Recognizer(ocr);
+    final rec = Recognizer(ocr, earlyStop: env['FASAN_EARLYSTOP'] != '0');
     final from = int.tryParse(env['FASAN_VON'] ?? '') ?? 0, to = int.tryParse(env['FASAN_BIS'] ?? '') ?? 60;
     var ok = 0, n = 0, checked = 0, checkedWrong = 0;
     for (var k = from; k < to; k++) {
