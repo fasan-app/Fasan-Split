@@ -80,12 +80,12 @@ if n != 1:
 # In-app updates (ota_update, MIT; README „Android“): FileProvider + install result receiver inside <application>,
 # res/xml/filepaths.xml for files/ota_update/. Permissions the plugin declares but Fasan Split does not need are removed
 # (we download into the app's own files dir, and we are no system app): WRITE_EXTERNAL_STORAGE, INSTALL_PACKAGES,
-# ACCESS_WIFI_STATE. Kept: INTERNET, ACCESS_NETWORK_STATE, REQUEST_INSTALL_PACKAGES (user confirms every install).
+# ACCESS_WIFI_STATE, and READ_EXTERNAL_STORAGE (added implicitly by the manifest merger, nicht geprüft why). Kept: INTERNET, ACCESS_NETWORK_STATE, REQUEST_INSTALL_PACKAGES (user confirms every install).
 if 'ota_update_provider' not in m:
     m = m.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android"',
                   '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"', 1)
     remove = ''.join(f'    <uses-permission android:name="android.permission.{p}" tools:node="remove"/>\n'
-                     for p in ('WRITE_EXTERNAL_STORAGE', 'INSTALL_PACKAGES', 'ACCESS_WIFI_STATE'))
+                     for p in ('WRITE_EXTERNAL_STORAGE', 'READ_EXTERNAL_STORAGE', 'INSTALL_PACKAGES', 'ACCESS_WIFI_STATE'))
     m = re.sub(r'(<manifest[^>]*>\n)', lambda x: x.group(1) + remove, m, count=1)
     provider = '''        <provider
             android:name="sk.fourq.otaupdate.OtaUpdateFileProvider"
