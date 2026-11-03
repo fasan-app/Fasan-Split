@@ -79,13 +79,16 @@ jobs:
             # Vom Handy eingefügt: Leerzeichen und Zeilenumbrüche entfernen, Passwort ohne Rand. Nie Inhalte ins Log.
             pwc=$(printf '%s' "$KEY_PW" | tr -d '\r\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
             if ! printf '%s' "$KEY_B64" | tr -d ' \r\n\t' | base64 -d > "$RUNNER_TEMP/fasan-release.p12" 2>/dev/null; then
-              echo "FEHLER: Secret FASAN_KEYSTORE_B64 ist kein gültiges Base64 (nur die lange Zeile unter dem Namen einfügen)." | tee logs/key.log
-              exit 1
+              bad="Secret FASAN_KEYSTORE_B64 ist kein gültiges Base64 (nur den Inhalt der Datei FASAN_KEYSTORE_B64.txt einfügen)"
+            elif ! keytool -list -keystore "$RUNNER_TEMP/fasan-release.p12" -storepass "$pwc" >/dev/null 2>&1; then
+              bad="Release-Schlüssel lässt sich mit FASAN_KEYSTORE_PASSWORD nicht öffnen (Passwort oder Datei passt nicht)"
             fi
-            if ! keytool -list -keystore "$RUNNER_TEMP/fasan-release.p12" -storepass "$pwc" >/dev/null 2>&1; then
-              echo "FEHLER: Release-Schlüssel lässt sich mit FASAN_KEYSTORE_PASSWORD nicht öffnen (Passwort oder Datei passt nicht)." | tee logs/key.log
-              exit 1
-            fi
+          fi
+          if [ -n "${bad:-}" ]; then
+            # Kaputtes Secret: weiter mit dem Testschlüssel, damit Updates auf die installierte Testversion weiter passen.
+            echo "WARNUNG: $bad. APK mit Test-Schlüssel signiert." | tee logs/key.log
+            echo "::warning::$bad"
+          elif [ -n "$KEY_B64" ] && [ -n "$KEY_PW" ]; then
             ks="$RUNNER_TEMP/fasan-release.p12"; pw="$pwc"
             {
               echo "FASAN_KEYSTORE=$ks"
