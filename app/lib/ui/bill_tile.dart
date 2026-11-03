@@ -71,7 +71,10 @@ class BillTile extends StatelessWidget {
     if (subtitle != null) sub = subtitle!;
     // reading: date as soon as the first pass knows it, then the state
     if (bill.read == BillRead.reading && bill.receiptDate != null) sub = '$date · $sub';
-    Widget body(VoidCallback? open) => InkWell(
+    Widget body(VoidCallback? open) => FasanDepth(
+        radius: r,
+        level: selected ? 1 : 2,
+        child: InkWell(
           borderRadius: BorderRadius.circular(r),
           onTap: selecting ? onToggle : open,
           child: Container(
@@ -80,7 +83,7 @@ class BillTile extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(r),
               border: Border.all(color: selected ? l.accent : l.hairline, width: selected ? 2 : 1),
-              color: selected ? l.accent.withValues(alpha: 0.08) : null,
+              color: selected ? Color.alphaBlend(l.accent.withValues(alpha: 0.08), l.surface) : l.surface,
             ),
             child: Row(children: [
               if (selecting) ...[
@@ -113,7 +116,7 @@ class BillTile extends StatelessWidget {
               ],
             ]),
           ),
-        );
+        ));
     // Waiting, reading and failed photos have nothing to open yet.
     if (waiting || failed || selecting || !openable) return body(null);
     // Container transform: the card grows into the bill (fasan_ui GESTALTUNG.md §7). Unfinished bills continue where

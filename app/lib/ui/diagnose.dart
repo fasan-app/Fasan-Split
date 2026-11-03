@@ -55,7 +55,8 @@ Future<void> shareRecognitionLog(BuildContext context, Bill bill) async {
     // what the screen can draw (Nutzer 02.11.: „Glas ist kein Glas“): the result of the glass probe and whether the grain
     // shader and its template loaded. Lets the next version be built from facts, not guesses.
     'darstellung': {
-      'glas': {'stufe': FasanGlassShader.tier.value.name, 'grund': FasanGlassShader.reason, 'shaderFilter': ui.ImageFilter.isShaderFilterSupported},
+      'glas': {'stufe': FasanGlassShader.tier.value.name, 'grund': FasanGlassShader.reason, 'pixel': FasanGlassShader.probePixels, 'kopfueber': FasanGlassShader.flipY, 'shaderFilter': ui.ImageFilter.isShaderFilterSupported},
+      'ton': {'modus': FasanSound.mode, 'gespielt': FasanSound.plays, 'fehler': FasanSound.lastError, 'ausfaelle': FasanSound.failures},
       'korn': {'programm': FasanFilm.grainProgram != null, 'vorlage': FasanFilm.grainTemplate != null},
     },
     'erkennung': log,

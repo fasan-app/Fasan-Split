@@ -303,6 +303,12 @@ class _PayScreenState extends State<PayScreen> {
       onAction: b.payer == null
           ? null
           : () {
+              // The numbers are checked twice (Beschluss 03.11.): a mismatch stops here, nothing is saved as finished.
+              if (b.audit().isNotEmpty) {
+                FasanHaptics.of(context).warn();
+                showNote(context, t.splitCheckBad, duration: const Duration(seconds: 6));
+                return;
+              }
               b.done = true;
               StoreScope.read(context).upsert(b);
               Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => ResultScreen(bill: b)), (r) => r.isFirst);
@@ -368,11 +374,54 @@ class ResultBody extends StatelessWidget {
             Expanded(child: Text(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} €'), style: tt.bodyMedium)),
           ]),
         ),
+      const SizedBox(height: FasanSpace.m),
+      _AuditLine(bill: bill),
       if (open.isNotEmpty) ...[
         const SizedBox(height: FasanSpace.l),
         Text('${t.notAssigned}: ${open.map((p) => p.title).join(', ')}', style: tt.bodySmall!.copyWith(color: Theme.of(context).colorScheme.error)),
       ],
     ]);
+  }
+}
+
+/// „Rechenprüfung“: every number is computed twice; a mismatch is shown loudly. The expandable part shows how each
+/// person's amount is made up (item by item, in cents).
+class _AuditLine extends StatelessWidget {
+  const _AuditLine({required this.bill});
+
+  final Bill bill;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    final tt = Theme.of(context).textTheme;
+    final issues = bill.audit();
+    final ok = issues.isEmpty;
+    final pp = bill.perPerson();
+    final total = pp.values.fold<int>(0, (a, x) => a + x);
+    final color = ok ? FasanLook.of(context).textMuted : Theme.of(context).colorScheme.error;
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
+        leading: Icon(ok ? Icons.verified_outlined : Icons.error_outline_rounded, color: color),
+        title: Text(ok ? '${t.splitCheck}: ${money(total, de: t.de)} €' : t.splitCheckBad, style: tt.bodyMedium!.copyWith(color: color)),
+        children: [
+          for (var p = 0; p < bill.ps.length; p++) ...[
+            Align(alignment: Alignment.centerLeft, child: Padding(padding: const EdgeInsets.only(top: 6), child: Text(bill.ps[p].name, style: tt.labelLarge))),
+            for (var n = 0; n < bill.its.length; n++)
+              if (Bill.split(bill.its[n].amount, bill.its[n].shares, rotate: n)[p] case final c? when c != 0)
+                Row(children: [
+                  Expanded(child: Text(bill.its[n].title, style: tt.bodySmall, overflow: TextOverflow.ellipsis)),
+                  Text('${money(c, de: t.de)} €', style: tt.bodySmall),
+                ]),
+          ],
+          if (!ok)
+            for (final i in issues) Text(i.toString(), style: tt.bodySmall!.copyWith(color: color)),
+        ],
+      ),
+    );
   }
 }
 

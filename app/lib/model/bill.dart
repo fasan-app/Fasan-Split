@@ -5,6 +5,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'split_math.dart';
+
 import '../recognition/speisen.dart';
 
 class Person {
@@ -228,40 +230,72 @@ class Bill {
 
   int get unassigned => its.where((p) => !p.assigned).length;
 
-  /// Cents per person for one item (largest remainder: parts always add up exactly).
-  static Map<int, int> split(int amount, Map<int, double> shares) {
-    final w = {for (final e in shares.entries) if (e.value > 0) e.key: e.value};
-    if (w.isEmpty) return {};
-    final sum = w.values.fold<double>(0, (a, x) => a + x);
-    final raw = {for (final e in w.entries) e.key: amount * e.value / sum};
-    final out = {for (final e in raw.entries) e.key: e.value.floor()};
-    var rest = amount - out.values.fold<int>(0, (a, x) => a + x); // ≥ 0 because of floor()
-    double frac(int k) => raw[k]! - raw[k]!.floor();
-    final order = raw.keys.toList()..sort((a, b) => frac(b) != frac(a) ? frac(b).compareTo(frac(a)) : a.compareTo(b));
-    for (var i = 0; rest > 0; i = (i + 1) % order.length) {
-      out[order[i]] = out[order[i]]! + 1;
-      rest--;
-    }
-    return out;
-  }
+  /// Cents per person for one item. Exact integer arithmetic, leftover cents rotate with [rotate] (the item index).
+  static Map<int, int> split(int amount, Map<int, double> shares, {int rotate = 0}) => SplitMath.split(amount, shares, rotate: rotate);
 
   /// What each person consumed (cents). Unassigned items are not counted (shown separately).
   Map<int, int> perPerson() {
     final out = {for (var i = 0; i < ps.length; i++) i: 0};
-    for (final it in its) {
-      for (final e in split(it.amount, it.shares).entries) {
+    for (var n = 0; n < its.length; n++) {
+      final it = its[n];
+      for (final e in split(it.amount, it.shares, rotate: n).entries) {
         if (e.key < ps.length) out[e.key] = out[e.key]! + e.value;
       }
     }
     // difference between receipt total and items (tip, unread line) is spread like the items
     final diff = difference;
     if (diff != 0 && out.values.any((v) => v > 0)) {
-      final weights = {for (final e in out.entries) if (e.value > 0) e.key: e.value.toDouble()};
-      for (final e in split(diff, weights).entries) {
+      for (final e in SplitMath.spread(diff, out, rotate: its.length).entries) {
         out[e.key] = out[e.key]! + e.value;
       }
     }
     return out;
+  }
+
+  /// Removes a person and moves every higher index down by one (shares, payer). Items that only they had become open.
+  void removePerson(int idx) {
+    if (idx < 0 || idx >= ps.length) return;
+    ps.removeAt(idx);
+    for (final it in its) {
+      it.shares = {
+        for (final e in it.shares.entries)
+          if (e.key != idx) (e.key > idx ? e.key - 1 : e.key): e.value
+      };
+    }
+    if (payer == idx) {
+      payer = null;
+    } else if (payer != null && payer! > idx) {
+      payer = payer! - 1;
+    }
+  }
+
+  /// Sum of the cents that are assigned to someone (plus the spread difference when anything is assigned).
+  int get expectedShared {
+    final assigned = its.where((p) => p.assigned && p.shares.keys.any((k) => k < ps.length && (p.shares[k] ?? 0) > 0)).fold<int>(0, (a, p) => a + p.amount);
+    return assigned + (assigned != 0 || its.any((p) => p.assigned) ? difference : 0);
+  }
+
+  /// Second, independent check of every number. Empty list = all consistent. Never throws.
+  List<AuditIssue> audit() {
+    final issues = <AuditIssue>[];
+    for (var n = 0; n < its.length; n++) {
+      final it = its[n];
+      final a = SplitMath.split(it.amount, it.shares, rotate: n);
+      final b = SplitMath.splitCumulative(it.amount, it.shares);
+      final sa = a.values.fold<int>(0, (x, y) => x + y);
+      if (a.isNotEmpty && sa != it.amount) issues.add(AuditIssue('sum', '${it.name}: $sa ≠ ${it.amount}'));
+      if (a.isNotEmpty && !SplitMath.agree(a, b)) issues.add(AuditIssue('method', '${it.name}: $a ≠ $b'));
+    }
+    final pp = perPerson();
+    final total = pp.values.fold<int>(0, (x, y) => x + y);
+    if (pp.values.any((v) => v > 0) && total != expectedShared) issues.add(AuditIssue('sum', 'Σ Personen $total ≠ $expectedShared'));
+    // transfers must net to zero around the payer
+    final p = payer;
+    if (p != null && p < ps.length) {
+      final t = transfers().fold<int>(0, (x, e) => x + e.$3);
+      if (t != total - (pp[p] ?? 0)) issues.add(AuditIssue('sum', 'Überweisungen $t ≠ ${total - (pp[p] ?? 0)}'));
+    }
+    return issues;
   }
 
   /// Transfers to the payer: (from, to, cents).
@@ -354,7 +388,7 @@ String billCsv(Bill b, {bool de = true}) {
   final rows = <String>[];
   rows.add([q(de ? 'Posten' : 'Item'), q(de ? 'Menge' : 'Qty'), q(de ? 'Betrag' : 'Amount'), for (final p in people) q(p.name)].join(';'));
   for (final it in b.its) {
-    final parts = Bill.split(it.amount, it.shares);
+    final parts = Bill.split(it.amount, it.shares, rotate: b.its.indexOf(it));
     rows.add([q(it.subtitle == null ? it.cleanName : '${it.food!.name} (${it.cleanName})'), '${it.qty}', money(it.amount, de: de), for (var i = 0; i < people.length; i++) money(parts[i] ?? 0, de: de)].join(';'));
   }
   final pp = b.perPerson();

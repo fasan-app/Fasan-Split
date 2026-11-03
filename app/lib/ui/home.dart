@@ -15,6 +15,7 @@ import '../state/scan_queue.dart';
 import '../state/store.dart';
 import '../update.dart';
 import 'bill_tile.dart';
+import 'hints.dart';
 import 'flow.dart';
 import 'groups.dart';
 import 'onboarding.dart';
@@ -174,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _plus(BuildContext context) async {
+    StoreScope.read(context).hintDismiss('plus');
     if (_page <= 2) return _addSheet(context);
     final t = S.of(context);
     final store = StoreScope.read(context);
@@ -282,6 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final store0 = StoreScope.of(context);
     final t = S.of(context);
     final store = StoreScope.of(context);
     final selected = _picked(store);
@@ -392,14 +395,26 @@ class _HomeScreenState extends State<HomeScreen> {
         ]),
         floatingActionButton: selecting
             ? null
-            : FasanGlow(
+            : PulseRing(
+                active: store0.bills.isEmpty && !store0.hintDone('plus'),
+                child: FasanGlow(
                 radius: 18,
-                child: FloatingActionButton(
-                  tooltip: _page <= 2 ? t.newBill : (_page == 3 ? t.newGroup : t.newFriend),
-                  onPressed: () => _plus(context),
-                  child: const Icon(Icons.add_rounded, size: 28),
+                // the plus button floats: three-layer shadow with its own colour, turns with the tilt
+                child: FasanDepth(
+                  radius: 18,
+                  level: 3,
+                  tint: FasanLook.of(context).accent,
+                  child: FloatingActionButton(
+                    elevation: 0,
+                    focusElevation: 0,
+                    hoverElevation: 0,
+                    highlightElevation: 0,
+                    tooltip: _page <= 2 ? t.newBill : (_page == 3 ? t.newGroup : t.newFriend),
+                    onPressed: () => _plus(context),
+                    child: const Icon(Icons.add_rounded, size: 28),
+                  ),
                 ),
-              ),
+              )),
         bottomNavigationBar: _NavBar(
           selected: _page <= 2 ? 0 : _page - 2,
           onSelect: (i) => _goTo(i == 0 ? (_page <= 2 ? _page : 0) : i + 2),
@@ -435,7 +450,17 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: FasanSpace.l),
         Text(done ? t.archiveEmptyTitle : t.emptyTitle, style: tt.titleLarge, textAlign: TextAlign.center),
         const SizedBox(height: FasanSpace.s),
-        Text(done ? t.archiveEmptyText : t.emptyText, style: tt.bodyMedium!.copyWith(color: l.textMuted), textAlign: TextAlign.center),
+        Text(done ? t.archiveHow : t.emptyText, style: tt.bodyMedium!.copyWith(color: l.textMuted), textAlign: TextAlign.center),
+        if (!done) ...[
+          const SizedBox(height: FasanSpace.xl),
+          FasanButton(label: t.emptyCamera, icon: Icons.photo_camera_outlined, expand: true, onPressed: () => _pick(context, ImageSource.camera)),
+          const SizedBox(height: FasanSpace.s),
+          FasanButton(label: t.galleryOrFile, icon: Icons.photo_library_outlined, kind: FasanButtonKind.secondary, expand: true, onPressed: () => _pickMany(context)),
+          const SizedBox(height: FasanSpace.s),
+          FasanButton(label: t.manual, icon: Icons.edit_note_rounded, kind: FasanButtonKind.secondary, expand: true, onPressed: () => _manual(context)),
+          const SizedBox(height: FasanSpace.l),
+          Text(t.emptyOr, style: tt.bodySmall!.copyWith(color: l.textMuted), textAlign: TextAlign.center),
+        ],
       ]);
     }
     return ListenableBuilder(
@@ -444,6 +469,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom),
         children: [
           if (banner != null) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: banner),
+          if (!done) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: HintCard(id: 'swipe', text: t.hintSwipe, icon: Icons.swipe_rounded)),
           for (final (g, bills) in groups) _section(context, store, mode, g, g, bills),
           _section(context, store, mode, null, null, loose, title: done ? t.finished : t.drafts),
         ],

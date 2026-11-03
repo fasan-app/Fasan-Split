@@ -234,20 +234,54 @@ glass.frag ohne Fehler.
 NICHT geprüft: alles auf dem S23 (Bedienung, Wischen zwischen Seiten und Konflikt mit dem Wischen auf Kacheln, Ziehen auf Gruppen, Ton, Korn, Glanz,
 Begradigung); SROIE; Original-Zeilen bei stark gewölbten Bons (Näherung).
 
-## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11. 01 Uhr; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
+## Sitzung 03.11. (0.1.24): Rechenkern, Zuordnen, Ton, Glas-Probe, Schatten, Anleitung
 
-1. Rückmeldung vom S23 zu 0.1.23: Probe-Knöpfe (System-Haptik, Vibrator, Ton), Korn, Glanz, Navigation und Wischen. Das Protokoll zeigt jetzt die Glas-Stufe.
-2. Glas echt (Paket 5, Rest): Hintergrund per `OffsetLayer.toImageSync` erfassen und im Fragment-Shader brechen (Vorbild fluid_glass, Lizenz „unknown“:
-   nur als Vorbild); erst nach dem Protokoll-Befund, welche Stufe das S23 wählt, und mit Wahl „Glas: Auto/Echt/Einfach“.
-3. Scan-Begradigung weiter verbessern: QR-Bereich, dunkler Keil unten links, Papierkante; ein Verformungsmaß, das bei zu starker Verzerrung auf den
-   Ausschnitt zurückfällt (mit echten Bons messen).
-4. Original-Zeilen genauer (Abbildung Scan → Foto statt Eckenbilinear), Lesesicherheit je Posten aus den Wortkonfidenzen, echte alternative Lesungen
-   mit Prozent (nicht nur Regeln), Korrekturen lernen, Wörterbücher je Sprache.
-5. Gruppe über Nostr (verschlüsselt, NIP-44/59/17): gebaut gegen lokalen Relay in der Sitzung; öffentliche Relays nur nach ausdrücklicher Freigabe
-   für den jeweiligen Test (Ereignisse lassen sich nicht sicher löschen). Mitbearbeiter, Rechte, Original-Foto verschlüsselt (Blossom).
-6. Soll-Liste (❌ oben): Rückgängig/Wiederholen, mehrere Zahler und Anzahlung, Ausgaben ohne Bon, Fremdwährung, PDF, Einführung/Profile/Wiederherstellen.
-7. Gestaltung §9: Lebendig/Warten, Glas 3D, Papier, Braun-Technik, Kino-Stile, Leistungstest, Stufen-Abnahme A/B/C auf dem S23.
-8. Technik: APK-Größe (`uvdoc.onnx` 31,6 MB), Release-Schlüssel als Secret, Akku mit laufendem Korn, SROIE nachmessen, `de-discount.png`.
+Rückmeldung vom S23 (Protokoll 00:45): Glas-Stufe `blur`, Grund „Testbild falsch (gedreht oder schwarz)“; Ton still; 3 Cola auf 2 Personen
+zeigten „1 + 1 Stück“; Zuordnen sprang nach „Alle“ sofort weiter; Anleitung fehlt.
+
+Behoben / gebaut (Code und Tests, **nicht auf dem Gerät geprüft**):
+- **Rechenkern** `model/split_math.dart`: ganze Cent, Anteile in Tausendsteln, keine Kommazahlen in Summen. Rest-Cent wandern reihum je Posten
+  (Beschluss 03.11.). Jede Aufteilung läuft zweimal mit zwei verschiedenen Verfahren (größter Rest und kumulatives Runden); `Bill.audit()` prüft
+  Summe der Posten, Summe der Personen gegen zugeordnet + Differenz, Überweisungen gegen Zahler. Ergebnis zeigt „Rechenprüfung“ mit aufklappbarem
+  Rechenweg; bei Abweichung rote Warnung. Tests: 20 000 Zufallsfälle, 3 000 Zufallsrechnungen (auch Rabatte, Trinkgeld), `split_math_test.dart`.
+  „Fertig“ ist gesperrt, solange die Prüfung eine Abweichung meldet (Meldung + Warn-Haptik).
+- **Zuordnen**: kein Auto-Springen mehr (Standard „Nie“, einstellbar: nie, kurz warten mit Abbrechen, sofort; Einstellungen); Stück je Person als
+  exakter Bruch in 0,5-Schritten (3 Stück auf 2 Personen = 1,5); Plus-Chip „Person hinzufügen“ direkt am Posten (die Person hat den Posten sofort);
+  Langdruck auf eine Person: nur diese, bei diesem Posten entfernen, umbenennen, aus der Rechnung entfernen (`Bill.removePerson`).
+  `FasanPersonChip.onLongPress` neu in fasan_ui. Tests `assign_test.dart` (5).
+- **Ton**: Ursache belegt im Plugin-Quelltext: `BytesSource` geht nicht im Modus lowLatency („Bytes sources are not supported on LOW_LATENCY mode
+  yet“, audioplayers_android 5.3.0). Der Fehler wurde verschluckt, der stumme Systemklick sprang ein. Jetzt MediaPlayer-Modus, ein vorbereiteter Player
+  je Ton, Nutzungsart „media“ (Medienlautstärke), alle vier Töne spielen. Der Test-Knopf zeigt den echten Fehler, das Protokoll hat `darstellung.ton`.
+- **Glas**: Probe erkennt „kopfüber“ und dreht im Shader (`uFlip`), statt aufzugeben; Protokoll `darstellung.glas.pixel` zeigt die gemessenen
+  Farben. Optik stärker und überall sichtbar (Lichtrand 1,8 dp, Innenglühen, stärkerer Glanz). **Echte Brechung bei „schwarz“ ist nicht gelöst**:
+  wenn das Protokoll wieder „Testbild falsch“ mit schwarzen Pixeln zeigt, braucht es den Weg ohne `ImageFilter.shader` (Hintergrundbild per
+  `toImageSync` + Paint-Shader). Entwurf und Hürden: Glas-Leisten müssen außerhalb der erfassten Fläche liegen, sonst Rückkopplung.
+- **Schatten**: `FasanShadows`/`FasanDepth` (fasan_ui): drei bis vier Schichten, Richtung folgt der Neigung (gleiche Winkelformel wie das Glas),
+  getönt bei Primärknöpfen und Plus. Auf Zuordnungskarten, Kacheln, Knöpfen, Plus-Knopf und Glasleisten.
+- **Anleitung**: Hinweiskarten am Ort (Zuordnen, Übersicht; „Verstanden“ schließt, Einstellungen „Hinweise wieder zeigen“), pulsierender Ring am Plus,
+  leere Übersicht mit drei Aktionen, Archiv erklärt, wie Rechnungen dorthin kommen.
+- **Zusammenarbeit**: Recherche `docs/recherche/2026-11-03-zusammenarbeit-verschluesselung.md` (Gift Wrap, Gruppenschlüssel, CRDT, Web-Link mit
+  Schlüssel im Fragment, Wiederherstellung per 12 Wörtern, NIP-49, Sicherungsdatei, spätere Stufe MLS). **Noch kein Code**, nichts gesendet.
+
+NICHT geprüft: alles auf dem S23; Wischen zwischen Seiten, Kollision Langdruck/Ziehen, Hinweis-Layouts im Querformat, Schatten bei „Akku maximal“,
+Ton (Medienlautstärke), Glas-Probe nach der Änderung. E2E der Erkennung nicht neu gemessen (nichts an der Erkennung geändert; hier fehlt in dieser
+Sitzung nur `LD_LIBRARY_PATH` für ONNX, daher laufen `e2e_test.dart` und `zz_view_test.dart` lokal nicht).
+
+## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
+
+1. Rückmeldung vom S23 zu 0.1.24: Ton (Test-Knopf zeigt jetzt den Grund), Glas-Probe (`pixel`, `kopfueber`), Schatten, Anleitung, Zuordnen.
+2. Glas echt (Paket 5, Rest): wenn die Probe auf dem S23 „schwarz“ meldet: Hintergrund per `toImageSync` erfassen und mit Paint-Shader brechen
+   (Schaltmöglichkeit Auto/Echt/Einfach). Wenn die Probe „kopfüber“ meldet: nur Feinschliff.
+3. Scan-Begradigung weiter: QR-Bereich, dunkler Keil unten links, Papierkante; Verformungsmaß mit Rückfall auf den Ausschnitt; mit echten Bons messen.
+   (Nutzer 03.11.: „muss absolut gut sein“.)
+4. Rechenprüfung auch beim Teilen/Export und beim Speichern von Entwürfen anzeigen (Fertig ist schon gesperrt).
+5. Zusammenarbeit (Recherche liegt vor), in dieser Reihenfolge: Schlüssel + Wiederherstellung (12 Wörter, NIP-49, Sicherungsdatei) ohne Netz; Krypto-Paket
+   mit Testvektoren; Relay-Client gegen lokalen Relay; CRDT für Rechnung, Notizen, Chat; Web-Build mit Einladungslink; Bestätigung neuer Mitglieder.
+   Öffentliche Relays nur nach ausdrücklicher Freigabe je Test.
+6. Original-Zeilen genauer, Lesesicherheit aus Wortkonfidenzen, echte Alternativen, Korrekturen lernen, Wörterbücher.
+7. Soll-Liste (❌ oben): Rückgängig/Wiederholen, mehrere Zahler und Anzahlung, Ausgaben ohne Bon, Fremdwährung, PDF.
+8. Gestaltung §9: Lebendig/Warten, Papier, Braun-Technik, Kino-Stile, Leistungstest; Erststart-Tour auf Hinweise am Ort abgleichen.
+9. Technik: APK-Größe (`uvdoc.onnx` 31,6 MB), Release-Schlüssel, Akku mit laufendem Korn, SROIE nachmessen, `de-discount.png`.
 
 ## Offen
 

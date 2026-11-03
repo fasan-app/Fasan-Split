@@ -80,6 +80,15 @@ class BillStore extends ChangeNotifier {
   set lastUpdateCheck(DateTime? v) => _setApp('lastUpdateCheck', v?.toIso8601String());
 
   /// The introduction was seen or skipped.
+  /// Hints that were closed (ids). „Hinweise wieder zeigen“ in the settings clears them.
+  List<String> get _hints => ((_app['hints'] as List?) ?? const []).cast<String>();
+  bool hintDone(String id) => _hints.contains(id);
+  void hintDismiss(String id) {
+    if (!hintDone(id)) _setApp('hints', [..._hints, id]);
+  }
+
+  void resetHints() => _setApp('hints', <String>[]);
+
   bool get onboarded => _app['onboarded'] as bool? ?? false;
   set onboarded(bool v) => _setApp('onboarded', v);
 
@@ -254,6 +263,10 @@ class BillStore extends ChangeNotifier {
   /// Days until the trash empties itself: 7, 30 or 0 = only by hand. Default 30 (Apple „Zuletzt gelöscht“, Google Drive/Gmail).
   int get trashDays => const [7, 30, 0].contains(_app['trashDays']) ? _app['trashDays'] as int : 30;
   set trashDays(int v) => _setApp('trashDays', v);
+
+  /// After „Alle“ in Zuordnen: 0 = never jump on (default, Beschluss 03.11.), 1 = after a short, cancellable wait, 2 = at once.
+  int get autoNext => const [0, 1, 2].contains(_app['autoNext']) ? _app['autoNext'] as int : 0;
+  set autoNext(int v) => _setApp('autoNext', v);
 
   /// Moves bills to the trash.
   void trash(Iterable<Bill> list) {

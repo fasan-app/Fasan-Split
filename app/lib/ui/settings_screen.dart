@@ -123,6 +123,22 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(t.setIntroSub),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingScreen())),
         ),
+        ListTile(
+          leading: const Icon(Icons.skip_next_rounded),
+          title: Text(t.setAutoNext),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: FasanSpace.s),
+            child: FasanSegmented<int>(values: const [0, 1, 2], selected: store.autoNext, label: t.autoNextLabel, onChanged: (v) => store.autoNext = v),
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.lightbulb_outline_rounded),
+          title: Text(t.setHints),
+          onTap: () {
+            store.resetHints();
+            ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(t.setHintsDone)));
+          },
+        ),
         head(t.setData),
         ListTile(
           leading: const Icon(Icons.auto_delete_outlined),

@@ -1,0 +1,83 @@
+// Zuordnen: Alle springt standardmäßig nicht weiter, Plus fügt am Posten hinzu, Stück je Person als Bruch.
+import 'package:fasan_split/main.dart';
+import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_split/state/store.dart';
+import 'package:fasan_split/ui/assign.dart';
+import 'package:fasan_ui/fasan_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  Bill bill() => Bill(id: 'x', created: DateTime(2026, 11, 3), total: 1380, people: [Person('Chris', 0), Person('Andi', 1)], items: [
+        BillItem(name: 'Coca Cola', amount: 960, qty: 3),
+        BillItem(name: 'Wasser', amount: 420),
+      ]);
+
+  Future<void> show(WidgetTester t, BillStore s, Bill b) async {
+    t.view.physicalSize = const Size(1080, 2400);
+    t.view.devicePixelRatio = 2.75;
+    addTearDown(t.view.reset);
+    t.platformDispatcher.localesTestValue = const [Locale('de', 'DE')];
+    addTearDown(t.platformDispatcher.clearLocalesTestValue);
+    const tilt = MethodChannel('app.fasan.ui/tilt');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(tilt, (_) async => null);
+    addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(tilt, null));
+    await t.pumpWidget(SplitApp(store: s, ui: FasanController(settings: const FasanSettings(reduceMotion: true)), home: AssignScreen(bill: b)));
+    await t.pump(const Duration(milliseconds: 300));
+  }
+
+  testWidgets('Alle: 1,5 Stück je Person und kein automatisches Weiterspringen', (t) async {
+    final s = BillStore.memory([]);
+    final b = bill();
+    await show(t, s, b);
+    await t.tap(find.text('Alle'));
+    await t.pump(const Duration(milliseconds: 2500));
+    expect(find.text('1 / 2'), findsOneWidget, reason: 'bleibt auf dem Posten');
+    expect(find.text('1,5'), findsNWidgets(2));
+    expect(b.audit(), isEmpty);
+    expect(b.perPerson()[0], 480);
+  });
+
+  testWidgets('Einstellung „Sofort“ springt weiter', (t) async {
+    final s = BillStore.memory([])..autoNext = 2;
+    await show(t, s, bill());
+    await t.tap(find.text('Alle'));
+    await t.pump(const Duration(milliseconds: 600));
+    expect(find.text('2 / 2'), findsOneWidget);
+  });
+
+  testWidgets('Plus fügt eine Person hinzu und weist sie dem Posten zu', (t) async {
+    final s = BillStore.memory([]);
+    final b = bill();
+    await show(t, s, b);
+    await t.tap(find.text('Person hinzufügen'));
+    await t.pump(const Duration(milliseconds: 300));
+    await t.enterText(find.byType(TextField), 'Eva');
+    await t.tap(find.text('Hinzufügen'));
+    await t.pump(const Duration(milliseconds: 400));
+    expect(b.ps.map((p) => p.name), ['Chris', 'Andi', 'Eva']);
+    expect(b.its[0].shares[2], 1);
+  });
+
+  testWidgets('Langdruck: „Nur diese Person“', (t) async {
+    final s = BillStore.memory([]);
+    final b = bill();
+    for (final it in b.its) {
+      it.shares = {0: 1, 1: 1};
+    }
+    await show(t, s, b);
+    await t.longPress(find.text('Andi').first);
+    await t.pump(const Duration(milliseconds: 600));
+    await t.tap(find.text('Nur diese Person'));
+    await t.pumpAndSettle(const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 3));
+    expect(b.its[0].shares, {1: 1});
+  });
+
+  test('Person entfernen schiebt Anteile und Zahler nach', () {
+    final b = Bill(id: 'y', created: DateTime(2026), people: [Person('A', 0), Person('B', 1), Person('C', 2)], items: [BillItem(name: 'x', amount: 300, shares: {0: 1, 2: 1})])..payer = 2;
+    b.removePerson(1);
+    expect(b.its[0].shares, {0: 1, 1: 1});
+    expect(b.payer, 1);
+  });
+}

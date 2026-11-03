@@ -1,6 +1,7 @@
 // Fasan Split – step 3: assign items to people, in four switchable variants to compare (Plan „Rechnung“, Punkt 4):
 // Fokus (one line large), Liste mit Zeilenbild, Bon (zoomed so every line is ≥ 48 dp), Karten (swipe).
 // A multi-line item is one continuous shape; shared items show avatars, never colour stripes. MPL-2.0
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -9,9 +10,11 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
+import '../model/split_math.dart';
 import 'common.dart';
 import 'receipt_view.dart';
 import 'flow.dart';
+import 'hints.dart';
 
 enum AssignMode { focus, list, receipt, cards }
 
@@ -99,7 +102,8 @@ class _AssignScreenState extends State<AssignScreen> {
   }
 }
 
-/// Person chips for one item; "Alle" toggles everyone. With quantity > 1: pieces per person.
+/// Person chips for one item; "Alle" toggles everyone, "+" adds a person right here, long press opens a menu.
+/// With quantity > 1 each person's share is shown in pieces (3 pieces for 2 people: 1,5 each) and can change in halves.
 class PeoplePicker extends StatelessWidget {
   const PeoplePicker({super.key, required this.bill, required this.item, required this.onChanged, this.onAll});
 
@@ -108,6 +112,83 @@ class PeoplePicker extends StatelessWidget {
   final VoidCallback onChanged;
   final VoidCallback? onAll;
 
+  Future<void> _add(BuildContext context) async {
+    final t = S.of(context);
+    final c = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.addPersonHere),
+        content: TextField(controller: c, autofocus: true, textCapitalization: TextCapitalization.words, decoration: InputDecoration(hintText: t.newName), onSubmitted: (v) => Navigator.pop(ctx, v)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(t.add)),
+        ],
+      ),
+    );
+    final n = (name ?? '').trim();
+    if (n.isEmpty || !context.mounted) return;
+    final dup = bill.ps.indexWhere((p) => p.name.toLowerCase() == n.toLowerCase());
+    final idx = dup >= 0 ? dup : bill.ps.length;
+    if (dup < 0) {
+      final used = bill.ps.map((p) => p.color).toSet();
+      var col = 0;
+      while (used.contains(col) && col < 64) {
+        col++;
+      }
+      bill.ps.add(Person(n, col));
+    }
+    item.shares[idx] = 1; // the new person has this item right away – that is why they were added here
+    FasanHaptics.of(context).confirm();
+    showNote(context, t.personAdded(bill.ps[idx].name));
+    onChanged();
+  }
+
+  Future<void> _menu(BuildContext context, int i, Offset at) async {
+    final t = S.of(context);
+    FasanHaptics.of(context).tap();
+    final sel = (item.shares[i] ?? 0) > 0;
+    final r = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(at.dx, at.dy, at.dx, at.dy),
+      items: [
+        PopupMenuItem(value: 'only', child: Text(t.onlyThis)),
+        if (sel) PopupMenuItem(value: 'not', child: Text(t.notForThis)),
+        PopupMenuItem(value: 'rename', child: Text(t.renamePerson)),
+        PopupMenuItem(value: 'remove', child: Text(t.removePerson)),
+      ],
+    );
+    if (r == null || !context.mounted) return;
+    switch (r) {
+      case 'only':
+        item.shares = {i: 1};
+      case 'not':
+        item.shares.remove(i);
+      case 'rename':
+        final c = TextEditingController(text: bill.ps[i].name);
+        final n = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(t.renamePerson),
+            content: TextField(controller: c, autofocus: true, textCapitalization: TextCapitalization.words, onSubmitted: (v) => Navigator.pop(ctx, v)),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
+              FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(t.save)),
+            ],
+          ),
+        );
+        final nn = (n ?? '').trim();
+        if (nn.isEmpty || !context.mounted) return;
+        bill.ps[i].name = nn;
+      case 'remove':
+        final name = bill.ps[i].name;
+        bill.removePerson(i);
+        showNote(context, t.personRemoved(name));
+    }
+    FasanHaptics.of(context).confirm();
+    onChanged();
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = S.of(context);
@@ -115,18 +196,25 @@ class PeoplePicker extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
       Wrap(spacing: 8, runSpacing: 8, children: [
         for (var i = 0; i < bill.ps.length; i++)
-          FasanPersonChip(
-            name: bill.ps[i].name,
-            index: bill.ps[i].color,
-            selected: (item.shares[i] ?? 0) > 0,
-            onTap: () {
-              if ((item.shares[i] ?? 0) > 0) {
-                item.shares.remove(i);
-              } else {
-                item.shares[i] = 1;
-              }
-              onChanged();
-            },
+          Builder(
+            builder: (ctx) => FasanPersonChip(
+              name: bill.ps[i].name,
+              index: bill.ps[i].color,
+              selected: (item.shares[i] ?? 0) > 0,
+              onTap: () {
+                if ((item.shares[i] ?? 0) > 0) {
+                  item.shares.remove(i);
+                } else {
+                  item.shares[i] = 1;
+                }
+                onChanged();
+              },
+              onLongPress: () {
+                // menu opens at the chip (the callback has no touch position)
+                final box = ctx.findRenderObject() as RenderBox;
+                _menu(context, i, box.localToGlobal(Offset(box.size.width / 2, box.size.height)));
+              },
+            ),
           ),
         ChoiceChip(
           label: Text(t.everyone),
@@ -137,6 +225,12 @@ class PeoplePicker extends StatelessWidget {
             onChanged();
             if (!all) onAll?.call();
           },
+        ),
+        ActionChip(
+          avatar: const Icon(Icons.add_rounded),
+          label: Text(t.addPersonHere),
+          tooltip: t.addPersonHere,
+          onPressed: () => _add(context),
         ),
       ]),
       if (item.qty > 1 && item.shares.values.any((w) => w > 0)) ...[
@@ -149,19 +243,19 @@ class PeoplePicker extends StatelessWidget {
               IconButton(
                 tooltip: '−',
                 icon: const Icon(Icons.remove_circle_outline),
-                onPressed: e.value <= 1
+                onPressed: e.value <= 0.5
                     ? null
                     : () {
-                        item.shares[e.key] = e.value - 1;
+                        item.shares[e.key] = e.value - 0.5;
                         onChanged();
                       },
               ),
-              SizedBox(width: 28, child: Text(_n(e.value), textAlign: TextAlign.center)),
+              SizedBox(width: 56, child: Text(_pieces(item, e.key), textAlign: TextAlign.center)),
               IconButton(
                 tooltip: '+',
                 icon: const Icon(Icons.add_circle_outline),
                 onPressed: () {
-                  item.shares[e.key] = e.value + 1;
+                  item.shares[e.key] = e.value + 0.5;
                   onChanged();
                 },
               ),
@@ -170,7 +264,41 @@ class PeoplePicker extends StatelessWidget {
     ]);
   }
 
-  static String _n(double v) => v == v.roundToDouble() ? '${v.toInt()}' : v.toStringAsFixed(1);
+  /// Exact fraction of the pieces, e.g. 3/2 → „1,5“, 1/3 → „⅓“-style „1/3“.
+  static String _pieces(BillItem it, int person) {
+    final (n, d) = SplitMath.pieces(it.qty, it.shares, person);
+    if (d == 1) return '$n';
+    if (d == 2 || d == 4 || d == 5 || d == 8 || d == 10) {
+      final v = n / d;
+      return v.toStringAsFixed(d == 2 || d == 5 || d == 10 ? 1 : 2).replaceAll('.', ',');
+    }
+    return '$n/$d';
+  }
+}
+
+/// Jump on to the next item after „Alle“ – only as far as the user's setting allows (default: never).
+/// With „after a pause“ a note with „Abbrechen“ counts it down, and any further tap on the people cancels it.
+class AdvanceTimer {
+  Timer? _t;
+
+  void cancel(BuildContext? context) {
+    _t?.cancel();
+    _t = null;
+    if (context != null) ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
+  }
+
+  void trigger(BuildContext context, VoidCallback go) {
+    final mode = StoreScope.read(context).autoNext;
+    cancel(null);
+    if (mode == 0) return;
+    if (mode == 2) {
+      _t = Timer(FasanMotion.of(context).short, go);
+      return;
+    }
+    final t = S.of(context);
+    showNote(context, t.goingOn, actionLabel: t.cancel, duration: const Duration(milliseconds: 1800), onAction: () => cancel(null));
+    _t = Timer(const Duration(milliseconds: 1800), go);
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -189,6 +317,13 @@ class FocusAssign extends StatefulWidget {
 class _FocusAssignState extends State<FocusAssign> {
   int i = 0;
   int dir = 1;
+  final _adv = AdvanceTimer();
+
+  @override
+  void dispose() {
+    _adv.cancel(null);
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -226,6 +361,7 @@ class _FocusAssignState extends State<FocusAssign> {
       child: ListView(
         padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, bottomBarSpace(context)),
         children: [
+          HintCard(id: 'assign', text: t.hintAssign, icon: Icons.touch_app_outlined),
           FasanLabel('${i + 1} / ${b.its.length}'),
           const SizedBox(height: FasanSpace.s),
           AnimatedSwitcher(
@@ -235,8 +371,11 @@ class _FocusAssignState extends State<FocusAssign> {
               position: Tween(begin: Offset(0.25 * dir, 0), end: Offset.zero).animate(a),
               child: FadeTransition(opacity: a, child: child),
             ),
-            child: Container(
+            child: FasanDepth(
               key: ValueKey(i),
+              radius: l.radius,
+              level: 2,
+              child: Container(
               padding: const EdgeInsets.all(FasanSpace.l),
               decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.radius), border: Border.all(color: l.hairline)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -251,10 +390,12 @@ class _FocusAssignState extends State<FocusAssign> {
                 Text(t.whoHad, style: tt.labelMedium),
                 const SizedBox(height: FasanSpace.s),
                 PeoplePicker(bill: b, item: it, onChanged: () {
+                  _adv.cancel(null); // any further tap means „not finished yet“
                   widget.onChanged();
                   setState(() {});
-                }, onAll: () => Future.delayed(m.short, () => mounted ? _go(1) : null)),
+                }, onAll: () => _adv.trigger(context, () => mounted ? _go(1) : null)),
               ]),
+              ),
             ),
           ),
           const SizedBox(height: FasanSpace.l),
@@ -346,6 +487,14 @@ class CardsAssign extends StatefulWidget {
 class _CardsAssignState extends State<CardsAssign> {
   late final _pc = PageController(viewportFraction: 0.88);
   int page = 0;
+  final _adv = AdvanceTimer();
+
+  @override
+  void dispose() {
+    _adv.cancel(null);
+    _pc.dispose();
+    super.dispose();
+  }
 
   void _go(int d) {
     final m = FasanMotion.of(context);
@@ -355,12 +504,6 @@ class _CardsAssignState extends State<CardsAssign> {
     } else {
       _pc.jumpToPage(to);
     }
-  }
-
-  @override
-  void dispose() {
-    _pc.dispose();
-    super.dispose();
   }
 
   @override
@@ -382,7 +525,10 @@ class _CardsAssignState extends State<CardsAssign> {
             final it = b.its[i];
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: FasanSpace.s),
-              child: Container(
+              child: FasanDepth(
+                radius: l.radius,
+                level: 2,
+                child: Container(
                 padding: const EdgeInsets.all(FasanSpace.l),
                 decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.radius), border: Border.all(color: it.assigned ? l.accent.withValues(alpha: 0.5) : l.hairline)),
                 child: SingleChildScrollView(
@@ -397,8 +543,9 @@ class _CardsAssignState extends State<CardsAssign> {
                     PeoplePicker(bill: b, item: it, onChanged: () {
                       widget.onChanged();
                       setState(() {});
-                    }, onAll: () => Future.delayed(FasanMotion.of(context).short, () => mounted ? _go(1) : null)),
+                    }, onAll: () => _adv.trigger(context, () => mounted ? _go(1) : null)),
                   ]),
+                ),
                 ),
               ),
             );
