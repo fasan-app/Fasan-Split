@@ -17,6 +17,7 @@ import '../update.dart';
 import 'bill_tile.dart';
 import 'hints.dart';
 import 'flow.dart';
+import 'collab_ui.dart';
 import 'groups.dart';
 import 'onboarding.dart';
 import 'scan_screen.dart';
@@ -177,6 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _plus(BuildContext context) async {
     StoreScope.read(context).hintDismiss('plus');
     if (_page <= 2) return _addSheet(context);
+    if (_page == 3) return groupPlusAction(context);
     final t = S.of(context);
     final store = StoreScope.read(context);
     final c = TextEditingController();

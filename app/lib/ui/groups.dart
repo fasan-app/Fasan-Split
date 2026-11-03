@@ -1,22 +1,17 @@
-// Fasan Split – Gruppen and Freunde (local: nothing is sent anywhere), group page and the invitation draft. MPL-2.0
-//
-// Nutzer 02.11.: „Papierkorb, Archiv, Freunde, Gruppe, Einladungen“ each get a screen. Sharing over the network (encrypted
-// Nostr events on public relays) needs the user's explicit release for every test (Beschluss 02.11.: nie in fremde Dienste
-// schreiben), so the invitation here is a draft: a link with a fresh key and a QR code, shown on the phone only.
-import 'dart:convert';
-import 'dart:math';
-
+// Fasan Split – Gruppen and Freunde, group page. A group is local until it is shared live (see collab_ui.dart); the
+// invitation and the live part of a group live in collab_ui.dart. MPL-2.0
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:zxing2/qrcode.dart';
 
 import '../l10n.dart';
+import '../l10n_collab.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import '../state/scan_queue.dart';
 import 'bill_tile.dart';
+import 'collab_ui.dart';
 
-/// All groups with their number of bills and sum; tap opens the group.
+/// All groups with their number of bills and sum; tap opens the group. Pending join requests are shown on top.
 class GroupsPage extends StatelessWidget {
   const GroupsPage({super.key, required this.queue});
 
@@ -30,6 +25,7 @@ class GroupsPage extends StatelessWidget {
     final bottom = 150 + MediaQuery.paddingOf(context).bottom;
     if (names.isEmpty) {
       return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom), children: [
+        const PendingJoinCards(),
         const SizedBox(height: 80),
         Icon(Icons.folder_copy_outlined, size: 56, color: l.textMuted),
         const SizedBox(height: FasanSpace.l),
@@ -39,12 +35,14 @@ class GroupsPage extends StatelessWidget {
       ]);
     }
     return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, bottom), children: [
+      const PendingJoinCards(),
       for (final g in names)
         Padding(
           padding: const EdgeInsets.only(bottom: FasanSpace.s),
           child: Builder(builder: (context) {
             final bills = store.inGroup(g);
             final sum = bills.fold<int>(0, (a, b) => a + b.effectiveTotal);
+            final live = CollabScope.of(context).groupByLocalName(g) != null;
             return Material(
               color: l.surfaceAlt,
               borderRadius: BorderRadius.circular(l.radius * 0.7),
@@ -54,9 +52,14 @@ class GroupsPage extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(FasanSpace.m),
                   child: Row(children: [
-                    Icon(Icons.folder_outlined, color: l.accent),
+                    Icon(live ? Icons.wifi_tethering_rounded : Icons.folder_outlined, color: l.accent),
                     const SizedBox(width: FasanSpace.m),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(g, style: tt.titleMedium), Text(t.billsCount(bills.length), style: tt.bodySmall)])),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(g, style: tt.titleMedium),
+                        Text(live ? '${t.billsCount(bills.length)} · ${t.shared}' : t.billsCount(bills.length), style: tt.bodySmall),
+                      ]),
+                    ),
                     Text('${money(sum, de: t.de)} €', style: tt.titleMedium),
                   ]),
                 ),
@@ -68,7 +71,7 @@ class GroupsPage extends StatelessWidget {
   }
 }
 
-/// One group: its bills (open and finished), the sum, and the invitation.
+/// One group: its bills (open and finished), the sum, the live part (when shared) and the invitation (admin).
 class GroupScreen extends StatelessWidget {
   const GroupScreen({super.key, required this.name, required this.queue});
 
@@ -81,11 +84,13 @@ class GroupScreen extends StatelessWidget {
     final store = StoreScope.of(context);
     final bills = store.inGroup(name);
     final sum = bills.fold<int>(0, (a, b) => a + b.effectiveTotal);
+    final live = CollabScope.of(context).groupByLocalName(name);
     return Scaffold(
       appBar: AppBar(
         title: Text(name),
         actions: [
-          IconButton(tooltip: t.invite, icon: const Icon(Icons.person_add_alt_1_outlined), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: name)))),
+          if (live != null && live.isAdmin)
+            IconButton(tooltip: t.invite, icon: const Icon(Icons.person_add_alt_1_outlined), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: live)))),
           PopupMenuButton<String>(
             onSelected: (v) async {
               if (v == 'delete') {
@@ -99,10 +104,33 @@ class GroupScreen extends StatelessWidget {
       ),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text('${t.billsCount(bills.length)} · ${money(sum, de: t.de)} €', style: tt.bodyMedium)),
+        if (live != null) CollabGroupPanel(group: live) else _ShareButton(name: name),
         if (bills.isEmpty) Text(t.groupEmpty, style: tt.bodyMedium),
         for (final b in bills)
           Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {})),
       ]),
+    );
+  }
+}
+
+/// Starts the live sharing of a group that is still local. Asks for the consent first.
+class _ShareButton extends StatelessWidget {
+  const _ShareButton({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: FasanSpace.m),
+      child: FilledButton.tonalIcon(
+        icon: const Icon(Icons.wifi_tethering_rounded),
+        label: Text(t.collabShare),
+        onPressed: () async {
+          await shareLive(context, name);
+        },
+      ),
     );
   }
 }
@@ -155,75 +183,4 @@ class FriendsPage extends StatelessWidget {
         ),
     ]);
   }
-}
-
-/// Invitation draft: a link with a fresh random key and its QR code. Nothing is sent (Beschluss 02.11.).
-class InviteScreen extends StatefulWidget {
-  const InviteScreen({super.key, required this.group});
-
-  final String group;
-
-  @override
-  State<InviteScreen> createState() => _InviteScreenState();
-}
-
-class _InviteScreenState extends State<InviteScreen> {
-  late final String _link = () {
-    final rnd = Random.secure();
-    final key = base64Url.encode(List<int>.generate(16, (_) => rnd.nextInt(256))).replaceAll('=', '');
-    return 'fasan://join?g=${Uri.encodeComponent(widget.group)}&k=$key';
-  }();
-
-  @override
-  Widget build(BuildContext context) {
-    final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
-    final qr = Encoder.encode(_link, ErrorCorrectionLevel.m);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.invite)),
-      body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
-        Text(t.inviteIntro(widget.group), style: tt.bodyMedium),
-        const SizedBox(height: FasanSpace.l),
-        Center(
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(l.radius * 0.7), border: Border.all(color: l.hairline)),
-            child: SizedBox.square(dimension: 220, child: CustomPaint(painter: _QrPainter(qr))),
-          ),
-        ),
-        const SizedBox(height: FasanSpace.l),
-        SelectableText(_link, style: tt.bodySmall),
-        const SizedBox(height: FasanSpace.l),
-        Container(
-          padding: const EdgeInsets.all(FasanSpace.m),
-          decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.7)),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(Icons.lock_outline_rounded, size: 18, color: l.textMuted),
-            const SizedBox(width: FasanSpace.s),
-            Expanded(child: Text(t.inviteNotActive, style: tt.bodySmall)),
-          ]),
-        ),
-      ]),
-    );
-  }
-}
-
-class _QrPainter extends CustomPainter {
-  _QrPainter(this.code);
-
-  final QRCode code;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final m = code.matrix!;
-    final n = m.width, cell = size.width / n;
-    final p = Paint()..color = Colors.black;
-    for (var y = 0; y < n; y++) {
-      for (var x = 0; x < n; x++) {
-        if (m.get(x, y) == 1) canvas.drawRect(Rect.fromLTWH(x * cell, y * cell, cell + 0.5, cell + 0.5), p);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_QrPainter old) => old.code != code;
 }

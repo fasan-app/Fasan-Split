@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../l10n.dart';
+import '../l10n_collab.dart';
 import '../main.dart';
+import 'collab_ui.dart';
 import 'common.dart';
 import 'diagnose.dart';
 import 'onboarding.dart';
@@ -104,6 +106,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: IconButton(tooltip: t.forget, icon: const Icon(Icons.close_rounded), onPressed: () => store.forget(n)),
               ),
           ],
+        ),
+        ListTile(
+          leading: const Icon(Icons.group_outlined),
+          title: Text(t.collabTitle),
+          subtitle: Text(t.accountOpen),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AccountScreen())),
         ),
         head(t.setLook),
         ListTile(

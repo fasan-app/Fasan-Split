@@ -1,8 +1,6 @@
 // Zwei Telefone (Dienst + Rechnungsspeicher + Test-Relay): Gruppe, Einladung, Freigabe, Rechnung erscheint beim anderen,
 // Änderungen laufen in beide Richtungen, Chat und Notizen, gleiche Beträge auf den Cent.
-import 'dart:async';
 
-import 'package:fasan_split/collab/group.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/collab/keys.dart';
