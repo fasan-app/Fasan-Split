@@ -3,20 +3,27 @@
 // Money is integer cents. Shares are weights per person (1 = an equal part; pieces of "4 × Pastel de Nata" can be
 // given as counts). Rounding: largest remainder, so the parts always add up to the item exactly (no lost cent).
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'split_math.dart';
 
 import '../recognition/speisen.dart';
 
+final math.Random _uidRng = math.Random.secure();
+
+/// 80-bit random id (hex). Stable names for people and items, so shared bills can merge by id, not by list position.
+String newUid() => List.generate(10, (_) => _uidRng.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+
 class Person {
-  Person(this.name, this.color);
+  Person(this.name, this.color, {String? uid}) : uid = uid ?? newUid();
 
   String name;
   final int color; // index into FasanPeople colours
+  final String uid;
 
-  Map<String, Object> toJson() => {'name': name, 'color': color};
-  static Person fromJson(Map<String, dynamic> j) => Person(j['name'] as String, (j['color'] as num).toInt());
+  Map<String, Object> toJson() => {'name': name, 'color': color, 'uid': uid};
+  static Person fromJson(Map<String, dynamic> j) => Person(j['name'] as String, (j['color'] as num).toInt(), uid: j['uid'] as String?);
 }
 
 /// Normalised box (0–1) in the receipt image.
@@ -42,7 +49,12 @@ class BillItem {
     this.snippet,
     this.note,
     Map<int, double>? shares,
-  }) : shares = shares ?? {};
+    String? uid,
+  })  : shares = shares ?? {},
+        uid = uid ?? newUid();
+
+  /// Stable id for merging shared bills.
+  final String uid;
 
   String name;
   int amount; // cents, incl. Pfand/Rabatt/extras
@@ -106,6 +118,7 @@ class BillItem {
   bool get assigned => shares.values.any((w) => w > 0);
 
   Map<String, Object?> toJson() => {
+        'uid': uid,
         'name': name,
         'amount': amount,
         'qty': qty,
@@ -120,6 +133,7 @@ class BillItem {
       };
 
   static BillItem fromJson(Map<String, dynamic> j) => BillItem(
+        uid: j['uid'] as String?,
         name: j['name'] as String,
         amount: (j['amount'] as num).toInt(),
         qty: (j['qty'] as num?)?.toInt() ?? 1,

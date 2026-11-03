@@ -104,6 +104,17 @@ if 'ota_update_provider' not in m:
         </receiver>
 '''
     m = m.replace('</application>', provider + '    </application>', 1)
+# Invitation links „fasansplit://join#…“ open the app (app_links, pub.dev/packages/app_links: custom scheme = VIEW + BROWSABLE).
+if 'android:scheme="fasansplit"' not in m:
+    link = '''            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="fasansplit" android:host="join"/>
+            </intent-filter>
+'''
+    i = m.index('</intent-filter>') + len('</intent-filter>\n')
+    m = m[:i] + link + m[i:]
 manifest.write_text(m)
 xml = root / 'src' / 'main' / 'res' / 'xml'
 xml.mkdir(parents=True, exist_ok=True)

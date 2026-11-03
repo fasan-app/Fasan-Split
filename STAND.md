@@ -267,6 +267,31 @@ NICHT geprüft: alles auf dem S23; Wischen zwischen Seiten, Kollision Langdruck/
 Ton (Medienlautstärke), Glas-Probe nach der Änderung. E2E der Erkennung nicht neu gemessen (nichts an der Erkennung geändert; hier fehlt in dieser
 Sitzung nur `LD_LIBRARY_PATH` für ONNX, daher laufen `e2e_test.dart` und `zz_view_test.dart` lokal nicht).
 
+## ÜBERGABE 03.11. abends (Branch `wip-zusammenarbeit`, NICHT auf main, Build dort absichtlich unvollständig)
+
+Rückmeldung S23 (0.1.24, Protokoll 19:11): Klick-Ton geht, erster Druck dünn, später lauter, in der Führung teils doppelt/verzögert, Klang „ganz schlimm“.
+Glas-Probe: Pixel oben/unten `rgb0,0,0` = **schwarz** (nicht kopfüber): `ImageFilter.shader` liefert auf dem S23 Schwarz, Glas bleibt `blur`.
+Schatten „nicht da“: Verdacht [Likely]: Akku 19 % → Effekte aus → `FasanDepth` zeichnet dann nur Haarlinie (`!st.on`). Fix: statische Schatten immer, nur Neigung abhängig von `st.tilt`.
+Bon-Ansicht: Langdruck auf Namen und Plus fehlten; im WIP-Stand ist `personMenu`/`addPersonDialog` (assign.dart) in `_PersonBar` (receipt_view.dart) eingebaut, **nicht getestet**.
+**Nutzer: Zusammenarbeit hat jetzt höchste Priorität** (Teilnehmer, Kassenzettel abrechnen, Verschlüsselung, gleichzeitig bearbeiten, Notizen, Nachrichten).
+
+FERTIG und getestet im WIP-Stand (39 Tests grün, `flutter test test/crypto_test.dart test/group_test.dart test/bill_sync_test.dart test/service_test.dart`):
+- `app/lib/collab/`: `crypto.dart` (BIP-340, NIP-44 v2 mit offiziellen Vektoren, ChaCha20-Poly1305 RFC 8439), `keys.dart` (NIP-06, Identity, Vault), `nostr.dart` (Events, RelayPool/WsRelay, MemoryRelay für Tests), `lww.dart` (LWW-CRDT), `group.dart` (Gruppenschlüssel, GroupSession, Invite/Invitations/JoinFlow, Bestätigung durch Admin), `bill_sync.dart` (Bill ⇄ CRDT über `uid`), `notes.dart` (Notizen, Chat), `service.dart` (`CollabService`: Identität, Gruppen, Einladung, Brücke zu den Bons).
+- `Bill`/`Person`/`BillItem` haben stabile `uid`.
+- fasan_ui (Branch `wip-zusammenarbeit`): `FasanTone.kt` (nativer AudioTrack MODE_STATIC) + `sound.dart` neu (Ton ohne audioplayers, Entprellung, weichere Töne). **Kotlin nie kompiliert** (kein Android-SDK hier), erst die CI zeigt Fehler.
+- `tool/patch_android.py`: Intent-Filter `fasansplit://join` (an frischem `flutter create` geprüft, XML gültig). `pubspec.yaml`: app_links, pointycastle, bip39, web_socket_channel, flutter_secure_storage.
+- `l10n_collab.dart`: alle Texte der Zusammenarbeit (de/en).
+- `main.dart`: `SplitApp` ist jetzt StatefulWidget mit `CollabScope`, `navigatorKey`, Deep-Link (öffnet `JoinScreen(prefill:)`). Importiert `ui/collab_ui.dart` → **diese Datei fehlt noch, bis sie da ist, baut nichts**.
+
+NOCH ZU BAUEN (Reihenfolge):
+1. `app/lib/ui/collab_ui.dart` mit: `JoinScreen({prefill})` (Link einfügen/Zwischenablage, Name, `service.join`), `GroupScreen`-Erweiterung für Live-Gruppen (Mitglieder, Einladen, Notizen, Nachrichten, Verlassen), `InviteScreen` neu (`g.invitations!.create()`, QR aus `invite.link`, Kopieren/Teilen, Anfragen mit `approve`/`decline`, widerrufen), `NotesScreen`/Editor (Speichern entprellt, Fremdänderungen einlesen), `ChatScreen`, `AccountScreen` (Name, 12 Wörter anzeigen, Wiederherstellen, Relays), Einwilligungsdialog vor dem ersten Relay-Kontakt, Karten „Wartet auf Bestätigung“ in der Gruppenliste, `home.dart` `_plus` auf Seite Gruppen: Neue Gruppe live/lokal oder Beitreten. Kein `groups.dart`-Entwurf mehr (`InviteScreen` ersetzen).
+2. Einstellungen: Eintrag „Konto und Zusammenarbeit“ → `AccountScreen`.
+3. Widget-Tests mit `CollabService(relayFactory: MemoryRelay…)`; CI muss grün sein, dann Merge nach main (Reihenfolge: fasan_ui nach main pushen, in Split `flutter pub upgrade fasan_ui`, Lock committen).
+4. Danach: Schatten immer an, Glas ohne `ImageFilter.shader` (Hintergrund per `toImageSync`, Leisten außerhalb der erfassten Fläche), Web-Build (Flutter Web, Gruppen-Link), Scan-Begradigung, Rest unten.
+
+Regeln: **Nie an öffentliche Relays senden, auch nicht zum Testen** (nur MemoryRelay); die App selbst nutzt sie nur nach Einwilligung des Nutzers. Lokal `app/pubspec_overrides.yaml` zeigt auf `../../fasan_ui` (gitignoriert, nicht committen; Vorlage `/tmp/po.yaml` kann fehlen: Inhalt `dependency_overrides:\n  fasan_ui:\n    path: ../../fasan_ui`).
+Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` (E2E nur mit `LD_LIBRARY_PATH=/home/claude/ort/onnxruntime-linux-x64-1.22.0/lib`, dauert ~13 min, im Hintergrund).
+
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
 1. Rückmeldung vom S23 zu 0.1.24: Ton (Test-Knopf zeigt jetzt den Grund), Glas-Probe (`pixel`, `kopfueber`), Schatten, Anleitung, Zuordnen.

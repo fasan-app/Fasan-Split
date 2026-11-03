@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
-import 'assign.dart' show PeoplePicker;
+import 'assign.dart' show PeoplePicker, addPersonDialog, personMenu;
 import 'common.dart';
 
 enum ReceiptLayer { scan, original, digital }
@@ -193,7 +193,10 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
     if (layer == ReceiptLayer.scan && !hasScan) layer = hasOriginal ? ReceiptLayer.original : ReceiptLayer.digital;
     final it = sel == null || sel! >= b.its.length ? null : b.its[sel!];
     return Column(children: [
-      if (!widget.readOnly) _PersonBar(bill: b, selected: person, sumOf: _sumOf, onSelect: (p) => setState(() => person = person == p ? null : p)),
+      if (!widget.readOnly) _PersonBar(bill: b, selected: person, sumOf: _sumOf, onSelect: (p) => setState(() => person = person == p ? null : p), onChanged: () => setState(() {
+        if (person != null && person! >= b.ps.length) person = null;
+        widget.onChanged();
+      })),
       Padding(
         padding: const EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.xs, FasanSpace.l, FasanSpace.xs),
         child: Row(children: [
@@ -515,12 +518,13 @@ class _RowsPainter extends CustomPainter {
 
 /// People as a bar with running sums; the chosen one is the only filled chip (Regel 4.3).
 class _PersonBar extends StatelessWidget {
-  const _PersonBar({required this.bill, required this.selected, required this.sumOf, required this.onSelect});
+  const _PersonBar({required this.bill, required this.selected, required this.sumOf, required this.onSelect, required this.onChanged});
 
   final Bill bill;
   final int? selected;
   final int Function(int) sumOf;
   final ValueChanged<int> onSelect;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -531,9 +535,22 @@ class _PersonBar extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l, vertical: 8),
-        itemCount: bill.ps.length,
+        itemCount: bill.ps.length + 1,
         separatorBuilder: (_, _) => const SizedBox(width: FasanSpace.s),
         itemBuilder: (context, p) {
+          if (p == bill.ps.length) {
+            // plus: add a person right here (Nutzer 03.11.)
+            return Center(
+              child: ActionChip(
+                avatar: const Icon(Icons.add_rounded),
+                label: Text(S.of(context).addPersonHere),
+                onPressed: () async {
+                  final idx = await addPersonDialog(context, bill);
+                  if (idx != null) onChanged();
+                },
+              ),
+            );
+          }
           final on = selected == p;
           final c = FasanPeople.color(bill.ps[p].color, l.brightness);
           return Semantics(
@@ -545,6 +562,10 @@ class _PersonBar extends StatelessWidget {
               child: InkWell(
                 customBorder: const StadiumBorder(),
                 onTap: () => onSelect(p),
+                onLongPress: () {
+                  final box = context.findRenderObject() as RenderBox;
+                  personMenu(context, bill, p, box.localToGlobal(Offset(box.size.width / 2, box.size.height / 2)), changed: onChanged);
+                },
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(6, 4, 14, 4),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [

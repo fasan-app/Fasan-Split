@@ -102,6 +102,84 @@ class _AssignScreenState extends State<AssignScreen> {
   }
 }
 
+/// Asks for a name and adds the person to the bill (or finds the one with that name). Returns the index, null if cancelled.
+Future<int?> addPersonDialog(BuildContext context, Bill bill) async {
+  final t = S.of(context);
+  final c = TextEditingController();
+  final name = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(t.addPersonHere),
+      content: TextField(controller: c, autofocus: true, textCapitalization: TextCapitalization.words, decoration: InputDecoration(hintText: t.newName), onSubmitted: (v) => Navigator.pop(ctx, v)),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
+        FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(t.add)),
+      ],
+    ),
+  );
+  final n = (name ?? '').trim();
+  if (n.isEmpty || !context.mounted) return null;
+  final dup = bill.ps.indexWhere((p) => p.name.toLowerCase() == n.toLowerCase());
+  final idx = dup >= 0 ? dup : bill.ps.length;
+  if (dup < 0) {
+    final used = bill.ps.map((p) => p.color).toSet();
+    var col = 0;
+    while (used.contains(col) && col < 64) {
+      col++;
+    }
+    bill.ps.add(Person(n, col));
+  }
+  FasanHaptics.of(context).confirm();
+  showNote(context, t.personAdded(bill.ps[idx].name));
+  return idx;
+}
+
+/// Context menu of a person (long press). With [item]: „only this person“ and „remove from this item“ apply to that item.
+Future<void> personMenu(BuildContext context, Bill bill, int i, Offset at, {BillItem? item, required VoidCallback changed}) async {
+  final t = S.of(context);
+  FasanHaptics.of(context).tap();
+  final sel = item != null && (item.shares[i] ?? 0) > 0;
+  final r = await showMenu<String>(
+    context: context,
+    position: RelativeRect.fromLTRB(at.dx, at.dy, at.dx, at.dy),
+    items: [
+      if (item != null) PopupMenuItem(value: 'only', child: Text(t.onlyThis)),
+      if (sel) PopupMenuItem(value: 'not', child: Text(t.notForThis)),
+      PopupMenuItem(value: 'rename', child: Text(t.renamePerson)),
+      PopupMenuItem(value: 'remove', child: Text(t.removePerson)),
+    ],
+  );
+  if (r == null || !context.mounted) return;
+  switch (r) {
+    case 'only':
+      item!.shares = {i: 1};
+    case 'not':
+      item!.shares.remove(i);
+    case 'rename':
+      final c = TextEditingController(text: bill.ps[i].name);
+      final n = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(t.renamePerson),
+          content: TextField(controller: c, autofocus: true, textCapitalization: TextCapitalization.words, onSubmitted: (v) => Navigator.pop(ctx, v)),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
+            FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(t.save)),
+          ],
+        ),
+      );
+      final nn = (n ?? '').trim();
+      if (nn.isEmpty || !context.mounted) return;
+      bill.ps[i].name = nn;
+    case 'remove':
+      final name = bill.ps[i].name;
+      bill.removePerson(i);
+      showNote(context, t.personRemoved(name));
+  }
+  if (context.mounted) FasanHaptics.of(context).confirm();
+  changed();
+}
+
 /// Person chips for one item; "Alle" toggles everyone, "+" adds a person right here, long press opens a menu.
 /// With quantity > 1 each person's share is shown in pieces (3 pieces for 2 people: 1,5 each) and can change in halves.
 class PeoplePicker extends StatelessWidget {
@@ -113,81 +191,13 @@ class PeoplePicker extends StatelessWidget {
   final VoidCallback? onAll;
 
   Future<void> _add(BuildContext context) async {
-    final t = S.of(context);
-    final c = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.addPersonHere),
-        content: TextField(controller: c, autofocus: true, textCapitalization: TextCapitalization.words, decoration: InputDecoration(hintText: t.newName), onSubmitted: (v) => Navigator.pop(ctx, v)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(t.add)),
-        ],
-      ),
-    );
-    final n = (name ?? '').trim();
-    if (n.isEmpty || !context.mounted) return;
-    final dup = bill.ps.indexWhere((p) => p.name.toLowerCase() == n.toLowerCase());
-    final idx = dup >= 0 ? dup : bill.ps.length;
-    if (dup < 0) {
-      final used = bill.ps.map((p) => p.color).toSet();
-      var col = 0;
-      while (used.contains(col) && col < 64) {
-        col++;
-      }
-      bill.ps.add(Person(n, col));
-    }
+    final idx = await addPersonDialog(context, bill);
+    if (idx == null || !context.mounted) return;
     item.shares[idx] = 1; // the new person has this item right away – that is why they were added here
-    FasanHaptics.of(context).confirm();
-    showNote(context, t.personAdded(bill.ps[idx].name));
     onChanged();
   }
 
-  Future<void> _menu(BuildContext context, int i, Offset at) async {
-    final t = S.of(context);
-    FasanHaptics.of(context).tap();
-    final sel = (item.shares[i] ?? 0) > 0;
-    final r = await showMenu<String>(
-      context: context,
-      position: RelativeRect.fromLTRB(at.dx, at.dy, at.dx, at.dy),
-      items: [
-        PopupMenuItem(value: 'only', child: Text(t.onlyThis)),
-        if (sel) PopupMenuItem(value: 'not', child: Text(t.notForThis)),
-        PopupMenuItem(value: 'rename', child: Text(t.renamePerson)),
-        PopupMenuItem(value: 'remove', child: Text(t.removePerson)),
-      ],
-    );
-    if (r == null || !context.mounted) return;
-    switch (r) {
-      case 'only':
-        item.shares = {i: 1};
-      case 'not':
-        item.shares.remove(i);
-      case 'rename':
-        final c = TextEditingController(text: bill.ps[i].name);
-        final n = await showDialog<String>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(t.renamePerson),
-            content: TextField(controller: c, autofocus: true, textCapitalization: TextCapitalization.words, onSubmitted: (v) => Navigator.pop(ctx, v)),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
-              FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(t.save)),
-            ],
-          ),
-        );
-        final nn = (n ?? '').trim();
-        if (nn.isEmpty || !context.mounted) return;
-        bill.ps[i].name = nn;
-      case 'remove':
-        final name = bill.ps[i].name;
-        bill.removePerson(i);
-        showNote(context, t.personRemoved(name));
-    }
-    FasanHaptics.of(context).confirm();
-    onChanged();
-  }
+  Future<void> _menu(BuildContext context, int i, Offset at) => personMenu(context, bill, i, at, item: item, changed: onChanged);
 
   @override
   Widget build(BuildContext context) {

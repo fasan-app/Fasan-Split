@@ -30,6 +30,11 @@ dependencies:
   ota_update: ^7.1.0
   package_info_plus: ^10.2.2
   file_picker: ^13.3.2
+  pointycastle: ^3.9.1
+  bip39: ^1.0.6
+  web_socket_channel: ^3.0.3
+  flutter_secure_storage: ^11.2.0
+  app_links: ^6.4.1         # BSD-3, Einladungslinks fasansplit://join öffnen die App
 
 dev_dependencies:
   flutter_test:
