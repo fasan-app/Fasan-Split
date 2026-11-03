@@ -73,7 +73,7 @@ class PaddleOcr {
   }
 
   /// Where is text? Axis-parallel boxes in image pixels [finde].
-  List<DetBox> find(Img c, {List<double>? scale, double stretch = 1}) {
+  Future<List<DetBox>> find(Img c, {List<double>? scale, double stretch = 1}) async {
     int ww, hh;
     double fx, fy;
     if (scale != null) {
@@ -85,7 +85,7 @@ class PaddleOcr {
       (ww, hh, fx, fy) = _detSize(c.w, c.h, stretch);
     }
     final g = c.resized(ww, hh);
-    final out = det.run(_bgr(g, const [0.485, 0.456, 0.406], const [0.229, 0.224, 0.225]), [1, 3, hh, ww]);
+    final out = await det.run(_bgr(g, const [0.485, 0.456, 0.406], const [0.229, 0.224, 0.225]), [1, 3, hh, ww]);
     return _boxes(out.data, ww, hh)
         .map((k) => DetBox(k.x0 / fx, k.y0 / fy, k.x1 / fx, k.y1 / fy, k.score, k.tilt == null ? null : (k.tilt! * fx) / fy))
         .toList();
@@ -148,13 +148,13 @@ class PaddleOcr {
   }
 
   /// What is in the box? CTC greedy decoding with second-best character [liesKasten].
-  RecResult? readBox(Img c, double x0, double y0, double x1, double y1) {
+  Future<RecResult?> readBox(Img c, double x0, double y0, double x1, double y1) async {
     final kh = y1 - y0, kw = x1 - x0;
     if (kh < 4 || kw < 4) return null;
     const H = 48;
     final W = math.max(16, math.min(1600, jsRound((H * kw) / kh)));
     final g = c.region(x0, y0, kw, kh, W, H);
-    final o = rec.run(_bgr(g, const [0.5, 0.5, 0.5], const [0.5, 0.5, 0.5]), [1, 3, H, W]);
+    final o = await rec.run(_bgr(g, const [0.5, 0.5, 0.5], const [0.5, 0.5, 0.5]), [1, 3, H, W]);
     final T = o.dims[1], C = o.dims[2], d = o.data;
     if (_classes == null) {
       // blank class first, space last (if the output has one class more); the Latin dict already starts with a blank line
@@ -193,8 +193,8 @@ class PaddleOcr {
   }
 
   /// Whole page: find boxes, read each. Fixes stacked digit columns of fixed-pitch receipts and tall merged boxes [woerter].
-  List<Word> words(Img c, {double? stretch, void Function(double)? progress}) {
-    var k = find(c, stretch: stretch ?? 1);
+  Future<List<Word>> words(Img c, {double? stretch, void Function(double)? progress}) async {
+    var k = await find(c, stretch: stretch ?? 1);
     final out = <Word>[];
     if (stretch == null) {
       double area(DetBox q) => math.max(1, q.w * q.h);
@@ -203,7 +203,7 @@ class PaddleOcr {
       final med0 = hs0.isNotEmpty ? hs0[hs0.length >> 1] : 0.0;
       final tall = med0 != 0 ? k.where((q) => q.h > 2.2 * med0 && q.h > 0.8 * q.w).toList() : <DetBox>[];
       if (tall.isNotEmpty) {
-        final k2 = find(c, stretch: 2.2);
+        final k2 = await find(c, stretch: 2.2);
         var neu = k2.where((q) => tall.any((t) => cut(q, t) > 0.25 * area(q))).toList();
         final sx0 = minOf(tall.map((q) => q.x0)), sx1 = maxOf(tall.map((q) => q.x1));
         for (var more = neu.isNotEmpty; more;) {
@@ -276,14 +276,14 @@ class PaddleOcr {
     final med = hs.isNotEmpty ? hs[hs.length >> 1] : 0.0;
     for (var i = 0; i < k.length; i++) {
       final q = k[i], h = q.h;
-      final r = readBox(c, q.x0, q.y0, q.x1, q.y1);
+      final r = await readBox(c, q.x0, q.y0, q.x1, q.y1);
       List<(RecResult, Box)>? parts;
       // too tall box with modest confidence: read n equal strips; keep them only if they read more surely
       if (med != 0 && h > 1.45 * med && (r == null || r.conf < 93)) {
         final n = math.max(2, jsRound(h / med)), sh = h / n, list = <(RecResult, Box)>[];
         for (var j = 0; j < n; j++) {
           final t = Box(q.x0, q.y0 + j * sh - sh * 0.08, q.x1, q.y0 + (j + 1) * sh + sh * 0.08);
-          final l = readBox(c, t.x0, t.y0, t.x1, t.y1);
+          final l = await readBox(c, t.x0, t.y0, t.x1, t.y1);
           if (l != null && l.text.isNotEmpty) list.add((l, t));
         }
         final mean = list.isNotEmpty ? list.fold<double>(0, (a, x) => a + x.$1.conf) / list.length : 0.0;
@@ -302,10 +302,10 @@ class PaddleOcr {
   }
 
   /// Is the text sideways? Detection on a small copy; tall boxes outnumbering wide ones → turned by 90° [hochkant].
-  bool sideways(Img c) {
+  Future<bool> sideways(Img c) async {
     final f = math.min(1.0, 960 / math.max(c.w, c.h));
     final small = f < 1 ? c.resized(jsRound(c.w * f), jsRound(c.h * f)) : c;
-    final k = find(small);
+    final k = await find(small);
     var wide = 0, tall = 0;
     for (final q in k) {
       if (q.w > 1.6 * q.h) {
@@ -321,7 +321,7 @@ class PaddleOcr {
 
   /// Reads the same area with several crops (margin, top/bottom, stretched contrast); voting by confidence
   /// (cf. Reul et al. 2017, arXiv:1711.09670) [mehrfach].
-  List<Reading> multiRead(Img c, Box k, {List<(double, double, bool)> variants = defaultVariants}) {
+  Future<List<Reading>> multiRead(Img c, Box k, {List<(double, double, bool)> variants = defaultVariants}) async {
     final h = k.h, out = <Reading>[];
     for (final (margin, inset, contrast) in variants) {
       var x0 = math.max(0.0, k.x0 - h * margin), x1 = math.min(c.w.toDouble(), k.x1 + h * margin);
@@ -350,7 +350,7 @@ class PaddleOcr {
         y0 = 0;
       }
       try {
-        final l = readBox(src, x0, y0, x1, y1);
+        final l = await readBox(src, x0, y0, x1, y1);
         if (l != null && l.text.isNotEmpty) out.add(Reading(l.text, l.conf));
       } catch (_) {/* next variant */}
     }
@@ -358,7 +358,7 @@ class PaddleOcr {
   }
 
   /// UVDoc: grid 2×gh×gw of source coordinates in [−1, 1] for a flat sheet. Input RGB 488×712, values 0–1 [uvdoc].
-  (Float32List, List<int>)? uvGrid(Img c) {
+  Future<(Float32List, List<int>)?> uvGrid(Img c) async {
     final m = uvdoc;
     if (m == null) return null;
     const W = 488, H = 712;
@@ -369,7 +369,7 @@ class PaddleOcr {
       t[n + i] = p[j + 1] / 255;
       t[2 * n + i] = p[j + 2] / 255;
     }
-    final o = m.run(t, [1, 3, H, W]);
+    final o = await m.run(t, [1, 3, H, W]);
     return (o.data, o.dims);
   }
 }

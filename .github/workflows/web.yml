@@ -1,4 +1,4 @@
-# Baut bei jedem Push auf main die Web-App (Beitreten, Bons, Saldo, Notizen, Chat; kein Bon-Lesen) und veröffentlicht sie
+# Baut bei jedem Push auf main die Web-App (alles wie die App, Bon-Lesen im Web Worker) und veröffentlicht sie
 # auf GitHub Pages: https://fasan-app.github.io/Fasan-Split/ . Einladungen: …/Fasan-Split/join/#<code> (docs/WEB.md).
 # Einmalig nötig: Settings → Pages → Source „GitHub Actions“.
 name: Web-App
@@ -26,6 +26,17 @@ jobs:
           flutter-version: 3.47.7
           cache: true
 
+      - name: Modelle holen (Prüfsummen)
+        working-directory: app
+        run: bash tool/fetch_models.sh
+
+      # ONNX Runtime Web (MIT) aus der npm-Registry, gleiche Version wie auf Android (1.22.0); liegt mit auf der Seite.
+      - name: ONNX Runtime Web holen
+        run: |
+          mkdir -p "$RUNNER_TEMP/ort" && cd "$RUNNER_TEMP/ort"
+          npm pack onnxruntime-web@1.22.0 --silent
+          tar xzf onnxruntime-web-1.22.0.tgz
+
       - name: Web bauen
         working-directory: app
         run: |
@@ -33,9 +44,13 @@ jobs:
           flutter create --org app.fasan --project-name fasan_split --platforms web .
           sed -i 's#<title>.*</title>#<title>Fasan Split</title>#' web/index.html
           sed -i 's#"name": "fasan_split"#"name": "Fasan Split"#; s#"short_name": "fasan_split"#"short_name": "Fasan Split"#' web/manifest.json
-          # Keine Modelle: der Browser liest keine Bons. CanvasKit liegt mit auf der Seite statt beim Google-CDN.
+          # CanvasKit liegt mit auf der Seite statt beim Google-CDN.
           flutter build web --release --base-href /Fasan-Split/ --no-web-resources-cdn --dart-define=FASAN_BUILD=${{ github.sha }}
           cp -r web_extra/. build/web/
+          # Erkennung als Web Worker (lib/recognition/web_worker.dart), ONNX Runtime Web daneben unter ort/
+          dart compile js -O2 -o build/web/recognition_worker.js lib/recognition/web_worker.dart
+          mkdir -p build/web/ort
+          cp "$RUNNER_TEMP/ort/package/dist/"{ort.wasm.min.js,ort-wasm-simd-threaded.wasm,ort-wasm-simd-threaded.mjs} build/web/ort/
           echo "${{ github.sha }}" > build/web/build.txt   # update check (lib/web_platform_web.dart)
           touch build/web/.nojekyll
 

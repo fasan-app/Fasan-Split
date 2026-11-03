@@ -17,7 +17,7 @@ void main() {
   final env = Platform.environment;
   final root = env['FASAN_SROIE'] ?? '/home/claude/sroie';
   final ready = Directory('$root/data/img').existsSync() && File('assets/models/det.onnx').existsSync();
-  test('SROIE Summe', () {
+  test('SROIE Summe', () async {
     final threads = int.tryParse(env['FASAN_THREADS'] ?? '') ?? 2;
     final uv = File('assets/models/uvdoc.onnx');
     final ocr = PaddleOcr(
@@ -42,7 +42,7 @@ void main() {
       int? got;
       var sure = false, items = 0, source = '';
       try {
-        final x = rec.recognize(img.readAsBytesSync());
+        final x = await rec.recognize(img.readAsBytesSync());
         got = x.result.total;
         sure = x.result.check.ok;
         items = x.result.items.length;

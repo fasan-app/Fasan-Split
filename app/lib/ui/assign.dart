@@ -2,7 +2,6 @@
 // Fokus (one line large), Liste mit Zeilenbild, Bon (zoomed so every line is ≥ 48 dp), Karten (swipe).
 // A multi-line item is one continuous shape; shared items show avatars, never colour stripes. MPL-2.0
 import 'dart:async';
-import 'dart:io';
 
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +14,7 @@ import 'common.dart';
 import 'receipt_view.dart';
 import 'flow.dart';
 import 'hints.dart';
+import '../state/images.dart';
 
 enum AssignMode { focus, list, receipt, cards }
 
@@ -59,7 +59,7 @@ class _AssignScreenState extends State<AssignScreen> {
   @override
   Widget build(BuildContext context) {
     final t = S.of(context);
-    final hasImage = b.imagePath != null && File(b.imagePath!).existsSync();
+    final hasImage = imageExists(b.imagePath);
     final modes = [AssignMode.focus, AssignMode.list, if (hasImage) AssignMode.receipt, AssignMode.cards];
     if (!modes.contains(mode)) mode = AssignMode.focus;
     final open = b.unassigned;

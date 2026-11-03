@@ -32,6 +32,9 @@ class OnnxModel {
   }
 
   /// [threads]: intra-op threads (phones: 2–4; the web app runs single-threaded).
+  /// Same as [fromBytes]; the browser version (onnx_web.dart) can only create sessions asynchronously.
+  static Future<OnnxModel> load(Uint8List bytes, {int threads = 2}) async => fromBytes(bytes, threads: threads);
+
   static OnnxModel fromBytes(Uint8List bytes, {int threads = 2}) {
     ensureEnv();
     final o = OrtSessionOptions()
@@ -46,7 +49,8 @@ class OnnxModel {
   String get inputName => _session.inputNames.first;
 
   /// Runs the model with one float32 input of [shape]; returns the first output.
-  OnnxOutput run(Float32List input, List<int> shape) {
+  /// Async because the browser engine (onnx_web.dart, onnxruntime-web) only offers a Promise; here it finishes at once.
+  Future<OnnxOutput> run(Float32List input, List<int> shape) async {
     final api = OrtEnv.instance.ortApiPtr.ref;
     final n = input.length;
     final dataPtr = calloc<ffi.Float>(n);

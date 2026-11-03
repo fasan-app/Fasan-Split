@@ -9,7 +9,6 @@
 //   (Regel 3.7).
 // - Three views: Scan (cleaned, with boxes), Original (photo exactly as taken), Digital (rebuilt by the app)
 //   (Beschluss 02.11.).
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -20,6 +19,7 @@ import '../main.dart';
 import '../model/bill.dart';
 import 'assign.dart' show PeoplePicker, addPersonDialog, personMenu;
 import 'common.dart';
+import '../state/images.dart';
 
 enum ReceiptLayer { scan, original, digital }
 
@@ -57,7 +57,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
   /// Goes to the next (+1) or previous (-1) view; no-op at the ends.
   void _swipeLayer(int dir) {
     final b = this.b;
-    final list = _layers(b.imagePath != null && File(b.imagePath!).existsSync(), b.originalPath != null && File(b.originalPath!).existsSync());
+    final list = _layers(imageExists(b.imagePath), imageExists(b.originalPath));
     final i = list.indexOf(layer) + dir;
     if (i < 0 || i >= list.length) return;
     FasanHaptics.of(context).tap();
@@ -186,8 +186,8 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
   Widget build(BuildContext context) {
     final t = S.of(context);
     final l = FasanLook.of(context);
-    final hasOriginal = b.originalPath != null && File(b.originalPath!).existsSync();
-    final hasScan = b.imagePath != null && File(b.imagePath!).existsSync();
+    final hasOriginal = imageExists(b.originalPath);
+    final hasScan = imageExists(b.imagePath);
     // fall back to what exists (bills from 0.1 have no original; „Bonfotos löschen“ removes both)
     if (layer == ReceiptLayer.original && !hasOriginal) layer = hasScan ? ReceiptLayer.scan : ReceiptLayer.digital;
     if (layer == ReceiptLayer.scan && !hasScan) layer = hasOriginal ? ReceiptLayer.original : ReceiptLayer.digital;
@@ -331,7 +331,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
           width: view.width,
           height: h,
           child: Stack(children: [
-            Positioned(left: 0, top: 0, width: w, height: h, child: Image.file(File(b.imagePath!), fit: BoxFit.fill, filterQuality: FilterQuality.medium)),
+            Positioned(left: 0, top: 0, width: w, height: h, child: Image(image: imageProvider(b.imagePath!), fit: BoxFit.fill, filterQuality: FilterQuality.medium)),
             Positioned(
               left: 0,
               top: 0,
@@ -437,7 +437,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
               width: view.width,
               height: view.height,
               child: Stack(children: [
-                Positioned.fill(child: Image.file(File(b.originalPath!), fit: BoxFit.contain, filterQuality: FilterQuality.medium)),
+                Positioned.fill(child: Image(image: imageProvider(b.originalPath!), fit: BoxFit.contain, filterQuality: FilterQuality.medium)),
                 if (polys.isNotEmpty)
                   Positioned.fill(
                     child: IgnorePointer(

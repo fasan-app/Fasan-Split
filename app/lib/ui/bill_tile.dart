@@ -1,5 +1,4 @@
 // Fasan Split – one bill as a card on the overview. MPL-2.0
-import 'dart:io';
 
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +11,7 @@ import 'scan_stage.dart';
 import 'flow.dart';
 import 'common.dart';
 import 'resume.dart';
+import '../state/images.dart';
 
 /// One bill on the overview: thumbnail, name, state (waiting / reading / failed / date and step) and sum.
 class BillTile extends StatelessWidget {
@@ -33,8 +33,8 @@ class BillTile extends StatelessWidget {
   Widget _thumb(BuildContext context) {
     final l = FasanLook.of(context);
     final orig = bill.originalPath;
-    final photo = orig != null && File(orig).existsSync()
-        ? Image.file(File(orig), fit: BoxFit.cover, cacheWidth: 160)
+    final photo = imageExists(orig)
+        ? Image(image: ResizeImage(imageProvider(orig!), width: 160), fit: BoxFit.cover)
         : ColoredBox(color: l.surfaceAlt, child: Icon(bill.read == BillRead.failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted));
     final live = bill.read == BillRead.reading ? queue.liveFor(bill.id) : null;
     return ClipRRect(
@@ -93,10 +93,10 @@ class BillTile extends StatelessWidget {
               ],
               if (waiting || failed)
                 _thumb(context)
-              else if (bill.imagePath != null && File(bill.imagePath!).existsSync())
+              else if (imageExists(bill.imagePath))
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
-                  child: Image.file(File(bill.imagePath!), width: 40, height: 52, fit: BoxFit.cover, cacheWidth: 120),
+                  child: Image(image: ResizeImage(imageProvider(bill.imagePath!), width: 120), width: 40, height: 52, fit: BoxFit.cover),
                 )
               else
                 SizedBox(width: 40, height: 52, child: Icon(failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted)),

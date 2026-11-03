@@ -99,7 +99,7 @@ Future<void> _fonts() async {
 
 /// Real receipt (FASAN_ECHT=Pfad zum JPG aus fasan-diagnose/tests/echt): the real recognition runs once, like on the phone.
 Bill? _real;
-Bill _realBill(String photo, Directory dir) {
+Future<Bill> _realBill(String photo, Directory dir) async {
   if (_real != null) return _real!;
   final uv = File('assets/models/uvdoc.onnx');
   final ocr = PaddleOcr(
@@ -109,7 +109,7 @@ Bill _realBill(String photo, Directory dir) {
     uvdoc: uv.existsSync() ? OnnxModel.fromBytes(uv.readAsBytesSync(), threads: 2) : null,
   );
   final bytes = File(photo).readAsBytesSync();
-  final r = RecognitionService.fromRecognition(Recognizer(ocr).recognize(bytes));
+  final r = RecognitionService.fromRecognition(await Recognizer(ocr).recognize(bytes));
   final scan = File('${dir.path}/echt-scan.png')..writeAsBytesSync(r.display);
   final orig = File('${dir.path}/echt-orig.jpg')..writeAsBytesSync(bytes);
   return _real = Bill(

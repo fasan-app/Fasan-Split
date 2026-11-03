@@ -20,7 +20,7 @@ void main() {
   // FASAN_BONORDNER: anderer Ordner, z. B. fasan-diagnose/tests/echt (echte Bons, nur dort).
   final dir = Directory(Platform.environment['FASAN_BONORDNER'] ?? '$diag/bons');
   final ready = dir.existsSync() && File('assets/models/det.onnx').existsSync();
-  test('e2e synthetische Bons', () {
+  test('e2e synthetische Bons', () async {
     final threads = int.tryParse(Platform.environment['FASAN_THREADS'] ?? '') ?? 2;
     final uv = File('assets/models/uvdoc.onnx');
     final ocr = PaddleOcr(
@@ -38,7 +38,7 @@ void main() {
     for (final f in files) {
       final truth = jsonDecode(File(f.replaceFirst(RegExp(r'(-mild|-hart|-extrem|-kopf|-quer)?\.(png|jpg)$'), '.json')).readAsStringSync()) as Map<String, dynamic>;
       final sw = Stopwatch()..start();
-      final x = rec.recognize(File(f).readAsBytesSync());
+      final x = await rec.recognize(File(f).readAsBytesSync());
       final r = x.result;
       // date and place from the printed lines (only for truths that carry them: tests/echt)
       if (truth['datum'] != null) {

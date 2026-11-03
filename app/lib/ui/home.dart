@@ -1,7 +1,6 @@
 // Fasan Split – start: three main tabs below (Rechnungen, Gruppen, Freunde), a floating plus for new bills, and on Rechnungen
 // three views above (Offen, Archiv, Papierkorb). One horizontal pager carries all five pages, so swiping moves through
 // them in order (Nutzer 02.11.). Research: fasan_ui docs/recherche/2026-11-02-navigation-layout-glas-ton.md. MPL-2.0
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -25,6 +24,7 @@ import 'onboarding.dart';
 import 'scan_screen.dart';
 import 'settings_screen.dart';
 import 'update_ui.dart';
+import '../state/images.dart';
 
 /// Which list of bills a page shows.
 enum BillList { open, archive, trash }
@@ -82,8 +82,8 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final store = StoreScope.read(context);
-      // Web: the introduction is about photographing receipts, which the browser cannot do; an invitation opens directly.
-      if (!kIsWeb && !store.onboarded && store.bills.isEmpty) {
+      // Opened through an invitation: the join screen comes first, the introduction would cover it.
+      if (!startedWithInvite && !store.onboarded && store.bills.isEmpty) {
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingScreen()));
       }
     });
@@ -166,10 +166,8 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          if (!kIsWeb) ...[
-            ListTile(leading: const Icon(Icons.photo_camera_outlined), title: Text(t.camera), onTap: () => Navigator.pop(ctx, 'camera')),
-            ListTile(leading: const Icon(Icons.photo_library_outlined), title: Text(t.galleryOrFile), onTap: () => Navigator.pop(ctx, 'gallery')),
-          ],
+          ListTile(leading: const Icon(Icons.photo_camera_outlined), title: Text(t.camera), onTap: () => Navigator.pop(ctx, 'camera')),
+          ListTile(leading: const Icon(Icons.photo_library_outlined), title: Text(t.galleryOrFile), onTap: () => Navigator.pop(ctx, 'gallery')),
           ListTile(leading: const Icon(Icons.edit_note_rounded), title: Text(t.manual), onTap: () => Navigator.pop(ctx, 'manual')),
           const SizedBox(height: FasanSpace.s),
         ]),
@@ -571,8 +569,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _retry(Bill b) async {
     final path = b.originalPath;
-    if (path == null || !File(path).existsSync()) return;
-    await queue.retry(b, await File(path).readAsBytes());
+    final bytes = path == null ? null : await readImage(path);
+    if (bytes == null) return;
+    await queue.retry(b, bytes);
   }
 
   // ---- trash ----

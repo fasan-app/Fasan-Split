@@ -1,15 +1,14 @@
 // Fasan Split – saved bills and settings (shared_preferences; images and logs as files in the app folder). MPL-2.0
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/settle.dart';
 import '../model/bill.dart';
+import 'images.dart';
 
 class BillStore extends ChangeNotifier {
   BillStore(this._prefs);
@@ -21,6 +20,7 @@ class BillStore extends ChangeNotifier {
 
   static Future<BillStore> load() async {
     final p = await SharedPreferences.getInstance();
+    await initImages();
     final s = BillStore(p);
     s._loadApp();
     try {
@@ -120,7 +120,7 @@ class BillStore extends ChangeNotifier {
       for (final f in [b.imagePath, b.originalPath]) {
         if (f != null) {
           try {
-            File(f).deleteSync();
+            deleteImage(f);
             n++;
           } catch (_) {}
         }
@@ -371,7 +371,7 @@ class BillStore extends ChangeNotifier {
     for (final f in [b.imagePath, b.logPath, b.originalPath]) {
       if (f != null) {
         try {
-          File(f).deleteSync();
+          deleteImage(f);
         } catch (_) {}
       }
     }
@@ -385,14 +385,6 @@ class BillStore extends ChangeNotifier {
 
   void _write() => _prefs?.setString(_key, jsonEncode(bills.map((b) => b.toJson()).toList()));
 
-  static Future<String?> saveFile(String name, Uint8List bytes) async {
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      final f = File('${dir.path}/$name');
-      await f.writeAsBytes(bytes, flush: true);
-      return f.path;
-    } catch (_) {
-      return null;
-    }
-  }
+  /// Photo or scan of a receipt: a file on the phone, IndexedDB in the browser (state/images.dart).
+  static Future<String?> saveFile(String name, Uint8List bytes) => saveImage(name, bytes);
 }

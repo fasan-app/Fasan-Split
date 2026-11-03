@@ -30,6 +30,9 @@ Future<void> main() async {
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
+/// True when this start came from an invitation link (browser: handed over by join/index.html).
+bool startedWithInvite = false;
+
 /// Invitation links: the old scheme fasansplit://join and the https address of the web app (App Link).
 bool isInviteLink(Uri u) =>
     u.scheme == 'fasansplit' || u.scheme == 'https' && u.host == 'fasan-app.github.io' && u.path.startsWith('/Fasan-Split/join');
@@ -62,7 +65,10 @@ class _SplitAppState extends State<SplitApp> {
     super.initState();
     // Web: join/index.html handed the invitation over (web_platform_web.dart).
     final code = kIsWeb ? takeJoinCode() : null;
-    if (code != null) _open(Uri.parse('${Invite.inviteBase}#$code'));
+    if (code != null) {
+      startedWithInvite = true;
+      _open(Uri.parse('${Invite.inviteBase}#$code'));
+    }
     if (widget.deepLinks && !kIsWeb) {
       final al = AppLinks();
       // link that started the app, then links while it runs

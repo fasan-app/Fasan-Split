@@ -130,7 +130,7 @@ class Recognizer {
   void _log(String type, [Map<String, Object?> d = const {}]) => _steps.add({'t': _sw.elapsedMilliseconds, 'typ': type, ...d});
   void _err(String where, Object e) => _errors.add({'t': _sw.elapsedMilliseconds, 'wo': where, 'text': '$e'});
 
-  Recognition recognize(Uint8List bytes, {void Function(RecognitionProgress)? onProgress}) {
+  Future<Recognition> recognize(Uint8List bytes, {void Function(RecognitionProgress)? onProgress}) async {
     _sw
       ..reset()
       ..start();
@@ -155,7 +155,7 @@ class Recognizer {
         ];
         var e = ReceiptImage.rectify(photo, ec);
         var sc = ReceiptImage.straighten(e.image);
-        if (ocr.sideways(e.image)) {
+        if (await ocr.sideways(e.image)) {
           ec = [ec[3], ec[0], ec[1], ec[2]];
           e = ReceiptImage.rectify(photo, ec);
           sc = ReceiptImage.straighten(e.image);
@@ -178,10 +178,10 @@ class Recognizer {
     final scans = <Img, ScanResult>{};
     final scanSrc = <Img, Img>{}; // scan image → the image it was straightened from (for the straightening animation)
     var readable = 0.0;
-    double run(Img canvas, String name, List<List<double>>? corners, void Function(double) progress, {Img? display, bool? straightArg}) {
+    Future<double> run(Img canvas, String name, List<List<double>>? corners, void Function(double) progress, {Img? display, bool? straightArg}) async {
       final straight = straightArg ?? name != 'foto';
       final ts = _sw.elapsedMilliseconds;
-      final words = ocr.words(canvas, progress: progress);
+      final words = await ocr.words(canvas, progress: progress);
       var z = linesFrom(words, straight: straight);
       var r = readLines(z.lines, qr);
       var g = quality(r, words);
@@ -202,7 +202,7 @@ class Recognizer {
       // amount column re-split and read – only if the reading does not check out yet
       if (!r.check.ok) {
         try {
-          final w2 = _columnReread(canvas, words);
+          final w2 = await _columnReread(canvas, words);
           if (w2 != null) {
             for (final z2 in [linesFrom(w2, straight: straight), ...(linesByColumns(w2) ?? const <Lines>[])]) {
               final r2 = readLines(z2.lines, qr);
@@ -278,12 +278,12 @@ class Recognizer {
     _stoppedAt = null;
     // 2. straight cut-out, rotated by 180° if unreadable, last the whole photo
     if (cut != null) {
-      final g1 = run(cut.canvas, 'ausschnitt', cut.corners, stage('Bon wird gelesen', 0.14, 0.4));
-      if (g1 < 5000 && readable < 0.5) run(cut.canvas.rotated180(), 'ausschnitt180', cut.corners, stage('Bon wird gedreht gelesen', 0.14, 0.4));
+      final g1 = await run(cut.canvas, 'ausschnitt', cut.corners, stage('Bon wird gelesen', 0.14, 0.4));
+      if (g1 < 5000 && readable < 0.5) await run(cut.canvas.rotated180(), 'ausschnitt180', cut.corners, stage('Bon wird gedreht gelesen', 0.14, 0.4));
     }
     if ((best == null || best!.g < 5000) && !settled()) {
       final fl = fitLongest(photo);
-      run(fl, 'foto', null, stage('Ganzes Foto wird gelesen', 0.14, 0.3));
+      await run(fl, 'foto', null, stage('Ganzes Foto wird gelesen', 0.14, 0.3));
       // receipt from the text position, rectify and read again in full resolution
       final fp = all.last, ec = textQuad(fp.lines.lines, fl.w.toDouble(), fl.h.toDouble());
       if (ec != null) {
@@ -291,22 +291,22 @@ class Recognizer {
         final ecO = [for (final p in ec) [p[0] / f, p[1] / f]];
         final e = ReceiptImage.rectify(photo, ecO);
         final sc = ReceiptImage.straighten(e.image);
-        run(sc, 'begradigt', ecO, stage('Bon wird begradigt und neu gelesen', 0.3, 0.4));
+        await run(sc, 'begradigt', ecO, stage('Bon wird begradigt und neu gelesen', 0.3, 0.4));
       }
     }
     // 2a. unfold (UVDoc): whole photo first, then the best rectified pass
     if (ocr.uvdoc != null && !settled()) {
       try {
-        final ef = _unfold(fitLongest(photo), photo);
-        if (ef != null) run(ef, 'entfaltet-foto', null, stage('Blatt wird erkannt und entfaltet', 0.3, 0.33), straightArg: true);
+        final ef = await _unfold(fitLongest(photo), photo);
+        if (ef != null) await run(ef, 'entfaltet-foto', null, stage('Blatt wird erkannt und entfaltet', 0.3, 0.33), straightArg: true);
       } catch (e) {
         _err('uvdoc-foto', e);
       }
       final b = best!;
       if (b.straight && !b.name.startsWith('entfaltet') && !settled()) {
         try {
-          final ef = _unfold(b.read, b.read);
-          if (ef != null) run(ef, 'entfaltet', b.corners, stage('Knicke und Wölbung werden entfaltet', 0.33, 0.37), straightArg: true);
+          final ef = await _unfold(b.read, b.read);
+          if (ef != null) await run(ef, 'entfaltet', b.corners, stage('Knicke und Wölbung werden entfaltet', 0.33, 0.37), straightArg: true);
         } catch (e) {
           _err('uvdoc', e);
         }
@@ -323,14 +323,14 @@ class Recognizer {
       if (s1 != null) {
         scans[s1.image] = s1;
         scanSrc[s1.image] = basis.canvas;
-        run(s1.image, 'gerade', basis.corners, stage('Bon wird begradigt wie gescannt', 0.36, 0.42), straightArg: true);
+        await run(s1.image, 'gerade', basis.corners, stage('Bon wird begradigt wie gescannt', 0.36, 0.42), straightArg: true);
         final e1 = all.last;
         final s2 = straighten(s1.image, e1.lines.lines, smooth: 0.05);
         _log('gerade', {'stufe': 2, 'ok': s2 != null, 'grund': s2 == null ? scanLastError : null, ...?s2?.stats});
         if (s2 != null) {
           scans[s2.image] = s2;
           scanSrc[s2.image] = s1.image;
-          run(s2.image, 'gerade2', basis.corners, stage('Feinere Begradigung', 0.42, 0.46), straightArg: true);
+          await run(s2.image, 'gerade2', basis.corners, stage('Feinere Begradigung', 0.42, 0.46), straightArg: true);
         }
       }
     } on _Settled {
@@ -341,9 +341,9 @@ class Recognizer {
     // 3. total not confirmed yet: improved images
     if (!best!.r.check.ok) {
       final src = best!.canvas, straight = best!.straight, corners = best!.corners;
-      run(improve(src, 'scan'), 'scan', corners, stage('Bon wird wie gescannt aufbereitet und neu gelesen', 0.4, 0.46), display: src, straightArg: straight);
-      if (!best!.r.check.ok) run(improve(src, 'kontrast'), 'kontrast', corners, stage('Bild wird verbessert und neu gelesen', 0.46, 0.55), display: src, straightArg: straight);
-      if (!best!.r.check.ok) run(improve(src, 'dunkel'), 'dunkel', corners, stage('Blasser Druck wird verstärkt gelesen', 0.55, 0.64), display: src, straightArg: straight);
+      await run(improve(src, 'scan'), 'scan', corners, stage('Bon wird wie gescannt aufbereitet und neu gelesen', 0.4, 0.46), display: src, straightArg: straight);
+      if (!best!.r.check.ok) await run(improve(src, 'kontrast'), 'kontrast', corners, stage('Bild wird verbessert und neu gelesen', 0.46, 0.55), display: src, straightArg: straight);
+      if (!best!.r.check.ok) await run(improve(src, 'dunkel'), 'dunkel', corners, stage('Blasser Druck wird verstärkt gelesen', 0.55, 0.64), display: src, straightArg: straight);
     }
     // 4. read every amount of the item block several times; on the first (original) pass and on the best
     final cands = <_Pass>[];
@@ -357,7 +357,7 @@ class Recognizer {
       var r = pass.r;
       final fort = stage(cands.length > 1 ? 'Beträge werden mehrfach geprüft (${ki + 1}/${cands.length})' : 'Beträge werden mehrfach geprüft',
           0.64 + (0.34 * ki) / cands.length, 0.64 + (0.34 * (ki + 1)) / cands.length);
-      _rereadAmounts(pass, fort);
+      await _rereadAmounts(pass, fort);
       final r2 = readLines(pass.lines.lines, qr);
       if (quality(r2, const []) >= quality(r, const [])) r = r2;
       final g2 = quality(r, const []) + displayBonus(pass.name, pass.straight);
@@ -471,7 +471,7 @@ class Recognizer {
 
   /// Re-reads each amount of the item block (own box; tall merged boxes at line height; pieces "2," | "59") with
   /// the original and with darker / higher-contrast images [Nachlesen in erkenne].
-  void _rereadAmounts(_Pass pass, void Function(double) progress) {
+  Future<void> _rereadAmounts(_Pass pass, void Function(double) progress) async {
     final v = pass.canvas, z = pass.lines.lines, r = pass.r;
     final group = [for (var i = 0; i < r.lines.length; i++) if (r.lines[i].block || r.lines[i].type == 'summe') i];
     final amountRe = RegExp(r'\d[.,]\s?\d{2}(?!\d)');
@@ -536,9 +536,9 @@ class Recognizer {
       }
       if (k != null) {
         var more = [
-          ...ocr.multiRead(v, k),
-          ...ocr.multiRead(dark, k, variants: const [(0.15, 0, false), (0.35, 0, false)]),
-          ...ocr.multiRead(contrast, k, variants: const [(0.15, 0, false), (0.35, 0, false)]),
+          ...await ocr.multiRead(v, k),
+          ...await ocr.multiRead(dark, k, variants: const [(0.15, 0, false), (0.35, 0, false)]),
+          ...await ocr.multiRead(contrast, k, variants: const [(0.15, 0, false), (0.35, 0, false)]),
         ];
         if (merged) more = [...more, ...more]; // readings at line height count double against the merged box
         zl.readings = more;
@@ -548,7 +548,7 @@ class Recognizer {
   }
 
   /// Amount column as a strip: slope from the line profile, split at the gaps, each line read [spalteNeu].
-  List<Word>? _columnReread(Img c, List<Word> words) {
+  Future<List<Word>?> _columnReread(Img c, List<Word> words) async {
     final w = withoutCrumbs(words);
     final isB = RegExp(r'\d[.,]\s?\d{2}(?!\d)'), l4 = RegExp(r'[a-z]{4,}', caseSensitive: false), l3 = RegExp(r'[a-z]{3,}', caseSensitive: false);
     final digit = RegExp(r'\d'), l2 = RegExp(r'[a-z]{2,}', caseSensitive: false);
@@ -708,7 +708,7 @@ class Recognizer {
       final k = Box(math.max(0, l - 0.3 * h), math.max(0, a - 0.12 * h), math.min(SW.toDouble(), rr + 0.3 * h), math.min(SH.toDouble(), b + 0.12 * h));
       List<Reading> readings;
       try {
-        readings = ocr.multiRead(R, k, variants: const [(0.12, 0, false), (0.3, 0, false), (0.2, 0, true)]);
+        readings = await ocr.multiRead(R, k, variants: const [(0.12, 0, false), (0.3, 0, false), (0.2, 0, true)]);
       } catch (_) {
         continue;
       }
@@ -735,8 +735,8 @@ class Recognizer {
   }
 
   /// UVDoc grid → resampled flat sheet; output size from the grid line lengths, read width ≥ 1300 px [entfalten].
-  Img? _unfold(Img c, Img source, [double targetWidth = 1300]) {
-    final res = ocr.uvGrid(c);
+  Future<Img?> _unfold(Img c, Img source, [double targetWidth = 1300]) async {
+    final res = await ocr.uvGrid(c);
     if (res == null) return null;
     final (grid, dims) = res;
     final gh = dims[2], gw = dims[3], n = gh * gw, QW = source.w, QH = source.h;

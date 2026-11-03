@@ -242,7 +242,9 @@ void main() {
       expect(b.placeAddress, startsWith('CRUZES'));
       expect(q.liveFor(b.id), isNotNull, reason: 'die Kachel spielt die Scan-Animation');
       gate.complete();
-      while (q.open > 0) {
+      // Wait for the result itself, not for the queue counter: under load (CI, 2 cores) the counter can reach 0 a moment
+      // before the finished bill is written (seen 03.11.: 'reading' instead of 'ok').
+      for (var i = 0; i < 500 && store.bills.single.read == BillRead.reading; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
       }
       expect(store.bills.single.read, BillRead.ok);

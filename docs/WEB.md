@@ -5,10 +5,12 @@ Einladung: `https://fasan-app.github.io/Fasan-Split/join/#<code>`. Der Teil nach
 
 ## Was die Web-App kann
 
-Dieselbe App wie auf dem Handy, im Browser gebaut. Beitreten, Bons ohne Foto, Saldo, Notizen, Chat. Bon-Lesen geht nicht:
-ONNX Runtime läuft über `dart:ffi`, das gibt es im Browser nicht (`lib/recognition/onnx_web.dart` ersetzt es). Kamera und
-Galerie sind im Web ausgeblendet, die Einführung auch. CanvasKit liegt mit auf der Seite (`--no-web-resources-cdn`),
-im Test (Chromium, 03.11.) gab es keine Anfragen an fremde Hosts.
+Dieselbe App wie auf dem Handy, im Browser gebaut, mit allen Funktionen. Bon-Lesen läuft in einem Web Worker
+(`lib/recognition/web_worker.dart`, gebaut mit `dart compile js`) mit ONNX Runtime Web 1.22.0 (MIT, WebAssembly, unter
+`ort/` auf der Seite) und denselben Modellen wie die App. Fotos liegen in IndexedDB (`lib/state/images_web.dart`), Daten
+wie auf dem Handy in shared_preferences (localStorage). CanvasKit liegt mit auf der Seite (`--no-web-resources-cdn`), im
+Test (Chromium, 03.11.) gab es keine Anfragen an fremde Hosts. Neue Version: Hinweis „Neu laden“ (build.txt).
+Größe der Seite ~100 MB, davon Modelle ~45 MB; geladen werden sie erst beim ersten Bon.
 
 Ablauf einer Einladung im Browser: `web_extra/join/index.html` legt den Code in `sessionStorage` und öffnet `../` ohne Code
 in der Adresszeile; `lib/web_platform_web.dart` liest und löscht ihn, die App öffnet „Gruppe beitreten“. Geprüft in Chromium.

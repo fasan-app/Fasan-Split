@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:fasan_ui/fasan_ui.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
@@ -12,12 +13,13 @@ import 'package:share_plus/share_plus.dart';
 import '../l10n.dart';
 import '../model/bill.dart';
 import 'common.dart';
+import '../state/images.dart';
 
 /// Asks first (with an opt-in for the original photo), then shares the log as JSON. People's names are never included.
 Future<void> shareRecognitionLog(BuildContext context, Bill bill) async {
   final t = S.of(context);
   var withPhoto = false;
-  final hasPhoto = bill.originalPath != null && File(bill.originalPath!).existsSync();
+  final hasPhoto = imageExists(bill.originalPath);
   final how = await showDialog<String>(
     context: context,
     builder: (context) => StatefulBuilder(
@@ -44,14 +46,15 @@ Future<void> shareRecognitionLog(BuildContext context, Bill bill) async {
   );
   if (how == null) return;
   Map<String, Object?> log = {};
-  if (bill.logPath != null && File(bill.logPath!).existsSync()) {
+  final logBytes = bill.logPath == null ? null : await readImage(bill.logPath!);
+  if (logBytes != null) {
     try {
-      log = (jsonDecode(File(bill.logPath!).readAsStringSync()) as Map).cast<String, Object?>();
+      log = (jsonDecode(utf8.decode(logBytes)) as Map).cast<String, Object?>();
     } catch (_) {}
   }
   final doc = {
     'app': 'app.fasan.split',
-    'geraet': {'os': Platform.operatingSystem, 'version': Platform.operatingSystemVersion, 'kerne': Platform.numberOfProcessors},
+    'geraet': kIsWeb ? {'os': 'web'} : {'os': Platform.operatingSystem, 'version': Platform.operatingSystemVersion, 'kerne': Platform.numberOfProcessors},
     // what the screen can draw (Nutzer 02.11.: „Glas ist kein Glas“): the result of the glass probe and whether the grain
     // shader and its template loaded. Lets the next version be built from facts, not guesses.
     'darstellung': {
@@ -71,7 +74,7 @@ Future<void> shareRecognitionLog(BuildContext context, Bill bill) async {
   if (how == 'save') {
     final uri = await FilePicker.saveFile(fileName: 'fasan-split-protokoll-$stamp.json', bytes: json, mimeType: 'application/json');
     if (uri != null && withPhoto && hasPhoto) {
-      await FilePicker.saveFile(fileName: 'fasan-split-bon-$stamp.jpg', bytes: File(bill.originalPath!).readAsBytesSync(), mimeType: 'image/jpeg');
+      await FilePicker.saveFile(fileName: 'fasan-split-bon-$stamp.jpg', bytes: (await readImage(bill.originalPath!))!, mimeType: 'image/jpeg');
     }
     if (uri != null && context.mounted) showNote(context, t.savedFile);
     return;

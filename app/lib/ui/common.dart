@@ -1,6 +1,5 @@
 // Fasan Split – shared widgets of the flow screens. MPL-2.0
 
-import 'dart:io';
 
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import '../main.dart';
 import '../model/bill.dart';
 import '../recognition/reader.dart' show nameAlternatives;
 import 'receipt_view.dart';
+import '../state/images.dart';
 
 /// Screen of the bill flow: title, step, content; the main action sits in a glass bar in the thumb zone
 /// (Bergstrom-Lehtovirta & Oulasvirta 2014, GRUNDSAETZE.md).
@@ -64,7 +64,7 @@ class StepScaffold extends StatelessWidget {
         ]),
         toolbarHeight: 72,
         actions: [
-          if (b != null && step != 3 && b.imagePath != null && File(b.imagePath!).existsSync())
+          if (b != null && step != 3 && imageExists(b.imagePath))
             IconButton(
               tooltip: t.showReceipt,
               icon: const Icon(Icons.receipt_long_outlined),
