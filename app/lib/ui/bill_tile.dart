@@ -5,6 +5,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../l10n_bill.dart';
 import '../model/bill.dart';
 import '../state/scan_queue.dart';
 import 'scan_stage.dart';
@@ -66,7 +67,7 @@ class BillTile extends StatelessWidget {
     } else if (failed) {
       sub = t.readFailedShort;
     } else {
-      sub = bill.done ? '$date · ${bill.ps.length} ${t.de ? 'Personen' : 'people'}' : '$date · ${t.stepOf(bill.step)}';
+      sub = bill.done ? '${bill.refund ? '${t.refundBadge} · ' : ''}$date · ${bill.ps.length} ${t.de ? 'Personen' : 'people'}' : '$date · ${t.stepOf(bill.step)}';
     }
     if (subtitle != null) sub = subtitle!;
     // reading: date as soon as the first pass knows it, then the state

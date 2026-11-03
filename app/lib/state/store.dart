@@ -225,7 +225,7 @@ class BillStore extends ChangeNotifier {
         final p = b.ps[i];
         if (gone.contains(p.name)) continue;
         final old = map[p.name];
-        map[p.name] = (bills: (old?.bills ?? 0) + 1, sum: (old?.sum ?? 0) + (pp[i] ?? 0), color: old?.color ?? p.color);
+        map[p.name] = (bills: (old?.bills ?? 0) + 1, sum: (old?.sum ?? 0) + (b.refund ? -1 : 1) * (pp[i] ?? 0), color: old?.color ?? p.color);
       }
     }
     for (final n in _extraFriends) {

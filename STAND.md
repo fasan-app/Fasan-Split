@@ -322,7 +322,7 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
 Neu 03.11. abends (Nutzer, Priorität nach Abhängigkeit gesetzt):
-1. ERLEDIGT 03.11. (Tests, nicht auf dem Gerät): Bon-Modell: Betrag immer positiv + Richtung `Bill.refund` (Ausgabe/Erstattung, Zahler bei Erstattung hält den Anteil der anderen). Negative Bon-Summe: Abfrage „Bezahlt oder Geld zurück?“ in Schritt 1, „Weiter“ gesperrt bis zur Antwort. Negative Zeilen bleiben Zeilen. `meta/refund` im Gruppenabgleich ergänzt (bill_sync.dart, kleine Ergänzung im Kern). Offen dazu: Übersicht und Ergebnis zeigen die Richtung noch nicht
+1. ERLEDIGT 03.11. (Tests, nicht auf dem Gerät): Bon-Modell: Betrag immer positiv + Richtung `Bill.refund` (Ausgabe/Erstattung, Zahler bei Erstattung hält den Anteil der anderen). Negative Bon-Summe: Abfrage „Bezahlt oder Geld zurück?“ in Schritt 1, „Weiter“ gesperrt bis zur Antwort. Negative Zeilen bleiben Zeilen. `meta/refund` im Gruppenabgleich ergänzt (bill_sync.dart, kleine Ergänzung im Kern). Nachtrag 03.11. (Branch `mitarbeit/erstattung-anzeigen`, Tests, nicht auf dem Gerät): Richtung sichtbar in Bon-Liste (Untertitel „Erstattung ·“), Ergebnis (Hinweis unter der Summe), Teilen-Text, CSV („Erstattung erhalten von“); Personen-Summe zieht Erstattungen ab statt sie zu addieren
 2. Gruppen ohne Bon anlegen (Name, Mitglieder), Gruppenseite mit Personen und Saldo.
 3. Bons per Langdruck auswählen, bei Mehrfachauswahl per Drag and Drop verschieben und sortieren.
 4. Kontakte komplett löschen (Tippfehler, ehemalige Personen), auch aus Vorschlägen und Bons-Namenslisten.

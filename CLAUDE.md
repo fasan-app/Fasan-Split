@@ -30,6 +30,12 @@ Posten zuordnen, wer hat bezahlt, Export. Der Code zieht später in Fasan Karte.
 - Token sparen: große Dateien nur per grep lesen; nach jedem Arbeitspaket `STAND.md` aktualisieren.
 - Commits als `Fasan <fasan@christopherziehm.de>`.
 
+## Neue Sitzung starten (Token sparen)
+
+Startprompt: `docs/START.md`. Sitzung am besten mit dem Repo `fasan-app/Fasan-Split` starten (dann ist es schon geklont und diese
+Datei geladen). Flutter kann das Setup-Skript der Cloud-Umgebung installieren (Vorlage in `docs/START.md`). Pfade unten mit
+`/home/claude/` stehen für das Arbeitsverzeichnis der Sitzung; manche Sitzungen nutzen `/home/user/`.
+
 ## Arbeitsumgebung: alles läuft in der Cloud-Sitzung, der Nutzer arbeitet vom Handy (Beschluss 02.11.)
 
 Der Nutzer hat keinen eigenen Rechner im Spiel. Nie „bei dir auf dem Rechner“ oder „lauf lokal“ antworten: Bauen, Testen,

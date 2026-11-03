@@ -431,7 +431,7 @@ String billCsv(Bill b, {bool de = true}) {
   if (b.difference != 0) rows.add([q(de ? 'Differenz zum Bon' : 'Difference to receipt'), '', money(b.difference, de: de), for (var i = 0; i < people.length; i++) ''].join(';'));
   rows.add([q(de ? 'Summe' : 'Total'), '', money(b.effectiveTotal, de: de), for (var i = 0; i < people.length; i++) money(pp[i] ?? 0, de: de)].join(';'));
   if (b.payer != null && b.payer! < people.length) {
-    rows.add([q(de ? 'Bezahlt von' : 'Paid by'), '', q(people[b.payer!].name), for (var i = 0; i < people.length; i++) ''].join(';'));
+    rows.add([q(b.refund ? (de ? 'Erstattung erhalten von' : 'Refund received by') : (de ? 'Bezahlt von' : 'Paid by')), '', q(people[b.payer!].name), for (var i = 0; i < people.length; i++) ''].join(';'));
   }
   return '﻿${rows.join('\r\n')}\r\n';
 }

@@ -2,6 +2,11 @@
 import 'package:fasan_split/collab/bill_sync.dart';
 import 'package:fasan_split/collab/lww.dart';
 import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_split/main.dart';
+import 'package:fasan_split/state/store.dart';
+import 'package:fasan_split/ui/flow.dart';
+import 'package:fasan_ui/fasan_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Bill uber() {
@@ -57,5 +62,30 @@ void main() {
     final doc = LwwDoc('aa');
     BillSync.write(doc, b);
     expect(BillSync.read(doc, id: 'u').refund, isTrue);
+  });
+
+  test('Erstattung: CSV nennt den Empfänger, Personen-Summe sinkt statt zu steigen', () {
+    final r = uber()..payer = 0..done = true;
+    r.resolveSign(refund: true);
+    expect(billCsv(r), contains('Erstattung erhalten von'));
+    final paid = Bill(id: 'p', created: DateTime(2026), purpose: 'Essen', total: 2000, done: true)..payer = 0;
+    paid.its.add(BillItem(name: 'Essen', amount: 2000)..shares = {0: 1, 1: 1});
+    paid.ps.addAll([Person('Anna', 0), Person('Ben', 1)]);
+    final store = BillStore.memory([paid, r]);
+    final ben = store.friends.firstWhere((f) => f.name == 'Ben');
+    expect(ben.sum, 1000 - 649);
+  });
+
+  testWidgets('Ergebnis zeigt die Erstattung', (tester) async {
+    tester.platformDispatcher.localesTestValue = const [Locale('de', 'DE')];
+    addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+    final b = uber()..payer = 0..done = true;
+    b.resolveSign(refund: true);
+    final store = BillStore.memory([b])..onboarded = true;
+    final ctl = FasanController(settings: FasanSettings(reduceMotion: true));
+    await tester.pumpWidget(SplitApp(store: store, ui: ctl, home: ResultScreen(bill: b)));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(RefundNote), findsOneWidget);
+    expect(find.textContaining('Erstattung'), findsWidgets);
   });
 }

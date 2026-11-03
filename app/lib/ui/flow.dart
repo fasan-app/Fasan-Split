@@ -125,11 +125,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             ),
           ] else if (b.refund) ...[
             const SizedBox(height: FasanSpace.s),
-            Row(children: [
-              Icon(Icons.undo_rounded, size: 18, color: l.accent),
-              const SizedBox(width: FasanSpace.s),
-              Expanded(child: Text('${t.refundBadge}. ${t.refundHint}', style: tt.bodySmall)),
-            ]),
+            const RefundNote(),
           ],
           if (status != null) ...[const SizedBox(height: FasanSpace.xs), status],
           const SizedBox(height: FasanSpace.l),
@@ -375,6 +371,21 @@ class _PayScreenState extends State<PayScreen> {
   }
 }
 
+/// Marks a bill as refund (money came back): the payer passes the others' share on. Shown in Review and Result.
+class RefundNote extends StatelessWidget {
+  const RefundNote({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    return Row(children: [
+      Icon(Icons.undo_rounded, size: 18, color: FasanLook.of(context).accent),
+      const SizedBox(width: FasanSpace.s),
+      Expanded(child: Text('${t.refundBadge}. ${t.refundHint}', style: Theme.of(context).textTheme.bodySmall)),
+    ]);
+  }
+}
+
 /// Per person, transfers, unassigned items.
 class ResultBody extends StatelessWidget {
   const ResultBody({super.key, required this.bill});
@@ -474,7 +485,7 @@ class ResultScreen extends StatelessWidget {
   final Bill bill;
 
   String _text(S t) {
-    final b = StringBuffer('${bill.purpose.isEmpty ? t.appName : bill.purpose}: ${money(bill.effectiveTotal, de: t.de)} €\n');
+    final b = StringBuffer('${bill.purpose.isEmpty ? t.appName : bill.purpose}: ${money(bill.effectiveTotal, de: t.de)} €${bill.refund ? ' (${t.refundBadge})' : ''}\n');
     final pp = bill.perPerson();
     for (var i = 0; i < bill.ps.length; i++) {
       b.writeln('${bill.ps[i].name}: ${money(pp[i] ?? 0, de: t.de)} €');
@@ -517,6 +528,7 @@ class ResultScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.xxxl),
         children: [
           Money(bill.effectiveTotal, style: Theme.of(context).textTheme.displaySmall),
+          if (bill.refund) ...[const SizedBox(height: FasanSpace.s), const RefundNote()],
           const SizedBox(height: FasanSpace.l),
           if (bill.payer != null) ResultBody(bill: bill) else Text(t.whoPaid),
           const SizedBox(height: FasanSpace.xl),
