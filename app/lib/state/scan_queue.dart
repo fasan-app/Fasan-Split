@@ -84,6 +84,9 @@ class ScanQueue extends ChangeNotifier {
     }
   }
 
+  /// Name last set by the recognition, per bill id: tells a name the user typed from one the scan filled in.
+  final Map<String, String> _autoPurpose = {};
+
   Future<void> _readOne(Bill placeholder, Uint8List photo) async {
     final done = Completer<void>();
     final live = ScanLive();
@@ -103,7 +106,11 @@ class ScanQueue extends ChangeNotifier {
           // shop, date and total are known after the first pass: the tile shows them while the rest is still reading
           final cur = store.bills.where((x) => x.id == placeholder.id).firstOrNull;
           if (cur != null && cur.read == BillRead.reading) {
-            if (e.shop.isNotEmpty) cur.purpose = titleCase(e.shop);
+            // a name the user typed while the bill is still being read is kept (see ScanDone)
+            if (e.shop.isNotEmpty && (cur.purpose.isEmpty || cur.purpose == _autoPurpose[placeholder.id])) {
+              cur.purpose = titleCase(e.shop);
+              _autoPurpose[placeholder.id] = cur.purpose;
+            }
             cur.receiptDate = DateTime.tryParse(e.dateIso ?? '') ?? cur.receiptDate;
             cur.placeAddress = e.address ?? cur.placeAddress;
             cur.total = e.total ?? cur.total;
@@ -118,6 +125,9 @@ class ScanQueue extends ChangeNotifier {
             }
             final b = await billFromScan(e.result, photo, id: placeholder.id, group: placeholder.group, created: placeholder.created, saveOriginal: false);
             b.originalPath = placeholder.originalPath;
+            final typed = store.bills.where((x) => x.id == placeholder.id).firstOrNull?.purpose ?? '';
+            if (typed.isNotEmpty && typed != _autoPurpose[placeholder.id]) b.purpose = typed; // the user renamed it meanwhile
+            _autoPurpose.remove(placeholder.id);
             store.upsert(b);
           } catch (_) {
             _fail(placeholder);

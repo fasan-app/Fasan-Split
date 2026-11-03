@@ -327,6 +327,9 @@ Neu 03.11. abends (Nutzer, Priorität nach Abhängigkeit gesetzt):
 3. Bons per Langdruck auswählen, bei Mehrfachauswahl per Drag and Drop verschieben und sortieren.
 4. Kontakte komplett löschen (Tippfehler, ehemalige Personen), auch aus Vorschlägen und Bons-Namenslisten.
 5. Einladungslink als https-Adresse (Web-App auf GitHub Pages, Install-Hinweis ohne App, Android App Links mit assetlinks.json). Doku zu App Links vorher lesen, nicht geprüft.
+6. Chat (Nutzer 03.11. abends): Bons im Chat mit @ nennen (Bon-Verweis), Nachrichten und Bons anpinnen, Nachricht nur an einzelne Mitglieder (Privatnachricht in der Gruppe). Nachrichten im Kern sind für alle Mitglieder lesbar: Privatnachrichten brauchen eine eigene Verschlüsselung je Empfänger (NIP-44 an dessen Schlüssel), Entwurf mit dem Nutzer abstimmen.
+7. Bons umbenennen: Verdacht, geprüft im Code, nicht auf dem Gerät: ScanDone ersetzte den Bon und überschrieb den Namen, den der Nutzer während des Lesens getippt hatte; der Name wurde nur mit „Weiter“ gespeichert. Behoben (Commit siehe Log). Dazu: Kopf „Uber Uber -12,98 €“ enthält den Betrag im Geschäftsnamen (Protokoll 03.11. 21:18), Erkennung muss Betrag aus dem Namen trennen. Offen.
+8. Kontakte löschen: Name nur aus Vorschlägen entfernen, nicht aus Bons, in denen die Person Kosten hatte oder bezahlt hat (Nutzer 03.11.).
 
 1. Rückmeldung vom S23 zu 0.1.24: Ton (Test-Knopf zeigt jetzt den Grund), Glas-Probe (`pixel`, `kopfueber`), Schatten, Anleitung, Zuordnen.
 2. Glas echt (Paket 5, Rest): wenn die Probe auf dem S23 „schwarz“ meldet: Hintergrund per `toImageSync` erfassen und mit Paint-Shader brechen

@@ -76,7 +76,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Expanded(
               flex: 3,
-              child: TextField(controller: _purpose, decoration: InputDecoration(labelText: t.purpose, hintText: t.purposeHint), textInputAction: TextInputAction.next),
+              child: TextField(
+                controller: _purpose,
+                decoration: InputDecoration(labelText: t.purpose, hintText: t.purposeHint),
+                textInputAction: TextInputAction.next,
+                // saved while typing: leaving without „Weiter“ or a finishing scan must not lose the name
+                onChanged: (v) {
+                  b.purpose = v.trim();
+                  StoreScope.read(context).upsert(b);
+                },
+              ),
             ),
             const SizedBox(width: FasanSpace.s),
             Expanded(
