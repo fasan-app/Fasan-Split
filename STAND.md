@@ -321,6 +321,13 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
+Neu 03.11. abends (Nutzer, Priorität nach Abhängigkeit gesetzt):
+1. Bon-Modell: Betrag immer positiv + Richtung (Ausgabe/Erstattung) + Zahler. Negative Bon-Summe: Rückfrage „Bezahlt oder Geld zurück?“. Negative Zeilen (Rabatt, Pfand) bleiben Zeilen, keine Frage. Grund für Platz 1: Salden und Gruppen bauen darauf auf.
+2. Gruppen ohne Bon anlegen (Name, Mitglieder), Gruppenseite mit Personen und Saldo.
+3. Bons per Langdruck auswählen, bei Mehrfachauswahl per Drag and Drop verschieben und sortieren.
+4. Kontakte komplett löschen (Tippfehler, ehemalige Personen), auch aus Vorschlägen und Bons-Namenslisten.
+5. Einladungslink als https-Adresse (Web-App auf GitHub Pages, Install-Hinweis ohne App, Android App Links mit assetlinks.json). Doku zu App Links vorher lesen, nicht geprüft.
+
 1. Rückmeldung vom S23 zu 0.1.24: Ton (Test-Knopf zeigt jetzt den Grund), Glas-Probe (`pixel`, `kopfueber`), Schatten, Anleitung, Zuordnen.
 2. Glas echt (Paket 5, Rest): wenn die Probe auf dem S23 „schwarz“ meldet: Hintergrund per `toImageSync` erfassen und mit Paint-Shader brechen
    (Schaltmöglichkeit Auto/Echt/Einfach). Wenn die Probe „kopfüber“ meldet: nur Feinschliff.
