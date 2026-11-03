@@ -129,5 +129,15 @@ abstract final class Notes {
     return out;
   }
 
-  static void send(LwwDoc doc, String from, String text) => doc.set('c/${newUid()}', {'f': from, 'x': text, 't': DateTime.now().millisecondsSinceEpoch});
+  static int _lastSentMs = 0;
+
+  /// Time stamp for a new message: never lower or equal to the last one sent in this process, so messages sent one after
+  /// another keep their order even within the same millisecond (the ID alone would order them at random).
+  static int _stamp() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _lastSentMs = now > _lastSentMs ? now : _lastSentMs + 1;
+    return _lastSentMs;
+  }
+
+  static void send(LwwDoc doc, String from, String text) => doc.set('c/${newUid()}', {'f': from, 'x': text, 't': _stamp()});
 }
