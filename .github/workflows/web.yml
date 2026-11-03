@@ -34,8 +34,9 @@ jobs:
           sed -i 's#<title>.*</title>#<title>Fasan Split</title>#' web/index.html
           sed -i 's#"name": "fasan_split"#"name": "Fasan Split"#; s#"short_name": "fasan_split"#"short_name": "Fasan Split"#' web/manifest.json
           # Keine Modelle: der Browser liest keine Bons. CanvasKit liegt mit auf der Seite statt beim Google-CDN.
-          flutter build web --release --base-href /Fasan-Split/ --no-web-resources-cdn
+          flutter build web --release --base-href /Fasan-Split/ --no-web-resources-cdn --dart-define=FASAN_BUILD=${{ github.sha }}
           cp -r web_extra/. build/web/
+          echo "${{ github.sha }}" > build/web/build.txt   # update check (lib/web_platform_web.dart)
           touch build/web/.nojekyll
 
       - uses: actions/upload-pages-artifact@v4

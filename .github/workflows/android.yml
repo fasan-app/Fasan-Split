@@ -85,6 +85,10 @@ jobs:
           else
             echo "Test-Schlüssel ci/fasan-split-test.p12 (öffentlich, nur für Tests)" | tee logs/key.log
           fi
+          # Fingerabdruck mitschreiben: muss bei jedem Lauf gleich sein und in fasan-app.github.io/.well-known/assetlinks.json stehen.
+          ks="${FASAN_KEYSTORE:-$RUNNER_TEMP/fasan-release.p12}"; [ -f "$ks" ] || ks=ci/fasan-split-test.p12
+          pw="${KEY_PW:-fasan-split-test}"; [ -f "$RUNNER_TEMP/fasan-release.p12" ] || pw=fasan-split-test
+          keytool -list -v -keystore "$ks" -storepass "$pw" | grep 'SHA256:' | tee -a logs/key.log
 
       - name: APK bauen
         working-directory: app

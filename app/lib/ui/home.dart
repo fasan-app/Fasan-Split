@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../l10n.dart';
+import '../web_platform.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import '../state/scan_queue.dart';
@@ -40,6 +41,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   UpdateInfo? _update;
+  bool _webUpdate = false;
   ScanQueue? _queue;
   bool _selecting = false;
   final Set<String> _selected = {};
@@ -59,7 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// At most once a day, only if enabled (Settings → Updates); silent without network.
   Future<void> _checkUpdate() async {
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      // Browser: no APK, only "load the page again" when the server has a newer build (web_platform_web.dart).
+      if (await webUpdateAvailable() && mounted) setState(() => _webUpdate = true);
+      return;
+    }
     final store = StoreScope.read(context);
     final last = store.lastUpdateCheck;
     if (!store.autoUpdate || (last != null && DateTime.now().difference(last) < const Duration(hours: 20))) return;
@@ -448,7 +454,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final groups = [for (final g in store.groups) (g, store.inGroup(g, done: done))].where((e) => e.$2.isNotEmpty).toList();
     final loose = store.inGroup(null, done: done);
     final empty = groups.isEmpty && loose.isEmpty;
-    final banner = !done && _update != null ? UpdateBanner(info: _update!, onClose: () => setState(() => _update = null)) : null;
+    final banner = done
+        ? null
+        : _webUpdate
+            ? WebUpdateBanner(onClose: () => setState(() => _webUpdate = false))
+            : _update != null
+                ? UpdateBanner(info: _update!, onClose: () => setState(() => _update = null))
+                : null;
     if (empty) {
       return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom), children: [
         ?banner,

@@ -5,6 +5,7 @@ import 'package:ota_update/ota_update.dart';
 
 import '../l10n.dart';
 import '../update.dart';
+import '../web_platform.dart';
 
 /// Banner on the start page when a newer version exists.
 class UpdateBanner extends StatelessWidget {
@@ -27,6 +28,33 @@ class UpdateBanner extends StatelessWidget {
           const SizedBox(width: FasanSpace.m),
           Expanded(child: Text(t.updateAvailable(info.name), style: Theme.of(context).textTheme.bodyMedium)),
           TextButton(onPressed: () => showUpdateSheet(context, info), child: Text(t.showUpdate)),
+          IconButton(tooltip: t.close, onPressed: onClose, icon: const Icon(Icons.close_rounded, size: 20)),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Browser: a newer web build is on the server. Loading the page again is the whole update.
+class WebUpdateBanner extends StatelessWidget {
+  const WebUpdateBanner({super.key, required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    final l = FasanLook.of(context);
+    return Material(
+      color: l.accent.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(l.radius * 0.6),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.s, FasanSpace.xs, FasanSpace.s),
+        child: Row(children: [
+          Icon(Icons.refresh_rounded, color: l.accent),
+          const SizedBox(width: FasanSpace.m),
+          Expanded(child: Text(t.de ? 'Neue Version da. Lade die Seite neu.' : 'New version available. Reload the page.', style: Theme.of(context).textTheme.bodyMedium)),
+          TextButton(onPressed: reloadPage, child: Text(t.de ? 'Neu laden' : 'Reload')),
           IconButton(tooltip: t.close, onPressed: onClose, icon: const Icon(Icons.close_rounded, size: 20)),
         ]),
       ),

@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:fasan_split/collab/group.dart';
 import 'package:fasan_split/main.dart';
-import 'package:fasan_split/web_link.dart';
+import 'package:fasan_split/web_platform.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

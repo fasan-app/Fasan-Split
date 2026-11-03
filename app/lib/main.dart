@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'collab/group.dart';
 import 'collab/keys.dart';
-import 'web_link.dart';
+import 'web_platform.dart';
 import 'collab/service.dart';
 import 'state/store.dart';
 import 'ui/collab_ui.dart';
@@ -60,7 +60,7 @@ class _SplitAppState extends State<SplitApp> {
   @override
   void initState() {
     super.initState();
-    // Web: join/index.html handed the invitation over (web_link_web.dart).
+    // Web: join/index.html handed the invitation over (web_platform_web.dart).
     final code = kIsWeb ? takeJoinCode() : null;
     if (code != null) _open(Uri.parse('${Invite.inviteBase}#$code'));
     if (widget.deepLinks && !kIsWeb) {
