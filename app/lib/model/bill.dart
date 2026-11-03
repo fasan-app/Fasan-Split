@@ -165,6 +165,7 @@ class Bill {
     this.items,
     this.people,
     this.payer,
+    this.refund = false,
     this.imagePath,
     this.imageAspect,
     this.checked = false,
@@ -193,6 +194,10 @@ class Bill {
   List<BillItem>? items;
   List<Person>? people;
   int? payer;
+
+  /// False: [payer] paid and the others owe them. True: [payer] got money back (refund) and holds the others' share.
+  /// Amounts are always positive; the direction is only this flag (Nutzer 03.11.: Schulden immer positiv).
+  bool refund;
   String? imagePath;
   double? imageAspect; // width / height of the receipt image
   bool checked;
@@ -238,6 +243,21 @@ class Bill {
 
   int get itemSum => its.fold(0, (a, p) => a + p.amount);
   int get effectiveTotal => total ?? itemSum;
+
+  /// A negative total (or, without a total, a negative item sum) cannot be a debt: the app asks whether it was paid or came
+  /// back. Single negative lines (discount, deposit) in a positive bill are no reason to ask.
+  bool get needsSignQuestion => effectiveTotal < 0;
+
+  /// Answers the question: turns every amount positive and sets the direction.
+  void resolveSign({required bool refund}) {
+    if (!needsSignQuestion) return;
+    for (final it in its) {
+      it.amount = -it.amount;
+    }
+    if (total != null) total = -total!;
+    this.refund = refund;
+    checked = false;
+  }
 
   /// Difference between total and items (positive: items missing).
   int get difference => effectiveTotal - itemSum;
@@ -312,14 +332,14 @@ class Bill {
     return issues;
   }
 
-  /// Transfers to the payer: (from, to, cents).
+  /// Transfers to the payer (to the others for a refund): (from, to, cents).
   List<(int, int, int)> transfers() {
     final p = payer;
     if (p == null) return const [];
     final pp = perPerson();
     return [
       for (final e in pp.entries)
-        if (e.key != p && e.value != 0) (e.key, p, e.value)
+        if (e.key != p && e.value != 0) refund ? (p, e.key, e.value) : (e.key, p, e.value)
     ];
   }
 
@@ -331,6 +351,7 @@ class Bill {
         'items': its.map((p) => p.toJson()).toList(),
         'people': ps.map((p) => p.toJson()).toList(),
         'payer': payer,
+        'refund': refund,
         'imagePath': imagePath,
         'imageAspect': imageAspect,
         'checked': checked,
@@ -358,6 +379,7 @@ class Bill {
         items: ((j['items'] as List?) ?? const []).map((x) => BillItem.fromJson((x as Map).cast<String, dynamic>())).toList(),
         people: ((j['people'] as List?) ?? const []).map((x) => Person.fromJson((x as Map).cast<String, dynamic>())).toList(),
         payer: (j['payer'] as num?)?.toInt(),
+        refund: j['refund'] as bool? ?? false,
         imagePath: j['imagePath'] as String?,
         imageAspect: (j['imageAspect'] as num?)?.toDouble(),
         checked: j['checked'] as bool? ?? false,

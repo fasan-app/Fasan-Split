@@ -20,6 +20,7 @@ abstract final class BillSync {
     set('meta/total', b.total);
     set('meta/payer', b.payer != null && b.payer! < b.ps.length ? b.ps[b.payer!].uid : null);
     set('meta/done', b.done);
+    set('meta/refund', b.refund);
     set('meta/advance', b.advance);
     set('meta/date', b.receiptDate?.millisecondsSinceEpoch);
     set('meta/place', b.placeAddress);
@@ -107,6 +108,7 @@ abstract final class BillSync {
     final payer = doc.get('meta/payer');
     b.payer = payer is String ? index[payer] : null;
     b.done = doc.get('meta/done') == true;
+    b.refund = doc.get('meta/refund') == true;
     b.advance = (doc.get('meta/advance') as num?)?.toInt() ?? 0;
     final date = doc.get('meta/date');
     b.receiptDate = date is num ? DateTime.fromMillisecondsSinceEpoch(date.toInt()) : null;

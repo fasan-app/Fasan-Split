@@ -322,7 +322,7 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
 Neu 03.11. abends (Nutzer, Priorität nach Abhängigkeit gesetzt):
-1. Bon-Modell: Betrag immer positiv + Richtung (Ausgabe/Erstattung) + Zahler. Negative Bon-Summe: Rückfrage „Bezahlt oder Geld zurück?“. Negative Zeilen (Rabatt, Pfand) bleiben Zeilen, keine Frage. Grund für Platz 1: Salden und Gruppen bauen darauf auf.
+1. ERLEDIGT 03.11. (Tests, nicht auf dem Gerät): Bon-Modell: Betrag immer positiv + Richtung `Bill.refund` (Ausgabe/Erstattung, Zahler bei Erstattung hält den Anteil der anderen). Negative Bon-Summe: Abfrage „Bezahlt oder Geld zurück?“ in Schritt 1, „Weiter“ gesperrt bis zur Antwort. Negative Zeilen bleiben Zeilen. `meta/refund` im Gruppenabgleich ergänzt (bill_sync.dart, kleine Ergänzung im Kern). Offen dazu: Übersicht und Ergebnis zeigen die Richtung noch nicht
 2. Gruppen ohne Bon anlegen (Name, Mitglieder), Gruppenseite mit Personen und Saldo.
 3. Bons per Langdruck auswählen, bei Mehrfachauswahl per Drag and Drop verschieben und sortieren.
 4. Kontakte komplett löschen (Tippfehler, ehemalige Personen), auch aus Vorschlägen und Bons-Namenslisten.

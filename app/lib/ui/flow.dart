@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../l10n.dart';
+import '../l10n_bill.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import '../recognition_service.dart';
@@ -62,7 +63,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       step: 1,
       bill: b,
       action: t.next,
-      onAction: b.its.isEmpty && b.total == null
+      onAction: (b.its.isEmpty && b.total == null) || b.needsSignQuestion
           ? null
           : () {
               b.purpose = _purpose.text.trim();
@@ -105,6 +106,31 @@ class _ReviewScreenState extends State<ReviewScreen> {
           ]),
           const SizedBox(height: FasanSpace.s),
           WhenWhere(bill: b, compact: true, onChanged: () => setState(() {})),
+          if (b.needsSignQuestion) ...[
+            const SizedBox(height: FasanSpace.s),
+            Container(
+              padding: const EdgeInsets.all(FasanSpace.m),
+              decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.7), border: Border.all(color: l.accent)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(t.signTitle, style: tt.titleMedium),
+                const SizedBox(height: FasanSpace.xs),
+                Text(t.signText, style: tt.bodySmall),
+                const SizedBox(height: FasanSpace.s),
+                Row(children: [
+                  Expanded(child: FasanButton(label: t.signPaid, onPressed: () => _answerSign(false))),
+                  const SizedBox(width: FasanSpace.s),
+                  Expanded(child: FasanButton(label: t.signRefund, onPressed: () => _answerSign(true))),
+                ]),
+              ]),
+            ),
+          ] else if (b.refund) ...[
+            const SizedBox(height: FasanSpace.s),
+            Row(children: [
+              Icon(Icons.undo_rounded, size: 18, color: l.accent),
+              const SizedBox(width: FasanSpace.s),
+              Expanded(child: Text('${t.refundBadge}. ${t.refundHint}', style: tt.bodySmall)),
+            ]),
+          ],
           if (status != null) ...[const SizedBox(height: FasanSpace.xs), status],
           const SizedBox(height: FasanSpace.l),
           Row(children: [
@@ -122,6 +148,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ],
       ),
     );
+  }
+
+  void _answerSign(bool refund) {
+    setState(() {
+      b.resolveSign(refund: refund);
+      _total.text = b.total == null ? '' : money(b.total!);
+    });
+    StoreScope.read(context).upsert(b);
   }
 
   Future<void> _edit(int i) async {
