@@ -282,11 +282,13 @@ Erledigt (Commit d9d6637 auf main und wip-zusammenarbeit; fasan_ui main 2d0a4c3)
 - `analyze` ohne Befund (zwei ungenutzte Imports in service_test entfernt).
 
 Offen, mit Stand 03.11. nachts:
-- CI auf main (Lauf 41700032762) war rot: `service_test` „Zwei Telefone“ (Chat-Reihenfolge) und `home_test`
-  „Warteschlange Erste Angaben“ (`ok` statt `reading`). Deshalb ist für 0.1.25 keine neue APK veröffentlicht.
-- Ursache Chat-Reihenfolge: `Notes.messages` sortiert bei gleichem Millisekunden-Zeitstempel nach der zufälligen Nachrichten-ID.
-  Dazu kommt die Uhr des Telefons (Zeitstempel ohne Korrektur). Behebung im Kern (`collab/notes.dart`) steht aus: Nutzer entscheidet.
-- `home_test`: lokal grün, in der CI einmal rot. Timing unter Last [Likely], nicht geprüft.
+- Chat-Reihenfolge behoben (Kern, auf Entscheidung des Nutzers 03.11.): `collab/notes.dart` vergibt pro Telefon streng steigende
+  Zeitstempel. Der Test „Zwei Telefone“ war in der CI rot, lokal mal grün, mal rot.
+- CI auf main, Lauf 41703816840 (Commit 0a5ba6c): grün, 148 bestanden, 54 übersprungen. APK als Release „neueste“
+  (Fasan Split 0.1.26, Test) veröffentlicht. Der Kotlin-Code für den nativen Ton ist damit in der CI gebaut.
+- Nicht auf dem S23 geprüft: die Oberfläche der Zusammenarbeit (nur Widget-Tests mit MemoryRelay und die CI).
+- `home_test` „Warteschlange Erste Angaben“: in der CI einmal rot (`ok` statt `reading`), in den späteren Läufen grün.
+  Timing unter Last [Likely], nicht geprüft.
 - Mitglied entfernen rotiert den Gruppenschlüssel nicht (`collab/group.dart`, Kommentar: nächste Stufe). Ein entferntes Mitglied
   kann mit dem alten Schlüssel weiter lesen, bis rotiert wird.
 - Glas ohne ImageFilter.shader: Hintergrund per `RepaintBoundary.toImageSync` lesen, Leisten außerhalb der erfassten Fläche. Offen.
