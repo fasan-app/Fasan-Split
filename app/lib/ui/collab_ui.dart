@@ -15,6 +15,8 @@ import '../collab/service.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
 import '../main.dart';
+import '../state/scan_queue.dart';
+import 'groups.dart';
 
 const _kConsent = 'collab.consent';
 bool _consentInMemory = false; // used when there are no preferences (tests)
@@ -120,7 +122,7 @@ Future<bool> confirmDialog(BuildContext context, String title, String text, Stri
 }
 
 /// The + on the groups page: a new live group, a new group only on this phone, or joining one.
-Future<void> groupPlusAction(BuildContext context) async {
+Future<void> groupPlusAction(BuildContext context, {ScanQueue? queue}) async {
   final t = S.of(context);
   final choice = await showModalBottomSheet<String>(
     context: context,
@@ -143,6 +145,7 @@ Future<void> groupPlusAction(BuildContext context) async {
     await createLiveGroup(context, name);
   } else {
     StoreScope.read(context).addGroup(name);
+    if (queue != null) Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupScreen(name: name.trim(), queue: queue)));
   }
 }
 

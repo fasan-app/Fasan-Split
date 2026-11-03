@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import '../l10n_collab.dart';
+import '../l10n_groups.dart';
+import '../model/settle.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import '../state/scan_queue.dart';
@@ -104,12 +106,70 @@ class GroupScreen extends StatelessWidget {
       ),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text('${t.billsCount(bills.length)} · ${money(sum, de: t.de)} €', style: tt.bodyMedium)),
+        GroupPeople(name: name),
+        const SizedBox(height: FasanSpace.l),
         if (live != null) CollabGroupPanel(group: live) else _ShareButton(name: name),
         if (bills.isEmpty) Text(t.groupEmpty, style: tt.bodyMedium),
         for (final b in bills)
           Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {})),
       ]),
     );
+  }
+}
+
+/// Members of a group with their balance, and the transfers that settle the group. People added by hand can be
+/// removed again; people from bills stay (their costs are in the bills).
+class GroupPeople extends StatelessWidget {
+  const GroupPeople({super.key, required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    final store = StoreScope.of(context);
+    final people = store.groupMembers(name);
+    final bal = store.groupBalance(name);
+    final moves = settle(bal);
+    final anyDone = store.inGroup(name, done: true).isNotEmpty;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      FasanLabel(t.groupPeople),
+      const SizedBox(height: FasanSpace.s),
+      if (people.isEmpty) Text(t.groupNoPeople, style: tt.bodyMedium!.copyWith(color: l.textMuted)),
+      for (final (i, p) in people.indexed)
+        Container(
+          constraints: BoxConstraints(minHeight: l.minTap),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: l.hairline))),
+          child: Row(children: [
+            FasanAvatar(name: p, index: i, size: 32),
+            const SizedBox(width: FasanSpace.m),
+            Expanded(child: Text(p, style: tt.bodyLarge)),
+            if (bal[p] case final v? when v != 0) Text('${money(v, de: t.de, sign: true)} €', style: tt.titleMedium!.copyWith(color: v > 0 ? l.accent : null)),
+            if (store.isHandMember(name, p))
+              IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: () => store.removeGroupMember(name, p)),
+          ]),
+        ),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          icon: const Icon(Icons.person_add_alt_rounded),
+          label: Text(t.groupAddPerson),
+          onPressed: () async {
+            final n = await askText(context, t.groupAddPerson, t.friendName);
+            if (n != null) store.addGroupMember(name, n);
+          },
+        ),
+      ),
+      if (anyDone) ...[
+        const SizedBox(height: FasanSpace.m),
+        FasanLabel(t.groupSettle),
+        const SizedBox(height: FasanSpace.s),
+        if (moves.isEmpty) Text(t.groupSettled, style: tt.bodyMedium),
+        for (final (from, to, c) in moves)
+          Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(t.owes(from, to, '${money(c, de: t.de)} €'), style: tt.bodyMedium)),
+        Text(t.groupBalanceHint, style: tt.bodySmall!.copyWith(color: l.textMuted)),
+      ],
+    ]);
   }
 }
 

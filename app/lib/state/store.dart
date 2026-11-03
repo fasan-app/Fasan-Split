@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../model/settle.dart';
 import '../model/bill.dart';
 
 class BillStore extends ChangeNotifier {
@@ -192,11 +193,51 @@ class BillStore extends ChangeNotifier {
     _setApp('groupsExtra', [..._extraGroups, n]);
   }
 
+  /// Members added by hand per group (a group can exist before its first bill). Stored as {group: [names]}.
+  Map<String, List<String>> get _groupMembers => {
+        for (final e in ((_app['groupMembers'] as Map?) ?? const {}).entries) e.key as String: [...(e.value as List).cast<String>()]
+      };
+
+  /// People of a group: the ones added by hand first, then everyone from its bills. Forgotten people are left out.
+  List<String> groupMembers(String group) {
+    final gone = forgotten;
+    final out = <String>[...?_groupMembers[group]];
+    for (final b in inGroup(group)) {
+      for (final p in b.ps) {
+        if (!out.contains(p.name)) out.add(p.name);
+      }
+    }
+    return out.where((n) => !gone.contains(n)).toList();
+  }
+
+  /// True when [person] was added to [group] by hand (only those can be taken out again; people from bills stay).
+  bool isHandMember(String group, String person) => _groupMembers[group]?.contains(person) ?? false;
+
+  void addGroupMember(String group, String person) {
+    final n = person.trim();
+    if (n.isEmpty || groupMembers(group).contains(n)) return;
+    final m = _groupMembers;
+    m[group] = [...?m[group], n];
+    _setApp('groupMembers', m);
+  }
+
+  void removeGroupMember(String group, String person) {
+    final m = _groupMembers;
+    m[group] = [...?m[group]]..remove(person);
+    if (m[group]!.isEmpty) m.remove(group);
+    _setApp('groupMembers', m);
+  }
+
+  /// Balance per member over the finished bills of the group (positive = gets money). See model/settle.dart.
+  Map<String, int> groupBalance(String group) => balances(inGroup(group, done: true));
+
   /// Removes the group; its bills stay, without group.
   void deleteGroup(String name) {
     for (final b in bills) {
       if (b.group == name) b.group = null;
     }
+    final m = _groupMembers..remove(name);
+    _app['groupMembers'] = m;
     _setApp('groupsExtra', _extraGroups.where((g) => g != name).toList());
     _persist();
   }

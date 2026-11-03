@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../l10n.dart';
 import '../l10n_bill.dart';
+import '../l10n_groups.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import '../recognition_service.dart';
@@ -269,7 +270,10 @@ class _PeopleScreenState extends State<PeopleScreen> {
   @override
   Widget build(BuildContext context) {
     final t = S.of(context);
-    final recent = StoreScope.of(context).recentNames.where((n) => !b.ps.any((p) => p.name == n)).toList();
+    final store = StoreScope.of(context);
+    final recent = store.recentNames.where((n) => !b.ps.any((p) => p.name == n)).toList();
+    final g = b.group;
+    final fromGroup = g == null || g.isEmpty ? const <String>[] : store.groupMembers(g).where((n) => !b.ps.any((p) => p.name == n)).toList();
     return StepScaffold(
       title: t.whoWasThere,
       step: 2,
@@ -304,6 +308,18 @@ class _PeopleScreenState extends State<PeopleScreen> {
                 }),
               ),
           ]),
+          if (fromGroup.isNotEmpty) ...[
+            const SizedBox(height: FasanSpace.l),
+            ActionChip(
+              avatar: const Icon(Icons.group_add_outlined, size: 18),
+              label: Text(t.allFromGroup(g!)),
+              onPressed: () {
+                for (final n in fromGroup) {
+                  _add(n);
+                }
+              },
+            ),
+          ],
           if (recent.isNotEmpty) ...[
             const SizedBox(height: FasanSpace.xl),
             FasanLabel(t.recent),
