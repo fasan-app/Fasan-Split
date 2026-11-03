@@ -13,6 +13,7 @@ import '../main.dart';
 import '../model/bill.dart';
 import '../recognition_service.dart';
 import 'assign.dart';
+import 'collab_ui.dart';
 import 'common.dart';
 import 'when_where.dart';
 import 'diagnose.dart';
@@ -267,6 +268,13 @@ class _PeopleScreenState extends State<PeopleScreen> {
     FasanHaptics.of(context).tap();
   }
 
+  void _invite(String person) {
+    final g = b.group == null ? null : CollabScope.read(context).groupByLocalName(b.group!);
+    if (g == null || !g.isAdmin || g.session.memberOfPerson(person) != null) return;
+    StoreScope.read(context).upsert(b); // the person must be in the group's bills before the invitation
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g, person: person)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = S.of(context);
@@ -299,6 +307,8 @@ class _PeopleScreenState extends State<PeopleScreen> {
               InputChip(
                 avatar: FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 28),
                 label: Text(b.ps[i].name),
+                // Bill in a live group (admin): tap a person to invite them; the new member is linked to this name.
+                onPressed: () => _invite(b.ps[i].name),
                 onDeleted: () => setState(() {
                   b.ps.removeAt(i);
                   for (final it in b.its) {

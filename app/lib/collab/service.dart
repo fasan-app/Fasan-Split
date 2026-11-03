@@ -225,7 +225,7 @@ class CollabService extends ChangeNotifier {
   Future<void> approve(CollabGroup g, JoinRequest r) async {
     final inv = g.invitations;
     if (inv == null) return;
-    g.session.addMember(r.pub, r.name.isEmpty ? r.pub.substring(0, 8) : r.name);
+    g.session.addMember(r.pub, r.name.isEmpty ? r.pub.substring(0, 8) : r.name, person: r.person);
     await g.session.flush(); // members first, then the key
     await inv.welcome(r.pub);
     notifyListeners();
@@ -233,6 +233,12 @@ class CollabService extends ChangeNotifier {
 
   void decline(CollabGroup g, JoinRequest r) {
     g.invitations?.decline(r.pub);
+    notifyListeners();
+  }
+
+  /// Admin: links a member to a person of the group's bills, or unlinks (person null).
+  void linkPerson(CollabGroup g, String pub, String? person) {
+    g.session.linkPerson(pub, person);
     notifyListeners();
   }
 

@@ -17,6 +17,7 @@ import '../collab/service.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
 import '../l10n_web.dart';
+import '../l10n_groups.dart';
 import '../main.dart';
 import '../state/scan_queue.dart';
 import 'groups.dart';
@@ -298,6 +299,32 @@ class _JoinScreenState extends State<JoinScreen> {
   }
 }
 
+/// Admin: choose which person of the group's bills a member is (or unlink). Names come from the bills and the people
+/// added by hand (BillStore.groupMembers).
+Future<void> pickPersonFor(BuildContext context, CollabGroup g, String pub) async {
+  final t = S.of(context), s = CollabScope.read(context);
+  final people = StoreScope.read(context).groupMembers(g.localName);
+  final cur = g.session.personOf(pub);
+  final choice = await showModalBottomSheet<String>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: ListView(shrinkWrap: true, children: [
+        ListTile(title: Text(t.linkPerson, style: Theme.of(ctx).textTheme.titleMedium)),
+        for (final p in people)
+          ListTile(
+            leading: Icon(p == cur ? Icons.link_rounded : Icons.person_outline_rounded),
+            title: Text(p),
+            subtitle: switch (g.session.memberOfPerson(p)) { final m? when m != pub => Text(t.linkedTo(g.session.nameOf(m))), _ => null },
+            onTap: () => Navigator.pop(ctx, p),
+          ),
+        if (cur != null) ListTile(leading: const Icon(Icons.link_off_rounded), title: Text(t.unlink), onTap: () => Navigator.pop(ctx, '')),
+      ]),
+    ),
+  );
+  if (choice == null) return;
+  s.linkPerson(g, pub, choice.isEmpty ? null : choice);
+}
+
 /// Browser only: says what the web app can do and offers the Android app. „In der App öffnen“ uses the old scheme
 /// fasansplit://join, which the installed app always handles (the https App Link needs assetlinks.json, docs/WEB.md).
 class _WebAppHint extends StatelessWidget {
@@ -337,9 +364,12 @@ class _WebAppHint extends StatelessWidget {
 
 /// Invitation for this group (admin only): QR code, link, requests to accept or decline, revoke.
 class InviteScreen extends StatefulWidget {
-  const InviteScreen({super.key, required this.group});
+  const InviteScreen({super.key, required this.group, this.person});
 
   final CollabGroup group;
+
+  /// Person of the group's bills this invitation is for; the new member is linked to it on approval.
+  final String? person;
 
   @override
   State<InviteScreen> createState() => _InviteScreenState();
@@ -365,7 +395,7 @@ class _InviteScreenState extends State<InviteScreen> {
     super.dispose();
   }
 
-  void _create() => setState(() => _current = _inv!.create());
+  void _create() => setState(() => _current = _inv!.create(person: widget.person));
 
   void _revoke() {
     _inv?.revokeAll();
@@ -379,7 +409,7 @@ class _InviteScreenState extends State<InviteScreen> {
     final g = widget.group, inv = _inv, link = _current?.link;
     final requests = inv?.pending.values.toList() ?? const <JoinRequest>[];
     return Scaffold(
-      appBar: AppBar(title: Text(t.invite)),
+      appBar: AppBar(title: Text(widget.person == null ? t.invite : t.inviteFor(widget.person!))),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Text(t.inviteLive(g.localName), style: tt.bodyMedium),
         const SizedBox(height: FasanSpace.l),
@@ -479,7 +509,8 @@ class MembersScreen extends StatelessWidget {
               ListTile(
                 leading: CircleAvatar(child: Text(group.session.nameOf(k).characters.first.toUpperCase())),
                 title: Text(k == me ? '${group.session.nameOf(k)} (${t.you})' : group.session.nameOf(k)),
-                subtitle: Text(k == admin ? t.admin : k.substring(0, 12)),
+                subtitle: Text([k == admin ? t.admin : k.substring(0, 12), if (group.session.personOf(k) case final p?) t.linkedTo(p)].join(' · ')),
+                onTap: group.isAdmin ? () => pickPersonFor(context, group, k) : null,
                 trailing: group.isAdmin && k != admin
                     ? IconButton(
                         tooltip: t.removeMember,

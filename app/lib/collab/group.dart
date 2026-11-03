@@ -44,9 +44,13 @@ class GroupSecret {
 
 /// The invitation a new member opens. Carries no group key.
 class Invite {
-  Invite({required this.tag, required this.secret, required this.adminPub, required this.relays, required this.expires, required this.name});
+  Invite({required this.tag, required this.secret, required this.adminPub, required this.relays, required this.expires, required this.name, this.person});
 
   final String tag, adminPub, name;
+
+  /// Person in the group's bills this invitation is for (Nutzer 03.11.: people from a bill are invited and linked).
+  /// The admin's phone links the new member to this name on approval; null = no person yet.
+  final String? person;
   final Uint8List secret; // 32 bytes, one-time
   final List<String> relays;
   final DateTime expires;
@@ -64,6 +68,7 @@ class Invite {
         'r': relays,
         'x': expires.millisecondsSinceEpoch ~/ 1000,
         'n': name,
+        if (person != null) 'p': person,
       }))).replaceAll('=', '');
 
   /// Link for sharing. The part after „#“ is never sent to a server: GitHub Pages only sees /Fasan-Split/join/.
@@ -88,6 +93,7 @@ class Invite {
         relays: [for (final r in j['r'] as List) '$r'],
         expires: DateTime.fromMillisecondsSinceEpoch((j['x'] as num).toInt() * 1000),
         name: j['n'] as String? ?? '',
+        person: j['p'] as String?,
       );
     } catch (_) {
       return null;
@@ -96,9 +102,12 @@ class Invite {
 }
 
 class JoinRequest {
-  JoinRequest(this.pub, this.name, this.at);
+  JoinRequest(this.pub, this.name, this.at, {this.person});
   final String pub, name;
   final DateTime at;
+
+  /// From the invitation that sealed the request (Invite.person).
+  final String? person;
 }
 
 /// Admin side of invitations: keeps the secrets of invitations it made, reads requests, approves.
@@ -114,8 +123,9 @@ class Invitations {
   final StreamController<void> changes = StreamController<void>.broadcast();
 
   /// A new invitation valid for [valid].
-  Invite create({Duration valid = const Duration(days: 2)}) {
-    final inv = Invite(tag: secret.tag, secret: randomBytes(32), adminPub: me.pub, relays: secret.relays, expires: DateTime.now().add(valid), name: secret.name);
+  Invite create({Duration valid = const Duration(days: 2), String? person}) {
+    final inv = Invite(
+        tag: secret.tag, secret: randomBytes(32), adminPub: me.pub, relays: secret.relays, expires: DateTime.now().add(valid), name: secret.name, person: person);
     _issued[toHex(inv.secret)] = inv;
     return inv;
   }
@@ -137,7 +147,7 @@ class Invitations {
       if (inv.expired) continue;
       try {
         final j = jsonDecode(aeadOpen(e.content, inv.requestKey, d)) as Map<String, dynamic>;
-        pending[e.pubkey] = JoinRequest(e.pubkey, (j['name'] as String? ?? '').trim(), DateTime.fromMillisecondsSinceEpoch(e.createdAt * 1000));
+        pending[e.pubkey] = JoinRequest(e.pubkey, (j['name'] as String? ?? '').trim(), DateTime.fromMillisecondsSinceEpoch(e.createdAt * 1000), person: inv.person);
         changes.add(null);
         return;
       } on FormatException {
@@ -271,7 +281,8 @@ class GroupSession {
     try {
       final entries = LwwDoc.decode(aeadOpen(e.content, secret.key, d));
       // the members document: only the admin's own entries count (entries about other keys cannot be forged by others)
-      final accepted = id == members ? entries.where((x) => x.key.startsWith('m/')) : entries;
+      // m/<pub> = member, l/admin = the admin's own person link (linkPerson); both only from the admin (see above)
+      final accepted = id == members ? entries.where((x) => x.key.startsWith('m/') || x.key == 'l/admin') : entries;
       if (doc(id).merge(accepted) > 0) _changes.add(id);
       if (isMembersDoc && _waiting.isNotEmpty) {
         final again = _waiting.toList();
@@ -313,10 +324,48 @@ class GroupSession {
   }
 
   /// Admin: puts a person into the members document (call before the welcome).
-  void addMember(String pub, String name) {
+  void addMember(String pub, String name, {String? person}) {
     if (!isAdmin) throw StateError('only the admin changes members');
-    doc(members).set('m/$pub', {'name': name});
+    doc(members).set('m/$pub', {'name': name, if (person != null && person.isNotEmpty) 'person': person});
     touch(members);
+  }
+
+  /// Admin: links a member to a person name of the group's bills, or unlinks ([person] null). One person, one member:
+  /// a name linked elsewhere is taken away there first. The admin itself has no m/ entry and links through l/admin.
+  void linkPerson(String pub, String? person) {
+    if (!isAdmin) throw StateError('only the admin changes members');
+    if (person != null) {
+      final other = memberOfPerson(person);
+      if (other != null && other != pub) linkPerson(other, null);
+    }
+    if (pub == secret.adminPub) {
+      doc(members).set('l/admin', person);
+    } else {
+      final m = doc(members).get('m/$pub');
+      final v = m is Map ? Map<String, Object?>.of(m.cast<String, Object?>()) : <String, Object?>{'name': nameOf(pub)};
+      if (person == null) {
+        v.remove('person');
+      } else {
+        v['person'] = person;
+      }
+      doc(members).set('m/$pub', v);
+    }
+    touch(members);
+  }
+
+  /// Person name a member is linked to, or null.
+  String? personOf(String pub) {
+    if (pub == secret.adminPub) return doc(members).get('l/admin') as String?;
+    final m = doc(members).get('m/$pub');
+    return m is Map && m['person'] is String ? m['person'] as String : null;
+  }
+
+  /// Member linked to [person], or null.
+  String? memberOfPerson(String person) {
+    for (final k in memberKeys) {
+      if (personOf(k) == person) return k;
+    }
+    return null;
   }
 
   void removeMember(String pub) {

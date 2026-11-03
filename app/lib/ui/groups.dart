@@ -3,6 +3,8 @@
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
+import '../collab/group.dart';
+import '../collab/service.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
 import '../l10n_groups.dart';
@@ -12,6 +14,7 @@ import '../model/bill.dart';
 import '../state/scan_queue.dart';
 import 'bill_tile.dart';
 import 'collab_ui.dart';
+import 'common.dart';
 
 /// All groups with their number of bills and sum; tap opens the group. Pending join requests are shown on top.
 class GroupsPage extends StatelessWidget {
@@ -132,22 +135,40 @@ class GroupPeople extends StatelessWidget {
     final bal = store.groupBalance(name);
     final moves = settle(bal);
     final anyDone = store.inGroup(name, done: true).isNotEmpty;
+    final live = CollabScope.of(context).groupByLocalName(name);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       FasanLabel(t.groupPeople),
       const SizedBox(height: FasanSpace.s),
       if (people.isEmpty) Text(t.groupNoPeople, style: tt.bodyMedium!.copyWith(color: l.textMuted)),
       for (final (i, p) in people.indexed)
-        Container(
+        InkWell(
+          // Live group: who of the bills is which member (Nutzer 03.11.: invite people from a bill, link, unlink).
+          onTap: live == null ? null : () => _personActions(context, live, p),
+          child: Container(
           constraints: BoxConstraints(minHeight: l.minTap),
           decoration: BoxDecoration(border: Border(bottom: BorderSide(color: l.hairline))),
           child: Row(children: [
             FasanAvatar(name: p, index: i, size: 32),
             const SizedBox(width: FasanSpace.m),
-            Expanded(child: Text(p, style: tt.bodyLarge)),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(p, style: tt.bodyLarge),
+                if (live != null)
+                  GroupChangeBuilder(
+                    group: live,
+                    docId: GroupSession.members,
+                    builder: (context) => Text(
+                      switch (live.session.memberOfPerson(p)) { final m? => t.linkedTo(live.session.nameOf(m)), _ => t.notLinked },
+                      style: tt.bodySmall!.copyWith(color: l.textMuted),
+                    ),
+                  ),
+              ]),
+            ),
             if (bal[p] case final v? when v != 0) Text('${money(v, de: t.de, sign: true)} €', style: tt.titleMedium!.copyWith(color: v > 0 ? l.accent : null)),
             if (store.isHandMember(name, p))
               IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: () => store.removeGroupMember(name, p)),
           ]),
+        ),
         ),
       Align(
         alignment: Alignment.centerLeft,
@@ -170,6 +191,40 @@ class GroupPeople extends StatelessWidget {
         Text(t.groupBalanceHint, style: tt.bodySmall!.copyWith(color: l.textMuted)),
       ],
     ]);
+  }
+}
+
+/// Invite this person, link them to a member who is already in, or unlink. Only the admin changes the members document;
+/// the others see who is linked.
+Future<void> _personActions(BuildContext context, CollabGroup g, String person) async {
+  final t = S.of(context), s = CollabScope.read(context);
+  final linked = g.session.memberOfPerson(person);
+  if (!g.isAdmin) {
+    showNote(context, t.onlyAdminLinks);
+    return;
+  }
+  final free = [for (final k in g.session.memberKeys) if (g.session.personOf(k) == null) k];
+  final choice = await showModalBottomSheet<String>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: ListView(shrinkWrap: true, children: [
+        ListTile(title: Text(person, style: Theme.of(ctx).textTheme.titleMedium)),
+        if (linked == null) ListTile(leading: const Icon(Icons.person_add_alt_1_outlined), title: Text(t.inviteFor(person)), onTap: () => Navigator.pop(ctx, 'invite')),
+        if (linked == null)
+          for (final k in free)
+            ListTile(leading: const Icon(Icons.link_rounded), title: Text(g.session.nameOf(k)), subtitle: Text(t.linkMember), onTap: () => Navigator.pop(ctx, 'link:$k')),
+        if (linked == null && free.isEmpty) ListTile(enabled: false, title: Text(t.noFreeMember)),
+        if (linked != null) ListTile(leading: const Icon(Icons.link_off_rounded), title: Text(t.unlink), subtitle: Text(t.linkedTo(g.session.nameOf(linked))), onTap: () => Navigator.pop(ctx, 'unlink')),
+      ]),
+    ),
+  );
+  if (choice == null || !context.mounted) return;
+  if (choice == 'invite') {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g, person: person)));
+  } else if (choice == 'unlink') {
+    s.linkPerson(g, linked!, null);
+  } else if (choice.startsWith('link:')) {
+    s.linkPerson(g, choice.substring(5), person);
   }
 }
 

@@ -10,4 +10,12 @@ extension GroupTexts on S {
   String get groupSettled => de ? 'Alles ausgeglichen.' : 'All settled.';
   String get groupBalanceHint => de ? 'Zählt nur fertige Bons.' : 'Counts finished receipts only.';
   String allFromGroup(String g) => de ? 'Alle aus „$g“' : 'Everyone from “$g”';
+  String inviteFor(String p) => de ? '$p einladen' : 'Invite $p';
+  String linkedTo(String m) => de ? 'Verknüpft mit $m' : 'Linked to $m';
+  String get notLinked => de ? 'Noch nicht in der App' : 'Not in the app yet';
+  String get linkMember => de ? 'Mit Mitglied verknüpfen' : 'Link to a member';
+  String get unlink => de ? 'Verknüpfung lösen' : 'Unlink';
+  String get linkPerson => de ? 'Person aus den Bons zuordnen' : 'Assign a person from the receipts';
+  String get noFreeMember => de ? 'Alle Mitglieder sind schon verknüpft.' : 'All members are linked already.';
+  String get onlyAdminLinks => de ? 'Verknüpfen kann die Person, die die Gruppe verwaltet.' : 'The group admin links people.';
 }
