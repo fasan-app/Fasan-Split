@@ -4,9 +4,11 @@
 import 'dart:async';
 
 import 'package:fasan_ui/fasan_ui.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:zxing2/qrcode.dart';
 
 import '../collab/group.dart';
@@ -14,6 +16,7 @@ import '../collab/notes.dart';
 import '../collab/service.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
+import '../l10n_web.dart';
 import '../main.dart';
 import '../state/scan_queue.dart';
 import 'groups.dart';
@@ -279,6 +282,7 @@ class _JoinScreenState extends State<JoinScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(t.joinGroup)),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
+        if (kIsWeb) const _WebAppHint(),
         Text(t.joinText, style: tt.bodyMedium),
         const SizedBox(height: FasanSpace.l),
         TextField(controller: _link, minLines: 1, maxLines: 3, decoration: InputDecoration(labelText: t.joinLink)),
@@ -289,6 +293,43 @@ class _JoinScreenState extends State<JoinScreen> {
         if (_error != null) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
         if (_sent) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text(t.joinSent, style: tt.bodyMedium)),
         FilledButton(onPressed: _busy || _sent ? null : _send, child: Text(t.joinSend)),
+      ]),
+    );
+  }
+}
+
+/// Browser only: says what the web app can do and offers the Android app. „In der App öffnen“ uses the old scheme
+/// fasansplit://join, which the installed app always handles (the https App Link needs assetlinks.json, docs/WEB.md).
+class _WebAppHint extends StatelessWidget {
+  const _WebAppHint();
+
+  static final _apk = Uri.parse('https://github.com/fasan-app/Fasan-Split/releases/tag/neueste');
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context), l = FasanLook.of(context);
+    final code = context.findAncestorStateOfType<_JoinScreenState>()?._link.text ?? '';
+    final i = code.indexOf('#');
+    return Container(
+      margin: const EdgeInsets.only(bottom: FasanSpace.l),
+      padding: const EdgeInsets.all(FasanSpace.m),
+      decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.7)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(t.webHint, style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(height: FasanSpace.s),
+        Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [
+          if (i >= 0)
+            FilledButton.tonalIcon(
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: Text(t.webOpenApp),
+              onPressed: () => launchUrl(Uri.parse('fasansplit://join${code.substring(i)}')),
+            ),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.android_rounded),
+            label: Text(t.webGetApp),
+            onPressed: () => launchUrl(_apk, mode: LaunchMode.externalApplication),
+          ),
+        ]),
       ]),
     );
   }

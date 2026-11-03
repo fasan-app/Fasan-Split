@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fasan_ui/fasan_ui.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -58,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// At most once a day, only if enabled (Settings → Updates); silent without network.
   Future<void> _checkUpdate() async {
+    if (kIsWeb) return;
     final store = StoreScope.read(context);
     final last = store.lastUpdateCheck;
     if (!store.autoUpdate || (last != null && DateTime.now().difference(last) < const Duration(hours: 20))) return;
@@ -74,7 +76,8 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final store = StoreScope.read(context);
-      if (!store.onboarded && store.bills.isEmpty) {
+      // Web: the introduction is about photographing receipts, which the browser cannot do; an invitation opens directly.
+      if (!kIsWeb && !store.onboarded && store.bills.isEmpty) {
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingScreen()));
       }
     });
@@ -157,8 +160,10 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(leading: const Icon(Icons.photo_camera_outlined), title: Text(t.camera), onTap: () => Navigator.pop(ctx, 'camera')),
-          ListTile(leading: const Icon(Icons.photo_library_outlined), title: Text(t.galleryOrFile), onTap: () => Navigator.pop(ctx, 'gallery')),
+          if (!kIsWeb) ...[
+            ListTile(leading: const Icon(Icons.photo_camera_outlined), title: Text(t.camera), onTap: () => Navigator.pop(ctx, 'camera')),
+            ListTile(leading: const Icon(Icons.photo_library_outlined), title: Text(t.galleryOrFile), onTap: () => Navigator.pop(ctx, 'gallery')),
+          ],
           ListTile(leading: const Icon(Icons.edit_note_rounded), title: Text(t.manual), onTap: () => Navigator.pop(ctx, 'manual')),
           const SizedBox(height: FasanSpace.s),
         ]),

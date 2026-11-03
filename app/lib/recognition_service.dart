@@ -13,7 +13,7 @@ import 'package:flutter/services.dart';
 
 import 'model/bill.dart';
 import 'recognition/model.dart';
-import 'recognition/onnx.dart';
+import 'recognition/onnx.dart' if (dart.library.js_interop) 'recognition/onnx_web.dart';
 import 'recognition/paddle.dart';
 import 'recognition/pipeline.dart';
 import 'recognition/reader.dart' show suspiciousName;

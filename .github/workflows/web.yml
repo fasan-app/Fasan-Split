@@ -1,0 +1,53 @@
+# Baut bei jedem Push auf main die Web-App (Beitreten, Bons, Saldo, Notizen, Chat; kein Bon-Lesen) und veröffentlicht sie
+# auf GitHub Pages: https://fasan-app.github.io/Fasan-Split/ . Einladungen: …/Fasan-Split/join/#<code> (docs/WEB.md).
+# Einmalig nötig: Settings → Pages → Source „GitHub Actions“.
+name: Web-App
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Web bauen
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter create --org app.fasan --project-name fasan_split --platforms web .
+          sed -i 's#<title>.*</title>#<title>Fasan Split</title>#' web/index.html
+          sed -i 's#"name": "fasan_split"#"name": "Fasan Split"#; s#"short_name": "fasan_split"#"short_name": "Fasan Split"#' web/manifest.json
+          # Keine Modelle: der Browser liest keine Bons. CanvasKit liegt mit auf der Seite statt beim Google-CDN.
+          flutter build web --release --base-href /Fasan-Split/ --no-web-resources-cdn
+          cp -r web_extra/. build/web/
+          touch build/web/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: app/build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

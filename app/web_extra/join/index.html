@@ -1,0 +1,21 @@
+<!doctype html>
+<!-- Fasan Split – invitation page. MPL-2.0
+     The link is https://fasan-app.github.io/Fasan-Split/join/#<code>. The part after "#" never reaches the server.
+     This page puts the code into sessionStorage (same tab only) and opens the app without the code in the address bar
+     or the history; lib/web_link_web.dart reads and removes it. -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Fasan Split – Einladung</title>
+<script>
+  var c = location.hash.slice(1);
+  try { if (c) sessionStorage.setItem('fasan-join', c); } catch (e) {}
+  location.replace('../');
+</script>
+</head>
+<body>
+<noscript>Fasan Split braucht JavaScript. / Fasan Split needs JavaScript.</noscript>
+</body>
+</html>

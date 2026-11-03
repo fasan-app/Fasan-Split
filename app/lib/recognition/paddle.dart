@@ -13,7 +13,7 @@ import 'dart:typed_data';
 
 import 'image.dart';
 import 'model.dart';
-import 'onnx.dart';
+import 'onnx.dart' if (dart.library.js_interop) 'onnx_web.dart';
 import 'text_util.dart';
 
 class DetBox {

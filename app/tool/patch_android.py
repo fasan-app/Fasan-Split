@@ -112,6 +112,14 @@ if 'android:scheme="fasansplit"' not in m:
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="fasansplit" android:host="join"/>
             </intent-filter>
+            <!-- App Link (developer.android.com/training/app-links): https invitations open the app once
+                 https://fasan-app.github.io/.well-known/assetlinks.json names this app; otherwise the browser shows the web app. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="fasan-app.github.io" android:pathPrefix="/Fasan-Split/join"/>
+            </intent-filter>
 '''
     i = m.index('</intent-filter>') + len('</intent-filter>\n')
     m = m[:i] + link + m[i:]

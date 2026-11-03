@@ -46,7 +46,7 @@ void main() {
     expect(find.text('Einladung erstellen'), findsOneWidget);
     await tester.tap(find.text('Einladung erstellen'));
     await tester.pump();
-    expect(find.textContaining('fasansplit://join#'), findsOneWidget);
+    expect(find.textContaining('https://fasan-app.github.io/Fasan-Split/join/#'), findsOneWidget);
     expect(find.byType(CustomPaint), findsWidgets);
     await tester.pump(const Duration(seconds: 1));
   });

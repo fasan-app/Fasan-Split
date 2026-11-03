@@ -3,11 +3,14 @@ import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:fasan_ui/fasan_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'collab/group.dart';
 import 'collab/keys.dart';
+import 'web_link.dart';
 import 'collab/service.dart';
 import 'state/store.dart';
 import 'ui/collab_ui.dart';
@@ -26,6 +29,10 @@ Future<void> main() async {
 }
 
 final navigatorKey = GlobalKey<NavigatorState>();
+
+/// Invitation links: the old scheme fasansplit://join and the https address of the web app (App Link).
+bool isInviteLink(Uri u) =>
+    u.scheme == 'fasansplit' || u.scheme == 'https' && u.host == 'fasan-app.github.io' && u.path.startsWith('/Fasan-Split/join');
 
 class SplitApp extends StatefulWidget {
   const SplitApp({super.key, required this.store, required this.ui, this.home, this.collab, this.deepLinks = false});
@@ -53,7 +60,10 @@ class _SplitAppState extends State<SplitApp> {
   @override
   void initState() {
     super.initState();
-    if (widget.deepLinks) {
+    // Web: join/index.html handed the invitation over (web_link_web.dart).
+    final code = kIsWeb ? takeJoinCode() : null;
+    if (code != null) _open(Uri.parse('${Invite.inviteBase}#$code'));
+    if (widget.deepLinks && !kIsWeb) {
       final al = AppLinks();
       // link that started the app, then links while it runs
       al.getInitialLink().then((u) => _open(u), onError: (_) {});
@@ -62,7 +72,7 @@ class _SplitAppState extends State<SplitApp> {
   }
 
   void _open(Uri? u) {
-    if (u == null || u.scheme != 'fasansplit') return;
+    if (u == null || !isInviteLink(u)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final nav = navigatorKey.currentState;
       if (nav != null) nav.push(MaterialPageRoute(builder: (_) => JoinScreen(prefill: u.toString())));

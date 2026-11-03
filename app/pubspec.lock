@@ -198,7 +198,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "2d0a4c3fc9d1f75bc77e5b301f27bdb50f03e9d6"
+      resolved-ref: c554a78a2233fc88d020c7e31c3199734553f0d7
       url: "https://github.com/fasan-app/fasan_ui.git"
     source: git
     version: "0.1.0"
@@ -1012,7 +1012,7 @@ packages:
     source: hosted
     version: "15.4.0"
   web:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: web
       sha256: e119e82ac4795c7925103b7cf3768191f33941b99e7ccffbd6c645201d9f606b

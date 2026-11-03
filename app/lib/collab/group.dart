@@ -66,8 +66,12 @@ class Invite {
         'n': name,
       }))).replaceAll('=', '');
 
-  /// Link for sharing. The part after „#“ is never sent to a server (web later).
-  String get link => 'fasansplit://join#${encode()}';
+  /// Link for sharing. The part after „#“ is never sent to a server: GitHub Pages only sees /Fasan-Split/join/.
+  /// Opens the app (Android App Link, needs assetlinks.json on the host) or the web app (docs/WEB.md).
+  String get link => '$inviteBase#${encode()}';
+
+  /// Web address of invitations. Older links „fasansplit://join#…“ still work (parse reads the part after „#“).
+  static const inviteBase = 'https://fasan-app.github.io/Fasan-Split/join/';
 
   static Invite? parse(String input) {
     try {
