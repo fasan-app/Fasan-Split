@@ -15,12 +15,15 @@ import '../state/images.dart';
 
 /// One bill on the overview: thumbnail, name, state (waiting / reading / failed / date and step) and sum.
 class BillTile extends StatelessWidget {
-  const BillTile({super.key, required this.bill, required this.queue, required this.selecting, required this.selected, required this.onToggle, required this.onRetry, this.subtitle, this.openable = true});
+  const BillTile({super.key, required this.bill, required this.queue, required this.selecting, required this.selected, required this.onToggle, required this.onRetry, this.subtitle, this.openable = true, this.onLongPress});
 
   final Bill bill;
   final ScanQueue queue;
   final bool selecting, selected;
   final VoidCallback onToggle, onRetry;
+
+  /// Long press outside the selection: starts selecting with this bill (home.dart).
+  final VoidCallback? onLongPress;
 
   /// Replaces the second line (trash: „gelöscht am …“).
   final String? subtitle;
@@ -78,6 +81,7 @@ class BillTile extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(r),
           onTap: selecting ? onToggle : open,
+          onLongPress: selecting ? null : onLongPress,
           child: Container(
             constraints: BoxConstraints(minHeight: l.minTap + 16),
             padding: const EdgeInsets.all(FasanSpace.m),

@@ -79,6 +79,40 @@ void main() {
       expect(store.inGroup(null).map((b) => b.id), ['c']);
     });
 
+    testWidgets('Langdruck wählt aus; Auswahl auf einen Bon ziehen sortiert sie davor', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen'), _bill('c', 'Taxi')]);
+      await app(tester, store, idle(store));
+      await tester.longPress(find.text('Taxi'));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('1 ausgewählt'), findsOneWidget);
+      final before = store.inGroup(null, done: false).map((b) => b.purpose).toList();
+      final top = before.first;
+      expect(top, isNot('Taxi'));
+      // drag the selected bill onto the first one: it goes right before it
+      final g = await tester.startGesture(tester.getCenter(find.text('Taxi')));
+      await tester.pump(const Duration(milliseconds: 400));
+      await g.moveTo(tester.getCenter(find.text(top)));
+      await tester.pump(const Duration(milliseconds: 100));
+      await g.up();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(store.inGroup(null, done: false).first.purpose, 'Taxi');
+    });
+
+    test('moveBefore: mehrere Bons vor ein Ziel, Reihenfolge bleibt, Gruppe des Ziels', () {
+      final store = BillStore.memory([_bill('a', 'A'), _bill('b', 'B'), _bill('c', 'C'), _bill('d', 'D')..group = 'WG']);
+      final list = store.inGroup(null, done: false);
+      final target = list.first;
+      final moved = list.sublist(1);
+      store.moveBefore(moved, target);
+      final after = store.inGroup(null, done: false);
+      expect(after.last.id, target.id);
+      expect(after.take(moved.length).map((b) => b.id), moved.map((b) => b.id));
+      final wg = store.inGroup('WG', done: false).single;
+      store.moveBefore([after.first], wg);
+      expect(store.inGroup('WG', done: false).first.id, after.first.id);
+      expect(store.inGroup('WG', done: false).length, 2);
+    });
+
     testWidgets('Auswahlmodus bleibt auch ohne Auswahl und endet mit dem X', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen')]);
       await app(tester, store, idle(store));

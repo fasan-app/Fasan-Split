@@ -499,11 +499,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (list.isEmpty) return const SizedBox.shrink();
     final t = S.of(context), l = FasanLook.of(context);
     final heading = groupName ?? title ?? '';
-    return DragTarget<Bill>(
-      onWillAcceptWithDetails: (d) => d.data.group != group,
+    return DragTarget<List<Bill>>(
+      onWillAcceptWithDetails: (d) => d.data.any((b) => b.group != group),
       onAcceptWithDetails: (d) {
-        store.setGroup([d.data], group);
+        store.setGroup(d.data, group);
         FasanHaptics.of(context).snap();
+        _exitSelect();
       },
       builder: (context, candidate, _) => AnimatedContainer(
         duration: const Duration(milliseconds: 150),
@@ -527,11 +528,60 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// A bill: tap opens it (or selects), swipe right moves it to the archive (or back), swipe left to the trash with
-  /// „Rückgängig“, long press picks it up to drop it onto a group.
+  /// „Rückgängig“, long press starts selecting (Nutzer 03.11.). While selecting, a long press picks up all selected
+  /// bills: dropped on a group they move there, dropped on a bill they go right before it (own order, store.moveBefore).
   Widget _row(BuildContext context, BillStore store, BillList mode, Bill b) {
     final t = S.of(context), l = FasanLook.of(context);
-    final tile = BillTile(bill: b, queue: queue, selecting: _selecting, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () => _retry(b));
-    if (_selecting) return tile;
+    final tile = BillTile(
+      bill: b,
+      queue: queue,
+      selecting: _selecting,
+      selected: _selected.contains(b.id),
+      onToggle: () => _toggle(b.id),
+      onRetry: () => _retry(b),
+      onLongPress: () {
+        FasanHaptics.of(context).tap();
+        setState(() {
+          _selecting = true;
+          _selected.add(b.id);
+        });
+      },
+    );
+    if (_selecting) {
+      final moving = _selected.contains(b.id) ? _picked(store) : [b];
+      return DragTarget<List<Bill>>(
+        onWillAcceptWithDetails: (d) => !d.data.any((x) => x.id == b.id),
+        onAcceptWithDetails: (d) {
+          store.moveBefore(d.data, b);
+          FasanHaptics.of(context).snap();
+        },
+        builder: (context, candidate, _) => Container(
+          // drop line above the bill the dragged ones will go before
+          decoration: BoxDecoration(border: Border(top: BorderSide(color: candidate.isEmpty ? Colors.transparent : l.accent, width: 3))),
+          child: LongPressDraggable<List<Bill>>(
+            data: moving,
+            delay: const Duration(milliseconds: 300),
+            onDragStarted: () => FasanHaptics.of(context).tap(),
+            feedback: Material(
+              color: Colors.transparent,
+              child: SizedBox(
+                width: MediaQuery.sizeOf(context).width - 2 * FasanSpace.l,
+                child: Opacity(
+                  opacity: 0.9,
+                  child: Badge(
+                    isLabelVisible: moving.length > 1,
+                    label: Text('${moving.length}'),
+                    child: BillTile(bill: b, queue: queue, selecting: true, selected: true, onToggle: () {}, onRetry: () {}),
+                  ),
+                ),
+              ),
+            ),
+            childWhenDragging: Opacity(opacity: 0.35, child: tile),
+            child: tile,
+          ),
+        ),
+      );
+    }
     final archive = mode == BillList.archive;
     return Dismissible(
       key: ValueKey('bill-${mode.name}-${b.id}'),
@@ -546,17 +596,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         FasanHaptics.of(context).snap();
       },
-      child: LongPressDraggable<Bill>(
-        data: b,
-        delay: const Duration(milliseconds: 350),
-        onDragStarted: () => FasanHaptics.of(context).tap(),
-        feedback: Material(
-          color: Colors.transparent,
-          child: SizedBox(width: MediaQuery.sizeOf(context).width - 2 * FasanSpace.l, child: Opacity(opacity: 0.9, child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {}))),
-        ),
-        childWhenDragging: Opacity(opacity: 0.35, child: tile),
-        child: tile,
-      ),
+      child: tile,
     );
   }
 

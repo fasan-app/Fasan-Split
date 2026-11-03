@@ -178,7 +178,7 @@ class BillStore extends ChangeNotifier {
   List<Bill> inGroup(String? g, {bool? done}) => [
         for (final b in bills)
           if (_show(b) && b.group == g && _real(b) && (done == null || b.done == done)) b
-      ]..sort((a, b) => b.updated.compareTo(a.updated));
+      ]..sort((a, b) => a.sortKey.compareTo(b.sortKey));
 
   /// Groups created by hand (they exist without bills) and friends added by hand.
   List<String> get _extraGroups => [...?(_app['groupsExtra'] as List?)?.cast<String>()];
@@ -279,6 +279,26 @@ class BillStore extends ChangeNotifier {
 
   /// Group names in use, alphabetical.
   List<String> get groups => ({for (final b in bills) if (_show(b) && b.group != null && b.group!.isNotEmpty) b.group!}.toList()..sort());
+
+  /// Moves [moved] (in their current order) right before [target] in its list, into the target's group (Nutzer 03.11.:
+  /// pick several bills and sort them by drag and drop). New places lie between the target and the bill above it, so no
+  /// other bill changes.
+  void moveBefore(List<Bill> moved, Bill target) {
+    final ids = {for (final b in moved) b.id};
+    if (ids.contains(target.id)) return;
+    final list = inGroup(target.group, done: target.done).where((b) => !ids.contains(b.id)).toList();
+    final i = list.indexWhere((b) => b.id == target.id);
+    final hi = target.sortKey, lo = i > 0 ? list[i - 1].sortKey : hi - moved.length - 1;
+    final ordered = [...moved]..sort((a, b) => a.sortKey.compareTo(b.sortKey));
+    for (final (k, b) in ordered.indexed) {
+      b.order = lo + (hi - lo) * (k + 1) / (ordered.length + 1);
+      if (b.group != target.group) {
+        b.group = target.group;
+        b.updated = DateTime.now(); // the group changed: shared like setGroup
+      }
+    }
+    _persist();
+  }
 
   /// Puts bills into a group (null or empty = take out of the group).
   void setGroup(Iterable<Bill> list, String? group) {

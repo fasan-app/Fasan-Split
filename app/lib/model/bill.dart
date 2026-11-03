@@ -182,6 +182,7 @@ class Bill {
     this.originalQuad,
     this.originalAspect,
     this.trashedAt,
+    this.order,
     DateTime? updated,
   }) : updated = updated ?? created;
 
@@ -234,6 +235,13 @@ class Bill {
 
   /// When the bill was moved to the trash (Papierkorb); null = not in the trash.
   DateTime? trashedAt;
+
+  /// Place in the list after the user moved it by hand (smaller = higher); null = by last change. Only on this phone,
+  /// not shared with the group (everyone sorts their own list).
+  double? order;
+
+  /// Sort key of the bill lists: hand-made place, else newest change first.
+  double get sortKey => order ?? -updated.millisecondsSinceEpoch.toDouble();
 
   /// The date that matters for the user: printed date, else when it was captured.
   DateTime get date => receiptDate ?? created;
@@ -368,6 +376,7 @@ class Bill {
         'originalQuad': originalQuad,
         'originalAspect': originalAspect,
         'trashedAt': trashedAt?.toIso8601String(),
+        if (order != null) 'order': order,
         'updated': updated.toIso8601String(),
       };
 
@@ -397,6 +406,7 @@ class Bill {
         originalQuad: (j['originalQuad'] as List?)?.map((x) => (x as num).toDouble()).toList(),
         originalAspect: (j['originalAspect'] as num?)?.toDouble(),
         trashedAt: DateTime.tryParse(j['trashedAt'] as String? ?? ''),
+        order: (j['order'] as num?)?.toDouble(),
         updated: DateTime.tryParse(j['updated'] as String? ?? ''),
       );
 }
