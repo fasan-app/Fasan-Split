@@ -242,6 +242,11 @@ class CollabService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void unlinkPerson(CollabGroup g, String pub, String person) {
+    g.session.unlinkPerson(pub, person);
+    notifyListeners();
+  }
+
   void removeMember(CollabGroup g, String pub) {
     g.session.removeMember(pub);
     notifyListeners();

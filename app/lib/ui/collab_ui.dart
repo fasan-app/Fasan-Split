@@ -304,7 +304,7 @@ class _JoinScreenState extends State<JoinScreen> {
 Future<void> pickPersonFor(BuildContext context, CollabGroup g, String pub) async {
   final t = S.of(context), s = CollabScope.read(context);
   final people = StoreScope.read(context).groupMembers(g.localName);
-  final cur = g.session.personOf(pub);
+  final cur = g.session.personsOf(pub);
   final choice = await showModalBottomSheet<String>(
     context: context,
     builder: (ctx) => SafeArea(
@@ -312,17 +312,17 @@ Future<void> pickPersonFor(BuildContext context, CollabGroup g, String pub) asyn
         ListTile(title: Text(t.linkPerson, style: Theme.of(ctx).textTheme.titleMedium)),
         for (final p in people)
           ListTile(
-            leading: Icon(p == cur ? Icons.link_rounded : Icons.person_outline_rounded),
+            leading: Icon(cur.contains(p) ? Icons.link_rounded : Icons.person_outline_rounded),
             title: Text(p),
             subtitle: switch (g.session.memberOfPerson(p)) { final m? when m != pub => Text(t.linkedTo(g.session.nameOf(m))), _ => null },
             onTap: () => Navigator.pop(ctx, p),
           ),
-        if (cur != null) ListTile(leading: const Icon(Icons.link_off_rounded), title: Text(t.unlink), onTap: () => Navigator.pop(ctx, '')),
       ]),
     ),
   );
   if (choice == null) return;
-  s.linkPerson(g, pub, choice.isEmpty ? null : choice);
+  // tap toggles: a linked name is unlinked, another one is added (a member can have several spellings)
+  cur.contains(choice) ? s.unlinkPerson(g, pub, choice) : s.linkPerson(g, pub, choice);
 }
 
 /// Browser only: says what the web app can do and offers the Android app. „In der App öffnen“ uses the old scheme
@@ -509,7 +509,7 @@ class MembersScreen extends StatelessWidget {
               ListTile(
                 leading: CircleAvatar(child: Text(group.session.nameOf(k).characters.first.toUpperCase())),
                 title: Text(k == me ? '${group.session.nameOf(k)} (${t.you})' : group.session.nameOf(k)),
-                subtitle: Text([k == admin ? t.admin : k.substring(0, 12), if (group.session.personOf(k) case final p?) t.linkedTo(p)].join(' · ')),
+                subtitle: Text([k == admin ? t.admin : k.substring(0, 12), if (group.session.personsOf(k) case final ps when ps.isNotEmpty) t.linkedTo(ps.join(', '))].join(' · ')),
                 onTap: group.isAdmin ? () => pickPersonFor(context, group, k) : null,
                 trailing: group.isAdmin && k != admin
                     ? IconButton(

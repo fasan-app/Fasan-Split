@@ -32,6 +32,14 @@ void main() {
     expect(bal, {'Anna': -500, 'Ben': 500});
   });
 
+  test('Saldo je Mitglied: zwei Schreibweisen einer Person zählen zusammen', () {
+    final bills = [paid('a', 1000, ['Anna', 'Ben']), paid('b', 1000, ['Anna', 'Benni'])];
+    expect(balances(bills), {'Anna': 1000, 'Ben': -500, 'Benni': -500});
+    final bal = balances(bills, key: (n) => n == 'Benni' ? 'Ben' : n);
+    expect(bal, {'Anna': 1000, 'Ben': -1000});
+    expect(settle(bal), [('Ben', 'Anna', 1000)]);
+  });
+
   test('Offene Bons und Bons ohne Zahler zählen nicht', () {
     final open = paid('o', 1000, ['Anna', 'Ben'])..done = false;
     final noPayer = paid('n', 1000, ['Anna', 'Ben'])..payer = null;

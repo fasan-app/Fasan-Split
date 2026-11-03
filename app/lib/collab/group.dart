@@ -326,44 +326,65 @@ class GroupSession {
   /// Admin: puts a person into the members document (call before the welcome).
   void addMember(String pub, String name, {String? person}) {
     if (!isAdmin) throw StateError('only the admin changes members');
-    doc(members).set('m/$pub', {'name': name, if (person != null && person.isNotEmpty) 'person': person});
+    doc(members).set('m/$pub', {'name': name, if (person != null && person.isNotEmpty) 'persons': [person]});
     touch(members);
   }
 
-  /// Admin: links a member to a person name of the group's bills, or unlinks ([person] null). One person, one member:
-  /// a name linked elsewhere is taken away there first. The admin itself has no m/ entry and links through l/admin.
+  /// Admin: links a member to a person name of the group's bills (Nutzer 03.11.). A member can have several names (the
+  /// same person written differently in two bills), a name belongs to one member: linking takes it away elsewhere.
+  /// [person] null unlinks all names of [pub]. Stored as `m/<pub>.persons` (older entries: .person); the admin itself has
+  /// no m/ entry and uses l/admin.
   void linkPerson(String pub, String? person) {
     if (!isAdmin) throw StateError('only the admin changes members');
     if (person != null) {
       final other = memberOfPerson(person);
-      if (other != null && other != pub) linkPerson(other, null);
+      if (other == pub) return;
+      if (other != null) unlinkPerson(other, person);
     }
+    _setPersons(pub, person == null ? const [] : [...personsOf(pub), person]);
+  }
+
+  /// Admin: takes one name away from a member.
+  void unlinkPerson(String pub, String person) {
+    if (!isAdmin) throw StateError('only the admin changes members');
+    _setPersons(pub, personsOf(pub).where((p) => p != person).toList());
+  }
+
+  void _setPersons(String pub, List<String> persons) {
     if (pub == secret.adminPub) {
-      doc(members).set('l/admin', person);
+      doc(members).set('l/admin', persons.isEmpty ? null : persons);
     } else {
       final m = doc(members).get('m/$pub');
       final v = m is Map ? Map<String, Object?>.of(m.cast<String, Object?>()) : <String, Object?>{'name': nameOf(pub)};
-      if (person == null) {
-        v.remove('person');
+      v.remove('person');
+      if (persons.isEmpty) {
+        v.remove('persons');
       } else {
-        v['person'] = person;
+        v['persons'] = persons;
       }
       doc(members).set('m/$pub', v);
     }
     touch(members);
   }
 
-  /// Person name a member is linked to, or null.
-  String? personOf(String pub) {
-    if (pub == secret.adminPub) return doc(members).get('l/admin') as String?;
-    final m = doc(members).get('m/$pub');
-    return m is Map && m['person'] is String ? m['person'] as String : null;
+  /// All person names a member is linked to (first = the one shown).
+  List<String> personsOf(String pub) {
+    final Object? v = pub == secret.adminPub ? doc(members).get('l/admin') : doc(members).get('m/$pub');
+    if (v is List) return [for (final x in v) '$x'];
+    if (v is Map) {
+      if (v['persons'] is List) return [for (final x in v['persons'] as List) '$x'];
+      if (v['person'] is String) return [v['person'] as String];
+    }
+    return const [];
   }
+
+  /// First person name of a member, or null.
+  String? personOf(String pub) => personsOf(pub).firstOrNull;
 
   /// Member linked to [person], or null.
   String? memberOfPerson(String person) {
     for (final k in memberKeys) {
-      if (personOf(k) == person) return k;
+      if (personsOf(k).contains(person)) return k;
     }
     return null;
   }

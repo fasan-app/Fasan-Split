@@ -4,15 +4,17 @@
 // (Bill.refund) already point the right way. Only finished bills with a payer count; open bills could still change.
 import 'bill.dart';
 
-/// Net balance per person name over [bills]. Names are the key because bills are separate (indices differ per bill).
-Map<String, int> balances(Iterable<Bill> bills) {
+/// Net balance per person over [bills]. The key is the name (bills are separate, indices differ per bill), or what
+/// [key] makes of it: in a live group every name linked to one member becomes that member (GroupPeople).
+Map<String, int> balances(Iterable<Bill> bills, {String Function(String name)? key}) {
+  final k = key ?? (String n) => n;
   final out = <String, int>{};
   for (final b in bills) {
     if (!b.done || b.payer == null) continue;
     for (final (from, to, c) in b.transfers()) {
       if (from >= b.ps.length || to >= b.ps.length) continue;
-      out.update(b.ps[from].name, (x) => x - c, ifAbsent: () => -c);
-      out.update(b.ps[to].name, (x) => x + c, ifAbsent: () => c);
+      out.update(k(b.ps[from].name), (x) => x - c, ifAbsent: () => -c);
+      out.update(k(b.ps[to].name), (x) => x + c, ifAbsent: () => c);
     }
   }
   return out;

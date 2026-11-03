@@ -57,6 +57,11 @@ void main() {
     a.linkPerson(ga, mia, 'Chris'); // takes „Chris“ away from the admin: one person, one member
     expect(ga.session.memberOfPerson('Chris'), mia);
     expect(ga.session.personOf(ga.secret.adminPub), isNull);
+    // a member can have several spellings; unlinking one keeps the other
+    a.linkPerson(ga, mia, 'Mia');
+    expect(ga.session.personsOf(mia), ['Chris', 'Mia']);
+    a.unlinkPerson(ga, mia, 'Chris');
+    expect(ga.session.personsOf(mia), ['Mia']);
     expect(() => gb.session.linkPerson(mia, 'Mia'), throwsStateError, reason: 'nur die Verwaltung ändert Mitglieder');
     a.dispose();
     b.dispose();

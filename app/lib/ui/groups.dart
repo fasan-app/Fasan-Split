@@ -132,10 +132,14 @@ class GroupPeople extends StatelessWidget {
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     final store = StoreScope.of(context);
     final people = store.groupMembers(name);
-    final bal = store.groupBalance(name);
+    final live = CollabScope.of(context).groupByLocalName(name);
+    // Live group: balance per member, not per spelling (Nutzer 03.11.). Every name linked to a member counts as „@pub“;
+    // the member's first name stands for all of them.
+    String keyOf(String p) => switch (live?.session.memberOfPerson(p)) { final m? => '@$m', _ => p };
+    String label(String k) => k.startsWith('@') ? (live!.session.personOf(k.substring(1)) ?? live.session.nameOf(k.substring(1))) : k;
+    final bal = store.groupBalance(name, key: keyOf);
     final moves = settle(bal);
     final anyDone = store.inGroup(name, done: true).isNotEmpty;
-    final live = CollabScope.of(context).groupByLocalName(name);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       FasanLabel(t.groupPeople),
       const SizedBox(height: FasanSpace.s),
@@ -158,13 +162,18 @@ class GroupPeople extends StatelessWidget {
                     group: live,
                     docId: GroupSession.members,
                     builder: (context) => Text(
-                      switch (live.session.memberOfPerson(p)) { final m? => t.linkedTo(live.session.nameOf(m)), _ => t.notLinked },
+                      switch (live.session.memberOfPerson(p)) {
+                        final m? when label('@$m') != p => '${t.linkedTo(live.session.nameOf(m))} · ${t.countsWith(label('@$m'))}',
+                        final m? => t.linkedTo(live.session.nameOf(m)),
+                        _ => t.notLinked,
+                      },
                       style: tt.bodySmall!.copyWith(color: l.textMuted),
                     ),
                   ),
               ]),
             ),
-            if (bal[p] case final v? when v != 0) Text('${money(v, de: t.de, sign: true)} €', style: tt.titleMedium!.copyWith(color: v > 0 ? l.accent : null)),
+            if (label(keyOf(p)) == p && bal[keyOf(p)] != null && bal[keyOf(p)] != 0)
+              Text('${money(bal[keyOf(p)]!, de: t.de, sign: true)} €', style: tt.titleMedium!.copyWith(color: bal[keyOf(p)]! > 0 ? l.accent : null)),
             if (store.isHandMember(name, p))
               IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: () => store.removeGroupMember(name, p)),
           ]),
@@ -187,7 +196,7 @@ class GroupPeople extends StatelessWidget {
         const SizedBox(height: FasanSpace.s),
         if (moves.isEmpty) Text(t.groupSettled, style: tt.bodyMedium),
         for (final (from, to, c) in moves)
-          Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(t.owes(from, to, '${money(c, de: t.de)} €'), style: tt.bodyMedium)),
+          Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(t.owes(label(from), label(to), '${money(c, de: t.de)} €'), style: tt.bodyMedium)),
         Text(t.groupBalanceHint, style: tt.bodySmall!.copyWith(color: l.textMuted)),
       ],
     ]);
@@ -203,7 +212,7 @@ Future<void> _personActions(BuildContext context, CollabGroup g, String person) 
     showNote(context, t.onlyAdminLinks);
     return;
   }
-  final free = [for (final k in g.session.memberKeys) if (g.session.personOf(k) == null) k];
+  final members = g.session.memberKeys.toList();
   final choice = await showModalBottomSheet<String>(
     context: context,
     builder: (ctx) => SafeArea(
@@ -211,9 +220,13 @@ Future<void> _personActions(BuildContext context, CollabGroup g, String person) 
         ListTile(title: Text(person, style: Theme.of(ctx).textTheme.titleMedium)),
         if (linked == null) ListTile(leading: const Icon(Icons.person_add_alt_1_outlined), title: Text(t.inviteFor(person)), onTap: () => Navigator.pop(ctx, 'invite')),
         if (linked == null)
-          for (final k in free)
-            ListTile(leading: const Icon(Icons.link_rounded), title: Text(g.session.nameOf(k)), subtitle: Text(t.linkMember), onTap: () => Navigator.pop(ctx, 'link:$k')),
-        if (linked == null && free.isEmpty) ListTile(enabled: false, title: Text(t.noFreeMember)),
+          for (final k in members)
+            ListTile(
+              leading: const Icon(Icons.link_rounded),
+              title: Text(g.session.nameOf(k)),
+              subtitle: Text([t.linkMember, ...g.session.personsOf(k)].join(' · ')),
+              onTap: () => Navigator.pop(ctx, 'link:$k'),
+            ),
         if (linked != null) ListTile(leading: const Icon(Icons.link_off_rounded), title: Text(t.unlink), subtitle: Text(t.linkedTo(g.session.nameOf(linked))), onTap: () => Navigator.pop(ctx, 'unlink')),
       ]),
     ),
@@ -222,7 +235,7 @@ Future<void> _personActions(BuildContext context, CollabGroup g, String person) 
   if (choice == 'invite') {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g, person: person)));
   } else if (choice == 'unlink') {
-    s.linkPerson(g, linked!, null);
+    s.unlinkPerson(g, linked!, person);
   } else if (choice.startsWith('link:')) {
     s.linkPerson(g, choice.substring(5), person);
   }

@@ -16,6 +16,6 @@ extension GroupTexts on S {
   String get linkMember => de ? 'Mit Mitglied verknüpfen' : 'Link to a member';
   String get unlink => de ? 'Verknüpfung lösen' : 'Unlink';
   String get linkPerson => de ? 'Person aus den Bons zuordnen' : 'Assign a person from the receipts';
-  String get noFreeMember => de ? 'Alle Mitglieder sind schon verknüpft.' : 'All members are linked already.';
+  String countsWith(String p) => de ? 'zählt bei $p' : 'counts with $p';
   String get onlyAdminLinks => de ? 'Verknüpfen kann die Person, die die Gruppe verwaltet.' : 'The group admin links people.';
 }
