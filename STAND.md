@@ -267,6 +267,31 @@ NICHT geprüft: alles auf dem S23; Wischen zwischen Seiten, Kollision Langdruck/
 Ton (Medienlautstärke), Glas-Probe nach der Änderung. E2E der Erkennung nicht neu gemessen (nichts an der Erkennung geändert; hier fehlt in dieser
 Sitzung nur `LD_LIBRARY_PATH` für ONNX, daher laufen `e2e_test.dart` und `zz_view_test.dart` lokal nicht).
 
+## Sitzung 03.11. nachts (Zusammenarbeit, Oberfläche): Stand nach der Übergabe
+
+Erledigt (Commit d9d6637 auf main und wip-zusammenarbeit; fasan_ui main 2d0a4c3):
+- `ui/collab_ui.dart`: Beitreten (JoinScreen, Link aus Zwischenablage oder Deep-Link), Einwilligung vor dem ersten Relay-Kontakt,
+  Live teilen (neue oder bestehende Gruppe), Einladung mit QR, Link kopieren und teilen, Anfragen annehmen oder ablehnen,
+  Widerruf, Mitglieder (Admin entfernt), Notizen mit Editor (entprellt, fremde Änderungen ohne Fokus), Chat, Konto
+  (Name, Schlüssel, 12 Wörter auf Abruf, Wiederherstellen mit Bestätigung, Relays), Karten „Wartet auf Bestätigung“.
+- `groups.dart` und `home.dart`: + auf der Gruppen-Seite fragt neu live, nur hier oder beitreten. Gruppen-Seite mit Live-Teil oder
+  „Live teilen“. Alter Einladungsentwurf entfernt. Einstellungen: „Konto und Zusammenarbeit“.
+- Tests: `test/collab_ui_test.dart` (Konto, Einladung, Notiz, Chat) mit MemoryRelay, keine öffentlichen Relays.
+- fasan_ui: Schatten immer an (Effekt-Schalter und Akku steuern nur die Neigung). Brechung aus: ImageFilter.shader war auf dem
+  S23 schwarz, Glas bleibt auf Stufe blur (`refractionEnabled = false`).
+- `analyze` ohne Befund (zwei ungenutzte Imports in service_test entfernt).
+
+Offen, mit Stand 03.11. nachts:
+- CI auf main (Lauf 41700032762) war rot: `service_test` „Zwei Telefone“ (Chat-Reihenfolge) und `home_test`
+  „Warteschlange Erste Angaben“ (`ok` statt `reading`). Deshalb ist für 0.1.25 keine neue APK veröffentlicht.
+- Ursache Chat-Reihenfolge: `Notes.messages` sortiert bei gleichem Millisekunden-Zeitstempel nach der zufälligen Nachrichten-ID.
+  Dazu kommt die Uhr des Telefons (Zeitstempel ohne Korrektur). Behebung im Kern (`collab/notes.dart`) steht aus: Nutzer entscheidet.
+- `home_test`: lokal grün, in der CI einmal rot. Timing unter Last [Likely], nicht geprüft.
+- Mitglied entfernen rotiert den Gruppenschlüssel nicht (`collab/group.dart`, Kommentar: nächste Stufe). Ein entferntes Mitglied
+  kann mit dem alten Schlüssel weiter lesen, bis rotiert wird.
+- Glas ohne ImageFilter.shader: Hintergrund per `RepaintBoundary.toImageSync` lesen, Leisten außerhalb der erfassten Fläche. Offen.
+- Web-Build (Gruppen-Link), Scan-Begradigung, Rest der Liste unten. Offen.
+
 ## ÜBERGABE 03.11. abends (Branch `wip-zusammenarbeit`, NICHT auf main, Build dort absichtlich unvollständig)
 
 Rückmeldung S23 (0.1.24, Protokoll 19:11): Klick-Ton geht, erster Druck dünn, später lauter, in der Führung teils doppelt/verzögert, Klang „ganz schlimm“.
