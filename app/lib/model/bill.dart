@@ -234,6 +234,16 @@ class Bill {
   List<Person>? people;
   int? payer;
 
+  /// Several payers (Nutzer 04.11.): person index → cents each one paid. Empty = [payer] paid everything. When set,
+  /// [payer] is the one who paid most (balances and lists that show one name use it).
+  Map<int, int> paid = {};
+
+  /// True when more than one person paid.
+  bool get multiPay => paid.values.where((v) => v > 0).length > 1;
+
+  /// Cents still missing (+) or too much (−) between the amounts of several payers and the receipt.
+  int get paidGap => multiPay ? effectiveTotal - paid.values.fold<int>(0, (a, v) => a + v) : 0;
+
   /// False: [payer] paid and the others owe them. True: [payer] got money back (refund) and holds the others' share.
   /// Amounts are always positive; the direction is only this flag (Nutzer 03.11.: Schulden immer positiv).
   bool refund;
@@ -391,6 +401,7 @@ class Bill {
     } else if (payer != null && payer! > idx) {
       payer = payer! - 1;
     }
+    paid = {for (final e in paid.entries) if (e.key != idx) (e.key > idx ? e.key - 1 : e.key): e.value};
   }
 
   /// Sum of the cents that are assigned to someone (plus the spread difference when anything is assigned).
@@ -415,17 +426,41 @@ class Bill {
     final pp = perPerson();
     final total = pp.values.fold<int>(0, (x, y) => x + y);
     if (pp.values.any((v) => v > 0) && total != expectedShared) issues.add(AuditIssue('sum', 'Σ Personen $total ≠ $expectedShared'));
-    // transfers must net to zero around the payer
+    // transfers must net to zero around the payer (several payers: they must have paid exactly the receipt)
     final p = payer;
-    if (p != null && p < ps.length) {
+    if (multiPay) {
+      if (paidGap != 0) issues.add(AuditIssue('sum', 'Zahler ${effectiveTotal - paidGap} ≠ $effectiveTotal'));
+    } else if (p != null && p < ps.length) {
       final t = transfers().fold<int>(0, (x, e) => x + e.$3);
       if (t != total - (pp[p] ?? 0)) issues.add(AuditIssue('sum', 'Überweisungen $t ≠ ${total - (pp[p] ?? 0)}'));
     }
     return issues;
   }
 
-  /// Transfers to the payer (to the others for a refund): (from, to, cents).
+  /// Transfers to the payer (to the others for a refund): (from, to, cents). Several payers: each person's balance is
+  /// what they paid minus what they had; the biggest debtor pays the biggest creditor, repeated (exact cents, at most
+  /// n−1 transfers, same on every phone).
   List<(int, int, int)> transfers() {
+    if (multiPay) {
+      final pp = perPerson();
+      final net = <int, int>{
+        for (var i = 0; i < ps.length; i++) i: (paid[i] ?? 0) - (pp[i] ?? 0),
+      };
+      if (refund) net.updateAll((_, v) => -v);
+      final cred = [for (final e in net.entries) if (e.value > 0) [e.key, e.value]]..sort((a, b) => b[1] != a[1] ? b[1].compareTo(a[1]) : a[0].compareTo(b[0]));
+      final debt = [for (final e in net.entries) if (e.value < 0) [e.key, -e.value]]..sort((a, b) => b[1] != a[1] ? b[1].compareTo(a[1]) : a[0].compareTo(b[0]));
+      final out = <(int, int, int)>[];
+      var i = 0, j = 0;
+      while (i < cred.length && j < debt.length) {
+        final x = cred[i][1] < debt[j][1] ? cred[i][1] : debt[j][1];
+        if (x > 0) out.add((debt[j][0], cred[i][0], x));
+        cred[i][1] -= x;
+        debt[j][1] -= x;
+        if (cred[i][1] == 0) i++;
+        if (debt[j][1] == 0) j++;
+      }
+      return out;
+    }
     final p = payer;
     if (p == null) return const [];
     final pp = perPerson();
@@ -443,6 +478,7 @@ class Bill {
         'items': its.map((p) => p.toJson()).toList(),
         'people': ps.map((p) => p.toJson()).toList(),
         'payer': payer,
+        if (paid.isNotEmpty) 'paid': {for (final e in paid.entries) '${e.key}': e.value},
         'refund': refund,
         'imagePath': imagePath,
         if (thumb != null) 'thumb': thumb,
@@ -506,7 +542,7 @@ class Bill {
         rate: (j['rate'] as num?)?.toDouble(),
         rateDate: DateTime.tryParse(j['rateDate'] as String? ?? ''),
         updated: DateTime.tryParse(j['updated'] as String? ?? ''),
-      );
+      )..paid = {for (final e in ((j['paid'] as Map?) ?? const {}).entries) int.parse('${e.key}'): (e.value as num).toInt()};
 }
 
 /// "12,50" (German) or "12.50".

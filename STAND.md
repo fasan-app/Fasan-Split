@@ -351,7 +351,7 @@ Bedienung, Saldo, Bons
 8. Saldo-Plakette auch auf Unterseiten, Visualisierung; Filter nach Gruppe/Person/„ich schulde“, Suche.
 9. Avatar und Gruppenbild, Namen ändern, Währung aus dem Bon erkennen ($, £, USD); EZB-Abruf im Browser (CORS) prüfen.
 10. Kontakte löschen: nur aus Vorschlägen, nicht aus Bons mit Kosten/Zahler.
-11. Mehrere Zahler und Anzahlung exakt, Rückgängig/Wiederholen, PDF, Rechenprüfung auch beim Teilen/Export und bei Entwürfen.
+11. Mehrere Zahler ERLEDIGT 04.11.; offen: Rückgängig/Wiederholen, PDF, Rechenprüfung auch beim Teilen/Export und bei Entwürfen.
 12. Erkennung: Betrag im Geschäftsnamen trennen („Uber -12,98 €“), Scan-Begradigung (QR-Bereich, Keil unten links, Papierkante), Lesesicherheit aus Wortkonfidenzen, Korrekturen lernen, `de-discount.png` und SROIE gegen Web.
 
 Gestaltung, Technik, Roadmap
@@ -382,6 +382,7 @@ Nacht 04.11. (Einladung im Browser, Bon-Status, Freunde):
   - Bons im Chat anhängen (Karte öffnet den Bon); Notizen im Bon mit Anpinnen (Hinweis oben in allen Schritten) und @-Erwähnung (`bill_notes_test.dart`).
   - Bon schließen führt zurück, wo er geöffnet wurde (Gruppe, Chat), nicht mehr zur Startseite. Gruppenzeile Mitglieder/Notizen/Chat kompakt. Breite Bildschirme: Spalte 600 px in der Mitte.
   - Offen: System-Benachrichtigungen auf dem Handy (flutter_local_notifications, BSD-3; Android-Erlaubnis erst beim Einschalten; ganz beendete App: erst beim Öffnen – ohne Google-Push), gelesen-Häkchen, schreibt gerade, online/zuletzt online, Antworten/Reaktionen; weitere Bedien-Prüfung aller Abläufe auf „komisches Verhalten“.
+- Mehrere Zahler (Nutzer 04.11., Test `payers_test.dart`, nicht auf dem Gerät): Schritt 4 „Mehrere haben bezahlt“, Beträge je Person (gleiche Teile vorgeschlagen), Eintragen erst, wenn die Summe passt; Überweisungen aus Saldo je Person (größter Schuldner an größten Gläubiger, exakte Cent); `meta/paid` im Gruppenabgleich. Ferreiras 7,90: wurde rechnerisch schon anteilig verteilt, stand aber nur als rote Differenz da; jetzt beim Scannen immer eigene Zeile (5/10/12/15 % der Posten → „Bedienung x %“, sonst „Ohne Postenzeile“), für alte Bons Knopf in Schritt 1.
 - To-do Nutzer 04.11.: GitHub-Konto für fasan@christopherziehm.de anlegen (dann signierte „Verified“-Commits möglich).
 - Wunsch Nutzer 04.11., später: Freunde „online“ / „zuletzt online“ (verschlüsselter Zeitstempel je Gruppe, in Einstellungen abschaltbar; aus = auch keine fremden Zeiten), weitere Messenger-Funktionen (gelesen, schreibt gerade, Profilbild/Status, Erwähnungen, stumm, anpinnen).
 

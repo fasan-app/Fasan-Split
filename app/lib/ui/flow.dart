@@ -18,6 +18,7 @@ import 'assign.dart';
 import 'category_ui.dart';
 import 'currency_ui.dart';
 import 'collab_ui.dart';
+import '../model/scan_bill.dart' show remainderName;
 import 'bill_notes.dart';
 import 'common.dart';
 import 'when_where.dart';
@@ -145,6 +146,22 @@ class _ReviewScreenState extends State<ReviewScreen> {
             const RefundNote(),
           ],
           if (status != null) ...[const SizedBox(height: FasanSpace.xs), status],
+          // the receipt says more than its items (Ferreiras 7,90, Nutzer 04.11.): one tap makes it a line that is shared
+          // like the items (whoever had more pays more of it); it can be renamed or removed like any line
+          if (b.total != null && diff > 0)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.playlist_add_rounded),
+                label: Text(t.de
+                    ? '${money(diff, de: true)} ${billSign(context, b)} als Zeile „${remainderName(diff, b.itemSum)}“ anteilig verteilen'
+                    : 'Add ${money(diff, de: false)} ${billSign(context, b)} as “${remainderName(diff, b.itemSum)}”, shared proportionally'),
+                onPressed: () => setState(() {
+                  b.its.add(BillItem(name: remainderName(diff, b.itemSum), amount: diff, sure: false, note: 'anteilig verteilt', proportional: true));
+                  StoreScope.read(context).upsert(b);
+                }),
+              ),
+            ),
           const SizedBox(height: FasanSpace.l),
           Row(children: [
             FasanLabel('${t.items} · ${b.its.length}'),
@@ -420,6 +437,7 @@ void removePersonFrom(Bill b, int i) {
   } else if (b.payer != null && b.payer! > i) {
     b.payer = b.payer! - 1;
   }
+  b.paid = {for (final e in b.paid.entries) if (e.key != i) (e.key > i ? e.key - 1 : e.key): e.value};
 }
 
 /// Step 1: who was there and who paid, in one row of chips. Tap a person = paid (again = not); x = remove; + and the
@@ -502,6 +520,53 @@ class PayScreen extends StatefulWidget {
 
 class _PayScreenState extends State<PayScreen> {
   Bill get b => widget.bill;
+  late bool _multi = b.multiPay;
+  final Map<int, TextEditingController> _amount = {};
+
+  @override
+  void dispose() {
+    for (final c in _amount.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  TextEditingController _ctl(int i) => _amount.putIfAbsent(i, () => TextEditingController(text: money(b.paid[i] ?? 0, de: S.of(context).de)));
+
+  /// Equal parts of the receipt for everyone who paid (exact cents, the first ones get the leftover cent).
+  void _spreadEqually() {
+    final who = b.paid.keys.toList()..sort();
+    if (who.isEmpty) return;
+    final total = b.effectiveTotal, each = total ~/ who.length;
+    var rest = total - each * who.length;
+    for (final i in who) {
+      b.paid[i] = each + (rest-- > 0 ? 1 : 0);
+      _ctl(i).text = money(b.paid[i]!, de: S.of(context).de);
+    }
+    _syncPayer();
+  }
+
+  /// The one who paid most stands for the bill in lists and balances that show one name.
+  void _syncPayer() {
+    if (b.paid.isEmpty) return;
+    b.payer = (b.paid.entries.toList()..sort((x, y) => y.value.compareTo(x.value))).first.key;
+  }
+
+  void _togglePayer(int i) => setState(() {
+        if (!_multi) {
+          b.paid.clear();
+          b.payer = i;
+          return;
+        }
+        if (b.paid.containsKey(i)) {
+          b.paid.remove(i);
+          _amount.remove(i)?.dispose();
+        } else {
+          b.paid[i] = 0;
+        }
+        _spreadEqually();
+        if (b.paid.isEmpty) b.payer = null;
+      });
 
   // Step 4 is the summary (Nutzer 04.11.: the old „Wer hat bezahlt?“ screen asked again what step 3 already knew and
   // raised question marks). Who paid stays changeable in one small row; the result is the main thing; „Eintragen“ puts
@@ -514,7 +579,7 @@ class _PayScreenState extends State<PayScreen> {
       step: 4,
       bill: b,
       action: t.de ? 'Eintragen' : 'Save',
-      onAction: b.payer == null
+      onAction: b.payer == null || b.paidGap != 0
           ? null
           : () {
               // The numbers are checked twice (Beschluss 03.11.): a mismatch stops here, nothing is saved as finished.
@@ -536,8 +601,58 @@ class _PayScreenState extends State<PayScreen> {
           const SizedBox(height: FasanSpace.xs),
           Wrap(spacing: 6, runSpacing: 6, children: [
             for (var i = 0; i < b.ps.length; i++)
-              FasanPersonChip(name: b.ps[i].name, index: b.ps[i].color, selected: b.payer == i, onTap: () => setState(() => b.payer = i)),
+              FasanPersonChip(name: b.ps[i].name, index: b.ps[i].color, selected: _multi ? b.paid.containsKey(i) : b.payer == i, onTap: () => _togglePayer(i)),
           ]),
+          // several payers with their own amounts (Nutzer 04.11.)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              icon: Icon(_multi ? Icons.person_rounded : Icons.group_rounded, size: 18),
+              label: Text(_multi ? (t.de ? 'Nur eine Person hat bezahlt' : 'Only one person paid') : (t.de ? 'Mehrere haben bezahlt' : 'Several people paid')),
+              onPressed: () => setState(() {
+                _multi = !_multi;
+                if (_multi) {
+                  if (b.payer != null) b.paid = {b.payer!: 0};
+                  _spreadEqually();
+                } else {
+                  b.paid.clear();
+                }
+              }),
+            ),
+          ),
+          if (_multi && b.paid.isNotEmpty) ...[
+            for (final i in (b.paid.keys.toList()..sort()))
+              Padding(
+                padding: const EdgeInsets.only(bottom: FasanSpace.xs),
+                child: Row(children: [
+                  FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 28),
+                  const SizedBox(width: FasanSpace.s),
+                  Expanded(child: Text(b.ps[i].name, style: Theme.of(context).textTheme.bodyLarge)),
+                  SizedBox(
+                    width: 120,
+                    child: TextField(
+                      controller: _ctl(i),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      textAlign: TextAlign.end,
+                      decoration: InputDecoration(suffixText: billSign(context, b), isDense: true),
+                      onChanged: (v) => setState(() {
+                        b.paid[i] = parseMoney(v) ?? 0;
+                        _syncPayer();
+                      }),
+                    ),
+                  ),
+                ]),
+              ),
+            if (b.paidGap != 0)
+              Text(
+                b.paidGap > 0
+                    ? (t.de ? 'Noch ${money(b.paidGap, de: true)} ${billSign(context, b)} offen bis zur Bon-Summe' : '${money(b.paidGap, de: false)} ${billSign(context, b)} still missing')
+                    : (t.de ? '${money(-b.paidGap, de: true)} ${billSign(context, b)} mehr als die Bon-Summe' : '${money(-b.paidGap, de: false)} ${billSign(context, b)} more than the total'),
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.red.shade600),
+              )
+            else
+              Text(t.de ? 'Passt: zusammen genau die Bon-Summe.' : 'Fits: together exactly the total.', style: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.green.shade600)),
+          ],
           if (b.advance > 0) ...[
             const SizedBox(height: FasanSpace.m),
             Text('${t.advance}: ${money(b.advance, de: t.de)} ${billSign(context, b)}', style: tt.bodyMedium),

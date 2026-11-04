@@ -83,7 +83,10 @@ class BillTile extends StatelessWidget {
         date,
         bill.settled ? (t.de ? 'ausgeglichen' : 'settled') : bill.done ? (t.de ? 'eingetragen' : 'entered') : t.stepOf(bill.step),
         if (bill.done) '${bill.ps.length} ${t.de ? 'Pers.' : 'ppl'}',
-        if (payer != null) t.de ? '$payer zahlte' : '$payer paid',
+        if (bill.multiPay)
+          t.de ? '${bill.paid.keys.where((i) => i < bill.ps.length).map((i) => bill.ps[i].name).join(' + ')} zahlten' : '${bill.paid.keys.where((i) => i < bill.ps.length).map((i) => bill.ps[i].name).join(' + ')} paid'
+        else if (payer != null)
+          t.de ? '$payer zahlte' : '$payer paid',
         ?city,
       ].join(' · ');
     }

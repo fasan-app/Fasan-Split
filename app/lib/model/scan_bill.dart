@@ -47,10 +47,20 @@ Future<Bill> billFromScan(ScanResultData r, Uint8List photo,
     final euros = '${diff ~/ 100}', cents = (diff % 100).toString().padLeft(2, '0');
     final amount = RegExp('(^|\\s)$euros[.,]$cents(\\s|\$)');
     final zeroRow = r.lines.map((l) => l.$1).any((t) => RegExp(r'^\s*0[.,]00\b').hasMatch(t) && amount.hasMatch(t));
-    // shared like the other items (whoever had more pays more of it), not evenly
-    if (zeroRow) b.its.add(BillItem(name: 'Ohne Postenzeile (0 % MwSt.)', amount: diff, sure: false, note: 'aus der Steuertabelle · anteilig', proportional: true));
+    // Nutzer 04.11.: the 7,90 must be visible and shared like the items. Any amount the receipt has more than its items
+    // becomes its own line; a usual service share (5, 10, 12, 15 % of the items) is named so.
+    b.its.add(BillItem(name: remainderName(diff, sum, zeroRow: zeroRow), amount: diff, sure: false, note: 'anteilig verteilt', proportional: true));
   }
   return b;
+}
+
+/// Name of the line for what a receipt has more than its items: „Bedienung 10 %“ when it is a usual service share,
+/// else where it came from.
+String remainderName(int diff, int itemSum, {bool zeroRow = false}) {
+  for (final p in const [5, 10, 12, 15]) {
+    if (itemSum > 0 && (itemSum * p / 100 - diff).abs() <= 1) return 'Bedienung $p %';
+  }
+  return zeroRow ? 'Ohne Postenzeile (0 % MwSt.)' : 'Ohne Postenzeile';
 }
 
 String titleCase(String s) => s

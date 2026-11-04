@@ -19,6 +19,8 @@ abstract final class BillSync {
     set('meta/purpose', b.purpose);
     set('meta/total', b.total);
     set('meta/payer', b.payer != null && b.payer! < b.ps.length ? b.ps[b.payer!].uid : null);
+    // several payers: person uid → cents (Nutzer 04.11.)
+    set('meta/paid', b.paid.isEmpty ? null : {for (final e in b.paid.entries) if (e.key < b.ps.length) b.ps[e.key].uid: e.value});
     set('meta/done', b.done);
     set('meta/settled', b.settled ? true : null);
     set('meta/trashed', b.trashedAt?.millisecondsSinceEpoch);
@@ -124,6 +126,8 @@ abstract final class BillSync {
     b.total = (doc.get('meta/total') as num?)?.toInt();
     final payer = doc.get('meta/payer');
     b.payer = payer is String ? index[payer] : null;
+    final paid = doc.get('meta/paid');
+    b.paid = paid is Map ? {for (final e in paid.entries) if (index['${e.key}'] != null) index['${e.key}']!: (e.value as num).toInt()} : {};
     b.done = doc.get('meta/done') == true;
     b.settled = doc.get('meta/settled') == true;
     if (doc.get('meta/thumb') case final String th) b.thumb = th;
