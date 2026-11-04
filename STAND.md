@@ -333,6 +333,12 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
+Abend 04.11. (Tests, nicht auf dem Gerät):
+- Gruppe nach Neuinstallation weg – Ursachen: (1) Gruppen lagen nur auf dem Gerät, 12 Wörter brachten sie nicht zurück; (2) eine Sicherung mit Konto wurde still verworfen, wenn auf dem neuen Gerät schon ein frisches Konto angelegt war (z. B. „Konto“ geöffnet), und wirkte erst nach Neustart.
+- Behoben: Konto-Abgleich (Kern `service.dart`): Gruppenliste als verschlüsseltes Ereignis an mich selbst (NIP-44, d `fs:account:v1`) auf den Relays, nach jeder Änderung veröffentlicht; „Konto aus 12 Wörtern“ holt die Gruppen zurück und meldet die Anzahl; laufende Geräte mit denselben Wörtern bekommen neue Gruppen live. Sicherung mit Konto ersetzt ein leeres Konto und wirkt sofort. Test `account_sync_test.dart` (Neuinstallation, zweites Gerät, Sicherung) grün. Entscheidung in Fasan/ENTSCHEIDUNGEN.md.
+- Offen dazu: Gerät per QR koppeln (12 Wörter nicht abtippen), Verlassen einer Gruppe auf allen Geräten, Hinweis beim ersten Start „Schon ein Konto? 12 Wörter eingeben“.
+- Kacheln dichter: weniger Innenabstand, kleineres Vorschaubild/Avatare, Zeile mit Datum · Schritt/Personen · wer zahlte · Ort.
+
 Nachmittag 04.11. (Tests, nicht auf dem Gerät):
 - „Bon neu lesen“: Symbol in Schritt 1, Menü im Ergebnis; neueste Erkennung, Personen/Zahler/Gruppe/Kategorie/Währung/Name bleiben, Zuordnung der Posten wird neu (`ScanQueue.reread`).
 - Posten „anteilig“ (`BillItem.proportional`): Zeile ohne Posten (0 % MwSt.) wird nach den übrigen Posten verteilt (Nutzer: wer weniger hatte, zahlt weniger), exakte Cents, im Abgleich (`prop`), Test `proportional_test.dart`.

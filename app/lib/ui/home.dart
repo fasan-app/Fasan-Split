@@ -587,7 +587,7 @@ class _HomeScreenState extends State<HomeScreen> {
               if (groupName != null) Text('${list.length} · ${money(list.fold(0, (a, b) => a + b.toHome(b.effectiveTotal)), de: t.de)} ${signOf(context)}', style: Theme.of(context).textTheme.bodySmall),
             ]),
           ),
-          for (final b in list) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: _row(context, store, mode, b)),
+          for (final b in list) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.xs + 2), child: _row(context, store, mode, b)),
         ]),
       ),
     );

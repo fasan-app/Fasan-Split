@@ -938,9 +938,10 @@ class _AccountScreenState extends State<AccountScreen> {
     if (text.isEmpty) return;
     if (!await confirmDialog(context, t.accountRestore, t.accountRestoreText, t.accountRestore)) return;
     try {
-      await s.restoreIdentity(text, name: _name.text.trim());
+      if (!mounted || !await ensureConsent(context, s)) return; // the group list comes from the relays
+      final n = await s.restoreIdentity(text, name: _name.text.trim());
       _words.clear();
-      messenger.showSnackBar(SnackBar(content: Text(t.accountRestoreOk)));
+      messenger.showSnackBar(SnackBar(content: Text('${t.accountRestoreOk} ${t.de ? (n == 0 ? 'Keine Gruppen gefunden.' : '$n Gruppen sind zurück.') : (n == 0 ? 'No groups found.' : '$n groups are back.')}')));
     } catch (_) {
       messenger.showSnackBar(SnackBar(content: Text(t.accountRestoreBad)));
     }

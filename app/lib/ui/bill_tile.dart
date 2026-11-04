@@ -74,7 +74,16 @@ class BillTile extends StatelessWidget {
     } else if (failed) {
       sub = t.readFailedShort;
     } else {
-      sub = bill.done ? '${bill.refund ? '${t.refundBadge} · ' : ''}$date · ${bill.ps.length} ${t.de ? 'Personen' : 'people'}' : '$date · ${t.stepOf(bill.step)}';
+      // dense line (Nutzer 04.11.: more at one glance): date, step or people, who paid, place
+      final payer = bill.payer != null && bill.payer! < bill.ps.length ? bill.ps[bill.payer!].name : null;
+      final city = bill.placeAddress?.split(RegExp(r'[,\n]')).map((x) => x.trim()).where((x) => x.isNotEmpty).lastOrNull;
+      sub = [
+        if (bill.refund) t.refundBadge,
+        date,
+        bill.done ? '${bill.ps.length} ${t.de ? 'Pers.' : 'ppl'}' : t.stepOf(bill.step),
+        if (payer != null) t.de ? '$payer zahlte' : '$payer paid',
+        ?city,
+      ].join(' · ');
     }
     if (subtitle != null) sub = subtitle!;
     // reading: date as soon as the first pass knows it, then the state
@@ -87,8 +96,8 @@ class BillTile extends StatelessWidget {
           onTap: selecting ? onToggle : open,
           onLongPress: selecting ? null : onLongPress,
           child: Container(
-            constraints: BoxConstraints(minHeight: l.minTap + 16),
-            padding: const EdgeInsets.all(FasanSpace.m),
+            constraints: BoxConstraints(minHeight: l.minTap + 8),
+            padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(r),
               border: Border.all(color: selected ? l.accent : l.hairline, width: selected ? 2 : 1),
@@ -104,10 +113,10 @@ class BillTile extends StatelessWidget {
               else if (imageExists(bill.imagePath))
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
-                  child: Image(image: ResizeImage(imageProvider(bill.imagePath!), width: 120), width: 40, height: 52, fit: BoxFit.cover, gaplessPlayback: true),
+                  child: Image(image: ResizeImage(imageProvider(bill.imagePath!), width: 120), width: 34, height: 44, fit: BoxFit.cover, gaplessPlayback: true),
                 )
               else
-                SizedBox(width: 40, height: 52, child: Icon(failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted)),
+                SizedBox(width: 34, height: 44, child: Icon(failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted)),
               const SizedBox(width: FasanSpace.m),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -123,7 +132,7 @@ class BillTile extends StatelessWidget {
               if (failed && !selecting)
                 TextButton(onPressed: onRetry, child: Text(t.readAgain))
               else if (!waiting && !failed || bill.total != null && !failed) ...[
-                FasanAvatarStack(people: [for (final p in bill.ps) (p.name, p.color)], size: 24, max: 3),
+                FasanAvatarStack(people: [for (final p in bill.ps) (p.name, p.color)], size: 20, max: 3),
                 const SizedBox(width: FasanSpace.s),
                 Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
                   CurrencyScope(code: bill.currency ?? StoreScope.read(context).homeCurrency, child: Money(bill.effectiveTotal)),

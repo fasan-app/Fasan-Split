@@ -96,7 +96,9 @@ class CollabService extends ChangeNotifier {
   /// Puts account and groups from a backup back, only if this device has no account and no groups yet (never mixes two
   /// accounts). Takes effect after a restart of the app. Returns whether something was restored.
   Future<bool> importSecrets(Map<String, Object?> m) async {
-    if (groups.isNotEmpty || await vault.read(Identity.vaultKeys.first) != null && identity?.pub != _pubOf(m)) return false;
+    // never mix two accounts that have groups; a fresh account without groups (e.g. made by opening „Konto“ before the
+    // restore, 04.11.: the group was gone after reinstall + restore) is replaced
+    if (groups.isNotEmpty) return false;
     final v = (m['vault'] as Map? ?? const {}).cast<String, String>();
     if (v.isEmpty) return false;
     for (final e in v.entries) {
@@ -107,13 +109,14 @@ class CollabService extends ChangeNotifier {
       if (v is String) await prefs?.setString(e.key, v);
       if (v is List) await prefs?.setStringList(e.key, [for (final x in v) '$x']);
     }
+    // at once, no restart: load the account and its groups again
+    identity = null;
+    await ensureIdentity();
+    await init();
     return true;
   }
 
-  static String? _pubOf(Map<String, Object?> m) {
-    final priv = (m['vault'] as Map?)?[Identity.vaultKeys.first] as String?;
-    return priv == null ? null : KeyPair.fromPrivate(priv).pub;
-  }
+
 
   /// Loads identity and groups and starts the sessions (connects only if there is a group).
   Future<void> init() async {
@@ -127,6 +130,13 @@ class CollabService extends ChangeNotifier {
       } catch (_) {
         // damaged group list: start without, never crash
       }
+    }
+    // other devices with the same 12 words: their new groups arrive while the app runs (only with groups = after consent)
+    if (groups.isNotEmpty && _accountWatch == null) {
+      final me = await ensureIdentity();
+      _accountWatch = _relayFactory(_accountRelays)
+          .subscribe(Filter(kinds: const [kindData], authors: [me.pub], tags: {'t': ['fs:account']}))
+          .listen((e) => unawaited(_mergeAccountEvent(e)));
     }
     try {
       for (final j in jsonDecode(prefs?.getString(_kJoins) ?? '[]') as List) {
@@ -150,10 +160,98 @@ class CollabService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> restoreIdentity(String words, {String? name}) async {
+  /// Restores the account from the 12 words and fetches its groups from the relays (account list, [syncAccount]).
+  /// Returns how many groups came back. Groups of another key on this phone stay as they are.
+  Future<int> restoreIdentity(String words, {String? name}) async {
     identity = await Identity.restore(vault, words, name: name ?? identity?.name ?? '');
-    // the groups on this phone belong to the old key: a restored key re-joins nothing by itself, the admin can invite again
     notifyListeners();
+    return recoverGroups();
+  }
+
+  // ---- account across devices (Nutzer 04.11.: reinstall, several devices; no server and no login beyond the 12 words) ----
+  //
+  // The list of my groups (group key, local name) is published as one addressable event (kind 30078, d „fs:account:v1“),
+  // encrypted with NIP-44 to my own key: only the holder of the 12 words can read it. Every device with the same words
+  // publishes and reads it; lists are merged (union), so a group joined on one device appears on the other.
+
+  static const _accountD = 'fs:account:v1';
+  StreamSubscription<NostrEvent>? _accountWatch;
+
+  /// One account event from another device: groups missing here are joined.
+  Future<void> _mergeAccountEvent(NostrEvent e) async {
+    final me = identity;
+    if (me == null || !e.valid || e.pubkey != me.pub || e.tag('d') != _accountD) return;
+    try {
+      final j = jsonDecode(nip44Decrypt(e.content, nip44ConversationKey(me.key.priv, me.pub))) as Map<String, dynamic>;
+      var added = 0;
+      for (final g in (j['groups'] as List? ?? const [])) {
+        final m = (g as Map).cast<String, dynamic>();
+        final s = GroupSecret.fromJson((m['secret'] as Map).cast<String, dynamic>());
+        if (groups.containsKey(s.tag)) continue;
+        final want = m['local'] as String? ?? s.name;
+        final local = groupByLocalName(want) == null ? want : uniqueLocalName(s.name);
+        store.addGroup(local);
+        await _activate(s, local);
+        added++;
+      }
+      if (added > 0) {
+        await vault.write(_kGroups, jsonEncode([for (final g in groups.values) {'secret': g.secret.toJson(), 'local': g.localName}]));
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  List<String> get _accountRelays => {...defaultRelays, for (final g in groups.values) ...g.secret.relays}.toList();
+
+  /// Publishes the group list of this account (after create, join, key change, leave).
+  Future<void> syncAccount() async {
+    final me = identity;
+    if (me == null || groups.isEmpty) return;
+    final body = jsonEncode({
+      'v': 1,
+      'groups': [for (final g in groups.values) {'secret': g.secret.toJson(), 'local': g.localName}],
+    });
+    final ev = NostrEvent.create(me.key, kind: kindData, tags: [['d', _accountD], ['t', 'fs:account']], content: nip44Encrypt(body, nip44ConversationKey(me.key.priv, me.pub)));
+    try {
+      await _relayFactory(_accountRelays).publish(ev);
+    } catch (_) {
+      // offline: next change publishes again
+    }
+  }
+
+  /// Reads the account list from the relays and joins every group that is not on this device yet. Waits up to
+  /// [wait] for the relays. Returns the number of groups added.
+  Future<int> recoverGroups({Duration wait = const Duration(seconds: 6)}) async {
+    final me = await ensureIdentity();
+    final relay = _relayFactory(defaultRelays);
+    final seen = <String, Map<String, dynamic>>{};
+    final sub = relay.subscribe(Filter(kinds: const [kindData], authors: [me.pub], tags: {'t': ['fs:account']})).listen((e) {
+      if (!e.valid || e.pubkey != me.pub || e.tag('d') != _accountD) return;
+      try {
+        final j = jsonDecode(nip44Decrypt(e.content, nip44ConversationKey(me.key.priv, me.pub))) as Map<String, dynamic>;
+        for (final g in (j['groups'] as List? ?? const [])) {
+          final m = (g as Map).cast<String, dynamic>();
+          final s = GroupSecret.fromJson((m['secret'] as Map).cast<String, dynamic>());
+          seen[s.tag] = m;
+        }
+      } catch (_) {}
+    });
+    await Future<void>.delayed(wait);
+    await sub.cancel();
+    var added = 0;
+    for (final m in seen.values) {
+      final s = GroupSecret.fromJson((m['secret'] as Map).cast<String, dynamic>());
+      if (groups.containsKey(s.tag)) continue;
+      final local = groupByLocalName(m['local'] as String? ?? s.name) == null ? (m['local'] as String? ?? s.name) : uniqueLocalName(s.name);
+      store.addGroup(local);
+      await _activate(s, local);
+      added++;
+    }
+    if (added > 0) {
+      await _persistGroups();
+      notifyListeners();
+    }
+    return added;
   }
 
   String uniqueLocalName(String wanted) {
@@ -501,7 +599,10 @@ class CollabService extends ChangeNotifier {
 
   // ---- persistence ----
 
-  Future<void> _persistGroups() => vault.write(_kGroups, jsonEncode([for (final g in groups.values) {'secret': g.secret.toJson(), 'local': g.localName}]));
+  Future<void> _persistGroups() async {
+    await vault.write(_kGroups, jsonEncode([for (final g in groups.values) {'secret': g.secret.toJson(), 'local': g.localName}]));
+    unawaited(syncAccount()); // the same list, encrypted to myself, for other devices and reinstalls
+  }
 
   void _saveJoins() => prefs?.setString(_kJoins, jsonEncode([for (final p in joins) {'code': p.invite.encode(), 'name': p.name, 'since': p.since.toIso8601String()}]));
 
@@ -537,6 +638,7 @@ class CollabService extends ChangeNotifier {
     for (final s in _subs.values) {
       s.cancel();
     }
+    _accountWatch?.cancel();
     for (final g in groups.values) {
       g.rekeySub?.cancel();
       g.session.close();
