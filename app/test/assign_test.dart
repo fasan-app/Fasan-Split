@@ -23,6 +23,9 @@ void main() {
     const tilt = MethodChannel('app.fasan.ui/tilt');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(tilt, (_) async => null);
     addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(tilt, null));
+    // these tests use the focus mode, which is off by default since 04.11.
+    s.assignExtraModes = true;
+    AssignScreen.lastMode = AssignMode.focus;
     await t.pumpWidget(SplitApp(store: s, ui: FasanController(settings: const FasanSettings(reduceMotion: true)), home: AssignScreen(bill: b)));
     await t.pump(const Duration(milliseconds: 300));
   }

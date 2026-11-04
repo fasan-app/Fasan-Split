@@ -333,6 +333,8 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
+Gesamt-Roadmap aller Fasan-Repos: `docs/ROADMAP.md` (gelesen 04.11.). Hinweis: `fasan-app/fasan-app.github.io` ist privat – Pages aus privaten Repos braucht einen bezahlten Plan, sonst findet Android assetlinks.json nicht (Nutzer prüfen). Ausgleich ist noch gierig, Karte-Beschluss verlangt exakt wenigste Überweisungen.
+
 Rückmeldung 04.11. vormittags (S23, 0.1.46) – ERLEDIGT 04.11. (Tests/E2E, nicht auf dem Gerät):
 - Kategorie wird sofort angezeigt und gespeichert (Chip hört auf den Speicher); vorhandene Bons bekommen die Kategorie einmal nachgetragen (`migrateCategories`).
 - Wischfläche so groß wie die Karte (Ablagelinie als foregroundDecoration statt 3 px Rand); weniger Platz über „Angefangen“; letzte Karte rollt ganz über Plus-Knopf und Leiste (Abstand 200); Plus-Knopf schlicht: Akzent, Kartenradius, Kartenschatten, kein Leuchten.

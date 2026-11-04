@@ -23,7 +23,9 @@ void main() {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.75;
     addTearDown(tester.view.reset);
-    final store = BillStore.memory();
+    // this test walks through all four assign modes: focus and cards are switched on (off by default since 04.11.)
+    final store = BillStore.memory()..assignExtraModes = true;
+    AssignScreen.lastMode = AssignMode.focus;
     final b = demoBill();
     // Korn und Bildstandwackeln laufen bei voller Akku-Stufe dauerhaft (FasanFilm-Ticker, 24 Hz), dann wird
     // pumpAndSettle nie fertig. Dieser Test prüft die Bedienung, darum mit „Animationen entfernen“.
