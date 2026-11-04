@@ -11,8 +11,10 @@
 <title>Fasan Split – Einladung</title>
 <script>
   var c = location.hash.slice(1);
-  try { if (c) sessionStorage.setItem('fasan-join', c); } catch (e) {}
-  location.replace('../');
+  var ok = true;
+  try { if (c) sessionStorage.setItem('fasan-join', c); } catch (e) { ok = false; }
+  // storage blocked (private window, in-app browser): hand the code over in the address; the app removes it at once
+  location.replace(ok || !c ? '../' : '../#fasan-join=' + c);
 </script>
 </head>
 <body>

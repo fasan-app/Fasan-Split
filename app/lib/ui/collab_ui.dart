@@ -191,6 +191,39 @@ class _GroupChangeBuilderState extends State<GroupChangeBuilder> {
 /// Pending join requests of this phone, shown on the groups page until the admin answers.
 /// An invitation that was opened but not used yet (the join screen was closed or covered): one big card on the start
 /// page until the request is out (Nutzer 04.11.: people have little patience, it must be impossible to miss).
+/// Browser without storage (private window, blocked site data): everything lives in memory until the tab closes.
+class StorageWarningCard extends StatelessWidget {
+  const StorageWarningCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (browserStorageWorks) return const SizedBox.shrink();
+    final t = S.of(context), tt = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: FasanSpace.s),
+      child: Material(
+        color: Colors.orange.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(FasanLook.of(context).radius * 0.7),
+        child: Padding(
+          padding: const EdgeInsets.all(FasanSpace.m),
+          child: Row(children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            const SizedBox(width: FasanSpace.m),
+            Expanded(
+              child: Text(
+                t.de
+                    ? 'Dein Browser speichert hier nichts (privates Fenster oder gesperrte Website-Daten). Mitmachen geht, aber nach dem Schließen ist alles weg. Öffne den Link besser in Chrome oder in der App.'
+                    : 'Your browser stores nothing here (private window or blocked site data). You can take part, but everything is gone when you close it. Better open the link in Chrome or in the app.',
+                style: tt.bodySmall,
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 class OpenInviteCard extends StatelessWidget {
   const OpenInviteCard({super.key});
 
@@ -339,6 +372,7 @@ class _JoinScreenState extends State<JoinScreen> {
     });
     if (err == null) {
       _tag = Invite.parse(text)?.tag;
+      scheduleMicrotask(_onService); // open link: the group is already there
       clearJoinCode(); // the request is out: the code may leave the tab now
       pendingInviteLink = null;
     }
@@ -464,10 +498,12 @@ class _InviteScreenState extends State<InviteScreen> {
 
   void _create() => setState(() => _current = _inv!.create(person: widget.person));
 
-  void _revoke() {
-    _inv?.revokeAll();
+  Future<void> _revoke() async {
+    final msg = ScaffoldMessenger.of(context), text = S.of(context).inviteRevoked, nav = Navigator.of(context);
     setState(() => _current = null);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.of(context).inviteRevoked)));
+    await CollabScope.read(context).revokeInvites(widget.group); // new group key: this screen's group is the old one
+    msg.showSnackBar(SnackBar(content: Text(text)));
+    if (mounted) nav.maybePop();
   }
 
   @override

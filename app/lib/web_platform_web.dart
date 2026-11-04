@@ -15,11 +15,50 @@ const _build = String.fromEnvironment('FASAN_BUILD');
 /// coi-serviceworker reloads the page once, and a code removed before that reload was lost – the invited person landed
 /// in an empty app (Nutzer 04.11., Angi).
 String? takeJoinCode() {
-  final c = web.window.sessionStorage.getItem(_key);
-  return c == null || c.isEmpty ? null : c;
+  if (_urlCode != null) return _urlCode;
+  try {
+    final c = web.window.sessionStorage.getItem(_key);
+    return c == null || c.isEmpty ? null : c;
+  } catch (_) {
+    return null; // storage blocked: the code came in the address (prepareWebStart)
+  }
 }
 
-void clearJoinCode() => web.window.sessionStorage.removeItem(_key);
+void clearJoinCode() {
+  _urlCode = null;
+  try {
+    web.window.sessionStorage.removeItem(_key);
+  } catch (_) {}
+}
+
+String? _urlCode;
+bool _storageOk = true;
+
+/// False when the browser refuses localStorage/sessionStorage (private window, blocked site data, some in-app
+/// browsers): the app then keeps everything in memory and says so (04.11., stress test „nostorage“).
+bool get browserStorageWorks => _storageOk;
+
+/// First thing in main(): checks storage and takes an invitation code that join/index.html had to put into the address
+/// (storage blocked), then removes it from the address bar and the history entry.
+void prepareWebStart() {
+  // write and read back: a bare property access may be dropped by the compiler (dart2js did, 04.11.)
+  try {
+    for (final st in [web.window.localStorage, web.window.sessionStorage]) {
+      st.setItem('fasan-probe', '1');
+      if (st.getItem('fasan-probe') != '1') _storageOk = false;
+      st.removeItem('fasan-probe');
+    }
+  } catch (_) {
+    _storageOk = false;
+  }
+  final h = web.window.location.hash;
+  if (h.startsWith('#fasan-join=')) {
+    _urlCode = h.substring('#fasan-join='.length);
+    try {
+      web.window.history.replaceState(null, '', web.window.location.pathname);
+    } catch (_) {}
+  }
+}
 
 Future<bool> webUpdateAvailable() async {
   if (_build.isEmpty) return false; // local build without the define

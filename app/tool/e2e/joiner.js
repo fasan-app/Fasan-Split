@@ -17,7 +17,7 @@ const mode = process.env.MODE || 'normal';
   const ctx = await b.newContext({ locale: 'de-DE', viewport: { width: 412, height: 900 }, serviceWorkers: mode === 'nosw' ? 'block' : 'allow' });
   await ctx.addInitScript((m) => {
     localStorage.setItem('flutter.split.settings', JSON.stringify(JSON.stringify({ me: 'Angi' })));
-    if (m === 'nostorage') Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } });
+    if (m === 'nostorage') for (const k of ['localStorage', 'sessionStorage']) Object.defineProperty(window, k, { get() { throw new DOMException('blocked', 'SecurityError'); } });
   }, mode);
   const p = await ctx.newPage();
   const errs = [];
@@ -38,6 +38,7 @@ const mode = process.env.MODE || 'normal';
   for (let i = 0; i < 60 && !inGroup; i++) { await p.waitForTimeout(1000); inGroup = (await p.getByText('Pizza Napoli').count()) > 0; }
   await shot('2-group');
   console.log(`${inGroup ? 'OK' : 'FAIL'} mode=${mode} in der Gruppe mit Bon: ${inGroup} · Fehler: ${errs.join(' | ') || 'keine'}`);
+  if (inGroup) fs.appendFileSync(dir + '/joined.txt', mode + '\n');
   await b.close();
   process.exit(inGroup && errs.length === 0 ? 0 : 1);
 })();

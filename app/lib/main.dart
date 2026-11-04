@@ -21,11 +21,18 @@ import 'ui/home.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  prepareWebStart();
+  if (!browserStorageWorks) {
+    // Browser refuses storage: keep everything in memory so the app still starts (an invitation still works); the
+    // home screen says that nothing stays. The in-memory store is meant for tests, here it is the honest fallback.
+    // ignore: invalid_use_of_visible_for_testing_member
+    SharedPreferences.setMockInitialValues({});
+  }
   final store = await BillStore.load();
   final ui = FasanController(settings: FasanSettings.decode(store.settingsJson), onChanged: (s) => store.saveSettings(s.encode()));
   ui.start();
   // Collaboration: keys in the Android Keystore; the service only connects to relays if there is a group (Beschluss 03.11.).
-  final collab = CollabService(store: store, vault: const SecureVault(), prefs: await SharedPreferences.getInstance());
+  final collab = CollabService(store: store, vault: browserStorageWorks ? const SecureVault() : MemoryVault(), prefs: await SharedPreferences.getInstance());
   runApp(SplitApp(store: store, ui: ui, collab: collab, deepLinks: true));
   unawaited(collab.init());
 }

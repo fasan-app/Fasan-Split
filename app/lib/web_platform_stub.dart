@@ -14,3 +14,7 @@ void reloadPage() {}
 Future<bool> askPersistentStorage() async => false;
 
 bool needsHomeScreenHint() => false;
+
+/// Native: storage always works, nothing to prepare (see web_platform_web.dart).
+bool get browserStorageWorks => true;
+void prepareWebStart() {}

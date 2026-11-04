@@ -1,6 +1,8 @@
 // Fasan Split – admin side of the browser end-to-end test (runs only with FASAN_E2E_RELAY=ws://127.0.0.1:<port>, a
-// local relay; never public relays). Creates a group with a bill, writes an invitation link to FASAN_E2E_DIR/link.txt,
-// waits until the web app (Playwright) joined, checks the member, writes the result. MPL-2.0
+// local relay; never public relays). Creates a group with a bill, writes an invitation link to FASAN_E2E_DIR/link.txt
+// and goes OFFLINE (the hard case, Nutzer 04.11.: people join while the inviting phone is off). The web app joins
+// (tool/e2e/joiner.js, one line per joiner in joined.txt). Then the admin starts again and must see every joiner as a
+// member, adopted, and linked to „Angi“. FASAN_E2E_JOINERS = how many browser runs to wait for (default 1). MPL-2.0
 import 'dart:io';
 
 import 'package:fasan_split/collab/keys.dart';
@@ -14,10 +16,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   final relayUrl = Platform.environment['FASAN_E2E_RELAY'];
   final dir = Platform.environment['FASAN_E2E_DIR'] ?? '/tmp';
-  test('Web-Einladung Ende zu Ende (Admin-Seite)', () async {
+  final joiners = int.tryParse(Platform.environment['FASAN_E2E_JOINERS'] ?? '') ?? 1;
+  test('Web-Einladung Ende zu Ende (Admin-Seite, Admin offline)', () async {
     SharedPreferences.setMockInitialValues({});
     final store = BillStore.memory()..me = 'Chris';
-    final a = CollabService(store: store, vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => RelayPool([WsRelay(relayUrl!)]));
+    final vault = MemoryVault();
+    final prefs = await SharedPreferences.getInstance();
+    CollabService start() => CollabService(store: store, vault: vault, prefs: prefs, relayFactory: (_) => RelayPool([WsRelay(relayUrl!)]));
+    var a = start();
     await a.init();
     await a.setName('Chris');
     final g = await a.createGroup('Lissabon', relays: [relayUrl!]);
@@ -26,29 +32,37 @@ void main() {
     ])
       ..payer = 0
       ..group = 'Lissabon');
+    final link = g.invitations!.create(person: 'Angi').link;
+    await Future<void>.delayed(const Duration(seconds: 1));
     await g.session.flush();
-    File('$dir/link.txt').writeAsStringSync(g.invitations!.create(person: 'Angi').link);
-    final until = DateTime.now().add(const Duration(minutes: 4));
-    while (DateTime.now().isBefore(until) && g.session.memberKeys.length < 3) {
-      // founder + m/founder + Angi: memberKeys holds founder once; Angi makes it 2
-      if (g.session.memberKeys.length >= 2) break;
+    a.saveDocs();
+    a.dispose(); // offline from here
+    File('$dir/link.txt').writeAsStringSync(link);
+
+    final flag = File('$dir/joined.txt');
+    final until = DateTime.now().add(Duration(minutes: 3 * joiners + 2));
+    while (DateTime.now().isBefore(until) && (!flag.existsSync() || flag.readAsLinesSync().where((x) => x.isNotEmpty).length < joiners)) {
+      await Future<void>.delayed(const Duration(seconds: 1));
+    }
+    final reported = flag.existsSync() ? flag.readAsLinesSync().where((x) => x.isNotEmpty).length : 0;
+
+    // the admin's phone starts again: reads the requests, adopts the self-joined members
+    a = start();
+    await a.init();
+    final g2 = a.groups.values.single;
+    final want = joiners + 1;
+    final until2 = DateTime.now().add(const Duration(seconds: 60));
+    while (DateTime.now().isBefore(until2) && (g2.session.memberKeys.length < want || g2.session.memberKeys.any(g2.session.isSelfJoined))) {
       await Future<void>.delayed(const Duration(milliseconds: 500));
     }
-    final joined = g.session.memberKeys.length >= 2;
-    final angi = g.session.memberOfPerson('Angi');
-    // wait for an edit from the web app (Angi takes the whole pizza) – optional
-    var edited = false;
-    final until2 = DateTime.now().add(const Duration(seconds: 90));
-    while (DateTime.now().isBefore(until2)) {
-      final b = store.bills.firstWhere((x) => x.id == 'r1');
-      if (b.its.single.shares.length == 1) {
-        edited = true;
-        break;
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 500));
-    }
-    File('$dir/admin.txt').writeAsStringSync('joined=$joined linked=${angi != null} edited=$edited');
-    expect(joined, isTrue);
+    final members = g2.session.memberKeys.length - 1;
+    final adopted = !g2.session.memberKeys.any(g2.session.isSelfJoined);
+    final linked = g2.session.memberOfPerson('Angi') != null;
+    File('$dir/admin.txt').writeAsStringSync('reported=$reported members=$members adopted=$adopted linked=$linked');
+    expect(reported, joiners, reason: 'jeder Browser-Lauf meldet „in der Gruppe“');
+    expect(members, joiners);
+    expect(adopted, isTrue);
+    expect(linked, isTrue);
     a.dispose();
-  }, skip: relayUrl == null ? 'nur mit lokalem Relay (FASAN_E2E_RELAY)' : false, timeout: const Timeout(Duration(minutes: 8)));
+  }, skip: relayUrl == null ? 'nur mit lokalem Relay (FASAN_E2E_RELAY)' : false, timeout: const Timeout(Duration(minutes: 20)));
 }

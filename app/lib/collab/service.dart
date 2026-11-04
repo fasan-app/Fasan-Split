@@ -351,6 +351,7 @@ class CollabService extends ChangeNotifier {
     final me = await ensureIdentity();
     if (myName.trim().isNotEmpty && me.name != myName.trim()) await setName(myName);
     final p = PendingJoin(inv, me.name.isEmpty ? myName : me.name, DateTime.now());
+    if (inv.groupKey != null) return _joinOpen(inv, p.name, me);
     joins.add(p);
     _saveJoins();
     final relay = _relayFactory(inv.relays);
@@ -363,6 +364,22 @@ class CollabService extends ChangeNotifier {
     _waitForWelcome(p, flow: flow);
     notifyListeners();
     return ok ? null : 'send';
+  }
+
+  /// Open link (group.dart step 4b): in at once with the key from the link, no admin needed. The join request still
+  /// goes out, so an admin adopts the member when its phone runs.
+  Future<String?> _joinOpen(Invite inv, String name, Identity me) async {
+    final secret = GroupSecret(key: inv.groupKey!, adminPub: inv.adminPub, name: inv.name, relays: inv.relays);
+    if (secret.tag != inv.tag) return 'invalid'; // damaged link
+    final local = uniqueLocalName(secret.name);
+    store.addGroup(local);
+    final g = await _activate(secret, local);
+    g.session.joinWithTicket(inv, name);
+    await g.session.flush();
+    await _persistGroups();
+    unawaited(JoinFlow(invite: inv, me: me.key, relay: _relayFactory(inv.relays), name: name).sendRequest());
+    notifyListeners();
+    return null;
   }
 
   void _waitForWelcome(PendingJoin p, {JoinFlow? flow}) {
@@ -396,10 +413,33 @@ class CollabService extends ChangeNotifier {
   Future<void> approve(CollabGroup g, JoinRequest r) async {
     final inv = g.invitations;
     if (inv == null) return;
-    if (!g.session.memberKeys.contains(r.pub)) g.session.addMember(r.pub, r.name.isEmpty ? r.pub.substring(0, 8) : r.name, person: r.person);
+    // not yet a member, or in through an open link only: the admin writes the entry itself (then it stays when the
+    // link is withdrawn)
+    if (!g.session.memberKeys.contains(r.pub) || g.session.isSelfJoined(r.pub)) {
+      g.session.addMember(r.pub, r.name.isEmpty ? r.pub.substring(0, 8) : r.name, person: r.person ?? g.session.personOf(r.pub));
+    }
     await g.session.flush(); // members first, then the key
     await inv.welcome(r.pub);
     notifyListeners();
+  }
+
+  /// Admin: withdraws all invitation links of this phone. Open links carry the group key, so the group gets a new one
+  /// (rotateKey): old links lead nowhere. Members who came in through a link and were not adopted yet are adopted first.
+  Future<CollabGroup> revokeInvites(CollabGroup g) async {
+    final inv = g.invitations;
+    final s = g.session;
+    for (final pub in s.memberKeys.where(s.isSelfJoined).toList()) {
+      s.addMember(pub, s.nameOf(pub), person: s.personOf(pub));
+    }
+    final hadOpen = inv?.open.any((i) => i.groupKey != null) ?? false;
+    for (final i in inv?.open ?? const <Invite>[]) {
+      if (i.groupKey != null) s.setTicket(i, open: false);
+    }
+    inv?.revokeAll();
+    await s.flush();
+    final ng = hadOpen ? await rotateKey(g) : g;
+    notifyListeners();
+    return ng;
   }
 
   void decline(CollabGroup g, JoinRequest r) {
@@ -488,7 +528,19 @@ class CollabService extends ChangeNotifier {
     final inv = Invitations(secret: g.secret, me: me.key, relay: g.session.relay);
     g.invitations = inv;
     final key = 'fasan.invites.${g.secret.tag}';
-    inv.onIssued = (l) => unawaited(vault.write(key, jsonEncode([for (final i in l) i.encode()])));
+    inv.onIssued = (l) {
+      unawaited(vault.write(key, jsonEncode([for (final i in l) i.encode()])));
+      // open links: the ticket goes into the members document at once (group.dart step 4b)
+      if (!g.session.isAdmin) return;
+      var added = false;
+      for (final i in l) {
+        if (i.groupKey != null && g.session.doc(GroupSession.members).get('i/${i.ticketId}') == null) {
+          g.session.setTicket(i);
+          added = true;
+        }
+      }
+      if (added) unawaited(g.session.flush());
+    };
     inv.changes.stream.listen((_) {
       _autoApprove(g);
       notifyListeners();

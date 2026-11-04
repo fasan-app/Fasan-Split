@@ -63,8 +63,60 @@ jobs:
         with:
           path: app/build/web
 
+  # Einladung im Browser Ende zu Ende (Nutzer 04.11.: „muss unter allen Bedingungen funktionieren“): lokales Relay und
+  # lokaler Server im Runner, nichts geht an fremde Dienste. Admin geht offline, drei Browser treten bei (normal, ohne
+  # Service Worker wie In-App-Browser, ohne Speicher wie privates Fenster). Ohne grünes Ergebnis keine Veröffentlichung.
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Modelle holen (Prüfsummen)
+        working-directory: app
+        run: bash tool/fetch_models.sh
+
+      - name: Web für den Test bauen (Relay ws://127.0.0.1:7777)
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter create --org app.fasan --project-name fasan_split --platforms web .
+          sed -i 's#<script src="flutter_bootstrap.js" async></script>#<script src="coi-serviceworker.js"></script>\n  <script src="flutter_bootstrap.js" async></script>#' web/index.html
+          cp web_template/flutter_bootstrap.js web/flutter_bootstrap.js
+          flutter build web --release --base-href /Fasan-Split/ --no-web-resources-cdn --dart-define=FASAN_RELAYS=ws://127.0.0.1:7777
+          cp -r web_extra/. build/web/
+          mkdir -p "$RUNNER_TEMP/srv" && cp -r build/web "$RUNNER_TEMP/srv/Fasan-Split"
+
+      - name: Relay, Server, Browser
+        run: |
+          pip install websockets==13.1
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw" && npm init -y >/dev/null && npm install playwright@1.48.2 --silent
+          npx playwright install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+          nohup python3 "$GITHUB_WORKSPACE/app/tool/e2e/relay.py" 7777 > "$RUNNER_TEMP/relay.log" 2>&1 &
+          cd "$RUNNER_TEMP/srv" && nohup python3 -m http.server 8765 > "$RUNNER_TEMP/http.log" 2>&1 &
+
+      - name: Einladung Ende zu Ende
+        working-directory: app
+        env:
+          E2E_DIR: ${{ runner.temp }}/e2e
+        run: bash tool/e2e/run.sh
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-bilder
+          path: ${{ runner.temp }}/e2e
+          retention-days: 7
+
   deploy:
-    needs: build
+    needs: [build, e2e]
     runs-on: ubuntu-24.04
     environment:
       name: github-pages

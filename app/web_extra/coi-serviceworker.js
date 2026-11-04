@@ -96,6 +96,7 @@ if (typeof window === 'undefined') {
         if (n.serviceWorker) {
             n.serviceWorker.register(window.document.currentScript.src).then(
                 (registration) => {
+                    if (!registration) return; // Fasan: some in-app browsers block service workers and resolve with nothing
                     !coi.quiet && console.log("COOP/COEP Service Worker registered", registration.scope);
 
                     registration.addEventListener("updatefound", () => {

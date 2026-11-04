@@ -6,6 +6,12 @@
 // 3. Joiner publishes a join request, sealed with a key from IV (ChaCha20-Poly1305). Only the admin (who made IV) can read it.
 // 4. Admin sees the request and approves: writes the person into the members document and sends a welcome (K, NIP-44 from the
 //    admin key to the joiner key). Before approval a person with the link cannot read the group.
+// 4b. Open link (Invite.groupKey, default since 04.11.: „people have little patience“): the link also carries K, and the
+//    admin wrote a ticket `i/<id>` into the members document. The joiner adds itself as `m/<own pub>` with that ticket
+//    id and is in at once, even when no admin is online (like a messenger group link: whoever has the link gets in).
+//    Every phone checks: a self entry counts only from its own author's event, names a ticket an admin wrote and that is
+//    not withdrawn, and never carries „admin“. The admin adopts the member on the next start (join request, step 4).
+//    Withdrawing links = deleting the tickets and a new K (CollabService.revokeInvites).
 // 5. Everyone publishes their copy of each document as an encrypted snapshot (ChaCha20-Poly1305 with K, bound to the d tag);
 //    everyone merges what the others publish (LwwDoc). Missed updates arrive with the next snapshot, no extra sync step.
 // Members trust each other: anyone who holds K can write. The member list is changed by admins only: the founder (adminPub
@@ -47,7 +53,7 @@ class GroupSecret {
 
 /// The invitation a new member opens. Carries no group key.
 class Invite {
-  Invite({required this.tag, required this.secret, required this.adminPub, required this.relays, required this.expires, required this.name, this.person, this.auto = false});
+  Invite({required this.tag, required this.secret, required this.adminPub, required this.relays, required this.expires, required this.name, this.person, this.auto = false, this.groupKey});
 
   final String tag, adminPub, name;
 
@@ -58,6 +64,12 @@ class Invite {
   /// Let in without asking (Nutzer 04.11.: people have little patience): the inviting phone approves at once.
   final bool auto;
   final Uint8List secret; // 32 bytes, one-time
+
+  /// Open link: the group key itself (step 4b above); null = the admin's phone has to let the person in.
+  final Uint8List? groupKey;
+
+  /// Id of the ticket in the members document (`i/<id>`); does not reveal [secret].
+  String get ticketId => toHex(sha256([...utf8.encode('fasan-split/ticket/v1'), ...secret]).sublist(0, 16));
   final List<String> relays;
   final DateTime expires;
 
@@ -76,6 +88,7 @@ class Invite {
         'n': name,
         if (person != null) 'p': person,
         if (auto) 'o': 1,
+        if (groupKey != null) 'k': toHex(groupKey!),
       }))).replaceAll('=', '');
 
   /// Link for sharing. The part after „#“ is never sent to a server: GitHub Pages only sees /Fasan-Split/join/.
@@ -102,6 +115,7 @@ class Invite {
         name: j['n'] as String? ?? '',
         person: j['p'] as String?,
         auto: j['o'] == 1,
+        groupKey: j['k'] is String ? fromHex(j['k'] as String) : null,
       );
     } catch (_) {
       return null;
@@ -145,7 +159,8 @@ class Invitations {
   /// A new invitation valid for [valid]; [auto] lets the person in without asking.
   Invite create({Duration valid = const Duration(days: 7), String? person, bool auto = true}) {
     final inv = Invite(
-        tag: secret.tag, secret: randomBytes(32), adminPub: me.pub, relays: secret.relays, expires: DateTime.now().add(valid), name: secret.name, person: person, auto: auto);
+        tag: secret.tag, secret: randomBytes(32), adminPub: me.pub, relays: secret.relays, expires: DateTime.now().add(valid), name: secret.name, person: person, auto: auto,
+        groupKey: auto ? secret.key : null);
     _issued[toHex(inv.secret)] = inv;
     onIssued?.call(open);
     return inv;
@@ -302,11 +317,8 @@ class GroupSession {
     if (d == null || !d.startsWith(prefix)) return;
     final id = d.substring(prefix.length);
     final isMembersDoc = id == members;
-    // only members write (the members document itself only from an admin)
-    if (isMembersDoc && !admins.contains(e.pubkey)) {
-      rejected++;
-      return;
-    }
+    // only members write; the members document from an admin, or a self entry with a ticket (open link, step 4b)
+    final fromAdmin = admins.contains(e.pubkey);
     if (!isMembersDoc && !memberKeys.contains(e.pubkey)) {
       // maybe the members document has not arrived yet: keep the event and look again when it has
       if (_waiting.length < 300) _waiting.add(e);
@@ -318,9 +330,22 @@ class GroupSession {
       // the members document: only entries written by admins count (an admin's snapshot also carries the other admins'
       // entries); m/<pub> = member, l/admin = the founder's own person link (linkPerson)
       final adm = admins;
-      final accepted = id == members
-          ? entries.where((x) => (x.key.startsWith('m/') || x.key == 'l/admin') && adm.contains(x.author))
-          : (acceptEntry == null ? entries : entries.where((x) => x.author == me.pub || acceptEntry!(id, x)));
+      final Iterable<Entry> accepted;
+      if (!isMembersDoc) {
+        accepted = acceptEntry == null ? entries : entries.where((x) => x.author == me.pub || acceptEntry!(id, x));
+      } else if (fromAdmin) {
+        accepted = entries.where((x) => (x.key.startsWith('m/') || x.key == 'l/admin' || x.key.startsWith('i/')) && adm.contains(x.author));
+      } else {
+        final self = entries.where((x) => x.key == 'm/${e.pubkey}' && x.author == e.pubkey).toList();
+        if (self.isEmpty) return; // nothing a non-admin may write here
+        if (!self.every(_validSelfEntry)) {
+          // the ticket may not have arrived yet: look again when the admin's members document has
+          if (_waiting.length < 300 && !_waiting.contains(e)) _waiting.add(e);
+          rejected++;
+          return;
+        }
+        accepted = self;
+      }
       if (doc(id).merge(accepted) > 0) _changes.add(id);
       if (isMembersDoc && _waiting.isNotEmpty) {
         final again = _waiting.toList();
@@ -333,6 +358,35 @@ class GroupSession {
     } catch (_) {
       rejected++;
     }
+  }
+
+  /// A member who added itself with an open link: names a ticket an admin wrote (and did not withdraw), no admin flag,
+  /// at most the person name the ticket was made for.
+  bool _validSelfEntry(Entry x) {
+    final v = x.value;
+    if (v == null) return true; // leaving: one may always take oneself out
+    if (v is! Map || v['i'] is! String || v.containsKey('admin')) return false;
+    final t = doc(members).get('i/${v['i']}');
+    if (t is! Map) return false;
+    final persons = v['persons'];
+    if (persons == null) return true;
+    return persons is List && persons.length == 1 && persons.single == t['p'];
+  }
+
+  /// In through an open link and not yet adopted by an admin.
+  bool isSelfJoined(String pub) => switch (doc(members).get('m/$pub')) { final Map m => m['i'] is String, _ => false };
+
+  /// Admin: writes the ticket of an open link (step 4b) or withdraws it ([open] false).
+  void setTicket(Invite inv, {bool open = true}) {
+    if (!isAdmin) throw StateError('only the admin changes members');
+    doc(members).set('i/${inv.ticketId}', open ? {'x': inv.expires.millisecondsSinceEpoch ~/ 1000, if (inv.person != null) 'p': inv.person} : null);
+    touch(members);
+  }
+
+  /// Joiner with an open link: adds itself to the members document (checked by everyone, see _validSelfEntry).
+  void joinWithTicket(Invite inv, String name) {
+    doc(members).set('m/${me.pub}', {'name': name, 'i': inv.ticketId, if (inv.person != null && inv.person!.isNotEmpty) 'persons': [inv.person]});
+    touch(members);
   }
 
   /// Marks a document as changed locally; the snapshot goes out after a short pause (many edits, one message).

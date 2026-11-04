@@ -39,7 +39,10 @@ void main() {
     await b.init();
     expect(await b.join(link, 'Angi'), isNull);
     await settle(300);
-    expect(b.groups, isEmpty, reason: 'noch niemand hat freigegeben');
+    // open link (04.11.): in at once, although Chris's phone is off
+    expect(b.groups.length, 1, reason: 'offener Link: sofort drin');
+    expect(storeB.bills.map((x) => x.id), contains('r1'));
+    expect(b.groups.values.single.session.isSelfJoined(b.identity!.pub), isTrue);
 
     // Chris opens the app again: the stored invitation reads the request and lets Angi in, without tapping
     a = CollabService(store: storeA, vault: vaultA, prefs: prefs, relayFactory: (_) => MemoryRelay(hub));
@@ -49,6 +52,7 @@ void main() {
     expect(storeB.bills.map((x) => x.id), contains('r1'), reason: 'und sieht die Bons');
     final ga2 = a.groups.values.single;
     expect(ga2.session.memberOfPerson('Angi'), b.identity!.pub);
+    expect(ga2.session.isSelfJoined(b.identity!.pub), isFalse, reason: 'vom Admin übernommen');
 
     // Angi edits, Chris sees it
     final billB = storeB.bills.firstWhere((x) => x.id == 'r1');
