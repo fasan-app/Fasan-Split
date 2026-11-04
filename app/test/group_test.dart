@@ -35,10 +35,16 @@ void main() {
     expect(restored.pub, a.pub, reason: 'gleiche Wörter, gleicher Schlüssel');
   });
 
-  test('Einladung: Kodierung, Ablauf, kein Gruppenschlüssel darin', () {
+  test('Einladung: Kodierung, Ablauf; Gruppenschlüssel nur im offenen Link', () {
     final secret = GroupSecret(key: randomBytes(32), adminPub: KeyPair.generate().pub, name: 'Lissabon', relays: ['wss://example.invalid']);
     final hub = MemoryRelayHub();
-    final inv = Invitations(secret: secret, me: KeyPair.generate(), relay: MemoryRelay(hub)).create();
+    final invs = Invitations(secret: secret, me: KeyPair.generate(), relay: MemoryRelay(hub));
+    // open link (default, 04.11.): carries the key, in the fragment only
+    final open = invs.create();
+    expect(Invite.parse(open.link)!.groupKey, secret.key);
+    expect(open.link.split('#').first.contains(toHex(secret.key)), isFalse);
+    // manual approval: no key in the link
+    final inv = invs.create(auto: false);
     final parsed = Invite.parse(inv.link)!;
     expect(parsed.tag, secret.tag);
     expect(parsed.name, 'Lissabon');
