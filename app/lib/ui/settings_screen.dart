@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
 import '../main.dart';
+import '../collab/activity.dart';
 import 'backup_ui.dart';
 import 'currency_ui.dart';
 import 'collab_ui.dart';
@@ -128,6 +129,20 @@ class SettingsScreen extends StatelessWidget {
         ...currencyTiles(context),
         head(t.de ? 'Sichern' : 'Backup'),
         ...backupTiles(context),
+        // one place for notifications (Nutzer 04.11.: no contradicting settings hidden in sub menus)
+        head(t.de ? 'Benachrichtigungen' : 'Notifications'),
+        for (final (k, de, en) in [
+          (ActivityKind.message, 'Nachrichten', 'Messages'),
+          (ActivityKind.mention, 'Erwähnungen in Notizen', 'Mentions in notes'),
+          (ActivityKind.joined, 'Jemand tritt bei (Einladung angenommen)', 'Someone joins (invitation accepted)'),
+          (ActivityKind.billNew, 'Neue und geänderte Bons', 'New and changed receipts'),
+        ])
+          SwitchListTile(
+            secondary: const Icon(Icons.notifications_outlined),
+            title: Text(t.de ? de : en),
+            value: CollabScope.of(context).notifies(k),
+            onChanged: (v) => CollabScope.read(context).setNotifies(k, v),
+          ),
         head(t.setLook),
         ListTile(
           leading: const Icon(Icons.palette_outlined),

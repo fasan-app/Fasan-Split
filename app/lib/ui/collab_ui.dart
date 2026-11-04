@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zxing2/qrcode.dart';
 
+import '../collab/activity.dart';
 import '../collab/group.dart';
 import '../collab/notes.dart';
 import '../collab/service.dart';
@@ -21,7 +22,9 @@ import '../web_platform.dart';
 import '../l10n_groups.dart';
 import '../main.dart';
 import '../state/scan_queue.dart';
+import 'bill_tile.dart';
 import 'common.dart' show TitleHelp;
+import '../model/bill.dart' show money;
 import 'groups.dart';
 import 'pairing_ui.dart';
 
@@ -410,7 +413,7 @@ class _JoinScreenState extends State<JoinScreen> {
 /// added by hand (BillStore.groupMembers).
 Future<void> pickPersonFor(BuildContext context, CollabGroup g, String pub) async {
   final t = S.of(context), s = CollabScope.read(context);
-  final people = StoreScope.read(context).groupMembers(g.localName);
+  final people = CollabScope.read(context).peopleOf(g.localName);
   final cur = g.session.personsOf(pub);
   final choice = await showModalBottomSheet<String>(
     context: context,
@@ -485,6 +488,7 @@ class InviteScreen extends StatefulWidget {
 class _InviteScreenState extends State<InviteScreen> {
   Invite? _current;
   StreamSubscription<void>? _sub;
+  int _days = 7; // how long the link works (Nutzer 04.11.: „sagen wie lange die gelten“)
 
   Invitations? get _inv => widget.group.invitations;
 
@@ -494,8 +498,15 @@ class _InviteScreenState extends State<InviteScreen> {
     _sub = _inv?.changes.stream.listen((_) {
       if (mounted) setState(() {});
     });
-    // friend link: there is nothing to choose, the link is ready at once
-    if (widget.group.secret.direct && _inv != null) _current = _inv!.create();
+    // the link is there at once: nothing to press before sharing (Nutzer 04.11.: inviting was too complicated). A link
+    // for the same person that still works for a day is used again instead of piling up new ones.
+    final inv = _inv;
+    if (inv != null) {
+      final reuse = inv.open.where((i) => i.person == widget.person && i.expires.isAfter(DateTime.now().add(const Duration(days: 1)))).toList()
+        ..sort((a, b) => b.expires.compareTo(a.expires));
+      _current = reuse.firstOrNull ?? inv.create(valid: Duration(days: _days), person: widget.person);
+      if (reuse.isNotEmpty) _days = [1, 7, 30].firstWhere((d) => reuse.first.expires.isBefore(DateTime.now().add(Duration(days: d, hours: 1))), orElse: () => 30);
+    }
   }
 
   @override
@@ -504,7 +515,10 @@ class _InviteScreenState extends State<InviteScreen> {
     super.dispose();
   }
 
-  void _create() => setState(() => _current = _inv!.create(person: widget.person));
+  void _setDays(int d) => setState(() {
+        _days = d;
+        _current = _inv!.create(valid: Duration(days: d), person: widget.person);
+      });
 
   Future<void> _revoke() async {
     final msg = ScaffoldMessenger.of(context), text = S.of(context).inviteRevoked, nav = Navigator.of(context);
@@ -517,69 +531,111 @@ class _InviteScreenState extends State<InviteScreen> {
   @override
   Widget build(BuildContext context) {
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme, s = CollabScope.read(context);
+    final de = t.de;
     final g = widget.group, inv = _inv, link = _current?.link;
     final requests = inv?.pending.values.toList() ?? const <JoinRequest>[];
+    final me = s.identity?.name.trim().isNotEmpty == true ? s.identity!.name.trim() : StoreScope.read(context).me;
+    final shareText = g.secret.direct
+        ? (de ? '$me lädt dich zu Fasan Split ein. Tippe auf den Link, dann seid ihr verbunden: $link' : '$me invites you to Fasan Split. Tap the link to connect: $link')
+        : (de ? '$me lädt dich in „${g.localName}“ ein (Fasan Split, Rechnungen teilen). Tippe auf den Link, dann bist du gleich dabei: $link' : '$me invites you to “${g.localName}” (Fasan Split, sharing bills). Tap the link and you are in: $link');
     return Scaffold(
-      appBar: AppBar(title: Text(g.secret.direct ? (t.de ? 'Freund einladen' : 'Invite a friend') : widget.person == null ? t.invite : t.inviteFor(widget.person!))),
+      appBar: AppBar(title: Text(g.secret.direct ? (de ? 'Freund einladen' : 'Invite a friend') : (de ? 'In „${g.localName}“ einladen' : 'Invite to “${g.localName}”'))),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Text(
             g.secret.direct
-                ? (t.de
-                    ? 'Schick diesen Link. Wer ihn öffnet, ist mit dir verbunden und kann mit dir schreiben – in der App oder im Browser, ohne Konto. Gruppen und Bons sieht niemand dadurch.'
-                    : 'Send this link. Whoever opens it is connected with you and can write to you – in the app or the browser, without an account. Nobody sees your groups or receipts through it.')
-                : t.inviteLive(g.localName),
+                ? (de ? 'Wer den Link öffnet, ist mit dir verbunden und kann dir schreiben – in der App oder im Browser, ohne Anmeldung.' : 'Whoever opens the link is connected with you and can write to you – in the app or the browser, no sign-up.')
+                : (de
+                    ? 'Wer den Link öffnet, ist sofort in der Gruppe – in der App oder im Browser, ohne Anmeldung. Er sieht die Bons, macht mit und ist dein Freund.'
+                    : 'Whoever opens the link is in the group at once – in the app or the browser, no sign-up. They see the receipts, take part and are your friend.'),
             style: tt.bodyMedium),
         const SizedBox(height: FasanSpace.l),
-        if (link == null) FilledButton.icon(icon: const Icon(Icons.add_link_rounded), label: Text(t.inviteCreate), onPressed: inv == null ? null : _create),
+        Text(de ? 'Gültig' : 'Valid for', style: tt.labelLarge!.copyWith(color: l.textMuted)),
+        const SizedBox(height: FasanSpace.xs),
+        FasanSegmented<int>(
+          values: const [1, 7, 30],
+          selected: _days,
+          label: (d) => de ? (d == 1 ? '1 Tag' : '$d Tage') : (d == 1 ? '1 day' : '$d days'),
+          onChanged: inv == null ? (_) {} : _setDays,
+        ),
+        const SizedBox(height: FasanSpace.l),
         if (link != null) ...[
+          FasanButton(label: de ? 'Link teilen' : 'Share link', icon: Icons.ios_share_rounded, expand: true, onPressed: () => SharePlus.instance.share(ShareParams(text: shareText))),
+          const SizedBox(height: FasanSpace.s),
+          FasanButton(
+            label: t.inviteCopy,
+            icon: Icons.copy_rounded,
+            kind: FasanButtonKind.secondary,
+            expand: true,
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: link));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.inviteCopied)));
+            },
+          ),
+          const SizedBox(height: FasanSpace.l),
           Center(
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(l.radius * 0.7), border: Border.all(color: l.hairline)),
-              child: SizedBox.square(dimension: 220, child: CustomPaint(painter: _QrPainter(Encoder.encode(link, ErrorCorrectionLevel.m)))),
+              child: SizedBox.square(dimension: 180, child: CustomPaint(painter: _QrPainter(Encoder.encode(link, ErrorCorrectionLevel.m)))),
             ),
           ),
-          const SizedBox(height: FasanSpace.m),
-          SelectableText(link, style: tt.bodySmall),
-          const SizedBox(height: FasanSpace.m),
-          Row(children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.copy_rounded),
-                label: Text(t.inviteCopy),
+          const SizedBox(height: FasanSpace.xs),
+          Center(child: Text(de ? 'Oder mit der Kamera scannen lassen' : 'Or let them scan it with the camera', style: tt.bodySmall)),
+        ] else if (inv == null)
+          Text(de ? 'Nur die Verwaltung der Gruppe kann einladen.' : 'Only the group admins can invite.', style: tt.bodyMedium),
+        // requests only appear for groups that let people in by hand
+        if (requests.isNotEmpty) ...[
+          const SizedBox(height: FasanSpace.l),
+          Text(t.requests, style: tt.titleMedium),
+          for (final r in requests)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(r.name.isEmpty ? r.pub.substring(0, 8) : r.name),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                TextButton(onPressed: () => s.decline(g, r), child: Text(t.decline)),
+                FilledButton(
+                  onPressed: () async {
+                    await s.approve(g, r);
+                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.approved(r.name.isEmpty ? r.pub.substring(0, 8) : r.name))));
+                  },
+                  child: Text(t.approve),
+                ),
+              ]),
+            ),
+        ],
+        // every open link, with whom it is for and until when, each one can be withdrawn (Nutzer 04.11.)
+        if (inv != null && inv.open.isNotEmpty) ...[
+          const SizedBox(height: FasanSpace.xl),
+          Text(de ? 'Offene Einladungen' : 'Open invitations', style: tt.titleMedium),
+          for (final i in (inv.open..sort((a, b) => b.expires.compareTo(a.expires))))
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(i == _current ? Icons.link_rounded : Icons.link_outlined, color: i == _current ? l.accent : l.textMuted),
+              title: Text(i.person != null ? (de ? 'Für ${i.person}' : 'For ${i.person}') : (de ? 'Für alle mit dem Link' : 'For anyone with the link')),
+              subtitle: Text('${de ? 'gültig bis' : 'valid until'} ${i.expires.day}.${i.expires.month}. ${i.expires.hour.toString().padLeft(2, '0')}:${i.expires.minute.toString().padLeft(2, '0')}${i == _current ? (de ? ' · oben gezeigt' : ' · shown above') : ''}'),
+              trailing: IconButton(
+                tooltip: de ? 'Zurückziehen' : 'Withdraw',
+                icon: Icon(Icons.close_rounded, color: Colors.red.shade600),
                 onPressed: () {
-                  Clipboard.setData(ClipboardData(text: link));
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.inviteCopied)));
+                  s.revokeInvite(g, i);
+                  setState(() {
+                    if (i == _current) _current = null;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(de ? 'Link zurückgezogen. Wer schon drin ist, bleibt.' : 'Link withdrawn. Whoever is in stays.')));
                 },
               ),
             ),
-            const SizedBox(width: FasanSpace.s),
-            Expanded(child: FilledButton.icon(icon: const Icon(Icons.ios_share_rounded), label: Text(t.inviteShare), onPressed: () => SharePlus.instance.share(ShareParams(text: g.secret.direct ? (t.de ? '${g.secret.name} lädt dich zu Fasan Split ein: $link' : '${g.secret.name} invites you to Fasan Split: $link') : link)))),
-          ]),
-          TextButton(onPressed: _create, child: Text(t.inviteCreate)),
         ],
-        if (!g.secret.direct) ...[
-        const SizedBox(height: FasanSpace.l),
-        Text(t.requests, style: tt.titleMedium),
-        if (requests.isEmpty) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: Text(t.noRequests, style: tt.bodySmall)),
-        for (final r in requests)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(r.name.isEmpty ? r.pub.substring(0, 8) : r.name),
-            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              TextButton(onPressed: () => s.decline(g, r), child: Text(t.decline)),
-              FilledButton(
-                onPressed: () async {
-                  await s.approve(g, r);
-                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.approved(r.name.isEmpty ? r.pub.substring(0, 8) : r.name))));
-                },
-                child: Text(t.approve),
-              ),
-            ]),
+        if (link == null && inv != null) ...[
+          const SizedBox(height: FasanSpace.m),
+          FasanButton(label: de ? 'Neuen Link erstellen' : 'Create a new link', icon: Icons.add_link_rounded, expand: true, onPressed: () => _setDays(_days)),
+        ],
+        const SizedBox(height: FasanSpace.xl),
+        if (inv != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(icon: const Icon(Icons.link_off_rounded), label: Text(de ? 'Alle Links ungültig machen' : 'Make all links invalid'), onPressed: _revoke),
           ),
-        ],
-        const SizedBox(height: FasanSpace.l),
-        if (inv != null) TextButton.icon(icon: const Icon(Icons.link_off_rounded), label: Text(t.inviteRevoke), onPressed: _revoke),
       ]),
     );
   }
@@ -822,6 +878,40 @@ class _ChatScreenState extends State<ChatScreen> {
     _input.clear();
   }
 
+  /// Tag a bill in the chat: the bills of this group, or – writing to a friend – of the groups we share.
+  Future<void> _attach() async {
+    final c = CollabScope.read(context), store = StoreScope.read(context), de = S.of(context).de;
+    final g = widget.group;
+    final peer = g.secret.direct ? c.directPeer(g) : null;
+    final groupsHere = g.secret.direct
+        ? {for (final x in c.groups.values) if (!x.secret.direct && peer != null && x.session.memberKeys.contains(peer)) x.localName}
+        : {g.localName};
+    final bills = store.bills.where((b) => b.trashedAt == null && groupsHere.contains(b.group)).toList()..sort((a, b) => b.date.compareTo(a.date));
+    final id = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.7),
+          child: ListView(shrinkWrap: true, children: [
+            ListTile(title: Text(de ? 'Welchen Bon?' : 'Which receipt?', style: Theme.of(ctx).textTheme.titleMedium)),
+            if (bills.isEmpty) ListTile(title: Text(de ? 'Noch keine gemeinsamen Bons.' : 'No shared receipts yet.')),
+            for (final b in bills)
+              ListTile(
+                leading: const Icon(Icons.receipt_long_outlined),
+                title: Text(b.purpose.isEmpty ? 'Bon' : b.purpose),
+                subtitle: Text('${b.group ?? ''} · ${money(b.effectiveTotal, de: de)}'),
+                onTap: () => Navigator.pop(ctx, b.id),
+              ),
+          ]),
+        ),
+      ),
+    );
+    if (id == null) return;
+    final b = store.bills.firstWhere((x) => x.id == id);
+    c.sendMessage(g, b.purpose.isEmpty ? 'Bon' : b.purpose, bill: id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
@@ -843,6 +933,8 @@ class _ChatScreenState extends State<ChatScreen> {
             builder: (context) {
               final s = CollabScope.read(context), me = s.identity?.pub;
               final msgs = s.messages(widget.group);
+              // open chat = read (after this frame: marking notifies)
+              WidgetsBinding.instance.addPostFrameCallback((_) => s.markRead(widget.group));
               if (msgs.isEmpty) {
                 return Center(child: Padding(padding: const EdgeInsets.all(FasanSpace.l), child: Text(t.chatEmpty, style: tt.bodyMedium, textAlign: TextAlign.center)));
               }
@@ -859,7 +951,19 @@ class _ChatScreenState extends State<ChatScreen> {
                       decoration: BoxDecoration(color: mine ? l.accent.withValues(alpha: 0.18) : l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                         Text(mine ? t.you : widget.group.session.nameOf(m.from), style: tt.labelSmall),
-                        Text(m.text, style: tt.bodyMedium),
+                        if (m.bill != null)
+                          // a tagged bill: the card opens it (Nutzer 04.11.)
+                          switch (StoreScope.read(context).bills.where((b) => b.id == m.bill).firstOrNull) {
+                            final b? => ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 300),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: BillTile(bill: b, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)), selecting: false, selected: false, onToggle: () {}, onRetry: () {}),
+                                ),
+                              ),
+                            _ => Text(t.de ? '(Bon nicht verfügbar)' : '(receipt not available)', style: tt.bodySmall),
+                          },
+                        if (m.text.isNotEmpty && m.bill == null) Text(m.text, style: tt.bodyMedium),
                       ]),
                     ),
                   );
@@ -873,6 +977,7 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, FasanSpace.s),
             child: Row(children: [
+              IconButton(tooltip: t.de ? 'Bon anhängen' : 'Attach a receipt', icon: const Icon(Icons.attach_file_rounded), onPressed: _attach),
               Expanded(
                 child: TextField(
                   controller: _input,
@@ -906,16 +1011,46 @@ class CollabGroupPanel extends StatelessWidget {
     final t = S.of(context), g = group;
     return GroupChangeBuilder(
       group: g,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.only(bottom: FasanSpace.m),
-        child: Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [
-          ActionChip(avatar: const Icon(Icons.group_outlined, size: 18), label: Text('${t.membersTitle} · ${g.session.memberKeys.length}'), onPressed: () => _open(context, MembersScreen(group: g))),
-          ActionChip(avatar: const Icon(Icons.edit_note_rounded, size: 18), label: Text(t.notesTitle), onPressed: () => _open(context, NotesScreen(group: g))),
-          ActionChip(avatar: const Icon(Icons.chat_bubble_outline_rounded, size: 18), label: Text(t.chatTitle), onPressed: () => _open(context, ChatScreen(group: g))),
-          if (CollabScope.of(context).held.where((h) => h.group.secret.tag == g.secret.tag).length case final n when n > 0)
-            ActionChip(avatar: const Icon(Icons.pending_actions_outlined, size: 18), label: Text('${t.heldTitle} · $n'), onPressed: () => _open(context, HeldChangesScreen(group: g))),
-        ]),
-      ),
+      // one compact row of three equal buttons (Nutzer 04.11.: members, notes and messages in one line)
+      builder: (context) {
+        final c = CollabScope.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+        final unread = c.unread(g), held = c.held.where((h) => h.group.secret.tag == g.secret.tag).length;
+        Widget button(IconData icon, String label, int badge, Widget page) => Expanded(
+              child: Material(
+                color: l.surfaceAlt,
+                borderRadius: BorderRadius.circular(l.radius * 0.6),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(l.radius * 0.6),
+                  onTap: () => _open(context, page),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: l.minTap),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Badge(isLabelVisible: badge > 0, label: Text('$badge'), child: Icon(icon, size: 18, color: l.accent)),
+                      const SizedBox(width: 6),
+                      Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: tt.labelLarge)),
+                    ]),
+                  ),
+                ),
+              ),
+            );
+        return Padding(
+          padding: const EdgeInsets.only(bottom: FasanSpace.m),
+          child: Column(children: [
+            Row(children: [
+              button(Icons.group_outlined, '${g.session.memberKeys.length}', 0, MembersScreen(group: g)),
+              const SizedBox(width: FasanSpace.s),
+              button(Icons.edit_note_rounded, t.notesTitle, 0, NotesScreen(group: g)),
+              const SizedBox(width: FasanSpace.s),
+              button(Icons.chat_bubble_outline_rounded, t.de ? 'Chat' : 'Chat', unread, ChatScreen(group: g)),
+            ]),
+            if (held > 0)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(icon: const Icon(Icons.pending_actions_outlined, size: 18), label: Text('${t.heldTitle} · $held'), onPressed: () => _open(context, HeldChangesScreen(group: g))),
+              ),
+          ]),
+        );
+      },
     );
   }
 
@@ -1167,6 +1302,96 @@ class _AccountScreenState extends State<AccountScreen> {
         Text(t.relaysText, style: tt.bodySmall),
         for (final r in defaultRelays) ListTile(dense: true, contentPadding: EdgeInsets.zero, title: Text(r)),
       ]),
+    );
+  }
+}
+
+/// The bell on the main pages (Nutzer 04.11.: notifications about joins, messages, new and changed bills).
+class ActivityBell extends StatelessWidget {
+  const ActivityBell({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = CollabScope.of(context), n = c.unseenActivity;
+    return IconButton(
+      tooltip: S.of(context).de ? 'Neuigkeiten' : 'News',
+      icon: Badge(isLabelVisible: n > 0, label: Text(n > 99 ? '99+' : '$n'), child: Icon(n > 0 ? Icons.notifications_rounded : Icons.notifications_none_rounded)),
+      onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ActivityScreen())),
+    );
+  }
+}
+
+class ActivityScreen extends StatefulWidget {
+  const ActivityScreen({super.key});
+
+  @override
+  State<ActivityScreen> createState() => _ActivityScreenState();
+}
+
+class _ActivityScreenState extends State<ActivityScreen> {
+  late final CollabService _c = CollabScope.read(context);
+  late final int _seenBefore = _c.prefs?.getInt('collab.activitySeen') ?? 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _c.markActivitySeen());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final de = S.of(context).de, l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    final c = CollabScope.of(context);
+    final list = c.activity;
+    IconData icon(ActivityKind k) => switch (k) {
+          ActivityKind.joined => Icons.waving_hand_rounded,
+          ActivityKind.billNew => Icons.receipt_long_rounded,
+          ActivityKind.billChanged => Icons.edit_note_rounded,
+          ActivityKind.message => Icons.chat_bubble_rounded,
+          ActivityKind.mention => Icons.alternate_email_rounded,
+        };
+    String when(DateTime d) {
+      final m = DateTime.now().difference(d).inMinutes;
+      if (m < 1) return de ? 'gerade' : 'now';
+      if (m < 60) return de ? 'vor $m Min.' : '$m min ago';
+      if (m < 24 * 60) return de ? 'vor ${m ~/ 60} Std.' : '${m ~/ 60} h ago';
+      return '${d.day}.${d.month}.';
+    }
+
+    void open(Activity a) {
+      final g = c.groups[a.group];
+      if (g == null) return;
+      if (a.kind == ActivityKind.message || g.secret.direct) {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: g)));
+      } else {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupScreen(name: g.localName, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)))));
+      }
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: Text(de ? 'Neuigkeiten' : 'News')),
+      body: list.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(FasanSpace.xl),
+                child: Text(de ? 'Noch nichts Neues. Hier erscheint, wer beitritt, neue und geänderte Bons und Nachrichten.' : 'Nothing new yet. Joins, new and changed receipts and messages show up here.',
+                    style: tt.bodyMedium!.copyWith(color: l.textMuted), textAlign: TextAlign.center),
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: FasanSpace.s),
+              itemCount: list.length,
+              separatorBuilder: (_, _) => Divider(height: 1, color: l.hairline),
+              itemBuilder: (_, i) {
+                final a = list[i], fresh = a.at.millisecondsSinceEpoch > _seenBefore;
+                return ListTile(
+                  leading: CircleAvatar(backgroundColor: l.accent.withValues(alpha: fresh ? 0.25 : 0.1), child: Icon(icon(a.kind), color: l.accent, size: 20)),
+                  title: Text(a.text, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: fresh ? FontWeight.w700 : null)),
+                  subtitle: Text(when(a.at)),
+                  onTap: () => open(a),
+                );
+              },
+            ),
     );
   }
 }

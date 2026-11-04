@@ -18,6 +18,7 @@ import 'assign.dart';
 import 'category_ui.dart';
 import 'currency_ui.dart';
 import 'collab_ui.dart';
+import 'bill_notes.dart';
 import 'common.dart';
 import 'when_where.dart';
 import 'diagnose.dart';
@@ -295,7 +296,7 @@ class _PeopleScreenState extends State<PeopleScreen> {
     final store = StoreScope.of(context);
     final recent = store.recentNames.where((n) => !b.ps.any((p) => p.name == n)).toList();
     final g = b.group;
-    final fromGroup = g == null || g.isEmpty ? const <String>[] : store.groupMembers(g).where((n) => !b.ps.any((p) => p.name == n)).toList();
+    final fromGroup = g == null || g.isEmpty ? const <String>[] : CollabScope.read(context).peopleOf(g).where((n) => !b.ps.any((p) => p.name == n)).toList();
     return StepScaffold(
       title: t.whoWasThere,
       step: 2,
@@ -392,7 +393,7 @@ Future<void> rereadFlow(BuildContext context, Bill bill) async {
   final bytes = await readImage(path);
   if (bytes == null || !context.mounted) return;
   await q.reread(bill, bytes);
-  if (context.mounted) Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+  if (context.mounted) closeBillFlow(context);
 }
 
 /// Adds [name] to the bill with the first free colour; false if the name is there already.
@@ -525,7 +526,7 @@ class _PayScreenState extends State<PayScreen> {
               b.done = true;
               if (b.transfers().isEmpty) b.settled = true; // nobody owes anything: nothing to settle
               StoreScope.read(context).upsert(b);
-              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => ResultScreen(bill: b)), (r) => r.isFirst);
+              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => ResultScreen(bill: b)), isBillOrigin);
             },
       body: ListView(
         padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context)),
@@ -716,6 +717,7 @@ class ResultScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.xxxl),
         children: [
+          PinnedNotes(bill: bill),
           Money(bill.effectiveTotal, style: Theme.of(context).textTheme.displaySmall),
           const SizedBox(height: FasanSpace.s),
           Align(
@@ -725,6 +727,8 @@ class ResultScreen extends StatelessWidget {
           if (bill.refund) ...[const SizedBox(height: FasanSpace.s), const RefundNote()],
           const SizedBox(height: FasanSpace.l),
           if (bill.payer != null) ResultBody(bill: bill) else Text(t.whoPaid),
+          const SizedBox(height: FasanSpace.l),
+          BillNotes(bill: bill),
           const SizedBox(height: FasanSpace.xl),
           // Nutzer 04.11.: the archive is for bills that are paid back; this is where one says so
           if (bill.done && bill.payer != null && bill.transfers().isNotEmpty) ...[

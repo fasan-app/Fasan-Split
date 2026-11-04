@@ -57,11 +57,14 @@ void main() {
   testWidgets('Einladung erzeugt einen Link mit QR-Code, nur für den Admin', (tester) async {
     final g = await svc.createGroup('Hütte');
     await tester.pumpWidget(host(InviteScreen(group: g)));
-    expect(find.text('Einladung erstellen'), findsOneWidget);
-    await tester.tap(find.text('Einladung erstellen'));
-    await tester.pump();
-    expect(find.textContaining('https://fasan-app.github.io/Fasan-Split/join/#'), findsOneWidget);
+    // the link is ready at once (Nutzer 04.11.: nothing to press before sharing), validity can be chosen
+    expect(find.text('Link teilen'), findsOneWidget);
+    expect(find.text('7 Tage'), findsOneWidget);
+    expect(g.invitations!.open.length, 1);
     expect(find.byType(CustomPaint), findsWidgets);
+    await tester.tap(find.text('30 Tage'));
+    await tester.pump();
+    expect(g.invitations!.open.any((i) => i.expires.isAfter(DateTime.now().add(const Duration(days: 29)))), isTrue);
     await tester.pump(const Duration(seconds: 1));
   });
 

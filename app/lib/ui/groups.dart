@@ -4,6 +4,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../collab/group.dart';
+import '../collab/notes.dart' show ChatMessage;
 import '../collab/service.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
@@ -49,7 +50,9 @@ class GroupsPage extends StatelessWidget {
           child: Builder(builder: (context) {
             final bills = store.inGroup(g);
             final sum = bills.fold<int>(0, (a, b) => a + b.effectiveTotal);
-            final live = CollabScope.of(context).groupByLocalName(g) != null;
+            final lg = CollabScope.of(context).groupByLocalName(g), live = lg != null;
+            final unread = lg == null ? 0 : CollabScope.of(context).unread(lg);
+            final last = lg == null ? null : CollabScope.of(context).lastMessage(lg);
             return Material(
               color: l.surfaceAlt,
               borderRadius: BorderRadius.circular(l.radius * 0.7),
@@ -63,12 +66,21 @@ class GroupsPage extends StatelessWidget {
                     const SizedBox(width: FasanSpace.m),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(g, style: tt.titleMedium),
-                        Text(live ? '${t.billsCount(bills.length)} · ${t.shared}' : t.billsCount(bills.length), style: tt.bodySmall),
+                        Text(g, style: tt.titleMedium!.copyWith(fontWeight: unread > 0 ? FontWeight.w800 : null)),
+                        // the newest message, bold while unread (Nutzer 04.11.)
+                        Text(
+                            last != null && unread > 0
+                                ? '${lg!.session.nameOf(last.from)}: ${last.text}'
+                                : live
+                                    ? '${t.billsCount(bills.length)} · ${t.shared}'
+                                    : t.billsCount(bills.length),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: tt.bodySmall!.copyWith(fontWeight: unread > 0 ? FontWeight.w700 : null)),
                       ]),
                     ),
                     Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('${money(sum, de: t.de)} ${signOf(context)}', style: tt.titleMedium),
+                      Badge(isLabelVisible: unread > 0, label: Text('$unread'), offset: const Offset(10, -6), child: Text('${money(sum, de: t.de)} ${signOf(context)}', style: tt.titleMedium)),
                       // my balance in this group (green = I get, red = I owe)
                       if (myDebts(store.inGroup(g, done: true), myNames(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
                         Text('${money(v, de: t.de, sign: true)} ${signOf(context)}', style: tt.labelMedium!.copyWith(color: v > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
@@ -101,8 +113,15 @@ class GroupScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(name),
         actions: [
-          if (live != null && live.isAdmin)
-            IconButton(tooltip: t.invite, icon: const Icon(Icons.person_add_alt_1_outlined), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: live)))),
+          // always there (Nutzer 04.11.): a group only on this phone is shared first, then the link is ready
+          IconButton(
+            tooltip: t.invite,
+            icon: const Icon(Icons.person_add_alt_1_outlined),
+            onPressed: () async {
+              final g = live ?? await shareLive(context, name);
+              if (g != null && context.mounted) Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g)));
+            },
+          ),
           PopupMenuButton<String>(
             onSelected: (v) async {
               if (v == 'leave' && live != null) {
@@ -146,8 +165,9 @@ class GroupPeople extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     final store = StoreScope.of(context);
-    final people = store.groupMembers(name);
     final live = CollabScope.of(context).groupByLocalName(name);
+    // everyone who joined is a person of the group (Nutzer 04.11.), next to the names from the bills
+    final people = CollabScope.of(context).peopleOf(name);
     // Live group: balance per member, not per spelling (Nutzer 03.11.). Every name linked to a member counts as „@pub“;
     // the member's first name stands for all of them.
     String keyOf(String p) => switch (live?.session.memberOfPerson(p)) { final m? => '@$m', _ => p };
@@ -323,49 +343,54 @@ class FriendsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     final store = StoreScope.of(context), collab = CollabScope.of(context);
-    final friends = store.friends;
+    final de = t.de;
     final bottom = 150 + MediaQuery.paddingOf(context).bottom;
-    // direct connections by the friend's name (lower case); waiting = link sent, nobody opened it yet
-    final direct = <String, CollabGroup>{};
+    // one list (Nutzer 04.11.): people from bills, everyone from my groups, direct connections – merged by name
+    final rows = <String, _Friend>{};
+    _Friend at(String name) => rows.putIfAbsent(name.toLowerCase(), () => _Friend(name));
+    for (final f in store.friends) {
+      at(f.name)
+        ..color = f.color
+        ..bills = f.bills
+        ..sum = f.sum
+        ..fromBills = true;
+    }
+    for (final e in collab.memberFriends.entries) {
+      at(e.value).pub ??= e.key;
+    }
     final waiting = <CollabGroup>[];
     for (final g in collab.directs) {
       final n = collab.directName(g);
-      n.isEmpty ? waiting.add(g) : direct[n.toLowerCase()] = g;
+      if (n.isEmpty) {
+        waiting.add(g);
+        continue;
+      }
+      at(n)
+        ..direct = g
+        ..pub ??= collab.directPeer(g);
     }
-    final names = {for (final f in friends) f.name.toLowerCase()};
-    final onlyDirect = [for (final e in direct.entries) if (!names.contains(e.key)) e.value];
-    final inviteButton = FasanButton(label: t.de ? 'Freund einladen' : 'Invite a friend', icon: Icons.person_add_alt_1_rounded, expand: true, onPressed: () => inviteFriend(context));
+    for (final f in rows.values) {
+      if (f.direct != null) {
+        f.last = collab.lastMessage(f.direct!);
+        f.unread = collab.unread(f.direct!);
+      }
+    }
+    final list = rows.values.toList()
+      ..sort((a, b) {
+        if ((a.unread > 0) != (b.unread > 0)) return a.unread > 0 ? -1 : 1;
+        final ta = a.last?.at, tb = b.last?.at;
+        if (ta != null || tb != null) return (tb ?? DateTime(0)).compareTo(ta ?? DateTime(0));
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+    final inviteButton = FasanButton(label: de ? 'Freund einladen' : 'Invite a friend', icon: Icons.person_add_alt_1_rounded, expand: true, onPressed: () => inviteFriend(context));
 
-    Widget row({required String name, required int color, required String sub, String? amount, CollabGroup? chat, required VoidCallback onTap}) => Padding(
-          padding: const EdgeInsets.only(bottom: FasanSpace.s),
-          child: Material(
-            color: l.surfaceAlt,
-            borderRadius: BorderRadius.circular(l.radius * 0.7),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(l.radius * 0.7),
-              onTap: onTap,
-              child: Padding(
-                padding: const EdgeInsets.all(FasanSpace.m),
-                child: Row(children: [
-                  FasanAvatar(name: name, index: color, size: 40),
-                  const SizedBox(width: FasanSpace.m),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(name, style: tt.titleMedium), Text(sub, style: tt.bodySmall)])),
-                  if (amount != null) Text(amount, style: tt.titleMedium),
-                  if (chat != null)
-                    IconButton(
-                      tooltip: t.de ? 'Nachricht' : 'Message',
-                      icon: Icon(Icons.chat_bubble_outline_rounded, color: l.accent),
-                      onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: chat))),
-                    )
-                  else
-                    Icon(Icons.chevron_right_rounded, color: l.textMuted),
-                ]),
-              ),
-            ),
-          ),
-        );
+    Future<void> openChat(_Friend f) async {
+      final c = CollabScope.read(context);
+      final g = f.direct ?? (f.pub != null ? await c.directWith(f.pub!, f.name) : null);
+      if (g != null && context.mounted) Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: g)));
+    }
 
-    if (friends.isEmpty && direct.isEmpty && waiting.isEmpty) {
+    if (list.isEmpty && waiting.isEmpty) {
       return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom), children: [
         const SizedBox(height: 80),
         Icon(Icons.people_outline_rounded, size: 56, color: l.textMuted),
@@ -377,37 +402,99 @@ class FriendsPage extends StatelessWidget {
         inviteButton,
       ]);
     }
-    final connected = t.de ? 'verbunden' : 'connected';
+    String when(DateTime d) {
+      final now = DateTime.now();
+      if (d.year == now.year && d.month == now.month && d.day == now.day) return '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+      return '${d.day}.${d.month}.';
+    }
+
+    Widget row(_Friend f) {
+      final hasChat = f.pub != null || f.direct != null;
+      final bold = f.unread > 0;
+      final sub = f.last != null
+          ? (f.last!.from == collab.identity?.pub ? (de ? 'Du: ' : 'You: ') : '') + f.last!.text
+          : [
+              if (f.bills > 0) t.billsCount(f.bills),
+              if (hasChat) de ? 'in der App' : 'in the app' else de ? 'nur in Bons' : 'only in receipts',
+            ].join(' · ');
+      final card = Material(
+        color: l.surfaceAlt,
+        borderRadius: BorderRadius.circular(l.radius * 0.7),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(l.radius * 0.7),
+          // with the app: tap writes (like a messenger), long press shows everything else; only in bills: the actions
+          onTap: hasChat ? () => openChat(f) : () => friendActions(context, f.name),
+          onLongPress: () => friendActions(context, f.name),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s + 2),
+            child: Row(children: [
+              FasanAvatar(name: f.name, index: f.color, size: 44),
+              const SizedBox(width: FasanSpace.m),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(f.name, style: tt.titleMedium!.copyWith(fontWeight: bold ? FontWeight.w800 : null)),
+                  Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: tt.bodySmall!.copyWith(fontWeight: bold ? FontWeight.w700 : null, color: bold ? tt.bodyLarge!.color : null)),
+                ]),
+              ),
+              const SizedBox(width: FasanSpace.s),
+              Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                if (f.last != null) Text(when(f.last!.at), style: tt.labelSmall!.copyWith(color: bold ? l.accent : l.textMuted, fontWeight: bold ? FontWeight.w700 : null)),
+                if (bold)
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                    decoration: BoxDecoration(color: l.accent, borderRadius: BorderRadius.circular(10)),
+                    child: Text(f.unread > 99 ? '99+' : '${f.unread}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                  )
+                else if (f.bills > 0 && f.last == null)
+                  Text('${money(f.sum, de: de)} ${signOf(context)}', style: tt.titleSmall),
+              ]),
+              if (hasChat && !bold && f.last == null) ...[const SizedBox(width: 4), Icon(Icons.chat_bubble_outline_rounded, size: 20, color: l.accent)],
+            ]),
+          ),
+        ),
+      );
+      return Padding(
+        padding: const EdgeInsets.only(bottom: FasanSpace.s),
+        child: f.fromBills && f.pub == null
+            ? SwipeActions(
+                key: ValueKey('friend-${f.name}'),
+                id: 'friend-${f.name}',
+                end: SwipeSide(Icons.person_remove_outlined, t.forget, Colors.red.shade700),
+                onDismissed: (_) => store.forgetFriend(f.name),
+                child: card,
+              )
+            : card,
+      );
+    }
+
     return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, bottom), children: [
       inviteButton,
       const SizedBox(height: FasanSpace.m),
-      for (final g in onlyDirect)
-        row(name: collab.directName(g), color: 0, sub: connected, chat: g, onTap: () => friendActions(context, collab.directName(g))),
-      for (final f in friends)
-        SwipeActions(
-          key: ValueKey('friend-${f.name}'),
-          id: 'friend-${f.name}',
-          end: SwipeSide(Icons.person_remove_outlined, t.forget, Colors.red.shade700),
-          onDismissed: (_) => store.forgetFriend(f.name),
-          child: row(
-            name: f.name,
-            color: f.color,
-            sub: [t.billsCount(f.bills), if (direct.containsKey(f.name.toLowerCase())) connected].join(' · '),
-            amount: f.bills > 0 ? '${money(f.sum, de: t.de)} ${signOf(context)}' : null,
-            chat: direct[f.name.toLowerCase()],
-            // a person can be tapped (Nutzer 04.11.): add to a group, write, see the bills
-            onTap: () => friendActions(context, f.name),
-          ),
-        ),
+      for (final f in list) row(f),
       for (final g in waiting)
-        row(
-          name: t.de ? 'Einladung offen' : 'Invitation open',
-          color: 3,
-          sub: t.de ? 'Noch hat niemand den Link geöffnet. Tippen: Link erneut schicken' : 'Nobody opened the link yet. Tap: send the link again',
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g))),
+        Padding(
+          padding: const EdgeInsets.only(bottom: FasanSpace.s),
+          child: ListTile(
+            leading: Icon(Icons.schedule_send_rounded, color: l.textMuted),
+            title: Text(de ? 'Einladung offen' : 'Invitation open'),
+            subtitle: Text(de ? 'Noch hat niemand den Link geöffnet. Tippen: erneut schicken' : 'Nobody opened the link yet. Tap: send again'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g))),
+          ),
         ),
     ]);
   }
+}
+
+/// One row of the friends list (built from bills, groups and direct connections).
+class _Friend {
+  _Friend(this.name);
+  final String name;
+  int color = 0, bills = 0, sum = 0, unread = 0;
+  bool fromBills = false;
+  String? pub;
+  CollabGroup? direct;
+  ChatMessage? last;
 }
 
 /// Everything one can do with a person (Nutzer 04.11.: „alles überall verfügbar, was der Benutzer erwarten könnte“).
@@ -422,6 +509,11 @@ Future<void> friendActions(BuildContext context, String name) async {
   for (final g in collab.directs) {
     if (collab.directName(g).toLowerCase() == name.toLowerCase()) direct = g;
   }
+  // a member of one of my groups: writing works without any link (directWith)
+  String? pub;
+  for (final e in collab.memberFriends.entries) {
+    if (e.value.toLowerCase() == name.toLowerCase()) pub = e.key;
+  }
   // shared groups where this person is linked to a member: chat there too
   final chats = [for (final g in live) if (g.session.memberOfPerson(name) != null) g];
   final choice = await showModalBottomSheet<String>(
@@ -429,7 +521,7 @@ Future<void> friendActions(BuildContext context, String name) async {
     builder: (ctx) => SafeArea(
       child: ListView(shrinkWrap: true, children: [
         ListTile(leading: FasanAvatar(name: name, index: 0, size: 32), title: Text(name, style: Theme.of(ctx).textTheme.titleMedium)),
-        if (direct != null)
+        if (direct != null || pub != null)
           ListTile(leading: const Icon(Icons.chat_bubble_outline_rounded), title: Text(de ? 'Nachricht schreiben' : 'Write a message'), onTap: () => Navigator.pop(ctx, 'direct'))
         else
           ListTile(
@@ -469,7 +561,8 @@ Future<void> friendActions(BuildContext context, String name) async {
       );
   switch (choice) {
     case 'direct':
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: direct!)));
+      final d = direct ?? await collab.directWith(pub!, name);
+      if (context.mounted) Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: d)));
     case 'connect':
       await FriendsPage.inviteFriend(context);
     case 'add':

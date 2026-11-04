@@ -232,6 +232,23 @@ void main() {
       expect(find.text('Noch keine Freunde'), findsOneWidget);
     });
 
+    testWidgets('Bon aus der Gruppe öffnen und schließen: man bleibt in der Gruppe (Nutzer 04.11.)', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück', group: 'Urlaub', done: true)..payer = 0]);
+      await app(tester, store, idle(store));
+      await tester.tap(find.text('Gruppen').last);
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await tester.tap(find.text('Urlaub'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Frühstück').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(BackButton).last);
+      await tester.pumpAndSettle();
+      expect(find.text('Urlaub'), findsWidgets, reason: 'zurück in der Gruppe, nicht auf der Startseite');
+      expect(find.byType(BackButton), findsOneWidget);
+    });
+
     testWidgets('Foto in der Warteschlange: wartet, wird gelesen, ohne Öffnen; fehlgeschlagen bietet „Nochmal lesen“', (tester) async {
       final store = BillStore.memory([_bill('q1', '', read: BillRead.queued), _bill('q2', '', read: BillRead.reading), _bill('f1', '', read: BillRead.failed)]);
       await app(tester, store, idle(store));

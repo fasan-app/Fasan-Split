@@ -177,6 +177,13 @@ class Invitations {
     return inv;
   }
 
+  /// Withdraws one invitation (Nutzer 04.11.: choose which one).
+  void revoke(Invite i) {
+    _issued.remove(toHex(i.secret));
+    onIssued?.call(open);
+    changes.add(null);
+  }
+
   /// Revokes all open invitations.
   void revokeAll() {
     _issued.clear();
@@ -386,7 +393,8 @@ class GroupSession {
     if (t is! Map) return false;
     final persons = v['persons'];
     if (persons == null) return true;
-    return persons is List && persons.length == 1 && persons.single == t['p'];
+    // the person the link was made for, or – a general link – the own name
+    return persons is List && persons.length == 1 && persons.single == (t['p'] ?? v['name']);
   }
 
   /// In through an open link and not yet adopted by an admin.
@@ -401,7 +409,9 @@ class GroupSession {
 
   /// Joiner with an open link: adds itself to the members document (checked by everyone, see _validSelfEntry).
   void joinWithTicket(Invite inv, String name) {
-    doc(members).set('m/${me.pub}', {'name': name, 'i': inv.ticketId, if (inv.person != null && inv.person!.isNotEmpty) 'persons': [inv.person]});
+    // every member is a person of the group right away (Nutzer 04.11.: joined, but not listed as a person)
+    final person = inv.person != null && inv.person!.isNotEmpty ? inv.person! : name;
+    doc(members).set('m/${me.pub}', {'name': name, 'i': inv.ticketId, if (person.isNotEmpty) 'persons': [person]});
     touch(members);
   }
 
@@ -418,7 +428,11 @@ class GroupSession {
     _timer?.cancel();
     final ids = _dirty.toList();
     _dirty.clear();
-    for (final id in ids) {
+    var failed = false;
+    for (final (i, id) in ids.indexed) {
+      // a short pause between documents: public relays limit bursts („rate-limited“), and a refused document used to wait
+      // for the next change – the other phones then showed an old state (Nutzer 04.11.)
+      if (i > 0 && publishPace > Duration.zero) await Future<void>.delayed(publishPace);
       final d = _d(id);
       final ev = NostrEvent.create(me, kind: kindData, tags: [['d', d], ['t', secret.tag]], content: aeadSeal(doc(id).encode(), secret.key, d));
       final ok = await relay.publish(ev);
@@ -426,9 +440,31 @@ class GroupSession {
         published++;
       } else {
         failedPublishes++;
-        _dirty.add(id); // try again with the next change or flush
+        _dirty.add(id);
+        failed = true;
       }
     }
+    if (failed && !_closed) {
+      // try again by itself: 3 s, 6 s, 12 s … up to 2 minutes
+      _retry = _retry == Duration.zero ? const Duration(seconds: 3) : (_retry * 2 > const Duration(minutes: 2) ? const Duration(minutes: 2) : _retry * 2);
+      _timer = Timer(_retry, flush);
+    } else if (!failed) {
+      _retry = Duration.zero;
+    }
+  }
+
+  Duration _retry = Duration.zero;
+  bool _closed = false;
+
+  /// Pause between two documents of one flush (tests: zero).
+  Duration publishPace = const Duration(milliseconds: 120);
+
+  /// After the start: every document of this phone goes out once more, so relays that missed one (or a member who
+  /// joined later) get the newest state without waiting for a change.
+  void republishAll() {
+    _dirty.addAll(_docs.keys);
+    _timer?.cancel();
+    _timer = Timer(const Duration(seconds: 2), flush);
   }
 
   /// Admin: puts a person into the members document (call before the welcome).
@@ -489,10 +525,16 @@ class GroupSession {
   /// First person name of a member, or null.
   String? personOf(String pub) => personsOf(pub).firstOrNull;
 
-  /// Member linked to [person], or null.
+  /// Member linked to [person], or null. Without an explicit link a member whose own name is the same (ignoring case)
+  /// counts as that person (Nutzer 04.11.: linking by hand was confusing; „Angi“ in a bill is Angi who joined).
   String? memberOfPerson(String person) {
     for (final k in memberKeys) {
       if (personsOf(k).contains(person)) return k;
+    }
+    final p = person.trim().toLowerCase();
+    if (p.isEmpty) return null;
+    for (final k in memberKeys) {
+      if (personsOf(k).isEmpty && nameOf(k).trim().toLowerCase() == p) return k;
     }
     return null;
   }
@@ -539,6 +581,7 @@ class GroupSession {
   }
 
   Future<void> close() async {
+    _closed = true;
     _timer?.cancel();
     await flush();
     await _sub?.cancel();

@@ -3,6 +3,8 @@
 
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
+
+import 'bill_notes.dart' show PinnedNotes;
 import 'package:flutter/services.dart';
 
 import '../l10n.dart';
@@ -81,7 +83,15 @@ class StepScaffold extends StatelessWidget {
         ],
       ),
       body: Stack(children: [
-        Positioned.fill(child: body),
+        Positioned.fill(
+          child: b != null && b.notes.any((n) => n.pinned)
+              // pinned notes stay visible in every step (Nutzer 04.11.: a hint for everyone on this bill)
+              ? Column(children: [
+                  Padding(padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, 0), child: PinnedNotes(bill: b)),
+                  Expanded(child: body),
+                ])
+              : body,
+        ),
         if (action != null || bottomExtra != null)
           Positioned(
             left: FasanSpace.m,
@@ -106,8 +116,9 @@ class StepScaffold extends StatelessWidget {
                           FasanHaptics.of(context).confirm();
                           final note = b.done ? t.saved : t.savedDraft;
                           // root navigator: a resumed draft runs in a nested one (ResumeFlow)
-                          Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
-                          showNote(context, note);
+                          final messenger = ScaffoldMessenger.of(context);
+                          closeBillFlow(context);
+                          messenger.showSnackBar(SnackBar(content: Text(note)));
                         },
                       ),
                       const SizedBox(width: 6),
@@ -361,3 +372,17 @@ class TitleHelp extends StatelessWidget {
         ),
       ]);
 }
+
+
+/// The page a bill was opened from (overview, a group, a chat). Closing the bill returns there – before 04.11. it always
+/// went back to the start and left the group (Nutzer: „ergibt überhaupt keinen Sinn“).
+Route<dynamic>? billOrigin;
+
+/// Call where a bill is opened or a new one is started.
+void markBillOrigin(BuildContext context) => billOrigin = ModalRoute.of(context);
+
+/// True for the route a closed bill returns to.
+bool isBillOrigin(Route<dynamic> r) => r.isFirst || (billOrigin != null && identical(r, billOrigin) && billOrigin!.isActive);
+
+/// Leaves the bill flow (all its steps, a nested ResumeFlow too) back to where it was opened.
+void closeBillFlow(BuildContext context) => Navigator.of(context, rootNavigator: true).popUntil(isBillOrigin);

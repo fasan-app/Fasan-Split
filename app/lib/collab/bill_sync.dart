@@ -21,6 +21,8 @@ abstract final class BillSync {
     set('meta/payer', b.payer != null && b.payer! < b.ps.length ? b.ps[b.payer!].uid : null);
     set('meta/done', b.done);
     set('meta/settled', b.settled ? true : null);
+    set('meta/trashed', b.trashedAt?.millisecondsSinceEpoch);
+    set('meta/thumb', b.thumb);
     set('meta/refund', b.refund);
     set('meta/category', b.category); // shared like the other metadata (04.11.)
     set('meta/currency', b.currency);
@@ -38,6 +40,15 @@ abstract final class BillSync {
     }
     for (final k in doc.keys('p/').toList()) {
       if (!puids.contains(k.substring(2))) set(k, null); // person removed here
+    }
+
+    // notes (Nutzer 04.11.): one entry each, removed ones become empty
+    final nids = {for (final n in b.notes) n.id};
+    for (final n in b.notes) {
+      set('n/${n.id}', n.toJson());
+    }
+    for (final k in doc.keys('n/').toList()) {
+      if (!nids.contains(k.substring(2))) set(k, null);
     }
 
     final iuids = {for (final it in b.its) it.uid};
@@ -115,6 +126,13 @@ abstract final class BillSync {
     b.payer = payer is String ? index[payer] : null;
     b.done = doc.get('meta/done') == true;
     b.settled = doc.get('meta/settled') == true;
+    if (doc.get('meta/thumb') case final String th) b.thumb = th;
+    b.notes = [
+      for (final k in doc.keys('n/'))
+        if (doc.get(k) case final Map m) BillNote.fromJson(m.cast<String, Object?>()),
+    ]..sort((x, y) => x.at.compareTo(y.at));
+    final tr = doc.get('meta/trashed');
+    b.trashedAt = tr is num ? DateTime.fromMillisecondsSinceEpoch(tr.toInt()) : null;
     b.refund = doc.get('meta/refund') == true;
     b.category = doc.get('meta/category') as String?;
     b.currency = doc.get('meta/currency') as String?;

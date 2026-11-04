@@ -1,5 +1,6 @@
 // Fasan Split – one bill as a card on the overview. MPL-2.0
 
+import 'dart:convert';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -99,13 +100,24 @@ class BillTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
                 child: Image(image: ResizeImage(imageProvider(bill.imagePath!), width: 120), width: 34, height: 44, fit: BoxFit.cover, gaplessPlayback: true),
               )
-            : SizedBox(width: 34, height: 44, child: Icon(failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted));
+            : bill.thumb != null
+                // the preview shared by the group (the photo is on the phone of whoever scanned it)
+                ? ClipRRect(borderRadius: BorderRadius.circular(6), child: Image.memory(base64Decode(bill.thumb!), width: 34, height: 44, fit: BoxFit.cover, gaplessPlayback: true))
+                : SizedBox(width: 34, height: 44, child: Icon(failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted));
     Widget body(VoidCallback? open) => FasanDepth(
         radius: r,
         level: 2,
         child: InkWell(
           borderRadius: BorderRadius.circular(r),
-          onTap: selecting ? onToggle : open,
+          onTap: selecting
+              ? onToggle
+              : open == null
+                  ? null
+                  : () {
+                      CollabScope.read(context).billSeen(bill.id); // opened: no longer „changed“
+                      markBillOrigin(context); // closing the bill comes back here (group, chat, overview)
+                      open();
+                    },
           onLongPress: selecting ? null : onLongPress,
           child: AnimatedContainer(
             duration: motion.short,
@@ -145,7 +157,14 @@ class BillTile extends StatelessWidget {
               const SizedBox(width: FasanSpace.m),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(bill.purpose.isEmpty ? (waiting || failed ? t.photoBill : t.appName) : bill.purpose, style: tt.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Row(children: [
+                    // changed by someone else since I last opened it (Nutzer 04.11.: bills must be marked)
+                    if (CollabScope.of(context).changedBills.contains(bill.id)) ...[
+                      Container(width: 9, height: 9, decoration: BoxDecoration(color: l.accent, shape: BoxShape.circle)),
+                      const SizedBox(width: 6),
+                    ],
+                    Expanded(child: Text(bill.purpose.isEmpty ? (waiting || failed ? t.photoBill : t.appName) : bill.purpose, style: tt.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  ]),
                   const SizedBox(height: 2),
                   Row(children: [
                     // category at a glance (category.dart)

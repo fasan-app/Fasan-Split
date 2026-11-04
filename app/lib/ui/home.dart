@@ -125,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (f == null) return;
     final bytes = await f.readAsBytes();
+    if (context.mounted) markBillOrigin(context);
     nav.push(MaterialPageRoute(builder: (_) => ScanScreen(photo: bytes)));
   }
 
@@ -153,6 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (files.isEmpty) return;
     final bytes = <Uint8List>[for (final f in files) await f.readAsBytes()];
     if (bytes.length == 1) {
+      if (context.mounted) markBillOrigin(context);
       nav.push(MaterialPageRoute(builder: (_) => ScanScreen(photo: bytes.first)));
       return;
     }
@@ -165,6 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _manual(BuildContext context) {
     final b = Bill(id: DateTime.now().microsecondsSinceEpoch.toString(), created: DateTime.now(), items: []);
+    markBillOrigin(context);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReviewScreen(bill: b)));
   }
 
@@ -396,6 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 actions: [
                   // my balance on every main page (Nutzer 04.11.)
                   const MyBalanceBadge(),
+                  const ActivityBell(),
                   if (list != null && list != BillList.trash && _hasAny(store, list))
                     IconButton(
                       tooltip: t.de ? 'Sortieren und filtern' : 'Sort and filter',
@@ -478,6 +482,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onGroup: (bills) => _groupDialog(context, bills),
               )
             : _NavBar(
+          badges: [0, CollabScope.of(context).unreadGroups, CollabScope.of(context).unreadDirects],
           selected: _page <= 2 ? 0 : _page - 2,
           onSelect: (i) => _goTo(i == 0 ? (_page <= 2 ? _page : 0) : i + 2),
           // bills dropped on „Gruppen“: choose a group or name a new one (same dialog as the button)
@@ -721,7 +726,10 @@ class _HomeScreenState extends State<HomeScreen> {
 /// The three main places (Rechnungen, Gruppen, Freunde) as a glass bar at the bottom: icon and label, colour for the active
 /// one (no check marks; Nutzer 02.11.). Material 3: a navigation bar holds three to five destinations.
 class _NavBar extends StatelessWidget {
-  const _NavBar({required this.selected, required this.onSelect, this.onDropGroup});
+  const _NavBar({required this.selected, required this.onSelect, this.onDropGroup, this.badges = const [0, 0, 0]});
+
+  /// Unread messages per tab (Nutzer 04.11.: indicators for new messages).
+  final List<int> badges;
 
   final int selected;
   final ValueChanged<int> onSelect;
@@ -771,7 +779,11 @@ class _NavBar extends StatelessWidget {
                         borderRadius: BorderRadius.circular(l.radius * 0.7)),
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(i == selected ? items[i].$2 : items[i].$1, color: i == selected ? l.accent : l.textMuted, size: 24),
+                      Badge(
+                        isLabelVisible: badges[i] > 0,
+                        label: Text(badges[i] > 99 ? '99+' : '${badges[i]}'),
+                        child: Icon(i == selected ? items[i].$2 : items[i].$1, color: i == selected ? l.accent : l.textMuted, size: 24),
+                      ),
                       const SizedBox(height: 2),
                       Text(items[i].$3, style: Theme.of(context).textTheme.labelMedium!.copyWith(color: i == selected ? l.accent : l.textMuted, fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500)),
                     ]),

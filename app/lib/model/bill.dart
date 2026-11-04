@@ -15,6 +15,29 @@ final math.Random _uidRng = math.Random.secure();
 /// 80-bit random id (hex). Stable names for people and items, so shared bills can merge by id, not by list position.
 String newUid() => List.generate(10, (_) => _uidRng.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
 
+/// A note on a bill (Nutzer 04.11.): written by someone, optionally pinned as a hint on top of the bill, and may mention
+/// members (they are told in their „Neuigkeiten“). [from] is the author's name; [mentions] are member keys or names.
+class BillNote {
+  BillNote({String? id, required this.from, required this.text, DateTime? at, this.pinned = false, this.mentions = const []})
+      : id = id ?? newUid(),
+        at = at ?? DateTime.now();
+  final String id, from;
+  String text;
+  final DateTime at;
+  bool pinned;
+  List<String> mentions;
+
+  Map<String, Object?> toJson() => {'id': id, 'f': from, 'x': text, 't': at.millisecondsSinceEpoch, if (pinned) 'pin': true, if (mentions.isNotEmpty) 'm': mentions};
+  static BillNote fromJson(Map<String, Object?> j) => BillNote(
+        id: j['id'] as String?,
+        from: j['f'] as String? ?? '',
+        text: j['x'] as String? ?? '',
+        at: DateTime.fromMillisecondsSinceEpoch((j['t'] as num?)?.toInt() ?? 0),
+        pinned: j['pin'] == true,
+        mentions: [for (final m in (j['m'] as List?) ?? const []) '$m'],
+      );
+}
+
 class Person {
   Person(this.name, this.color, {String? uid}) : uid = uid ?? newUid();
 
@@ -174,6 +197,8 @@ class Bill {
     this.payer,
     this.refund = false,
     this.imagePath,
+    this.thumb,
+    List<BillNote>? notes,
     this.imageAspect,
     this.checked = false,
     this.advance = 0,
@@ -196,7 +221,8 @@ class Bill {
     this.rate,
     this.rateDate,
     DateTime? updated,
-  }) : updated = updated ?? created;
+  })  : updated = updated ?? created,
+        notes = notes ?? [];
 
   final String id;
   final DateTime created;
@@ -212,6 +238,13 @@ class Bill {
   /// Amounts are always positive; the direction is only this flag (Nutzer 03.11.: Schulden immer positiv).
   bool refund;
   String? imagePath;
+
+  /// Small preview of the scan (base64 JPEG, about 120 px wide), shared with the group: the others have no photo
+  /// (Nutzer 04.11.: no thumbnails in the browser). Made by CollabService once per bill.
+  String? thumb;
+
+  /// Notes on this bill, oldest first; a pinned one shows as a hint on top (Nutzer 04.11.).
+  List<BillNote> notes;
   double? imageAspect; // width / height of the receipt image
   bool checked;
   int advance;
@@ -412,6 +445,8 @@ class Bill {
         'payer': payer,
         'refund': refund,
         'imagePath': imagePath,
+        if (thumb != null) 'thumb': thumb,
+        if (notes.isNotEmpty) 'notes': [for (final n in notes) n.toJson()],
         'imageAspect': imageAspect,
         'checked': checked,
         'advance': advance,
@@ -446,6 +481,8 @@ class Bill {
         payer: (j['payer'] as num?)?.toInt(),
         refund: j['refund'] as bool? ?? false,
         imagePath: j['imagePath'] as String?,
+        thumb: j['thumb'] as String?,
+        notes: [for (final n in (j['notes'] as List?) ?? const []) BillNote.fromJson((n as Map).cast<String, Object?>())],
         imageAspect: (j['imageAspect'] as num?)?.toDouble(),
         checked: j['checked'] as bool? ?? false,
         advance: (j['advance'] as num?)?.toInt() ?? 0,

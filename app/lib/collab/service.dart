@@ -7,10 +7,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/bill.dart';
+import '../state/images.dart';
 import '../state/store.dart';
+import 'activity.dart';
 import 'bill_sync.dart';
 import 'crypto.dart';
 import 'group.dart';
@@ -142,6 +145,7 @@ class CollabService extends ChangeNotifier {
           .listen((e) => unawaited(_mergeAccountEvent(e)));
       unawaited(syncAccount()); // groups from before 0.1.49 reach the account list without waiting for a change
     }
+    if (groups.isNotEmpty) _watchDirectOffers();
     try {
       for (final j in jsonDecode(prefs?.getString(_kJoins) ?? '[]') as List) {
         final m = (j as Map).cast<String, dynamic>();
@@ -333,6 +337,21 @@ class CollabService extends ChangeNotifier {
     return g;
   }
 
+  /// Everyone of a group: the names from its bills and added by hand, and every member who joined (as the person they
+  /// are linked to, or their own name). Nutzer 04.11.: joined people were missing from the group.
+  List<String> peopleOf(String localName) {
+    final people = [...store.groupMembers(localName)];
+    final live = groupByLocalName(localName);
+    if (live != null) {
+      final have = {for (final p in people) p.toLowerCase()};
+      for (final k in live.session.memberKeys) {
+        final p = live.session.personOf(k) ?? live.session.nameOf(k);
+        if (p.trim().isNotEmpty && p != '—' && have.add(p.toLowerCase())) people.add(p);
+      }
+    }
+    return people;
+  }
+
   // ---- friends: direct connections (Nutzer 04.11.: invite friends without a group, chat, try the app) ----
 
   /// Internal local name of a direct connection; never shown (the UI shows the other person's name).
@@ -360,6 +379,77 @@ class CollabService extends ChangeNotifier {
     return p == g.secret.adminPub ? g.secret.name : g.session.nameOf(p);
   }
 
+  /// Friends = everyone I share a group with (Nutzer 04.11.: like contacts in a messenger), by member key.
+  Map<String, String> get memberFriends {
+    final me = identity?.pub;
+    final out = <String, String>{};
+    for (final g in groups.values) {
+      for (final k in g.session.memberKeys) {
+        if (k == me) continue;
+        final n = g.secret.direct ? directName(g) : g.session.nameOf(k);
+        if (n.trim().isNotEmpty && n != '—') out.putIfAbsent(k, () => n);
+      }
+    }
+    return out;
+  }
+
+  /// The direct connection with [pub], if there is one.
+  CollabGroup? directWithPub(String pub) {
+    for (final g in directs) {
+      if (directPeer(g) == pub) return g;
+    }
+    return null;
+  }
+
+  /// Writing to a member without a second link (Nutzer 04.11.): a direct connection is made here and offered to the
+  /// other person (its key NIP-44 encrypted to them, event `fs:direct`); their phone takes it when it comes from someone
+  /// they share a group with.
+  Future<CollabGroup> directWith(String pub, String name) async {
+    final have = directWithPub(pub);
+    if (have != null) return have;
+    final me = await ensureIdentity();
+    final secret = GroupSecret(key: randomBytes(32), adminPub: me.pub, name: me.name.isEmpty ? '—' : me.name, relays: defaultRelays, direct: true);
+    final g = await _activate(secret, directLocalName(secret));
+    g.session.addMember(me.pub, me.name.isEmpty ? '—' : me.name);
+    g.session.addMember(pub, name);
+    await g.session.flush();
+    final ev = NostrEvent.create(me.key,
+        kind: kindData,
+        tags: [['d', 'fs:direct:${secret.tag}'], ['t', 'fs:direct'], ['p', pub]],
+        content: nip44Encrypt(jsonEncode(secret.toJson()), nip44ConversationKey(me.key.priv, pub)));
+    await _relayFactory(_accountRelays).publish(ev);
+    await _persistGroups();
+    notifyListeners();
+    return g;
+  }
+
+  StreamSubscription<NostrEvent>? _directWatch;
+
+  void _watchDirectOffers() {
+    final me = identity;
+    if (me == null || _directWatch != null) return;
+    _directWatch = _relayFactory(_accountRelays).subscribe(Filter(kinds: const [kindData], tags: {'t': ['fs:direct'], 'p': [me.pub]})).listen(_onDirectOffer);
+  }
+
+  final List<NostrEvent> _laterOffers = []; // offers from people whose membership has not arrived yet
+
+  Future<void> _onDirectOffer(NostrEvent e) async {
+      final me = identity;
+      if (me == null || !e.valid || e.pubkey == me.pub) return;
+      // only from people I share a group with (no strangers writing to me); maybe the members list comes later
+      if (!groups.values.any((g) => g.session.memberKeys.contains(e.pubkey))) {
+        if (_laterOffers.length < 50 && !_laterOffers.any((x) => x.id == e.id)) _laterOffers.add(e);
+        return;
+      }
+      try {
+        final s = GroupSecret.fromJson((jsonDecode(nip44Decrypt(e.content, nip44ConversationKey(me.key.priv, e.pubkey))) as Map).cast<String, dynamic>());
+        if (!s.direct || s.adminPub != e.pubkey || groups.containsKey(s.tag) || directWithPub(e.pubkey) != null) return;
+        await _activate(s, directLocalName(s));
+        await _persistGroups();
+        notifyListeners();
+      } catch (_) {}
+  }
+
   /// A new friend link: a direct connection with only me in it; the link lets the friend in at once (open link).
   Future<CollabGroup> createDirect({List<String>? relays}) async {
     final me = await ensureIdentity();
@@ -385,12 +475,17 @@ class CollabService extends ChangeNotifier {
 
   Future<CollabGroup> _activate(GroupSecret secret, String local, {bool restoreDocs = false}) async {
     final me = await ensureIdentity();
+    scheduleMicrotask(_watchDirectOffers);
+    _activeSince[secret.tag] = DateTime.now();
     final relay = _relayFactory(secret.relays);
     final session = GroupSession(secret: secret, me: me.key, relay: relay);
     final g = CollabGroup(secret, local, session, null);
     session.acceptEntry = (docId, e) => _accept(g, docId, e);
     groups[secret.tag] = g;
-    if (restoreDocs) _restoreDocs(g);
+    if (restoreDocs) {
+      _restoreDocs(g);
+      session.republishAll(); // relays that missed something get it now (04.11.)
+    }
     _subs[secret.tag] = session.changes.listen((id) => _onDocChanged(g, id));
     session.start();
     _ensureInvitations(g);
@@ -485,10 +580,21 @@ class CollabService extends ChangeNotifier {
     // not yet a member, or in through an open link only: the admin writes the entry itself (then it stays when the
     // link is withdrawn)
     if (!g.session.memberKeys.contains(r.pub) || g.session.isSelfJoined(r.pub)) {
-      g.session.addMember(r.pub, r.name.isEmpty ? r.pub.substring(0, 8) : r.name, person: r.person ?? g.session.personOf(r.pub));
+      final n = r.name.isEmpty ? r.pub.substring(0, 8) : r.name;
+      g.session.addMember(r.pub, n, person: r.person ?? g.session.personOf(r.pub) ?? n);
+      // open links: everyone in the group may invite too (Nutzer 04.11.: like messenger groups where all can add people)
+      if (r.auto && !g.secret.direct) g.session.setAdmin(r.pub, true);
     }
     await g.session.flush(); // members first, then the key
     await inv.welcome(r.pub);
+    notifyListeners();
+  }
+
+  /// Withdraws one link: nobody new gets in with it (its ticket is deleted). Whoever already joined stays. The group key
+  /// stays too – for „nobody who ever had a link can read on“ there is [revokeInvites].
+  void revokeInvite(CollabGroup g, Invite i) {
+    if (i.groupKey != null && g.session.isAdmin) g.session.setTicket(i, open: false);
+    g.invitations?.revoke(i);
     notifyListeners();
   }
 
@@ -704,13 +810,46 @@ class CollabService extends ChangeNotifier {
 
   List<ChatMessage> messages(CollabGroup g) => Notes.messages(g.session.doc(GroupSession.chat));
 
-  void sendMessage(CollabGroup g, String text) {
+  void sendMessage(CollabGroup g, String text, {String? bill}) {
     final me = identity;
     final t = text.trim();
-    if (me == null || t.isEmpty) return;
-    Notes.send(g.session.doc(GroupSession.chat), me.pub, t);
+    if (me == null || t.isEmpty && bill == null) return;
+    Notes.send(g.session.doc(GroupSession.chat), me.pub, t, bill: bill);
     g.session.touch(GroupSession.chat);
   }
+
+  // ---- unread (Nutzer 04.11.: last message in the friends list, unread made clear, numbers on the tabs) ----
+
+  static const _kRead = 'collab.read';
+  Map<String, int>? _readCache;
+  Map<String, int> get _read => _readCache ??= {
+        for (final e in ((jsonDecode(prefs?.getString(_kRead) ?? '{}') as Map).entries)) '${e.key}': (e.value as num).toInt(),
+      };
+
+  /// Last message of a chat, or null.
+  ChatMessage? lastMessage(CollabGroup g) => messages(g).lastOrNull;
+
+  /// Messages of others since I last opened this chat. Before the first opening only the last day counts (joining an
+  /// old group does not show hundreds).
+  int unread(CollabGroup g) {
+    final me = identity?.pub;
+    final since = _read[g.secret.tag] ?? DateTime.now().subtract(const Duration(days: 1)).millisecondsSinceEpoch;
+    return messages(g).where((m) => m.from != me && m.at.millisecondsSinceEpoch > since).length;
+  }
+
+  /// The chat is open: everything up to now is read.
+  void markRead(CollabGroup g) {
+    final last = messages(g).lastOrNull?.at.millisecondsSinceEpoch ?? 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final v = last > now ? last : now;
+    if ((_read[g.secret.tag] ?? 0) >= v) return;
+    _read[g.secret.tag] = v;
+    prefs?.setString(_kRead, jsonEncode(_read));
+    notifyListeners();
+  }
+
+  int get unreadDirects => directs.fold(0, (a, g) => a + unread(g));
+  int get unreadGroups => groups.values.where((g) => !g.secret.direct).fold(0, (a, g) => a + unread(g));
 
   List<NoteInfo> notes(CollabGroup g) => Notes.list(g.session.doc(GroupSession.notes));
 
@@ -736,20 +875,171 @@ class CollabService extends ChangeNotifier {
 
   void _onStoreChanged() => _pushAll();
 
+  final Set<String> _thumbing = {};
+
+  /// A small preview of the scan for the others (Nutzer 04.11.: no thumbnails in the browser). Once per bill, in the
+  /// background; the bill goes out again with it.
+  Future<void> _makeThumb(Bill b) async {
+    final path = b.imagePath;
+    if (path == null || !_thumbing.add(b.id)) return;
+    try {
+      final bytes = await readImage(path);
+      if (bytes == null) return;
+      final src = img.decodeImage(bytes);
+      if (src == null) return;
+      final small = img.copyResize(src, width: 120);
+      b.thumb = base64.encode(img.encodeJpg(small, quality: 60));
+      store.upsert(b);
+    } catch (_) {
+      // no preview: the bill is shared without it
+    }
+  }
+
   void _pushAll() {
+    for (final b in store.bills) {
+      if (b.thumb == null && b.imagePath != null && b.group != null && groupByLocalName(b.group!) != null) unawaited(_makeThumb(b));
+    }
     for (final g in groups.values) {
       for (final b in store.bills) {
-        if (b.group != g.localName || b.trashedAt != null || b.read != BillRead.ok) continue;
+        // trashed bills go out too: the others move them to their trash (04.11.: they stayed there)
+        if (b.group != g.localName || b.read != BillRead.ok) continue;
         final id = GroupSession.bill(b.id);
         if (BillSync.write(g.session.doc(id), b)) g.session.touch(id);
       }
     }
   }
 
+  // ---- activity (bell) and changed bills (Nutzer 04.11.) ----
+
+  static const _kActivity = 'collab.activity', _kSeen = 'collab.activitySeen', _kChanged = 'collab.changedBills';
+  List<Activity>? _act;
+  List<Activity> get activity => _act ??= Activity.decode(prefs?.getString(_kActivity));
+  final Map<String, DateTime> _activeSince = {}; // group tag → when it started on this phone (first sync is not news)
+  final Map<String, Set<String>> _knownMembers = {};
+  final Map<String, Set<String>> _knownMessages = {};
+  final Map<String, Set<String>> _knownNotes = {}; // bill doc → note ids seen
+
+  /// New since the bell was opened.
+  int get unseenActivity {
+    final seen = prefs?.getInt(_kSeen) ?? 0;
+    return activity.where((a) => a.at.millisecondsSinceEpoch > seen).length;
+  }
+
+  void markActivitySeen() {
+    prefs?.setInt(_kSeen, DateTime.now().millisecondsSinceEpoch);
+    notifyListeners();
+  }
+
+  /// Bills someone else changed that I have not opened since (marked in the list).
+  Set<String> get changedBills => {...?prefs?.getStringList(_kChanged)};
+  void billSeen(String id) {
+    final c = changedBills;
+    if (c.remove(id)) {
+      prefs?.setStringList(_kChanged, c.toList());
+      notifyListeners();
+    }
+  }
+
+  /// Called for every new activity (system notification in the app, Benachrichtigungen settings).
+  void Function(Activity)? onActivity;
+
+  /// Which news count (Einstellungen → Benachrichtigungen, one place; Nutzer 04.11.). Default: all on.
+  static const _kNotify = 'collab.notifyOff';
+  bool notifies(ActivityKind k) => !(prefs?.getStringList(_kNotify) ?? const []).contains(k.name);
+  void setNotifies(ActivityKind k, bool on) {
+    final off = {...?prefs?.getStringList(_kNotify)};
+    on ? off.remove(k.name) : off.add(k.name);
+    prefs?.setStringList(_kNotify, off.toList());
+    notifyListeners();
+  }
+
+  void _note(Activity a) {
+    if (!notifies(a.kind == ActivityKind.billChanged ? ActivityKind.billNew : a.kind)) return;
+    final l = activity;
+    // several snapshots of one edit: one line, not five
+    if (a.ref != null && l.isNotEmpty && l.first.ref == a.ref && l.first.group == a.group && a.at.difference(l.first.at).abs() < const Duration(minutes: 2) &&
+        (l.first.kind == a.kind || l.first.kind == ActivityKind.billNew && a.kind == ActivityKind.billChanged)) {
+      if (l.first.kind == ActivityKind.billNew) return;
+      l.removeAt(0);
+    }
+    l.insert(0, a);
+    if (l.length > 150) l.removeRange(150, l.length);
+    prefs?.setString(_kActivity, Activity.encode(l));
+    onActivity?.call(a);
+  }
+
+  bool _quiet(CollabGroup g) => DateTime.now().difference(_activeSince[g.secret.tag] ?? DateTime(0)) < const Duration(seconds: 8);
+
+  String _groupLabel(CollabGroup g) => g.secret.direct ? directName(g) : g.localName;
+
+  void _trackActivity(CollabGroup g, String id) {
+    final me = identity?.pub;
+    final s = g.session;
+    if (id == GroupSession.members) {
+      final now = s.memberKeys;
+      final before = _knownMembers[g.secret.tag];
+      _knownMembers[g.secret.tag] = now;
+      if (before == null || _quiet(g) || g.secret.direct) return;
+      for (final k in now.difference(before)) {
+        if (k != me) _note(Activity(ActivityKind.joined, DateTime.now(), g.secret.tag, '${s.nameOf(k)} ist „${g.localName}“ beigetreten'));
+      }
+    } else if (id == GroupSession.chat) {
+      final msgs = messages(g);
+      final known = _knownMessages[g.secret.tag];
+      _knownMessages[g.secret.tag] = {for (final m in msgs) m.id};
+      if (known == null || _quiet(g)) return;
+      for (final m in msgs) {
+        if (!known.contains(m.id) && m.from != me) {
+          _note(Activity(ActivityKind.message, m.at, g.secret.tag, '${s.nameOf(m.from)} in „${_groupLabel(g)}“: ${m.text}', ref: m.id));
+        }
+      }
+    } else if (id.startsWith('bill:')) {
+      final doc = s.doc(id);
+      Entry? last;
+      for (final e in doc.entries) {
+        if (last == null || e.beats(last)) last = e;
+      }
+      final billId = id.substring(5);
+      // notes that mention me (Nutzer 04.11.: @user in a bill note notifies them)
+      final noteIds = doc.keys('n/').toSet();
+      final knownN = _knownNotes[id];
+      _knownNotes[id] = noteIds;
+      if (knownN != null && !_quiet(g)) {
+        final myName = (identity?.name ?? store.me).trim().toLowerCase();
+        for (final k in noteIds.difference(knownN)) {
+          final v = doc.get(k);
+          if (v is! Map || v['f'] == (identity?.name ?? '')) continue;
+          final ms = [for (final m in (v['m'] as List?) ?? const []) '$m'.toLowerCase()];
+          if (ms.contains(me) || myName.isNotEmpty && ms.contains(myName)) {
+            final p = doc.get('meta/purpose');
+            _note(Activity(ActivityKind.mention, DateTime.now(), g.secret.tag, '${v['f']} hat dich in „${p is String && p.isNotEmpty ? p : 'Bon'}“ erwähnt: ${v['x']}', ref: billId));
+          }
+        }
+      }
+      if (last == null || last.author == me || _quiet(g)) return;
+      final isNew = !store.bills.any((b) => b.id == billId);
+      final purpose = doc.get('meta/purpose');
+      final title = purpose is String && purpose.isNotEmpty ? purpose : 'Bon';
+      final who = s.nameOf(last.author);
+      _note(Activity(isNew ? ActivityKind.billNew : ActivityKind.billChanged, DateTime.now(), g.secret.tag,
+          isNew ? '$who hat „$title“ in „${g.localName}“ eingetragen' : '$who hat „$title“ geändert', ref: billId));
+      final c = changedBills..add(billId);
+      prefs?.setStringList(_kChanged, c.toList());
+    }
+  }
+
   void _onDocChanged(CollabGroup g, String id) {
     _scheduleSave();
+    _trackActivity(g, id);
     if (id == GroupSession.members || id == GroupSession.chat || id == GroupSession.notes || id.startsWith('profile:')) {
-      if (id == GroupSession.members) _ensureInvitations(g); // someone made me admin
+      if (id == GroupSession.members) {
+        _ensureInvitations(g); // someone made me admin
+        if (_laterOffers.isNotEmpty) {
+          final again = _laterOffers.toList();
+          _laterOffers.clear();
+          again.forEach(_onDirectOffer);
+        }
+      }
       notifyListeners();
       return;
     }
@@ -808,6 +1098,7 @@ class CollabService extends ChangeNotifier {
       s.cancel();
     }
     _accountWatch?.cancel();
+    _directWatch?.cancel();
     for (final g in groups.values) {
       g.rekeySub?.cancel();
       g.session.close();

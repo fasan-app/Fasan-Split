@@ -12,8 +12,11 @@ class NoteInfo {
 }
 
 class ChatMessage {
-  ChatMessage(this.id, this.from, this.text, this.at);
+  ChatMessage(this.id, this.from, this.text, this.at, {this.bill});
   final String id, from, text;
+
+  /// A bill mentioned in the message (Nutzer 04.11.: bills tagged in the chat); shown as a card.
+  final String? bill;
   final DateTime at;
 }
 
@@ -123,7 +126,7 @@ abstract final class Notes {
     final out = <ChatMessage>[];
     for (final k in doc.keys('c/')) {
       final v = doc.get(k);
-      if (v is Map) out.add(ChatMessage(k.substring(2), v['f'] as String? ?? '', v['x'] as String? ?? '', DateTime.fromMillisecondsSinceEpoch((v['t'] as num?)?.toInt() ?? 0)));
+      if (v is Map) out.add(ChatMessage(k.substring(2), v['f'] as String? ?? '', v['x'] as String? ?? '', DateTime.fromMillisecondsSinceEpoch((v['t'] as num?)?.toInt() ?? 0), bill: v['b'] as String?));
     }
     out.sort((a, b) => a.at != b.at ? a.at.compareTo(b.at) : a.id.compareTo(b.id));
     return out;
@@ -139,5 +142,5 @@ abstract final class Notes {
     return _lastSentMs;
   }
 
-  static void send(LwwDoc doc, String from, String text) => doc.set('c/${newUid()}', {'f': from, 'x': text, 't': _stamp()});
+  static void send(LwwDoc doc, String from, String text, {String? bill}) => doc.set('c/${newUid()}', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill});
 }

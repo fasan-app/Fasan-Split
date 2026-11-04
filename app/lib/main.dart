@@ -140,7 +140,31 @@ class _SplitAppState extends State<SplitApp> {
               supportedLocales: const [Locale('de'), Locale('en')],
               // Layer 0 (ground with gradient, grain, weave, light) behind all pages; FasanFilm adds grain over the whole
               // picture only if the user chooses „ganzes Bild“ (fasan_ui docs/GESTALTUNG.md §2). Both pause when saving.
-              builder: (context, child) => FasanBackdrop(child: FasanFilm(child: child ?? const SizedBox())),
+              // wide screens (laptop browser, tablet across, Nutzer 04.11.: „auf dem Desktop eine Katastrophe“): the app keeps
+              // a phone-like column in the middle on the shared background, like messengers in the browser; the system
+              // insets stay correct because MediaQuery is narrowed with the column.
+              builder: (context, child) => FasanBackdrop(
+                child: FasanFilm(
+                  child: LayoutBuilder(builder: (context, c) {
+                    const maxW = 600.0;
+                    final inner = child ?? const SizedBox();
+                    if (c.maxWidth <= maxW + 48) return inner;
+                    final mq = MediaQuery.of(context);
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: SizedBox(
+                            width: maxW,
+                            child: MediaQuery(data: mq.copyWith(size: Size(maxW, mq.size.height - 32)), child: inner),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
               home: widget.home ?? (demoPage.isEmpty ? const HomeScreen() : const DemoLauncher()),
             ),
           ),
