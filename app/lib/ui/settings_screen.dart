@@ -131,6 +131,18 @@ class SettingsScreen extends StatelessWidget {
         ...backupTiles(context),
         // one place for notifications (Nutzer 04.11.: no contradicting settings hidden in sub menus)
         head(t.de ? 'Benachrichtigungen' : 'Notifications'),
+        if (deviceNotifier != null) const _DeviceNotifyTile(),
+        SwitchListTile(
+          secondary: const Icon(Icons.visibility_outlined),
+          title: TitleHelp(
+            t.de ? 'Online-Status und „gelesen“ teilen' : 'Share online status and “read”',
+            t.de
+                ? 'An: Deine Gruppen und Freunde sehen, ob du gerade online bist, wann zuletzt, und ob du ihre Nachrichten gelesen hast. Aus: Nichts davon geht hinaus – und du siehst es bei den anderen auch nicht.'
+                : 'On: your groups and friends see whether you are online, when you were last, and whether you read their messages. Off: none of it goes out – and you do not see it from others either.',
+          ),
+          value: CollabScope.of(context).presence,
+          onChanged: (v) => CollabScope.read(context).presence = v,
+        ),
         for (final (k, de, en) in [
           (ActivityKind.message, 'Nachrichten', 'Messages'),
           (ActivityKind.mention, 'Erwähnungen in Notizen', 'Mentions in notes'),
@@ -268,6 +280,41 @@ class SettingsScreen extends StatelessWidget {
           child: Text(t.setFewNote, style: Theme.of(context).textTheme.bodySmall!.copyWith(color: l.textMuted)),
         ),
       ]),
+    );
+  }
+}
+
+
+/// „Auf dem Handy anzeigen“: asks for the permission only here (Android 13+, browsers).
+class _DeviceNotifyTile extends StatefulWidget {
+  const _DeviceNotifyTile();
+
+  @override
+  State<_DeviceNotifyTile> createState() => _DeviceNotifyTileState();
+}
+
+class _DeviceNotifyTileState extends State<_DeviceNotifyTile> {
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context), n = deviceNotifier!;
+    return SwitchListTile(
+      secondary: const Icon(Icons.notifications_active_outlined),
+      title: TitleHelp(
+        t.de ? 'Auf dem Gerät anzeigen' : 'Show on the device',
+        t.de
+            ? 'Solange die App läuft oder im Hintergrund ist, zeigt dein Gerät Neuigkeiten als Benachrichtigung. Ist die App ganz geschlossen, siehst du sie beim nächsten Öffnen in der Glocke – Fasan nutzt keinen Push-Dienst von Google.'
+            : 'While the app runs or is in the background, your device shows news as notifications. When the app is fully closed you see them in the bell next time – Fasan uses no Google push service.',
+      ),
+      value: n.enabled,
+      onChanged: (v) async {
+        final messenger = ScaffoldMessenger.of(context);
+        final ok = await n.setEnabled(v);
+        if (!mounted) return;
+        setState(() {});
+        if (v && !ok) {
+          messenger.showSnackBar(SnackBar(content: Text(t.de ? 'Benachrichtigungen sind in den Geräte-Einstellungen gesperrt.' : 'Notifications are blocked in the device settings.')));
+        }
+      },
     );
   }
 }

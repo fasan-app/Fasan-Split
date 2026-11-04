@@ -157,6 +157,7 @@ class CollabService extends ChangeNotifier {
       await ensureIdentity();
       await _syncName();
     }
+    _beat(); // online now (when the app is in front)
     notifyListeners();
   }
 
@@ -845,7 +846,76 @@ class CollabService extends ChangeNotifier {
     if ((_read[g.secret.tag] ?? 0) >= v) return;
     _read[g.secret.tag] = v;
     prefs?.setString(_kRead, jsonEncode(_read));
+    // „gelesen“ for the others (only with presence on)
+    if (presence) {
+      g.session.doc(GroupSession.profile(g.session.me.pub)).set('read', v);
+      g.session.touch(GroupSession.profile(g.session.me.pub));
+    }
     notifyListeners();
+  }
+
+  // ---- presence and read receipts (Nutzer 04.11.: online / zuletzt online, abschaltbar; gelesen) ----
+
+  static const _kPresence = 'collab.presence';
+
+  /// Online status and read marks are shared (default). Off: nothing of mine goes out, and others' are not shown either.
+  bool get presence => prefs?.getBool(_kPresence) ?? true;
+  set presence(bool v) {
+    prefs?.setBool(_kPresence, v);
+    if (!v) {
+      for (final g in groups.values) {
+        final d = g.session.doc(GroupSession.profile(g.session.me.pub));
+        d.set('seen', null);
+        d.set('read', null);
+        g.session.touch(GroupSession.profile(g.session.me.pub));
+      }
+    } else {
+      _beat();
+    }
+    notifyListeners();
+  }
+
+  Timer? _heart;
+  bool _front = false;
+
+  /// The app came to the front or left it (main.dart): while in front „seen“ is renewed every 3 minutes.
+  void setForeground(bool front) {
+    _front = front;
+    _heart?.cancel();
+    if (front) {
+      _beat();
+      _heart = Timer.periodic(const Duration(minutes: 3), (_) => _beat());
+    }
+  }
+
+  void _beat() {
+    if (!presence || !_front) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (final g in groups.values) {
+      g.session.doc(GroupSession.profile(g.session.me.pub)).set('seen', now);
+      g.session.touch(GroupSession.profile(g.session.me.pub));
+    }
+  }
+
+  /// When [pub] was last in the app (newest over all shared groups); null if unknown or presence is off.
+  DateTime? lastSeen(String pub) {
+    if (!presence) return null;
+    int? best;
+    for (final g in groups.values) {
+      final v = g.session.doc(GroupSession.profile(pub)).get('seen');
+      if (v is num && (best == null || v > best)) best = v.toInt();
+    }
+    return best == null ? null : DateTime.fromMillisecondsSinceEpoch(best);
+  }
+
+  /// Seen within the last 4 minutes (one heartbeat plus slack).
+  bool isOnline(String pub) => lastSeen(pub)?.isAfter(DateTime.now().subtract(const Duration(minutes: 4))) ?? false;
+
+  /// Until when [pub] has read this chat; null if unknown or presence is off.
+  DateTime? readUntil(CollabGroup g, String pub) {
+    if (!presence) return null;
+    final v = g.session.doc(GroupSession.profile(pub)).get('read');
+    return v is num ? DateTime.fromMillisecondsSinceEpoch(v.toInt()) : null;
   }
 
   int get unreadDirects => directs.fold(0, (a, g) => a + unread(g));
@@ -1099,6 +1169,7 @@ class CollabService extends ChangeNotifier {
     }
     _accountWatch?.cancel();
     _directWatch?.cancel();
+    _heart?.cancel();
     for (final g in groups.values) {
       g.rekeySub?.cancel();
       g.session.close();

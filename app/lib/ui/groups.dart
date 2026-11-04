@@ -415,7 +415,14 @@ class FriendsPage extends StatelessWidget {
           ? (f.last!.from == collab.identity?.pub ? (de ? 'Du: ' : 'You: ') : '') + f.last!.text
           : [
               if (f.bills > 0) t.billsCount(f.bills),
-              if (hasChat) de ? 'in der App' : 'in the app' else de ? 'nur in Bons' : 'only in receipts',
+              if (f.pub != null && collab.isOnline(f.pub!))
+                'online'
+              else if (f.pub != null && collab.lastSeen(f.pub!) != null)
+                (de ? 'zuletzt ${when(collab.lastSeen(f.pub!)!)}' : 'last seen ${when(collab.lastSeen(f.pub!)!)}')
+              else if (hasChat)
+                de ? 'in der App' : 'in the app'
+              else
+                de ? 'nur in Bons' : 'only in receipts',
             ].join(' · ');
       final card = Material(
         color: l.surfaceAlt,
@@ -428,7 +435,16 @@ class FriendsPage extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s + 2),
             child: Row(children: [
-              FasanAvatar(name: f.name, index: f.color, size: 44),
+              Stack(clipBehavior: Clip.none, children: [
+                FasanAvatar(name: f.name, index: f.color, size: 44),
+                // online now (Nutzer 04.11.; off in Einstellungen → Privatsphäre)
+                if (f.pub != null && collab.isOnline(f.pub!))
+                  Positioned(
+                    right: -1,
+                    bottom: -1,
+                    child: Container(width: 13, height: 13, decoration: BoxDecoration(color: Colors.green.shade500, shape: BoxShape.circle, border: Border.all(color: l.surfaceAlt, width: 2))),
+                  ),
+              ]),
               const SizedBox(width: FasanSpace.m),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

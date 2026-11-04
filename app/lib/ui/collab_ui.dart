@@ -921,9 +921,18 @@ class _ChatScreenState extends State<ChatScreen> {
               group: widget.group,
               docId: GroupSession.members,
               builder: (context) {
-                final g = widget.group, c = CollabScope.read(context);
+                final g = widget.group, c = CollabScope.of(context); // rebuilds with presence changes
                 final n = g.secret.direct ? c.directName(g) : g.localName;
-                return Text(n.isEmpty ? t.chatTitle : n);
+                final peer = g.secret.direct ? c.directPeer(g) : null;
+                final seen = peer == null ? null : c.lastSeen(peer);
+                return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text(n.isEmpty ? t.chatTitle : n),
+                  if (peer != null && (c.isOnline(peer) || seen != null))
+                    Text(
+                      c.isOnline(peer) ? 'online' : (t.de ? 'zuletzt online ${seen!.day}.${seen.month}. ${seen.hour.toString().padLeft(2, '0')}:${seen.minute.toString().padLeft(2, '0')}' : 'last seen ${seen!.day}.${seen.month}. ${seen.hour.toString().padLeft(2, '0')}:${seen.minute.toString().padLeft(2, '0')}'),
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                ]);
               })),
       body: Column(children: [
         Expanded(
@@ -931,7 +940,7 @@ class _ChatScreenState extends State<ChatScreen> {
             group: widget.group,
             docId: GroupSession.chat,
             builder: (context) {
-              final s = CollabScope.read(context), me = s.identity?.pub;
+              final s = CollabScope.of(context), me = s.identity?.pub; // read marks of others rebuild too
               final msgs = s.messages(widget.group);
               // open chat = read (after this frame: marking notifies)
               WidgetsBinding.instance.addPostFrameCallback((_) => s.markRead(widget.group));
@@ -964,6 +973,19 @@ class _ChatScreenState extends State<ChatScreen> {
                             _ => Text(t.de ? '(Bon nicht verfügbar)' : '(receipt not available)', style: tt.bodySmall),
                           },
                         if (m.text.isNotEmpty && m.bill == null) Text(m.text, style: tt.bodyMedium),
+                        // ✓ sent, ✓✓ read (direct: the friend; group: how many have read it) – only with presence on
+                        if (mine)
+                          Builder(builder: (context) {
+                            final readers = [
+                              for (final k in widget.group.session.memberKeys)
+                                if (k != me && (s.readUntil(widget.group, k)?.millisecondsSinceEpoch ?? 0) >= m.at.millisecondsSinceEpoch) k,
+                            ];
+                            final read = readers.isNotEmpty;
+                            return Row(mainAxisSize: MainAxisSize.min, children: [
+                              Icon(read ? Icons.done_all_rounded : Icons.done_rounded, size: 14, color: read ? l.accent : l.textMuted),
+                              if (read && !widget.group.secret.direct) ...[const SizedBox(width: 3), Text(t.de ? 'gelesen von ${readers.length}' : 'read by ${readers.length}', style: tt.labelSmall)],
+                            ]);
+                          }),
                       ]),
                     ),
                   );

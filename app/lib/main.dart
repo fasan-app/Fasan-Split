@@ -14,6 +14,7 @@ import 'collab/pairing.dart';
 import 'ui/pairing_ui.dart';
 import 'web_platform.dart';
 import 'collab/service.dart';
+import 'state/notify.dart';
 import 'state/store.dart';
 import 'ui/collab_ui.dart';
 import 'ui/demo.dart';
@@ -41,11 +42,29 @@ Future<void> main() async {
   ui.start();
   // Collaboration: keys in the Android Keystore; the service only connects to relays if there is a group (Beschluss 03.11.).
   final collab = CollabService(store: store, vault: browserStorageWorks ? const SecureVault() : MemoryVault(), prefs: await SharedPreferences.getInstance());
+  // news as device notifications while the app is in the background (state/notify.dart)
+  deviceNotifier = DeviceNotifier(await SharedPreferences.getInstance());
+  collab.onActivity = (a) => deviceNotifier?.show(a);
+  unawaited(deviceNotifier!.init());
+  WidgetsBinding.instance.addObserver(_Foreground(collab));
   runApp(SplitApp(store: store, ui: ui, collab: collab, deepLinks: true));
   unawaited(collab.init());
 }
 
 final navigatorKey = GlobalKey<NavigatorState>();
+
+/// Device notifications (null in tests).
+DeviceNotifier? deviceNotifier;
+
+/// Tells the collaboration when the app is in front (online status, CollabService.setForeground).
+class _Foreground with WidgetsBindingObserver {
+  _Foreground(this.c) {
+    c.setForeground(true);
+  }
+  final CollabService c;
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) => c.setForeground(state == AppLifecycleState.resumed);
+}
 
 /// True when this start came from an invitation link (browser: handed over by join/index.html).
 bool startedWithInvite = false;

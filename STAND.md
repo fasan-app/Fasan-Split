@@ -337,12 +337,12 @@ Alles Unerledigte aus dem Verlauf unten steht hier. Erledigtes wandert mit Datum
 Einladen, Gruppen und Freunde blockiert (Nutzer 04.11.: „muss sofort funktionieren“), dann Bedienung, dann Neues.
 
 Gruppen, Einladen, Freunde
-0. System-Benachrichtigungen (Nutzer 04.11.: Einladung angenommen, neue Bons, Nachrichten) – In-App gebaut, Handy-Benachrichtigung offen; Ablauf-Prüfung aller Bildschirme auf umständliches Verhalten.
+0. System-Benachrichtigungen – ERLEDIGT 04.11. (Gerät nicht geprüft); offen: Ablauf-Prüfung aller Bildschirme auf umständliches Verhalten.
 1. Auf dem S23 prüfen: offener Einladungslink, Freundeslink + Chat, Bon-Status („Eintragen“, „ausgleichen“), Schritt 4 „Übersicht“.
 2. Echte In-App-Browser (WhatsApp, Instagram) und iPhone/Safari: nicht geprüft (nachgestellt nur ohne Service Worker / ohne Speicher).
 3. Browser-E2E: Bon im Browser bearbeiten (heute nur Android↔Android-Test); „schon Mitglied“ → direkt in die Gruppe; Relay nicht erreichbar; abgelaufener Link mit klarer Meldung.
-4. Online / zuletzt online bei Freunden (verschlüsselter Zeitstempel, in Einstellungen aus = auch keine fremden Zeiten).
-5. Messenger: gelesen, schreibt gerade, Profilbild/Status, @Bon im Chat, anpinnen, stumm, Privatnachricht in der Gruppe (eigene Verschlüsselung je Empfänger – Entwurf mit dem Nutzer).
+4. Online / zuletzt online – ERLEDIGT 04.11. (presence_test).
+5. Messenger: gelesen ERLEDIGT 04.11.; offen: schreibt gerade, Profilbild/Status, @Bon im Chat, anpinnen, stumm, Privatnachricht in der Gruppe (eigene Verschlüsselung je Empfänger – Entwurf mit dem Nutzer).
 6. Gruppe verlassen auf allen eigenen Geräten; Mitglieder von Hand auch im Live-Teil abgleichen; verknüpfte Person umbenennen.
 7. Konto: Passkey-Messprobe auf dem S23, danach bauen; soziale Wiederherstellung (2 von 3) als Entwurf.
 
@@ -383,6 +383,8 @@ Nacht 04.11. (Einladung im Browser, Bon-Status, Freunde):
   - Bon schließen führt zurück, wo er geöffnet wurde (Gruppe, Chat), nicht mehr zur Startseite. Gruppenzeile Mitglieder/Notizen/Chat kompakt. Breite Bildschirme: Spalte 600 px in der Mitte.
   - Offen: System-Benachrichtigungen auf dem Handy (flutter_local_notifications, BSD-3; Android-Erlaubnis erst beim Einschalten; ganz beendete App: erst beim Öffnen – ohne Google-Push), gelesen-Häkchen, schreibt gerade, online/zuletzt online, Antworten/Reaktionen; weitere Bedien-Prüfung aller Abläufe auf „komisches Verhalten“.
 - Mehrere Zahler (Nutzer 04.11., Test `payers_test.dart`, nicht auf dem Gerät): Schritt 4 „Mehrere haben bezahlt“, Beträge je Person (gleiche Teile vorgeschlagen), Eintragen erst, wenn die Summe passt; Überweisungen aus Saldo je Person (größter Schuldner an größten Gläubiger, exakte Cent); `meta/paid` im Gruppenabgleich. Ferreiras 7,90: wurde rechnerisch schon anteilig verteilt, stand aber nur als rote Differenz da; jetzt beim Scannen immer eigene Zeile (5/10/12/15 % der Posten → „Bedienung x %“, sonst „Ohne Postenzeile“), für alte Bons Knopf in Schritt 1.
+- Benachrichtigungen auf dem Gerät (Punkt 0, nicht auf dem Gerät geprüft): `flutter_local_notifications` 22.3.3 (BSD-3), `state/notify.dart`; Einstellungen → Benachrichtigungen → „Auf dem Gerät anzeigen“ fragt erst dann die Erlaubnis (Android 13+, Browser); zeigt Neuigkeiten, solange die App läuft oder im Hintergrund ist und nicht vorne; ganz geschlossen: nichts (kein Google-Push), dann in der Glocke. CI-Bau mit AGP 9.1.0/compileSdk 36, Desugaring war schon an.
+- Online / zuletzt online und „gelesen“ (Test `presence_test.dart`): Profil-Dokument je Gruppe `seen` (alle 3 min, nur wenn die App vorne ist) und `read`; grüner Punkt in der Freundesliste, „zuletzt …“, im Chat „online“/„zuletzt online“, ✓/✓✓ und in Gruppen „gelesen von n“. Einstellungen → „Online-Status und gelesen teilen“: aus = nichts geht hinaus und man sieht es bei anderen nicht.
 - To-do Nutzer 04.11.: GitHub-Konto für fasan@christopherziehm.de anlegen (dann signierte „Verified“-Commits möglich).
 - Wunsch Nutzer 04.11., später: Freunde „online“ / „zuletzt online“ (verschlüsselter Zeitstempel je Gruppe, in Einstellungen abschaltbar; aus = auch keine fremden Zeiten), weitere Messenger-Funktionen (gelesen, schreibt gerade, Profilbild/Status, Erwähnungen, stumm, anpinnen).
 
