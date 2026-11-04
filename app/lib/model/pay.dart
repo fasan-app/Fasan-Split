@@ -7,8 +7,10 @@
 // error correction M. Layout from the search results and the guideline as known – NOT checked against the EPC PDF in
 // this session (host not reachable); check with a banking app.
 // PayPal.Me: paypal.me/<name>/<amount><ISO currency> (PayPal help „What is PayPal.Me?“; name A–Z, 0–9, ≤20).
-// Bitcoin: BIP 21 `bitcoin:<address>`; Monero: `monero:<address>` (monero-project docs/URI_SCHEME.md). No amount for
-// crypto: Fasan has no exchange rate for them.
+// Bitcoin: BIP 21/BIP 321 (read 04.11. from github.com/bitcoin/bips): `bitcoin:<address>?label=<name>`, amount would be
+// decimal BTC with a dot. BIP 321: an on-chain address in a URI is a one-time instruction, not a contact detail – a
+// reusable Lightning offer (BOLT 12, `lno=`) is the better thing to share; the UI says so. Monero (monero-project
+// docs/URI_SCHEME.md, read 04.11.): `monero:<address>?recipient_name=<name>`. No amount for crypto: Fasan has no rate.
 
 class PayInfo {
   PayInfo({this.iban = '', this.holder = '', this.paypal = '', this.bitcoin = '', this.monero = ''});
@@ -78,5 +80,7 @@ String epcPayload({required String name, required String iban, required int cent
 /// PayPal.Me link with amount and currency.
 Uri paypalUri(String name, int cents, String currency) => Uri.parse('https://paypal.me/$name/${_dot(cents)}${currency.toUpperCase()}');
 
-Uri bitcoinUri(String address) => Uri.parse('bitcoin:${address.trim()}');
-Uri moneroUri(String address) => Uri.parse('monero:${address.trim()}');
+Uri bitcoinUri(String address, {String label = ''}) =>
+    Uri.parse('bitcoin:${address.trim()}${label.isEmpty ? '' : '?label=${Uri.encodeQueryComponent(label)}'}');
+Uri moneroUri(String address, {String name = ''}) =>
+    Uri.parse('monero:${address.trim()}${name.isEmpty ? '' : '?recipient_name=${Uri.encodeQueryComponent(name)}'}');

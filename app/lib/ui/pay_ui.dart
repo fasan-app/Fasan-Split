@@ -67,7 +67,10 @@ class _PaySetupScreenState extends State<PaySetupScreen> {
         const SizedBox(height: FasanSpace.l),
         TextField(controller: _paypal, decoration: d(de ? 'PayPal.Me-Name' : 'PayPal.Me name', de ? 'Nur der Name aus paypal.me/NAME' : 'Only the name from paypal.me/NAME')),
         const SizedBox(height: FasanSpace.l),
-        TextField(controller: _btc, decoration: d(de ? 'Bitcoin-Adresse (optional)' : 'Bitcoin address (optional)')),
+        TextField(
+            controller: _btc,
+            decoration: d(de ? 'Bitcoin-Adresse (optional)' : 'Bitcoin address (optional)',
+                de ? 'Eine feste Adresse verknüpft Zahlungen miteinander (BIP 321) – besser eine eigene nur für Fasan' : 'A fixed address links payments (BIP 321) – better one only for Fasan')),
         const SizedBox(height: FasanSpace.s),
         TextField(controller: _xmr, decoration: d(de ? 'Monero-Adresse (optional)' : 'Monero address (optional)')),
         const SizedBox(height: FasanSpace.xl),
@@ -120,9 +123,9 @@ Future<void> payFlow(BuildContext context, {required String name, String? pub, r
             if (info.paypal.isNotEmpty)
               ListTile(leading: const Icon(Icons.account_balance_wallet_outlined), title: Text(de ? 'Mit PayPal bezahlen' : 'Pay with PayPal'), subtitle: Text('paypal.me/${info.paypal} · $amount'), onTap: () => open(paypalUri(info.paypal, cents, currency))),
             if (info.bitcoin.isNotEmpty)
-              ListTile(leading: const Icon(Icons.currency_bitcoin_rounded), title: Text(de ? 'Bitcoin-Wallet öffnen' : 'Open Bitcoin wallet'), subtitle: Text(de ? 'Betrag in der Wallet umrechnen' : 'Convert the amount in the wallet'), onTap: () => open(bitcoinUri(info.bitcoin))),
+              ListTile(leading: const Icon(Icons.currency_bitcoin_rounded), title: Text(de ? 'Bitcoin-Wallet öffnen' : 'Open Bitcoin wallet'), subtitle: Text(de ? 'Betrag in der Wallet umrechnen' : 'Convert the amount in the wallet'), onTap: () => open(bitcoinUri(info.bitcoin, label: name))),
             if (info.monero.isNotEmpty)
-              ListTile(leading: const Icon(Icons.lock_outline_rounded), title: Text(de ? 'Monero-Wallet öffnen' : 'Open Monero wallet'), subtitle: Text(de ? 'Betrag in der Wallet umrechnen' : 'Convert the amount in the wallet'), onTap: () => open(moneroUri(info.monero))),
+              ListTile(leading: const Icon(Icons.lock_outline_rounded), title: Text(de ? 'Monero-Wallet öffnen' : 'Open Monero wallet'), subtitle: Text(de ? 'Betrag in der Wallet umrechnen' : 'Convert the amount in the wallet'), onTap: () => open(moneroUri(info.monero, name: name))),
           ],
           const SizedBox(height: FasanSpace.s),
           Text(de ? 'Danach den Bon oder die Gruppe „ausgleichen“.' : 'Afterwards “settle” the receipt or the group.', style: Theme.of(ctx).textTheme.bodySmall),

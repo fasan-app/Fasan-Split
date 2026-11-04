@@ -73,3 +73,14 @@ Fehlt, nach Nutzen sortiert:
 - I2P: geti2p.net/en/docs/api/sam
 - Fediverse-Teilen: palant.info/2023/10/19/implementing-a-share-on-mastodon-button-for-a-blog/
 - Nostr über Tor: d-central.tech/nostr-relay-directory/
+
+## Nachtrag 04.11. spät: Primärquellen gelesen (raw.githubusercontent.com)
+
+- BIP 21: `bitcoin:` groß/klein egal, `amount` in dezimalen BTC mit Punkt, `label`, `message`. BIP 321 (ersetzt BIP 21):
+  Abfrageschlüssel groß/klein egal, `lightning` (BOLT 11), `lno` (BOLT 12), Adresse darf leer sein; eine On-Chain-Adresse
+  in einer URI ist eine Einmal-Anweisung, keine dauerhafte Kontaktangabe → im Profil besser eigene Adresse/Lightning-Angebot.
+- Monero `docs/URI_SCHEME.md`: `monero:<adresse>`, `tx_amount`, `recipient_name`, `tx_description`; `tx_payment_id` veraltet.
+- Orbot (guardianproject/orbot-android): `HTTP_PROXY_PORT_DEFAULT = "8118"`, `SOCKS_PROXY_PORT_DEFAULT = "9050"`,
+  Tor-Konfiguration `HTTPTunnelPort` (CONNECT-Tunnel) – passt zum Tor-Schalter.
+- Passkey PRF: weiterhin keine developer.android.com-Seite; nur das experimentelle Paket maktub_passkey (pub.dev).
+- Noch gesperrt: EPC-PDF, docs.joinmastodon.org, nostr.watch, api.dart.dev. Gesamtliste: Fasan `NACHPRUEFEN.md`.
