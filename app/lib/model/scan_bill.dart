@@ -47,7 +47,8 @@ Future<Bill> billFromScan(ScanResultData r, Uint8List photo,
     final euros = '${diff ~/ 100}', cents = (diff % 100).toString().padLeft(2, '0');
     final amount = RegExp('(^|\\s)$euros[.,]$cents(\\s|\$)');
     final zeroRow = r.lines.map((l) => l.$1).any((t) => RegExp(r'^\s*0[.,]00\b').hasMatch(t) && amount.hasMatch(t));
-    if (zeroRow) b.its.add(BillItem(name: 'Ohne Postenzeile (0 % MwSt.)', amount: diff, sure: false, note: 'aus der Steuertabelle'));
+    // shared like the other items (whoever had more pays more of it), not evenly
+    if (zeroRow) b.its.add(BillItem(name: 'Ohne Postenzeile (0 % MwSt.)', amount: diff, sure: false, note: 'aus der Steuertabelle · anteilig', proportional: true));
   }
   return b;
 }

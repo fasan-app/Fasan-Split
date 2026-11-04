@@ -114,6 +114,7 @@ class _CurrencyChipState extends State<CurrencyChip> {
     final home = store.homeCurrency, code = b.currency ?? home;
     final rt = rateText(b, home, t.de);
     return ActionChip(
+      visualDensity: VisualDensity.compact,
       avatar: _busy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : Text(currencySign(code)),
       label: Text(code == home ? code : (rt.isEmpty ? '$code · ${t.de ? 'Kurs fehlt' : 'rate missing'}' : '$code · $rt')),
       onPressed: _busy ? null : _pick,

@@ -47,6 +47,22 @@ class ScanQueue extends ChangeNotifier {
   }
 
   /// Reads a failed or interrupted bill again from its saved photo.
+  /// The queue of the start page (HomeScreen); bill screens use it for „Bon neu lesen“.
+  static ScanQueue? current;
+
+  /// Bills read again on purpose: what the user set stays (people, payer, group, category, currency, name).
+  final Map<String, Bill> _keep = {};
+
+  /// Reads a finished or started bill again from its original photo (Nutzer 04.11.: newer recognition for old bills).
+  /// Items and their assignment are replaced; people, payer, group, category, currency and the name stay.
+  Future<void> reread(Bill b, Uint8List photo) {
+    _keep[b.id] = Bill.fromJson(b.toJson());
+    b
+      ..done = false
+      ..step = 1;
+    return retry(b, photo);
+  }
+
   Future<void> retry(Bill b, Uint8List photo) async {
     b.read = BillRead.queued;
     store.upsert(b);
@@ -125,6 +141,23 @@ class ScanQueue extends ChangeNotifier {
             }
             final b = await billFromScan(e.result, photo, id: placeholder.id, group: placeholder.group, created: placeholder.created, saveOriginal: false);
             b.originalPath = placeholder.originalPath;
+            final k = _keep.remove(placeholder.id);
+            if (k != null) {
+              b.ps
+                ..clear()
+                ..addAll(k.ps);
+              b
+                ..payer = k.payer
+                ..group = k.group
+                ..category = k.category ?? b.category
+                ..currency = k.currency
+                ..rate = k.rate
+                ..rateDate = k.rateDate
+                ..order = k.order
+                ..refund = k.refund
+                ..receiptDate = b.receiptDate ?? k.receiptDate;
+              if (k.purpose.isNotEmpty) b.purpose = k.purpose;
+            }
             final typed = store.bills.where((x) => x.id == placeholder.id).firstOrNull?.purpose ?? '';
             if (typed.isNotEmpty && typed != _autoPurpose[placeholder.id]) b.purpose = typed; // the user renamed it meanwhile
             _autoPurpose.remove(placeholder.id);

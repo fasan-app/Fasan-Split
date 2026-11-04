@@ -41,7 +41,7 @@ class BillTile extends StatelessWidget {
     final l = FasanLook.of(context);
     final orig = bill.originalPath;
     final photo = imageExists(orig)
-        ? Image(image: ResizeImage(imageProvider(orig!), width: 160), fit: BoxFit.cover)
+        ? Image(image: ResizeImage(imageProvider(orig!), width: 160), fit: BoxFit.cover, gaplessPlayback: true)
         : ColoredBox(color: l.surfaceAlt, child: Icon(bill.read == BillRead.failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted));
     final live = bill.read == BillRead.reading ? queue.liveFor(bill.id) : null;
     return ClipRRect(
@@ -104,7 +104,7 @@ class BillTile extends StatelessWidget {
               else if (imageExists(bill.imagePath))
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
-                  child: Image(image: ResizeImage(imageProvider(bill.imagePath!), width: 120), width: 40, height: 52, fit: BoxFit.cover),
+                  child: Image(image: ResizeImage(imageProvider(bill.imagePath!), width: 120), width: 40, height: 52, fit: BoxFit.cover, gaplessPlayback: true),
                 )
               else
                 SizedBox(width: 40, height: 52, child: Icon(failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted)),

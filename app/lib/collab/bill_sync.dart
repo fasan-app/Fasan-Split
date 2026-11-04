@@ -42,7 +42,7 @@ abstract final class BillSync {
     final iuids = {for (final it in b.its) it.uid};
     for (var n = 0; n < b.its.length; n++) {
       final it = b.its[n];
-      set('i/${it.uid}', {'name': it.name, 'amount': it.amount, 'qty': it.qty, 'note': it.note, 'pos': n});
+      set('i/${it.uid}', {'name': it.name, 'amount': it.amount, 'qty': it.qty, 'note': it.note, 'pos': n, if (it.proportional) 'prop': true});
       for (var i = 0; i < b.ps.length; i++) {
         final w = it.shares[i];
         set('s/${it.uid}/${b.ps[i].uid}', w != null && w > 0 ? w : null);
@@ -93,7 +93,8 @@ abstract final class BillSync {
         ..name = v['name'] as String? ?? ''
         ..amount = (v['amount'] as num?)?.toInt() ?? 0
         ..qty = (v['qty'] as num?)?.toInt() ?? 1
-        ..note = v['note'] as String?;
+        ..note = v['note'] as String?
+        ..proportional = v['prop'] == true;
       final shares = <int, double>{};
       for (final sk in doc.keys('s/$uid/')) {
         final pi = index[sk.split('/').last];

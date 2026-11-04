@@ -198,7 +198,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "1202b7f82fd7138992e6db4a8591f3da2f5e1977"
+      resolved-ref: f42035985ae25b763c9374afd372f212de3c4c39
       url: "https://github.com/fasan-app/fasan_ui.git"
     source: git
     version: "0.1.0"

@@ -50,6 +50,7 @@ class BillItem {
     this.note,
     Map<int, double>? shares,
     String? uid,
+    this.proportional = false,
   })  : shares = shares ?? {},
         uid = uid ?? newUid();
 
@@ -73,6 +74,10 @@ class BillItem {
 
   /// person index → weight
   Map<int, double> shares;
+
+  /// Shared like the other items, not by own weights: whoever had more pays more of it (VAT/service without an item
+  /// line, Nutzer 04.11.: „jemand der weniger hatte muss auch weniger Steuern zahlen“). [shares] is ignored then.
+  bool proportional;
 
   // Leading till words in front of the name ("2 Uni", "1 Unj", "Un."): OCR variants of „Unidade“ (PT tills).
   static final _tillPrefix = RegExp(r'^\s*(\d+([.,]00)?\s+)?(u[nm][il1tfjíìĩ|!]?|und|unid|unidade)(?![A-Za-zÀ-ÿ])\.?\s+', caseSensitive: false);
@@ -115,7 +120,7 @@ class BillItem {
   /// Receipt name shown small under the plain name (only when it differs).
   String? get subtitle => food != null ? cleanName : null;
 
-  bool get assigned => shares.values.any((w) => w > 0);
+  bool get assigned => proportional || shares.values.any((w) => w > 0);
 
   Map<String, Object?> toJson() => {
         'uid': uid,
@@ -130,6 +135,7 @@ class BillItem {
         'snippet': snippet == null ? null : base64Encode(snippet!),
         'note': note,
         'shares': {for (final e in shares.entries) '${e.key}': e.value},
+        if (proportional) 'prop': true,
       };
 
   static BillItem fromJson(Map<String, dynamic> j) => BillItem(
@@ -145,6 +151,7 @@ class BillItem {
         snippet: j['snippet'] == null ? null : base64Decode(j['snippet'] as String),
         note: j['note'] as String?,
         shares: {for (final e in ((j['shares'] as Map?) ?? const {}).entries) int.parse(e.key as String): (e.value as num).toDouble()},
+        proportional: j['prop'] == true,
       );
 }
 
@@ -292,11 +299,32 @@ class Bill {
   static Map<int, int> split(int amount, Map<int, double> shares, {int rotate = 0}) => SplitMath.split(amount, shares, rotate: rotate);
 
   /// What each person consumed (cents). Unassigned items are not counted (shown separately).
-  Map<int, int> perPerson() {
+  /// What each person pays of item [n]. Proportional items follow the other items (largest remainders, exact cents).
+  Map<int, int> partsOf(int n) {
+    final it = its[n];
+    if (!it.proportional) return split(it.amount, it.shares, rotate: n);
+    final base = _baseSums();
+    if (!base.values.any((v) => v > 0)) return const {};
+    return SplitMath.spread(it.amount, base, rotate: n);
+  }
+
+  Map<int, int> _baseSums() {
     final out = {for (var i = 0; i < ps.length; i++) i: 0};
     for (var n = 0; n < its.length; n++) {
       final it = its[n];
+      if (it.proportional) continue;
       for (final e in split(it.amount, it.shares, rotate: n).entries) {
+        if (e.key < ps.length) out[e.key] = out[e.key]! + e.value;
+      }
+    }
+    return out;
+  }
+
+  Map<int, int> perPerson() {
+    final out = _baseSums();
+    for (var n = 0; n < its.length; n++) {
+      if (!its[n].proportional) continue;
+      for (final e in partsOf(n).entries) {
         if (e.key < ps.length) out[e.key] = out[e.key]! + e.value;
       }
     }
@@ -329,7 +357,9 @@ class Bill {
 
   /// Sum of the cents that are assigned to someone (plus the spread difference when anything is assigned).
   int get expectedShared {
-    final assigned = its.where((p) => p.assigned && p.shares.keys.any((k) => k < ps.length && (p.shares[k] ?? 0) > 0)).fold<int>(0, (a, p) => a + p.amount);
+    final shared = its.where((p) => !p.proportional && p.assigned && p.shares.keys.any((k) => k < ps.length && (p.shares[k] ?? 0) > 0));
+    // proportional items count once anyone has a share of the others (partsOf)
+    final assigned = shared.fold<int>(0, (a, p) => a + p.amount) + (shared.isEmpty ? 0 : its.where((p) => p.proportional).fold<int>(0, (a, p) => a + p.amount));
     return assigned + (assigned != 0 || its.any((p) => p.assigned) ? difference : 0);
   }
 
@@ -458,7 +488,7 @@ String billCsv(Bill b, {bool de = true}) {
   final rows = <String>[];
   rows.add([q(de ? 'Posten' : 'Item'), q(de ? 'Menge' : 'Qty'), q(de ? 'Betrag' : 'Amount'), for (final p in people) q(p.name)].join(';'));
   for (final it in b.its) {
-    final parts = Bill.split(it.amount, it.shares, rotate: b.its.indexOf(it));
+    final parts = b.partsOf(b.its.indexOf(it));
     rows.add([q(it.subtitle == null ? it.cleanName : '${it.food!.name} (${it.cleanName})'), '${it.qty}', money(it.amount, de: de), for (var i = 0; i < people.length; i++) money(parts[i] ?? 0, de: de)].join(';'));
   }
   final pp = b.perPerson();

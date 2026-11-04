@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _page = 0; // 0 open, 1 archive, 2 trash, 3 groups, 4 friends
 
   /// Reads several photos one after the other; lives as long as the start page (which stays under every other page).
-  ScanQueue get queue => _queue ??= widget.queue ?? ScanQueue(StoreScope.read(context));
+  ScanQueue get queue => ScanQueue.current = _queue ??= widget.queue ?? ScanQueue(StoreScope.read(context));
 
   BillList? get _list => _page <= 2 ? BillList.values[_page] : null;
 

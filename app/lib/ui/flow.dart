@@ -10,6 +10,8 @@ import '../l10n.dart';
 import '../l10n_bill.dart';
 import '../l10n_groups.dart';
 import '../main.dart';
+import '../state/scan_queue.dart';
+import '../state/images.dart';
 import '../model/bill.dart';
 import '../recognition_service.dart';
 import 'assign.dart';
@@ -66,6 +68,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
       title: t.totalAndPurpose,
       step: 1,
       bill: b,
+      actions: [
+        if (imageExists(b.originalPath))
+          IconButton(tooltip: t.de ? 'Bon neu lesen' : 'Read receipt again', icon: const Icon(Icons.document_scanner_outlined), onPressed: () => rereadFlow(context, b)),
+      ],
       action: t.next,
       onAction: (b.its.isEmpty && b.total == null) || b.needsSignQuestion
           ? null
@@ -111,8 +117,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           ]),
           const SizedBox(height: FasanSpace.s),
           // currency and category right where the total is checked (Nutzer 04.11.)
-          Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [CurrencyChip(bill: b), CategoryChip(bill: b)]),
-          const SizedBox(height: FasanSpace.s),
+          Wrap(spacing: 4, runSpacing: 0, children: [CurrencyChip(bill: b), CategoryChip(bill: b)]),
           // who was there and who paid, right at the start (Nutzer 04.11.: not only at the end)
           QuickPeople(bill: b, onChanged: () => setState(() {})),
           const SizedBox(height: FasanSpace.s),
@@ -371,6 +376,25 @@ class _PeopleScreenState extends State<PeopleScreen> {
   }
 }
 
+/// „Bon neu lesen“: after asking, the newest recognition reads the original photo again (ScanQueue.reread).
+Future<void> rereadFlow(BuildContext context, Bill bill) async {
+  final t = S.of(context), q = ScanQueue.current, path = bill.originalPath;
+  if (q == null || path == null) return;
+  final ok = await confirmDialog(
+    context,
+    t.de ? 'Bon neu lesen' : 'Read receipt again',
+    t.de
+        ? 'Die Posten werden mit der neuesten Erkennung neu gelesen. Die Zuordnung der Posten geht dabei verloren. Personen, Zahler, Gruppe, Kategorie und Name bleiben.'
+        : 'The items are read again with the newest recognition. The assignment of the items is lost; people, payer, group, category and name stay.',
+    t.de ? 'Neu lesen' : 'Read again',
+  );
+  if (!ok || !context.mounted) return;
+  final bytes = await readImage(path);
+  if (bytes == null || !context.mounted) return;
+  await q.reread(bill, bytes);
+  if (context.mounted) Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+}
+
 /// Adds [name] to the bill with the first free colour; false if the name is there already.
 bool addPersonTo(Bill b, String name) {
   final n = name.trim();
@@ -422,10 +446,12 @@ class QuickPeople extends StatelessWidget {
         style: tt.labelLarge!.copyWith(color: l.textMuted),
       ),
       const SizedBox(height: FasanSpace.xs),
-      Wrap(spacing: 6, runSpacing: 6, children: [
+      Wrap(spacing: 4, runSpacing: 0, children: [
         for (var i = 0; i < b.ps.length; i++)
           InputChip(
-            avatar: FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 24),
+            visualDensity: VisualDensity.compact,
+            labelPadding: const EdgeInsets.only(right: 2),
+            avatar: FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 22),
             label: Text(b.payer == i ? '${b.ps[i].name} · ${t.de ? 'bezahlt' : 'paid'}' : b.ps[i].name),
             selected: b.payer == i,
             showCheckmark: false,
@@ -440,6 +466,7 @@ class QuickPeople extends StatelessWidget {
             },
           ),
         ActionChip(
+          visualDensity: VisualDensity.compact,
           avatar: const Icon(Icons.person_add_alt_rounded, size: 18),
           label: Text(t.addPerson),
           onPressed: () async {
@@ -449,6 +476,7 @@ class QuickPeople extends StatelessWidget {
         ),
         for (final n in recent)
           ActionChip(
+            visualDensity: VisualDensity.compact,
             label: Text('+ $n'),
             onPressed: () {
               if (addPersonTo(b, n)) changed();
@@ -608,7 +636,7 @@ class _AuditLine extends StatelessWidget {
           for (var p = 0; p < bill.ps.length; p++) ...[
             Align(alignment: Alignment.centerLeft, child: Padding(padding: const EdgeInsets.only(top: 6), child: Text(bill.ps[p].name, style: tt.labelLarge))),
             for (var n = 0; n < bill.its.length; n++)
-              if (Bill.split(bill.its[n].amount, bill.its[n].shares, rotate: n)[p] case final c? when c != 0)
+              if (bill.partsOf(n)[p] case final c? when c != 0)
                 Row(children: [
                   Expanded(child: Text(bill.its[n].title, style: tt.bodySmall, overflow: TextOverflow.ellipsis)),
                   Text('${money(c, de: t.de)} ${billSign(context, bill)}', style: tt.bodySmall),
@@ -655,12 +683,14 @@ class ResultScreen extends StatelessWidget {
           PopupMenuButton<String>(
             onSelected: (v) {
               if (v == 'log') shareRecognitionLog(context, bill);
+              if (v == 'reread') rereadFlow(context, bill);
               if (v == 'del') {
                 store.remove(bill);
                 Navigator.of(context).maybePop();
               }
             },
             itemBuilder: (_) => [
+              if (imageExists(bill.originalPath)) PopupMenuItem(value: 'reread', child: Text(t.de ? 'Bon neu lesen' : 'Read receipt again')),
               PopupMenuItem(value: 'log', child: Text(t.shareLog)),
               PopupMenuItem(value: 'del', child: Text(t.deleteBill)),
             ],

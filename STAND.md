@@ -333,6 +333,14 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
+Nachmittag 04.11. (Tests, nicht auf dem Gerät):
+- „Bon neu lesen“: Symbol in Schritt 1, Menü im Ergebnis; neueste Erkennung, Personen/Zahler/Gruppe/Kategorie/Währung/Name bleiben, Zuordnung der Posten wird neu (`ScanQueue.reread`).
+- Posten „anteilig“ (`BillItem.proportional`): Zeile ohne Posten (0 % MwSt.) wird nach den übrigen Posten verteilt (Nutzer: wer weniger hatte, zahlt weniger), exakte Cents, im Abgleich (`prop`), Test `proportional_test.dart`.
+- Glas (fasan_ui): Lupen-Brechung ohne Shader (ImageFilter.matrix + Blur wie Flutters RawMagnifier), verschiebt mit der Neigung; im Browser ohne Fehler, auf dem S23 nicht geprüft.
+- Chips in Schritt 1 kompakt (VisualDensity.compact, Tippfläche bleibt 48 dp); Vorschaubilder ohne Lücke (gaplessPlayback).
+- Gesamtablauf mit drei Telefonen (`full_flow_test.dart`): Gruppe teilen, Person aus dem Bon per https-Link einladen, Freigabe, Verknüpfung, gleiche Bons und Salden, Änderungen in beide Richtungen, zweites Mitglied von Hand verknüpft, Entfernen mit neuem Schlüssel – grün.
+- App Links: `fasan-app.github.io` jetzt öffentlich, aber `has_pages` = false → Pages ist dort nicht eingeschaltet (Nutzer: Settings → Pages → Deploy from a branch → main, / (root)).
+
 Gesamt-Roadmap aller Fasan-Repos: `docs/ROADMAP.md` (gelesen 04.11.). Hinweis: `fasan-app/fasan-app.github.io` ist privat – Pages aus privaten Repos braucht einen bezahlten Plan, sonst findet Android assetlinks.json nicht (Nutzer prüfen). Ausgleich ist noch gierig, Karte-Beschluss verlangt exakt wenigste Überweisungen.
 
 Rückmeldung 04.11. vormittags (S23, 0.1.46) – ERLEDIGT 04.11. (Tests/E2E, nicht auf dem Gerät):

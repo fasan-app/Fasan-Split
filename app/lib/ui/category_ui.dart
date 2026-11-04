@@ -22,6 +22,7 @@ class CategoryChip extends StatelessWidget {
     StoreScope.of(context); // rebuild right after choosing (04.11.: showed the old one until leaving the bill)
     final c = categoryById(bill.category);
     return ActionChip(
+      visualDensity: VisualDensity.compact,
       avatar: Icon(c?.icon ?? Icons.category_outlined, size: 18, color: c?.color),
       label: Text(c?.label(t.de) ?? (t.de ? 'Kategorie wählen' : 'Choose category')),
       onPressed: () async {
