@@ -5,6 +5,7 @@ import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/collab_ui.dart';
+import 'package:fasan_split/ui/my_balance.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -38,6 +39,19 @@ void main() {
     await tester.pump();
     expect(svc.identity?.name, 'Anna');
     await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('Profil: Name tippen und Seite schließen – überall gespeichert (Nutzer 04.11.)', (tester) async {
+    store.me = 'Chris';
+    await tester.pumpWidget(host(Builder(builder: (context) => Scaffold(body: TextButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen())), child: const Text('auf'))))));
+    await tester.tap(find.text('auf'));
+    await tester.pumpAndSettle();
+    expect(find.text('Chris'), findsWidgets, reason: 'Name aus „Ich bin“ vorbefüllt');
+    await tester.enterText(find.byType(TextField).first, 'Christopher');
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(store.me, 'Christopher');
+    expect(svc.identity?.name, 'Christopher');
   });
 
   testWidgets('Einladung erzeugt einen Link mit QR-Code, nur für den Admin', (tester) async {

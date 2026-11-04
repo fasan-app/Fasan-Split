@@ -145,18 +145,28 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _name = TextEditingController();
   Timer? _timer;
+  // looked up once: dispose() saves the name and must not look up the tree
+  late final _store = StoreScope.read(context);
+  late final _collab = CollabScope.read(context);
 
   @override
   void initState() {
     super.initState();
-    final n = CollabScope.read(context).identity?.name ?? '';
-    _name.text = n.isNotEmpty ? n : StoreScope.read(context).me;
+    final n = _collab.identity?.name ?? '';
+    _name.text = n.isNotEmpty ? n : _store.me;
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _save();
+    final n = _name.text.trim(), store = _store, collab = _collab;
+    // after the frame: saving notifies listeners, which is not allowed while the tree is torn down
+    if (n.isNotEmpty) {
+      scheduleMicrotask(() {
+        store.me = n;
+        collab.setName(n);
+      });
+    }
     _name.dispose();
     super.dispose();
   }
@@ -164,8 +174,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _save() {
     final n = _name.text.trim();
     if (n.isEmpty) return;
-    StoreScope.read(context).me = n;
-    CollabScope.read(context).setName(n);
+    _store.me = n;
+    _collab.setName(n);
   }
 
   @override

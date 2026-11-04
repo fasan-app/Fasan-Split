@@ -1060,18 +1060,19 @@ class _AccountScreenState extends State<AccountScreen> {
   bool _showWords = false;
 
   Timer? _nameTimer;
+  late final CollabService _svc = CollabScope.read(context); // dispose() must not look up the tree
 
   @override
   void initState() {
     super.initState();
-    final n = CollabScope.read(context).identity?.name ?? '';
+    final n = _svc.identity?.name ?? '';
     _name.text = n.isNotEmpty ? n : StoreScope.read(context).me;
   }
 
   @override
   void dispose() {
     _nameTimer?.cancel();
-    if (_name.text.trim().isNotEmpty) CollabScope.read(context).setName(_name.text);
+    if (_name.text.trim().isNotEmpty) _svc.setName(_name.text);
     _name.dispose();
     _words.dispose();
     super.dispose();
