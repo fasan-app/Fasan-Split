@@ -83,4 +83,31 @@ Fehlt, nach Nutzen sortiert:
 - Orbot (guardianproject/orbot-android): `HTTP_PROXY_PORT_DEFAULT = "8118"`, `SOCKS_PROXY_PORT_DEFAULT = "9050"`,
   Tor-Konfiguration `HTTPTunnelPort` (CONNECT-Tunnel) – passt zum Tor-Schalter.
 - Passkey PRF: weiterhin keine developer.android.com-Seite; nur das experimentelle Paket maktub_passkey (pub.dev).
-- Noch gesperrt: EPC-PDF, docs.joinmastodon.org, nostr.watch, api.dart.dev. Gesamtliste: Fasan `NACHPRUEFEN.md`.
+- (Stand des Nachtrags davor; siehe nächsten Nachtrag für das, was inzwischen lesbar ist.)
+
+## Nachtrag 04.11. spät, 2: Netz-Freigabe wirkt, weitere Quellen gelesen
+
+- **Dart `HttpClient.findProxy`** (api.dart.dev, gelesen): Ohne gesetzte Funktion immer direkte Verbindung. Die Funktion liefert
+  eine Zeichenkette im PAC-Format: `"DIRECT"` oder `"PROXY host:port"`, mehrere durch Semikolon (`"PROXY a:1; PROXY b:2; DIRECT"`).
+  Es gibt `HttpClient.findProxyFromEnvironment`. Passt zu `ws_connect_io.dart` (`'PROXY $proxy'`). Ohne `DIRECT` am Ende
+  keine Rückfallverbindung: gewollt beim Tor-Schalter (nichts läuft an Tor vorbei). [geprüft]
+- **Mastodon-Teilen-URL** (Quelltext github.com/mastodon/mastodon, main): Route `resource :share, only: [:show]`
+  (`config/routes.rb`), Aufruf nur eingeloggt (`before_action :authenticate_user!`, `shares_controller.rb`). Der Text kommt aus
+  `[params[:title], params[:text], params[:url]].compact.join(' ')` (`app/helpers/application_helper.rb`). Also
+  `https://<instanz>/share?text=…` auf der eigenen Instanz des Nutzers; Fasan kennt die Instanz nicht → Teilen-Menü des Systems
+  bleibt der Weg ohne Instanzfrage. docs.joinmastodon.org-Seite dazu nicht gefunden (Methoden-Index ohne Share). [geprüft: Quelltext]
+- **GitHub Release-Datei** (docs.github.com, „Get a release asset“): Antwortbeispiel enthält `"digest": "sha256:…"`, außerdem
+  `size`, `content_type`, `browser_download_url`, `download_count`. Download: `browser_download_url` oder Header
+  `Accept: application/octet-stream`, die API leitet um (200 oder 302 behandeln). [geprüft]
+- **EZB-Abruf im Browser:** `eurofxref-daily.xml` antwortet 200, auch mit Header `Origin: https://example.org`, aber **ohne**
+  `Access-Control-Allow-Origin`. Ein Browser darf die Antwort von einer anderen Herkunft also nicht lesen → die Web-App kann den
+  Kurs nicht direkt holen (Handbetrieb bleibt). Gemessen aus der Sitzung mit curl; Verhalten im echten Browser nicht gesehen. Der Hinweis
+  „im Browser CORS offen“ in `NACHPRUEFEN.md` Zeile 9 war falsch bzw. ungeprüft.
+- **EPC-QR** (Wikipedia „EPC QR code“, Zweitquelle; europeanpaymentscouncil.eu liegt hinter einer Cloudflare-Prüfung, nicht umgangen):
+  Beispiel `BCD / 001 / 1 / SCT / BIC / Name / IBAN / EUR1 / CHAR / (Referenz oder Text) / Info`. Feldfolge, UTF-8 (`1`), `SCT`,
+  `EUR` + Betrag mit Punkt und „Referenz **oder** Text“ stimmen mit `epcPayload` überein. Der Code nutzt Version `002` (BIC optional);
+  die Wikipedia-Seite nennt nur `001` mit BIC. Ob `002` und leeres BIC-Feld von Banking-Apps gelesen werden, ist **nicht geprüft** →
+  Messprobe mit Banking-App (S23); `NACHPRUEFEN.md` Zeile 1 bleibt offen.
+- **Weiter offen:** nostr.watch (Seite lädt nur per JavaScript, kein Text im Abruf), docs.joinmastodon.org (siehe oben),
+  Passkey-PRF (keine offizielle Seite).
+

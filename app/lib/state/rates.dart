@@ -2,7 +2,8 @@
 // working days around 16:00 CET, „for information only“, no RUB since 01.03.2022). Only GET, nothing is sent; can be
 // switched off (Einstellungen). The rate used is stored with the bill (date shown, manual update). Nutzer 04.11.
 // Files: eurofxref-daily.xml (latest), eurofxref-hist-90d.xml (last 90 days, for the receipt date). In the browser the
-// ECB may block the request (no CORS header; not checked) – then the rate is entered by hand. MPL-2.0
+// ECB answers without Access-Control-Allow-Origin (checked 04.11. with curl and an Origin header; not seen in a real browser) –
+// the browser then cannot read it and the rate is entered by hand. MPL-2.0
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
