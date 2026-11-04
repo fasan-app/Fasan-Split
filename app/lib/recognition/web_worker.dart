@@ -28,9 +28,27 @@ extension on JSObject {
   external void operator []=(String key, JSAny? value);
 }
 
+@JS('crossOriginIsolated')
+external bool? get _isolated;
+
+/// Models through the Cache API (developer.mozilla.org/docs/Web/API/Cache): loaded once, then offline. The files are
+/// fixed by checksum (tool/fetch_models.sh), so a cached copy never goes stale for the same URL.
 Future<Uint8List> _fetch(String url) async {
+  web.Cache? cache;
+  try {
+    cache = await _self.caches.open('fasan-models-v1').toDart;
+    final hit = await cache.match(url.toJS).toDart;
+    if (hit != null) return (await hit.arrayBuffer().toDart).toDart.asUint8List();
+  } catch (_) {
+    cache = null; // no Cache API (private mode): just load
+  }
   final r = await _self.fetch(url.toJS).toDart;
   if (!r.ok) throw StateError('$url: ${r.status}');
+  if (cache != null) {
+    try {
+      await cache.put(url.toJS, r.clone()).toDart;
+    } catch (_) {}
+  }
   return (await r.arrayBuffer().toDart).toDart.asUint8List();
 }
 
@@ -42,7 +60,9 @@ void main() {
   Future<Recognizer> start(String models, String ort) async {
     _importScripts('${ort}ort.wasm.min.js'.toJS);
     _wasmEnv['wasmPaths'] = ort.toJS;
-    _wasmEnv['numThreads'] = 1.toJS;
+    // several threads only with cross-origin isolation (coi-serviceworker.js on GitHub Pages); else one
+    final cores = _self.navigator.hardwareConcurrency;
+    _wasmEnv['numThreads'] = (_isolated == true ? (cores < 2 ? 1 : (cores > 4 ? 4 : cores)) : 1).toJS;
     final det = await OnnxModel.load(await _fetch('${models}det.onnx'));
     final rec = await OnnxModel.load(await _fetch('${models}rec-latin.onnx'));
     final dict = utf8.decode(await _fetch('${models}dict-latin.txt'));

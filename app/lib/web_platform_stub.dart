@@ -8,3 +8,7 @@ Future<bool> webUpdateAvailable() async => false;
 
 /// Loads the page again (newer web build).
 void reloadPage() {}
+
+Future<bool> askPersistentStorage() async => false;
+
+bool needsHomeScreenHint() => false;

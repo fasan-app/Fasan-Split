@@ -1,6 +1,7 @@
 // Fasan Split – start: three main tabs below (Rechnungen, Gruppen, Freunde), a floating plus for new bills, and on Rechnungen
 // three views above (Offen, Archiv, Papierkorb). One horizontal pager carries all five pages, so swiping moves through
 // them in order (Nutzer 02.11.). Research: fasan_ui docs/recherche/2026-11-02-navigation-layout-glas-ton.md. MPL-2.0
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -19,6 +20,7 @@ import 'bill_tile.dart';
 import 'hints.dart';
 import 'flow.dart';
 import 'collab_ui.dart';
+import 'backup_ui.dart';
 import 'category_ui.dart';
 import 'common.dart';
 import 'my_balance.dart';
@@ -68,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// At most once a day, only if enabled (Settings → Updates); silent without network.
   Future<void> _checkUpdate() async {
     if (kIsWeb) {
+      unawaited(askPersistentStorage()); // keep IndexedDB/localStorage (browser decides)
       // Browser: no APK, only "load the page again" when the server has a newer build (web_platform_web.dart).
       if (await webUpdateAvailable() && mounted) setState(() => _webUpdate = true);
       return;
@@ -510,13 +513,18 @@ class _HomeScreenState extends State<HomeScreen> {
     final groups = [for (final g in store.groups) (g, arrange(store.inGroup(g, done: done), sort, _catFilter))].where((e) => e.$2.isNotEmpty).toList();
     final loose = arrange(store.inGroup(null, done: done), sort, _catFilter);
     final empty = groups.isEmpty && loose.isEmpty;
-    final banner = done
+    // one banner at a time, most important first: update, backup due, home-screen tip (iPhone browser)
+    final Widget? banner = done
         ? null
         : _webUpdate
             ? WebUpdateBanner(onClose: () => setState(() => _webUpdate = false))
             : _update != null
                 ? UpdateBanner(info: _update!, onClose: () => setState(() => _update = null))
-                : null;
+                : store.backupDue
+                    ? const BackupReminder()
+                    : kIsWeb && !store.hintDone('homescreen') && needsHomeScreenHint()
+                        ? HomeScreenHint(onClose: () => store.hintDismiss('homescreen'))
+                        : null;
     if (empty) {
       return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom), children: [
         ?banner,

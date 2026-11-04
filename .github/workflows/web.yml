@@ -43,6 +43,11 @@ jobs:
           set -o pipefail
           flutter create --org app.fasan --project-name fasan_split --platforms web .
           sed -i 's#<title>.*</title>#<title>Fasan Split</title>#' web/index.html
+          # Cross-origin isolation for several ONNX threads: GitHub Pages sets no COOP/COEP headers, coi-serviceworker (MIT,
+          # web_extra/) adds them in a service worker and reloads once on the first visit. Must come before flutter_bootstrap.
+          sed -i 's#<script src="flutter_bootstrap.js" async></script>#<script src="coi-serviceworker.js"></script>\n  <script src="flutter_bootstrap.js" async></script>#' web/index.html
+          grep -q coi-serviceworker web/index.html
+          cp web_template/flutter_bootstrap.js web/flutter_bootstrap.js   # no Flutter service worker (it fought coi)
           sed -i 's#"name": "fasan_split"#"name": "Fasan Split"#; s#"short_name": "fasan_split"#"short_name": "Fasan Split"#' web/manifest.json
           # CanvasKit liegt mit auf der Seite statt beim Google-CDN.
           flutter build web --release --base-href /Fasan-Split/ --no-web-resources-cdn --dart-define=FASAN_BUILD=${{ github.sha }}

@@ -31,3 +31,21 @@ Future<bool> webUpdateAvailable() async {
 }
 
 void reloadPage() => web.window.location.reload();
+
+/// Asks the browser to keep IndexedDB and localStorage (no automatic eviction). Returns whether it is granted.
+Future<bool> askPersistentStorage() async {
+  try {
+    return (await web.window.navigator.storage.persist().toDart).toDart;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// iPhone/iPad in Safari, not added to the home screen: Safari may delete the data after 7 days without a visit
+/// (WebKit tracking prevention; home-screen apps are exempt).
+bool needsHomeScreenHint() {
+  final ua = web.window.navigator.userAgent;
+  final ios = RegExp(r'iPhone|iPad|iPod').hasMatch(ua) || (ua.contains('Macintosh') && web.window.navigator.maxTouchPoints > 1);
+  final standalone = web.window.matchMedia('(display-mode: standalone)').matches;
+  return ios && !standalone;
+}

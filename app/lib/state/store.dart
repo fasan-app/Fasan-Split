@@ -141,6 +141,34 @@ class BillStore extends ChangeNotifier {
   bool get ratesOnline => _app['ratesOnline'] as bool? ?? true;
   set ratesOnline(bool v) => _setApp('ratesOnline', v);
 
+  // ---- backup reminder (Nutzer 04.11.: weekly or after many changes) ----
+
+  DateTime? get lastBackup => DateTime.tryParse(_app['lastBackup'] as String? ?? '');
+  int get changesSinceBackup => (_app['changes'] as num?)?.toInt() ?? 0;
+  DateTime? get backupHintSnoozed => DateTime.tryParse(_app['backupSnooze'] as String? ?? '');
+
+  /// Counted without notifying (upsert notifies anyway); written with the next settings write or bill write.
+  void _changed() => _app['changes'] = changesSinceBackup + 1;
+
+  void backupDone() {
+    _app['changes'] = 0;
+    _setApp('lastBackup', DateTime.now().toIso8601String());
+  }
+
+  void snoozeBackupHint() => _setApp('backupSnooze', DateTime.now().toIso8601String());
+
+  /// True when it is time to suggest a backup: a few receipts and either never saved after 10 changes, a week since the
+  /// last backup with changes, or 40 changes. Not again within 3 days after „Später“.
+  bool get backupDue {
+    final real = bills.where((b) => b.trashedAt == null).length;
+    if (real < 3) return false;
+    final now = DateTime.now(), s = backupHintSnoozed;
+    if (s != null && now.difference(s).inDays < 3) return false;
+    final c = changesSinceBackup, last = lastBackup;
+    if (last == null) return c >= 10;
+    return c >= 40 || (c > 0 && now.difference(last).inDays >= 7);
+  }
+
   /// Own categories (names), model/category.dart.
   List<String> get customCategories => [...?(_app['categories'] as List?)?.cast<String>()];
   void addCategory(String name) {
@@ -404,6 +432,7 @@ class BillStore extends ChangeNotifier {
 
   void upsert(Bill b) {
     b.updated = DateTime.now();
+    _changed();
     final i = bills.indexWhere((x) => x.id == b.id);
     if (i >= 0) {
       bills[i] = b;
