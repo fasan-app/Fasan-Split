@@ -175,7 +175,7 @@ class S {
   String get markOpen => de ? 'Wieder öffnen' : 'Reopen';
   String get ok => 'OK';
   String deletedN(int n) => de ? (n == 1 ? 'Bon gelöscht' : '$n Bons gelöscht') : (n == 1 ? 'Receipt deleted' : '$n receipts deleted');
-  String stepOf(int s) => de ? 'Schritt $s von 4' : 'Step $s of 4';
+  String stepOf(int s) => de ? 'Schritt $s/4' : 'Step $s/4'; // short: the subtitle must stay on one line (04.11.)
   String get receiptHintPick => de ? 'Person wählen, dann Posten antippen.' : 'Pick a person, then tap items.';
   String receiptHintPerson(String n) => de ? 'Tippe, was $n hatte.' : 'Tap what $n had.';
   String get receiptHintView => de ? 'Posten antippen für Details.' : 'Tap an item for details.';

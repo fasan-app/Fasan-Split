@@ -1,5 +1,5 @@
-// Fasan Split – „Mein Stand“: what I get or owe, in total, per group and per person, and who should pay next
-// (Nutzer 04.11.: always visible at a glance; research docs/recherche/2026-11-04-konkurrenz-bedienung-saldo.md §3).
+// Fasan Split – „Mein Stand“: what I get or owe, in total, per group and per person. No „who pays next“ (Nutzer 04.11.:
+// the group may be incomplete and a program telling people to pay feels wrong; always visible at a glance; research docs/recherche/2026-11-04-konkurrenz-bedienung-saldo.md §3).
 // Only finished bills with a payer count. Me = the name in Einstellungen → „Das bin ich“ and, in live groups, the
 // names linked to my member key. MPL-2.0
 import 'package:fasan_ui/fasan_ui.dart';
@@ -22,7 +22,6 @@ class _T {
   String get perPerson => de ? 'Je Person' : 'Per person';
   String get noGroup => de ? 'Ohne Gruppe' : 'No group';
   String get setMe => de ? 'Sag zuerst, wer du bist: Einstellungen → Das bin ich.' : 'First tell who you are: Settings → This is me.';
-  String nextPays(String p) => de ? 'Als Nächstes zahlt: $p' : 'Next to pay: $p';
   String getsFrom(String p) => de ? '$p gibt dir' : '$p owes you';
   String owesTo(String p) => de ? 'Du gibst $p' : 'You owe $p';
 }
@@ -83,7 +82,8 @@ class MyBalanceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = _T(S.of(context).de), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
-    final store = StoreScope.of(context), collab = CollabScope.of(context);
+    final store = StoreScope.of(context);
+    CollabScope.of(context); // rebuild on group changes
     final isMe = myNames(context);
     final bills = store.bills.where((b) => b.trashedAt == null).toList();
     final per = myDebts(bills, isMe);
@@ -102,16 +102,11 @@ class MyBalanceScreen extends StatelessWidget {
           Builder(builder: (context) {
             final inG = bills.where((b) => b.group == g);
             final mine = myDebts(inG, isMe).values.fold(0, (a, x) => a + x);
-            final live = g == null ? null : collab.groupByLocalName(g);
-            String keyOf(String p) => switch (live?.session.memberOfPerson(p)) { final m? => '@$m', _ => p };
-            String label(String k) => k.startsWith('@') ? (live!.session.personOf(k.substring(1)) ?? live.session.nameOf(k.substring(1))) : k;
-            final next = g == null ? null : nextPayer(balances(inG, key: keyOf));
-            if (mine == 0 && next == null) return const SizedBox.shrink();
+            if (mine == 0) return const SizedBox.shrink();
             return ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(g == null ? Icons.receipt_long_outlined : Icons.folder_outlined, color: l.accent),
               title: Text(g ?? t.noGroup),
-              subtitle: next == null ? null : Text(t.nextPays(label(next))),
               trailing: Text(mine == 0 ? '–' : '${money(mine, de: t.de, sign: true)} €', style: tt.titleMedium!.copyWith(color: c(mine))),
             );
           }),

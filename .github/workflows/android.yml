@@ -72,9 +72,9 @@ jobs:
         env:
           KEY_B64: ${{ secrets.FASAN_KEYSTORE_B64 }}
           KEY_PW: ${{ secrets.FASAN_KEYSTORE_PASSWORD }}
-          # Übergang (Nutzer 03.11.): eine letzte Testversion mit „Sicherung speichern“, die per Update auf die installierte
-          # Testversion passt. Nach der Sicherung auf dem Handy wieder entfernen, dann gilt der Release-Schlüssel.
-          FORCE_TEST_KEY: '1'
+          # Übergang zum Release-Schlüssel abgeschlossen 04.11. (Sicherung auf dem Handy gespeichert). Für eine einmalige
+          # Testversion hier FORCE_TEST_KEY: '1' setzen.
+          FORCE_TEST_KEY: ''
         run: |
           mkdir -p logs
           ks=ci/fasan-split-test.p12; pw=fasan-split-test

@@ -15,6 +15,7 @@ import '../state/scan_queue.dart';
 import 'bill_tile.dart';
 import 'collab_ui.dart';
 import 'common.dart';
+import 'swipe.dart';
 
 /// All groups with their number of bills and sum; tap opens the group. Pending join requests are shown on top.
 class GroupsPage extends StatelessWidget {
@@ -295,15 +296,10 @@ class FriendsPage extends StatelessWidget {
       for (final f in friends)
         Padding(
           padding: const EdgeInsets.only(bottom: FasanSpace.s),
-          child: Dismissible(
+          child: SwipeActions(
             key: ValueKey('friend-${f.name}'),
-            direction: DismissDirection.endToStart,
-            background: Container(
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l),
-              decoration: BoxDecoration(color: Colors.red.shade700.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(l.radius * 0.7)),
-              child: Icon(Icons.person_remove_outlined, color: Colors.red.shade700),
-            ),
+            id: 'friend-${f.name}',
+            end: SwipeSide(Icons.person_remove_outlined, t.forget, Colors.red.shade700),
             onDismissed: (_) => store.forgetFriend(f.name),
             child: Container(
               padding: const EdgeInsets.all(FasanSpace.m),

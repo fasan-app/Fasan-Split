@@ -21,6 +21,7 @@ import 'flow.dart';
 import 'collab_ui.dart';
 import 'common.dart';
 import 'my_balance.dart';
+import 'swipe.dart';
 import 'groups.dart';
 import 'onboarding.dart';
 import 'scan_screen.dart';
@@ -584,11 +585,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final tile = BillTile(bill: b, queue: queue, selecting: _selecting, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () => _retry(b));
     final moving = _selecting && _selected.contains(b.id) ? _picked(store) : [b];
     final archive = mode == BillList.archive;
-    return Dismissible(
+    return SwipeActions(
       key: ValueKey('bill-${mode.name}-${b.id}'),
-      direction: _selecting ? DismissDirection.none : (b.read == BillRead.ok ? DismissDirection.horizontal : DismissDirection.endToStart),
-      background: _swipeBackground(l, archive ? Icons.unarchive_outlined : Icons.archive_outlined, archive ? t.markOpen : t.markDone, Alignment.centerLeft, l.accent),
-      secondaryBackground: _swipeBackground(l, Icons.delete_outline_rounded, t.delete, Alignment.centerRight, Colors.red.shade700),
+      id: '${mode.name}-${b.id}',
+      enabled: !_selecting,
+      start: b.read == BillRead.ok ? SwipeSide(archive ? Icons.unarchive_outlined : Icons.archive_outlined, archive ? t.markOpen : t.markDone, l.accent) : null,
+      end: SwipeSide(Icons.delete_outline_rounded, t.delete, Colors.red.shade700),
       onDismissed: (dir) {
         if (dir == DismissDirection.startToEnd) {
           _toArchive(context, [b], !archive);
@@ -632,13 +634,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _swipeBackground(FasanLook l, IconData icon, String label, Alignment align, Color color) => Container(
-        alignment: align,
-        padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(l.radius * 0.7)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, color: color), const SizedBox(width: 8), Text(label, style: TextStyle(color: color))]),
-      );
-
   Future<void> _retry(Bill b) async {
     final path = b.originalPath;
     final bytes = path == null ? null : await readImage(path);
@@ -677,10 +672,11 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.only(bottom: FasanSpace.s),
           child: _selecting
               ? BillTile(bill: b, queue: queue, selecting: true, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () {}, subtitle: _trashSub(t, store, b))
-              : Dismissible(
+              : SwipeActions(
                   key: ValueKey('trash-${b.id}'),
-                  background: _swipeBackground(l, Icons.restore_from_trash_rounded, t.restore, Alignment.centerLeft, l.accent),
-                  secondaryBackground: _swipeBackground(l, Icons.delete_forever_outlined, t.deleteForever, Alignment.centerRight, Colors.red.shade700),
+                  id: 'trash-${b.id}',
+                  start: SwipeSide(Icons.restore_from_trash_rounded, t.restore, l.accent),
+                  end: SwipeSide(Icons.delete_forever_outlined, t.deleteForever, Colors.red.shade700),
                   confirmDismiss: (dir) async => dir == DismissDirection.startToEnd || await _confirmForever(context, 1),
                   onDismissed: (dir) {
                     if (dir == DismissDirection.startToEnd) {
@@ -724,7 +720,8 @@ class _NavBar extends StatelessWidget {
       (Icons.people_outline_rounded, Icons.people_rounded, t.friendsTab),
     ];
     return Padding(
-      padding: EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, FasanSpace.s + MediaQuery.paddingOf(context).bottom),
+      // same side margin as the cards above (Nutzer 04.11.: surfaces of different width)
+      padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s + MediaQuery.paddingOf(context).bottom),
       // fixed height: the glass fills the space it is given, and the Scaffold gives its bottom bar all the height there is
       child: SizedBox(
         height: l.minTap + 32,

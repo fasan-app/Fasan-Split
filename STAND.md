@@ -329,7 +329,7 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
   `test/backup_test.dart`. Nicht auf dem Gerät geprüft.
 - Übergang: `FORCE_TEST_KEY: '1'` im Signaturschritt erzwingt einmal den Testschlüssel, damit die Sicherung per Update auf die
   installierte Testversion kommt. Ablauf: Update installieren → Sicherung speichern → Flag entfernen (Sitzung) → Release-APK:
-  Testversion deinstallieren, neu installieren, Sicherung einspielen, App neu starten. OFFEN: Flag entfernen.
+  Testversion deinstallieren, neu installieren, Sicherung einspielen, App neu starten. ERLEDIGT 04.11. nachts: Flag entfernt (Nutzer hat mit Konto gesichert).
 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
@@ -338,7 +338,7 @@ Bedienung, die stören, dann Saldo-Sicht, dann neue Funktionen:
 A1. Sicherung mit Konto/Gruppen ging nicht (Liste im Speicher) – ERLEDIGT 04.11. (fe5b884, Test); danach echten Schlüssel einschalten (FORCE_TEST_KEY entfernen, sobald gesichert).
 A2. ERLEDIGT 04.11. (Widget-Tests, nicht auf dem Gerät): Langdruck: hebt sofort an (ohne Loslassen), Ablegen auf Gruppe, Bon, Reiter unten (Archiv, Papierkorb, Gruppen → Gruppe wählen/neu, Duplikat prüfen); Auswahlleiste ohne Rutschen/Ausblenden.
 A3. TEIL ERLEDIGT 04.11.: Einladen nur oben, Mitglieder/Notizen/Chat als kleine Chips, „Gruppe verlassen“ im Menü mit Abfrage (Verwaltung wird gewarnt), Löschen mit Abfrage. OFFEN: Gründer verlässt Gruppe → heute bleibt die Gruppe lesbar und beschreibbar, aber niemand kann einladen oder Mitglieder ändern (adminPub steckt im Gruppengeheimnis); Lösung: Verwaltung übergeben bzw. mehrere Verwalter (Kern, Entwurf), dann ist der ehemalige Gründer wieder einladbar.
-A4. TEIL ERLEDIGT 04.11.: Saldo-Plakette oben auf den Hauptseiten (Ring grün/rot, Betrag), „Mein Stand“ (gesamt, je Gruppe mit „Als Nächstes zahlt“, je Person), `model/settle.dart` myDebts/nextPayer. OFFEN: Plakette auch auf Unterseiten, Visualisierung. Ursprünglich: Profil-Avatar auf allen Seiten mit Stand; „Mein Stand“ gesamt, je Gruppe, über Gruppen, je Person; „Wer zahlt als Nächstes?“.
+A4. TEIL ERLEDIGT 04.11.: Saldo-Plakette oben auf den Hauptseiten (Ring grün/rot, Betrag), „Mein Stand“ (gesamt, je Gruppe, je Person), `model/settle.dart` myDebts. „Wer zahlt als Nächstes“ bewusst NICHT (Nutzer 04.11.: Gruppe kann unvollständig sein, Zahlungsaufforderung durch ein Programm stößt übel auf). OFFEN: Plakette auch auf Unterseiten, Visualisierung. Ursprünglich: Profil-Avatar auf allen Seiten mit Stand; „Mein Stand“ gesamt, je Gruppe, über Gruppen, je Person; „Wer zahlt als Nächstes?“.
 A5. Sortieren: Status, Datum, Ort, Betrag, Kategorie, Gruppe, Person, eigene Reihenfolge; Filter.
 A6. Kategorien: Grundliste, automatisch aus Bon (Händler/Posten), eigene Kategorien.
 A7. Web: dauerhafter Speicher + Hinweis Home-Bildschirm (iOS); mehrere Threads (coi-serviceworker); Modelle zwischenspeichern (offline).
@@ -346,6 +346,7 @@ A8. Erinnerung an Sicherung (wöchentlich oder nach vielen Änderungen).
 A9. Gruppenschlüssel rotieren beim Entfernen eines Mitglieds (Kern).
 A10. Vertrauen: Eintragungen anderer, die mich betreffen, je Person oder für alle sperren/freigeben (Standard: allen vertrauen). Entwurf nötig (Kern: Prüfung beim Zusammenführen).
 A11. Avatar und Gruppenbild, Namen ändern, Standardwährung, Fremdwährung mit EZB-Kurs (Datum, manuell aktualisieren).
+A12a. TEIL ERLEDIGT 04.11. nachts: Wischen mit runder Fläche unter der Karte, Symbol und Text blenden mit dem Wischweg ein (`ui/swipe.dart`, auch Freunde); Leiste unten so breit wie die Karten; Schatten eigener Schalter in Erscheinungsbild (fasan_ui 1202b7f); „Schritt 1/4“ statt Umbruch. Hinweis: In Test-Bildschirmfotos sind Schatten ohne Unschärfe gezeichnet (Test-Renderer), auf dem Gerät weich.
 A12. Indikatoren, Farben, Visualisierung, Animation nach Regelwerk und Recherchen; Übergänge ohne Ruckeln; Menüs und Einstellungen neu ordnen; Leistung auf alten Geräten messen.
 A13. Integration in Fasan Karte/Reise: Fundament (Module ohne App-Abhängigkeiten: model, collab, recognition, state) halten.
 A14. Roadmap: Widgets; sehr große und kleine Bildschirme; MCP-Schnittstelle für KI; Import aus Splitwise/Tricount; weitere Konkurrenz-Apps einzeln ansehen (Splidu, Splidit, Splital, Wexpense, Cashinator, Splitser, Finanzguru Split, iOS, Open Source).
