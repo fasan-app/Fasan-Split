@@ -216,7 +216,7 @@ class CollabService extends ChangeNotifier {
         if (groups.containsKey(s.tag)) continue;
         final want = m['local'] as String? ?? s.name;
         final local = groupByLocalName(want) == null ? want : uniqueLocalName(s.name);
-        store.addGroup(local);
+        if (!s.direct) store.addGroup(local);
         await _activate(s, local);
         added++;
       }
@@ -269,7 +269,7 @@ class CollabService extends ChangeNotifier {
       final s = GroupSecret.fromJson((m['secret'] as Map).cast<String, dynamic>());
       if (groups.containsKey(s.tag)) continue;
       final local = groupByLocalName(m['local'] as String? ?? s.name) == null ? (m['local'] as String? ?? s.name) : uniqueLocalName(s.name);
-      store.addGroup(local);
+      if (!s.direct) store.addGroup(local);
       await _activate(s, local);
       added++;
     }
@@ -298,6 +298,44 @@ class CollabService extends ChangeNotifier {
     final local = uniqueLocalName(name);
     store.addGroup(local);
     final g = await _activate(secret, local);
+    g.session.addMember(me.pub, me.name.isEmpty ? '—' : me.name);
+    await _persistGroups();
+    notifyListeners();
+    return g;
+  }
+
+  // ---- friends: direct connections (Nutzer 04.11.: invite friends without a group, chat, try the app) ----
+
+  /// Internal local name of a direct connection; never shown (the UI shows the other person's name).
+  static String directLocalName(GroupSecret s) => '@friend:${s.tag}';
+
+  /// My direct connections (also those still waiting for the friend to open the link).
+  List<CollabGroup> get directs => [for (final g in groups.values) if (g.secret.direct) g];
+
+  /// The other person of a direct connection, or null while nobody opened the link.
+  String? directPeer(CollabGroup g) {
+    final me = identity?.pub;
+    for (final k in g.session.memberKeys) {
+      if (k != me) return k;
+    }
+    return null;
+  }
+
+  /// Name to show for a direct connection: the friend's name (the inviter's name is in the secret).
+  String directName(CollabGroup g) {
+    final p = directPeer(g);
+    if (p == null) return '';
+    // the members list may not be here yet: the inviter's name is in the secret
+    final m = g.session.doc(GroupSession.members).get('m/$p');
+    if (m is Map && m['name'] is String && (m['name'] as String).isNotEmpty) return m['name'] as String;
+    return p == g.secret.adminPub ? g.secret.name : g.session.nameOf(p);
+  }
+
+  /// A new friend link: a direct connection with only me in it; the link lets the friend in at once (open link).
+  Future<CollabGroup> createDirect({List<String>? relays}) async {
+    final me = await ensureIdentity();
+    final secret = GroupSecret(key: randomBytes(32), adminPub: me.pub, name: me.name.isEmpty ? '—' : me.name, relays: relays ?? defaultRelays, direct: true);
+    final g = await _activate(secret, directLocalName(secret));
     g.session.addMember(me.pub, me.name.isEmpty ? '—' : me.name);
     await _persistGroups();
     notifyListeners();
@@ -369,10 +407,10 @@ class CollabService extends ChangeNotifier {
   /// Open link (group.dart step 4b): in at once with the key from the link, no admin needed. The join request still
   /// goes out, so an admin adopts the member when its phone runs.
   Future<String?> _joinOpen(Invite inv, String name, Identity me) async {
-    final secret = GroupSecret(key: inv.groupKey!, adminPub: inv.adminPub, name: inv.name, relays: inv.relays);
+    final secret = GroupSecret(key: inv.groupKey!, adminPub: inv.adminPub, name: inv.name, relays: inv.relays, direct: inv.direct);
     if (secret.tag != inv.tag) return 'invalid'; // damaged link
-    final local = uniqueLocalName(secret.name);
-    store.addGroup(local);
+    final local = secret.direct ? directLocalName(secret) : uniqueLocalName(secret.name);
+    if (!secret.direct) store.addGroup(local);
     final g = await _activate(secret, local);
     g.session.joinWithTicket(inv, name);
     await g.session.flush();
@@ -391,8 +429,8 @@ class CollabService extends ChangeNotifier {
         final secret = await f.waitForWelcome(timeout: p.invite.expires.add(const Duration(days: 1)).difference(DateTime.now()));
         joins.remove(p);
         _saveJoins();
-        final local = uniqueLocalName(secret.name);
-        store.addGroup(local);
+        final local = secret.direct ? directLocalName(secret) : uniqueLocalName(secret.name);
+        if (!secret.direct) store.addGroup(local);
         await _activate(secret, local);
         await _persistGroups();
       } catch (_) {
@@ -479,7 +517,7 @@ class CollabService extends ChangeNotifier {
     final me = await ensureIdentity();
     if (!g.isAdmin) throw StateError('only an admin rotates the key');
     final s = g.secret;
-    final ns = GroupSecret(key: randomBytes(32), adminPub: s.adminPub, name: s.name, relays: s.relays);
+    final ns = GroupSecret(key: randomBytes(32), adminPub: s.adminPub, name: s.name, relays: s.relays, direct: s.direct);
     final body = jsonEncode({'key': toHex(ns.key), 'name': ns.name, 'admin': ns.adminPub, 'relays': ns.relays});
     for (final pub in g.session.memberKeys) {
       if (pub == me.pub) continue;
@@ -494,7 +532,7 @@ class CollabService extends ChangeNotifier {
     if (me == null || !e.valid || !g.session.admins.contains(e.pubkey) || e.tag('d') != 'fs:${g.secret.tag}:rekey:${me.pub}') return;
     try {
       final j = jsonDecode(nip44Decrypt(e.content, nip44ConversationKey(me.key.priv, e.pubkey))) as Map<String, dynamic>;
-      final ns = GroupSecret(key: fromHex(j['key'] as String), adminPub: j['admin'] as String? ?? g.secret.adminPub, name: j['name'] as String? ?? g.secret.name, relays: [for (final r in j['relays'] as List) '$r']);
+      final ns = GroupSecret(key: fromHex(j['key'] as String), adminPub: j['admin'] as String? ?? g.secret.adminPub, name: j['name'] as String? ?? g.secret.name, relays: [for (final r in j['relays'] as List) '$r'], direct: g.secret.direct);
       if (ns.adminPub != g.secret.adminPub || groups.containsKey(ns.tag)) return; // other group or already there
       _switchKey(g, ns);
     } catch (_) {

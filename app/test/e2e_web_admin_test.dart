@@ -41,7 +41,7 @@ void main() {
 
     final flag = File('$dir/joined.txt');
     final until = DateTime.now().add(Duration(minutes: 3 * joiners + 2));
-    while (DateTime.now().isBefore(until) && (!flag.existsSync() || flag.readAsLinesSync().where((x) => x.isNotEmpty).length < joiners)) {
+    while (joiners > 0 && DateTime.now().isBefore(until) && (!flag.existsSync() || flag.readAsLinesSync().where((x) => x.isNotEmpty).length < joiners)) {
       await Future<void>.delayed(const Duration(seconds: 1));
     }
     final reported = flag.existsSync() ? flag.readAsLinesSync().where((x) => x.isNotEmpty).length : 0;
@@ -62,7 +62,36 @@ void main() {
     expect(reported, joiners, reason: 'jeder Browser-Lauf meldet „in der Gruppe“');
     expect(members, joiners);
     expect(adopted, isTrue);
-    expect(linked, isTrue);
+    if (joiners > 0) expect(linked, isTrue);
+
+    // phase 2: friend link without a group (Nutzer 04.11.), the browser connects and writes while the admin is offline
+    final friends = Platform.environment['FASAN_E2E_FRIEND'] == '1';
+    if (friends) {
+      final d = await a.createDirect(relays: [relayUrl]);
+      final flink = d.invitations!.create().link;
+      await Future<void>.delayed(const Duration(seconds: 1));
+      await d.session.flush();
+      a.saveDocs();
+      a.dispose();
+      File('$dir/friend.txt').writeAsStringSync(flink);
+      final f = File('$dir/friend-done.txt');
+      final until3 = DateTime.now().add(const Duration(minutes: 4));
+      while (DateTime.now().isBefore(until3) && !f.existsSync()) {
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+      a = start();
+      await a.init();
+      final d2 = a.directs.single;
+      final until4 = DateTime.now().add(const Duration(seconds: 60));
+      while (DateTime.now().isBefore(until4) && !a.messages(d2).any((m) => m.text == 'Hallo aus dem Browser')) {
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
+      final got = a.messages(d2).any((m) => m.text == 'Hallo aus dem Browser');
+      File('$dir/admin.txt').writeAsStringSync(' friend=${a.directName(d2)} message=$got', mode: FileMode.append);
+      expect(a.directName(d2), 'Angi');
+      expect(got, isTrue);
+      expect(store.allGroups, ['Lissabon'], reason: 'die Freundesverbindung ist keine Gruppe');
+    }
     a.dispose();
   }, skip: relayUrl == null ? 'nur mit lokalem Relay (FASAN_E2E_RELAY)' : false, timeout: const Timeout(Duration(minutes: 20)));
 }

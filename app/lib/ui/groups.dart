@@ -311,13 +311,61 @@ class _ShareButton extends StatelessWidget {
 class FriendsPage extends StatelessWidget {
   const FriendsPage({super.key});
 
+  /// A friend link (Nutzer 04.11.: invite friends without a group or bill, to chat and try the app together).
+  static Future<void> inviteFriend(BuildContext context) async {
+    final c = CollabScope.read(context);
+    if (!await ensureConsent(context, c) || !context.mounted) return;
+    final g = await c.createDirect();
+    if (context.mounted) Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
-    final store = StoreScope.of(context);
+    final store = StoreScope.of(context), collab = CollabScope.of(context);
     final friends = store.friends;
     final bottom = 150 + MediaQuery.paddingOf(context).bottom;
-    if (friends.isEmpty) {
+    // direct connections by the friend's name (lower case); waiting = link sent, nobody opened it yet
+    final direct = <String, CollabGroup>{};
+    final waiting = <CollabGroup>[];
+    for (final g in collab.directs) {
+      final n = collab.directName(g);
+      n.isEmpty ? waiting.add(g) : direct[n.toLowerCase()] = g;
+    }
+    final names = {for (final f in friends) f.name.toLowerCase()};
+    final onlyDirect = [for (final e in direct.entries) if (!names.contains(e.key)) e.value];
+    final inviteButton = FasanButton(label: t.de ? 'Freund einladen' : 'Invite a friend', icon: Icons.person_add_alt_1_rounded, expand: true, onPressed: () => inviteFriend(context));
+
+    Widget row({required String name, required int color, required String sub, String? amount, CollabGroup? chat, required VoidCallback onTap}) => Padding(
+          padding: const EdgeInsets.only(bottom: FasanSpace.s),
+          child: Material(
+            color: l.surfaceAlt,
+            borderRadius: BorderRadius.circular(l.radius * 0.7),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(l.radius * 0.7),
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.all(FasanSpace.m),
+                child: Row(children: [
+                  FasanAvatar(name: name, index: color, size: 40),
+                  const SizedBox(width: FasanSpace.m),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(name, style: tt.titleMedium), Text(sub, style: tt.bodySmall)])),
+                  if (amount != null) Text(amount, style: tt.titleMedium),
+                  if (chat != null)
+                    IconButton(
+                      tooltip: t.de ? 'Nachricht' : 'Message',
+                      icon: Icon(Icons.chat_bubble_outline_rounded, color: l.accent),
+                      onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: chat))),
+                    )
+                  else
+                    Icon(Icons.chevron_right_rounded, color: l.textMuted),
+                ]),
+              ),
+            ),
+          ),
+        );
+
+    if (friends.isEmpty && direct.isEmpty && waiting.isEmpty) {
       return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom), children: [
         const SizedBox(height: 80),
         Icon(Icons.people_outline_rounded, size: 56, color: l.textMuted),
@@ -325,61 +373,79 @@ class FriendsPage extends StatelessWidget {
         Text(t.friendsEmptyTitle, style: tt.titleLarge, textAlign: TextAlign.center),
         const SizedBox(height: FasanSpace.s),
         Text(t.friendsEmptyText, style: tt.bodyMedium!.copyWith(color: l.textMuted), textAlign: TextAlign.center),
+        const SizedBox(height: FasanSpace.l),
+        inviteButton,
       ]);
     }
+    final connected = t.de ? 'verbunden' : 'connected';
     return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, bottom), children: [
+      inviteButton,
+      const SizedBox(height: FasanSpace.m),
+      for (final g in onlyDirect)
+        row(name: collab.directName(g), color: 0, sub: connected, chat: g, onTap: () => friendActions(context, collab.directName(g))),
       for (final f in friends)
-        Padding(
-          padding: const EdgeInsets.only(bottom: FasanSpace.s),
-          child: SwipeActions(
-            key: ValueKey('friend-${f.name}'),
-            id: 'friend-${f.name}',
-            end: SwipeSide(Icons.person_remove_outlined, t.forget, Colors.red.shade700),
-            onDismissed: (_) => store.forgetFriend(f.name),
-            child: Material(
-              color: l.surfaceAlt,
-              borderRadius: BorderRadius.circular(l.radius * 0.7),
-              child: InkWell(
-              borderRadius: BorderRadius.circular(l.radius * 0.7),
-              // a person can be tapped (Nutzer 04.11.): add to a group, invite, write, see the bills
-              onTap: () => friendActions(context, f.name),
-              child: Padding(
-              padding: const EdgeInsets.all(FasanSpace.m),
-              child: Row(children: [
-                FasanAvatar(name: f.name, index: f.color, size: 40),
-                const SizedBox(width: FasanSpace.m),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(f.name, style: tt.titleMedium), Text(t.billsCount(f.bills), style: tt.bodySmall)])),
-                if (f.bills > 0) Text('${money(f.sum, de: t.de)} ${signOf(context)}', style: tt.titleMedium),
-                Icon(Icons.chevron_right_rounded, color: l.textMuted),
-              ]),
-            ),
-            ),
-            ),
+        SwipeActions(
+          key: ValueKey('friend-${f.name}'),
+          id: 'friend-${f.name}',
+          end: SwipeSide(Icons.person_remove_outlined, t.forget, Colors.red.shade700),
+          onDismissed: (_) => store.forgetFriend(f.name),
+          child: row(
+            name: f.name,
+            color: f.color,
+            sub: [t.billsCount(f.bills), if (direct.containsKey(f.name.toLowerCase())) connected].join(' · '),
+            amount: f.bills > 0 ? '${money(f.sum, de: t.de)} ${signOf(context)}' : null,
+            chat: direct[f.name.toLowerCase()],
+            // a person can be tapped (Nutzer 04.11.): add to a group, write, see the bills
+            onTap: () => friendActions(context, f.name),
           ),
+        ),
+      for (final g in waiting)
+        row(
+          name: t.de ? 'Einladung offen' : 'Invitation open',
+          color: 3,
+          sub: t.de ? 'Noch hat niemand den Link geöffnet. Tippen: Link erneut schicken' : 'Nobody opened the link yet. Tap: send the link again',
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g))),
         ),
     ]);
   }
 }
 
-
 /// Everything one can do with a person (Nutzer 04.11.: „alles überall verfügbar, was der Benutzer erwarten könnte“).
+/// One „In Gruppe aufnehmen“ for all groups (Nutzer 04.11.: two group entries were confusing); in a shared group where
+/// I am admin the invitation link opens right away.
 Future<void> friendActions(BuildContext context, String name) async {
   final t = S.of(context), store = StoreScope.read(context), collab = CollabScope.read(context);
   final de = t.de;
   final groups = store.allGroups;
   final live = [for (final g in groups) ?collab.groupByLocalName(g)];
-  // shared groups where this person is linked to a member: chat there
+  CollabGroup? direct;
+  for (final g in collab.directs) {
+    if (collab.directName(g).toLowerCase() == name.toLowerCase()) direct = g;
+  }
+  // shared groups where this person is linked to a member: chat there too
   final chats = [for (final g in live) if (g.session.memberOfPerson(name) != null) g];
   final choice = await showModalBottomSheet<String>(
     context: context,
     builder: (ctx) => SafeArea(
       child: ListView(shrinkWrap: true, children: [
         ListTile(leading: FasanAvatar(name: name, index: 0, size: 32), title: Text(name, style: Theme.of(ctx).textTheme.titleMedium)),
-        ListTile(leading: const Icon(Icons.group_add_outlined), title: Text(de ? 'Zu einer Gruppe hinzufügen' : 'Add to a group'), onTap: () => Navigator.pop(ctx, 'add')),
-        if (live.any((g) => g.isAdmin && g.session.memberOfPerson(name) == null))
-          ListTile(leading: const Icon(Icons.person_add_alt_1_outlined), title: Text(de ? 'In eine geteilte Gruppe einladen' : 'Invite to a shared group'), onTap: () => Navigator.pop(ctx, 'invite')),
+        if (direct != null)
+          ListTile(leading: const Icon(Icons.chat_bubble_outline_rounded), title: Text(de ? 'Nachricht schreiben' : 'Write a message'), onTap: () => Navigator.pop(ctx, 'direct'))
+        else
+          ListTile(
+            leading: const Icon(Icons.link_rounded),
+            title: Text(de ? 'Mit $name verbinden' : 'Connect with $name'),
+            subtitle: Text(de ? 'Link schicken: chatten und die App testen, ohne Gruppe' : 'Send a link: chat and try the app, no group needed'),
+            onTap: () => Navigator.pop(ctx, 'connect'),
+          ),
+        ListTile(
+          leading: const Icon(Icons.group_add_outlined),
+          title: Text(de ? 'In Gruppe aufnehmen' : 'Add to a group'),
+          subtitle: Text(de ? 'Bei geteilten Gruppen geht ein Einladungslink mit' : 'Shared groups: an invitation link comes with it'),
+          onTap: () => Navigator.pop(ctx, 'add'),
+        ),
         for (final g in chats)
-          ListTile(leading: const Icon(Icons.chat_bubble_outline_rounded), title: Text(de ? 'Nachricht in „${g.localName}“' : 'Message in “${g.localName}”'), onTap: () => Navigator.pop(ctx, 'chat:${g.secret.tag}')),
+          ListTile(leading: const Icon(Icons.forum_outlined), title: Text(de ? 'Nachricht in „${g.localName}“' : 'Message in “${g.localName}”'), onTap: () => Navigator.pop(ctx, 'chat:${g.secret.tag}')),
         ListTile(leading: const Icon(Icons.receipt_long_outlined), title: Text(de ? 'Bons mit $name' : 'Receipts with $name'), onTap: () => Navigator.pop(ctx, 'bills')),
         ListTile(leading: Icon(Icons.person_remove_outlined, color: Colors.red.shade700), title: Text(de ? 'Aus den Vorschlägen entfernen' : 'Remove from suggestions'), onTap: () => Navigator.pop(ctx, 'forget')),
       ]),
@@ -390,28 +456,37 @@ Future<void> friendActions(BuildContext context, String name) async {
         context: context,
         builder: (ctx) => SafeArea(
           child: ListView(shrinkWrap: true, children: [
-            for (final g in names) ListTile(leading: const Icon(Icons.folder_outlined), title: Text(g), onTap: () => Navigator.pop(ctx, g)),
+            for (final g in names)
+              ListTile(
+                leading: Icon(collab.groupByLocalName(g) != null ? Icons.sensors_rounded : Icons.folder_outlined),
+                title: Text(g),
+                subtitle: collab.groupByLocalName(g) != null ? Text(de ? 'geteilt' : 'shared') : null,
+                onTap: () => Navigator.pop(ctx, g),
+              ),
             ListTile(leading: const Icon(Icons.create_new_folder_outlined), title: Text(t.newGroup), onTap: () => Navigator.pop(ctx, '+')),
           ]),
         ),
       );
   switch (choice) {
+    case 'direct':
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: direct!)));
+    case 'connect':
+      await FriendsPage.inviteFriend(context);
     case 'add':
       var g = await pickGroup(groups);
       if (g == '+' && context.mounted) {
         g = await askText(context, t.newGroup, t.groupName);
         if (g != null) store.addGroup(g);
       }
-      if (g == null || g.trim().isEmpty) return;
+      if (g == null || g.trim().isEmpty || !context.mounted) return;
       store.addGroupMember(g.trim(), name);
-      if (context.mounted) showNote(context, de ? '$name ist in „${g.trim()}“.' : '$name is in “${g.trim()}”.');
-    case 'invite':
-      final names = [for (final g in live) if (g.isAdmin && g.session.memberOfPerson(name) == null) g.localName];
-      final g = await pickGroup(names);
-      final c = g == null ? null : collab.groupByLocalName(g);
-      if (c == null || !context.mounted) return;
-      store.addGroupMember(c.localName, name);
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: c, person: name)));
+      final c = collab.groupByLocalName(g.trim());
+      if (c != null && c.isAdmin && c.session.memberOfPerson(name) == null) {
+        // shared: the person still has to get in – the link for them opens at once
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: c, person: name)));
+      } else {
+        showNote(context, de ? '$name ist in „${g.trim()}“.' : '$name is in “${g.trim()}”.');
+      }
     case 'bills':
       final list = store.bills.where((b) => b.trashedAt == null && b.ps.any((p) => p.name == name)).toList()..sort((a, b) => b.date.compareTo(a.date));
       Navigator.of(context).push(MaterialPageRoute(

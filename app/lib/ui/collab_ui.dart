@@ -251,7 +251,11 @@ class OpenInviteCard extends StatelessWidget {
               const SizedBox(width: FasanSpace.m),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(t.de ? 'Einladung zu „${inv.name}“' : 'Invitation to “${inv.name}”', style: tt.titleMedium),
+                  Text(
+                      inv.direct
+                          ? (t.de ? '${inv.name} möchte sich mit dir verbinden' : '${inv.name} wants to connect with you')
+                          : (t.de ? 'Einladung zu „${inv.name}“' : 'Invitation to “${inv.name}”'),
+                      style: tt.titleMedium),
                   Text(t.de ? 'Tippe hier, gib deinen Namen ein und tritt bei.' : 'Tap here, enter your name and join.', style: tt.bodySmall),
                 ]),
               ),
@@ -331,7 +335,8 @@ class _JoinScreenState extends State<JoinScreen> {
     _tag = null;
     final nav = Navigator.of(context);
     nav.popUntil((r) => r.isFirst);
-    nav.push(MaterialPageRoute(builder: (_) => GroupScreen(name: g.localName, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)))));
+    nav.push(MaterialPageRoute(
+        builder: (_) => g.secret.direct ? ChatScreen(group: g) : GroupScreen(name: g.localName, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)))));
   }
 
   @override
@@ -382,7 +387,7 @@ class _JoinScreenState extends State<JoinScreen> {
   Widget build(BuildContext context) {
     final t = S.of(context), tt = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: Text(t.joinGroup)),
+      appBar: AppBar(title: Text(Invite.parse(_link.text)?.direct == true ? (t.de ? 'Verbinden' : 'Connect') : t.joinGroup)),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         if (kIsWeb) const _WebAppHint(),
         Text(t.joinText, style: tt.bodyMedium),
@@ -488,6 +493,8 @@ class _InviteScreenState extends State<InviteScreen> {
     _sub = _inv?.changes.stream.listen((_) {
       if (mounted) setState(() {});
     });
+    // friend link: there is nothing to choose, the link is ready at once
+    if (widget.group.secret.direct && _inv != null) _current = _inv!.create();
   }
 
   @override
@@ -512,9 +519,15 @@ class _InviteScreenState extends State<InviteScreen> {
     final g = widget.group, inv = _inv, link = _current?.link;
     final requests = inv?.pending.values.toList() ?? const <JoinRequest>[];
     return Scaffold(
-      appBar: AppBar(title: Text(widget.person == null ? t.invite : t.inviteFor(widget.person!))),
+      appBar: AppBar(title: Text(g.secret.direct ? (t.de ? 'Freund einladen' : 'Invite a friend') : widget.person == null ? t.invite : t.inviteFor(widget.person!))),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
-        Text(t.inviteLive(g.localName), style: tt.bodyMedium),
+        Text(
+            g.secret.direct
+                ? (t.de
+                    ? 'Schick diesen Link. Wer ihn öffnet, ist mit dir verbunden und kann mit dir schreiben – in der App oder im Browser, ohne Konto. Gruppen und Bons sieht niemand dadurch.'
+                    : 'Send this link. Whoever opens it is connected with you and can write to you – in the app or the browser, without an account. Nobody sees your groups or receipts through it.')
+                : t.inviteLive(g.localName),
+            style: tt.bodyMedium),
         const SizedBox(height: FasanSpace.l),
         if (link == null) FilledButton.icon(icon: const Icon(Icons.add_link_rounded), label: Text(t.inviteCreate), onPressed: inv == null ? null : _create),
         if (link != null) ...[
@@ -540,10 +553,11 @@ class _InviteScreenState extends State<InviteScreen> {
               ),
             ),
             const SizedBox(width: FasanSpace.s),
-            Expanded(child: FilledButton.icon(icon: const Icon(Icons.ios_share_rounded), label: Text(t.inviteShare), onPressed: () => SharePlus.instance.share(ShareParams(text: link)))),
+            Expanded(child: FilledButton.icon(icon: const Icon(Icons.ios_share_rounded), label: Text(t.inviteShare), onPressed: () => SharePlus.instance.share(ShareParams(text: g.secret.direct ? (t.de ? '${g.secret.name} lädt dich zu Fasan Split ein: $link' : '${g.secret.name} invites you to Fasan Split: $link') : link)))),
           ]),
           TextButton(onPressed: _create, child: Text(t.inviteCreate)),
         ],
+        if (!g.secret.direct) ...[
         const SizedBox(height: FasanSpace.l),
         Text(t.requests, style: tt.titleMedium),
         if (requests.isEmpty) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: Text(t.noRequests, style: tt.bodySmall)),
@@ -562,6 +576,7 @@ class _InviteScreenState extends State<InviteScreen> {
               ),
             ]),
           ),
+        ],
         const SizedBox(height: FasanSpace.l),
         if (inv != null) TextButton.icon(icon: const Icon(Icons.link_off_rounded), label: Text(t.inviteRevoke), onPressed: _revoke),
       ]),
@@ -810,7 +825,15 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: Text(t.chatTitle)),
+      appBar: AppBar(
+          title: GroupChangeBuilder(
+              group: widget.group,
+              docId: GroupSession.members,
+              builder: (context) {
+                final g = widget.group, c = CollabScope.read(context);
+                final n = g.secret.direct ? c.directName(g) : g.localName;
+                return Text(n.isEmpty ? t.chatTitle : n);
+              })),
       body: Column(children: [
         Expanded(
           child: GroupChangeBuilder(

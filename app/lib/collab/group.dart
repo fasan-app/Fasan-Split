@@ -31,7 +31,11 @@ const int kindData = 30078;
 
 /// Secrets and settings of one group on this device.
 class GroupSecret {
-  GroupSecret({required this.key, required this.adminPub, required this.name, required this.relays, DateTime? created}) : created = created ?? DateTime.now();
+  GroupSecret({required this.key, required this.adminPub, required this.name, required this.relays, DateTime? created, this.direct = false}) : created = created ?? DateTime.now();
+
+  /// Direct connection of two friends (Nutzer 04.11.: invite friends without a group or bill, to chat and try the app).
+  /// Same machinery as a group; shown under Freunde, never in the group or bill lists. [name] is the inviter's name.
+  final bool direct;
 
   final Uint8List key; // 32 bytes
   final String adminPub;
@@ -41,19 +45,23 @@ class GroupSecret {
 
   String get tag => toHex(sha256([...utf8.encode('fasan-split/group/v1'), ...key]).sublist(0, 16));
 
-  Map<String, Object?> toJson() => {'key': toHex(key), 'admin': adminPub, 'name': name, 'relays': relays, 'created': created.toIso8601String()};
+  Map<String, Object?> toJson() => {'key': toHex(key), 'admin': adminPub, 'name': name, 'relays': relays, 'created': created.toIso8601String(), if (direct) 'direct': true};
   static GroupSecret fromJson(Map<String, dynamic> j) => GroupSecret(
         key: fromHex(j['key'] as String),
         adminPub: j['admin'] as String,
         name: j['name'] as String,
         relays: [for (final r in j['relays'] as List) '$r'],
         created: DateTime.tryParse(j['created'] as String? ?? ''),
+        direct: j['direct'] == true,
       );
 }
 
 /// The invitation a new member opens. Carries no group key.
 class Invite {
-  Invite({required this.tag, required this.secret, required this.adminPub, required this.relays, required this.expires, required this.name, this.person, this.auto = false, this.groupKey});
+  Invite({required this.tag, required this.secret, required this.adminPub, required this.relays, required this.expires, required this.name, this.person, this.auto = false, this.groupKey, this.direct = false});
+
+  /// Friend link (GroupSecret.direct): joining connects two people, no group.
+  final bool direct;
 
   final String tag, adminPub, name;
 
@@ -89,6 +97,7 @@ class Invite {
         if (person != null) 'p': person,
         if (auto) 'o': 1,
         if (groupKey != null) 'k': toHex(groupKey!),
+        if (direct) 'd': 1,
       }))).replaceAll('=', '');
 
   /// Link for sharing. The part after „#“ is never sent to a server: GitHub Pages only sees /Fasan-Split/join/.
@@ -116,6 +125,7 @@ class Invite {
         person: j['p'] as String?,
         auto: j['o'] == 1,
         groupKey: j['k'] is String ? fromHex(j['k'] as String) : null,
+        direct: j['d'] == 1,
       );
     } catch (_) {
       return null;
@@ -160,7 +170,8 @@ class Invitations {
   Invite create({Duration valid = const Duration(days: 7), String? person, bool auto = true}) {
     final inv = Invite(
         tag: secret.tag, secret: randomBytes(32), adminPub: me.pub, relays: secret.relays, expires: DateTime.now().add(valid), name: secret.name, person: person, auto: auto,
-        groupKey: auto ? secret.key : null);
+        groupKey: auto ? secret.key : null,
+        direct: secret.direct);
     _issued[toHex(inv.secret)] = inv;
     onIssued?.call(open);
     return inv;
@@ -199,7 +210,7 @@ class Invitations {
   Future<bool> welcome(String pub) {
     final conv = nip44ConversationKey(me.priv, pub);
     // 'admin' is the founder (the group's adminPub), also when another admin sends the welcome
-    final body = nip44Encrypt(jsonEncode({'key': toHex(secret.key), 'name': secret.name, 'admin': secret.adminPub, 'relays': secret.relays}), conv);
+    final body = nip44Encrypt(jsonEncode({'key': toHex(secret.key), 'name': secret.name, 'admin': secret.adminPub, 'relays': secret.relays, if (secret.direct) 'direct': true}), conv);
     final ev = NostrEvent.create(me, kind: kindData, tags: [['d', 'fs:${secret.tag}:welcome:$pub'], ['t', '${secret.tag}:welcome'], ['p', pub]], content: body);
     pending.remove(pub);
     changes.add(null);
@@ -240,7 +251,7 @@ class JoinFlow {
       if (!e.valid || e.pubkey != invite.adminPub || e.tag('d') != 'fs:${invite.tag}:welcome:${me.pub}') return;
       try {
         final j = jsonDecode(nip44Decrypt(e.content, nip44ConversationKey(me.priv, invite.adminPub))) as Map<String, dynamic>;
-        final g = GroupSecret(key: fromHex(j['key'] as String), adminPub: j['admin'] as String? ?? invite.adminPub, name: j['name'] as String? ?? invite.name, relays: [for (final r in j['relays'] as List) '$r']);
+        final g = GroupSecret(key: fromHex(j['key'] as String), adminPub: j['admin'] as String? ?? invite.adminPub, name: j['name'] as String? ?? invite.name, relays: [for (final r in j['relays'] as List) '$r'], direct: j['direct'] == true || invite.direct);
         if (g.tag != invite.tag) return; // not the group we asked for
         if (!c.isCompleted) c.complete(g);
         sub.cancel();

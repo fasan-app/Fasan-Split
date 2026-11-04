@@ -331,7 +331,37 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
   installierte Testversion kommt. Ablauf: Update installieren → Sicherung speichern → Flag entfernen (Sitzung) → Release-APK:
   Testversion deinstallieren, neu installieren, Sicherung einspielen, App neu starten. ERLEDIGT 04.11. nachts: Flag entfernt (Nutzer hat mit Konto gesichert).
 
-## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
+## Noch offen – Reihenfolge (aufgeräumt 04.11. abends; die einzige Liste, die gepflegt wird)
+
+Alles Unerledigte aus dem Verlauf unten steht hier. Erledigtes wandert mit Datum in den Verlauf. Priorität: erst was
+Einladen, Gruppen und Freunde blockiert (Nutzer 04.11.: „muss sofort funktionieren“), dann Bedienung, dann Neues.
+
+Gruppen, Einladen, Freunde
+1. Auf dem S23 prüfen: offener Einladungslink, Freundeslink + Chat, Bon-Status („Eintragen“, „ausgleichen“), Schritt 4 „Übersicht“.
+2. Echte In-App-Browser (WhatsApp, Instagram) und iPhone/Safari: nicht geprüft (nachgestellt nur ohne Service Worker / ohne Speicher).
+3. Browser-E2E: Bon im Browser bearbeiten (heute nur Android↔Android-Test); „schon Mitglied“ → direkt in die Gruppe; Relay nicht erreichbar; abgelaufener Link mit klarer Meldung.
+4. Online / zuletzt online bei Freunden (verschlüsselter Zeitstempel, in Einstellungen aus = auch keine fremden Zeiten).
+5. Messenger: gelesen, schreibt gerade, Profilbild/Status, @Bon im Chat, anpinnen, stumm, Privatnachricht in der Gruppe (eigene Verschlüsselung je Empfänger – Entwurf mit dem Nutzer).
+6. Gruppe verlassen auf allen eigenen Geräten; Mitglieder von Hand auch im Live-Teil abgleichen; verknüpfte Person umbenennen.
+7. Konto: Passkey-Messprobe auf dem S23, danach bauen; soziale Wiederherstellung (2 von 3) als Entwurf.
+
+Bedienung, Saldo, Bons
+8. Saldo-Plakette auch auf Unterseiten, Visualisierung; Filter nach Gruppe/Person/„ich schulde“, Suche.
+9. Avatar und Gruppenbild, Namen ändern, Währung aus dem Bon erkennen ($, £, USD); EZB-Abruf im Browser (CORS) prüfen.
+10. Kontakte löschen: nur aus Vorschlägen, nicht aus Bons mit Kosten/Zahler.
+11. Mehrere Zahler und Anzahlung exakt, Rückgängig/Wiederholen, PDF, Rechenprüfung auch beim Teilen/Export und bei Entwürfen.
+12. Erkennung: Betrag im Geschäftsnamen trennen („Uber -12,98 €“), Scan-Begradigung (QR-Bereich, Keil unten links, Papierkante), Lesesicherheit aus Wortkonfidenzen, Korrekturen lernen, `de-discount.png` und SROIE gegen Web.
+
+Gestaltung, Technik, Roadmap
+13. Glas echt (vom Nutzer zurückgestellt), Indikatoren/Farben/Animation nach Regelwerk, Übergänge ohne Ruckeln, Menüs und Einstellungen neu ordnen, Gestaltung §9 (Lebendig, Papier, Braun, Kino).
+14. Am Gerät beurteilen: Bon-Ansicht (Zoom breiter als Bildschirm, Querformat), Akku mit laufendem Korn, Leistung auf alten Geräten.
+15. APK-Größe (`uvdoc.onnx` 31,6 MB, fp16 prüfen); Safari mit 1 Thread.
+16. Fasan Karte: Fundament (model, collab, recognition, state ohne App-Abhängigkeit) halten.
+17. Roadmap: Widgets, große/kleine Bildschirme, MCP-Schnittstelle, Import Splitwise/Tricount, Konkurrenz-Apps einzeln.
+18. Nutzer: GitHub-Konto für fasan@christopherziehm.de (dann „Verified“-Commits möglich).
+
+## Verlauf der offenen Liste (bis 04.11.; nicht mehr pflegen, offene Punkte stehen oben)
+
 
 Nacht 04.11. (Einladung im Browser, Bon-Status, Freunde):
 - Behoben: Web-App konnte keine Beitrittsanfrage senden und keine Gruppe lesen (pointycastle-Poly1305 wirft im Browser „full width integer not supported“). Eigenes ChaCha20-Poly1305 nach RFC 8439, gleiche Bytes wie vorher (Test `crypto_web_test.dart`). Einladungen gespeichert und standardmäßig automatisch bestätigt (`invite_robust_test.dart`), Beitrittsseite öffnet die Gruppe, sobald sie da ist. Browser-Ende-zu-Ende lokal geprüft (lokales Relay `app/tool/e2e/relay.py`, `tool/e2e/joiner.js`, Admin `test/e2e_web_admin_test.dart`): Angi tritt im Browser bei, sieht Gruppe und Bon, ist verknüpft.
@@ -339,6 +369,7 @@ Nacht 04.11. (Einladung im Browser, Bon-Status, Freunde):
 - Als Nächstes (in dieser Reihenfolge, Grund: Nutzer „muss sofort funktionieren“): (1) Freigabe im Link – Beitritt ohne dass ein Verwalter online ist (Plan in `docs/recherche/2026-11-04-einladung-situationen.md`); (2) Browser-Test als CI-Schranke vor Pages (normal, ohne Service Worker, ohne Speicher); (3) Bon-Status „Eingetragen“ (Offen, zählt im Saldo) vs. „Ausgeglichen“ (Archiv, zählt nicht mehr), letzter Schritt als Übersicht mit „Eintragen“ statt doppelter Zahler-Frage (Nutzer 04.11.).
 - Gebaut (später in der Nacht): (1) offener Link – Beitritt sofort, auch wenn kein Verwalter online ist (Kern `group.dart` 4b, `invite_open_test.dart`); (2) Browser-E2E als CI-Schranke vor Pages (`web.yml` Job e2e, `tool/e2e/run.sh`: Admin offline, 3 Browser normal/ohne Service Worker/ohne Speicher). Stresstest fand und behob: Absturz ohne Browser-Speicher, Fehler in coi-serviceworker ohne Service Worker. Offen: (3) Bon-Status; Bearbeiten aus dem Browser im E2E (heute nur Android-Test).
 - Bon-Status gebaut (Nutzer 04.11., Test `settled_test.dart`, NICHT auf dem Gerät geprüft): „eingetragen“ (Schritt 4 „Eintragen“) bleibt unter Offen und zählt im Saldo; „ausgeglichen“ (Bon: „Alles bezahlt – ausgleichen“, Gruppe: „Alle haben bezahlt – ausgleichen“, Wischen nach rechts) geht ins Archiv und zählt nicht mehr. Angefangene Bons können nicht ins Archiv (Hinweis). Bons, bei denen niemand etwas schuldet, sind beim Eintragen gleich ausgeglichen. Geteilt über `meta/settled`. Schritt 4 heißt jetzt „Übersicht“: kleine Zeile „Bezahlt hat“, Ergebnis, Erklärung, Knopf „Eintragen“. Listentitel ohne Gruppe: „Ohne Gruppe“ / Archiv „Ausgeglichen“.
+- Freunde ohne Gruppe gebaut (Nutzer 04.11., Tests `friend_direct_test.dart` + Browser-E2E Modus friend, nicht auf dem Gerät): „Freund einladen“ auf der Freunde-Seite → Link (offen, Zweier-Verbindung `GroupSecret.direct`), wer ihn öffnet, landet im Chat; Verbindung erscheint nur unter Freunde (Chat-Symbol, „verbunden“), nie unter Gruppen oder Bons. Menü je Person vereinfacht: „Nachricht schreiben“ / „Mit … verbinden“, ein „In Gruppe aufnehmen“ (geteilte Gruppe: Einladungslink öffnet sich gleich). Browser im Test sperrt jetzt alle nicht-lokalen Verbindungen (ein Testaufbau trug kurz öffentliche Relays im Link; der Sitzungs-Proxy lehnte alle Verbindungen ab, nichts ging raus).
 - To-do Nutzer 04.11.: GitHub-Konto für fasan@christopherziehm.de anlegen (dann signierte „Verified“-Commits möglich).
 - Wunsch Nutzer 04.11., später: Freunde „online“ / „zuletzt online“ (verschlüsselter Zeitstempel je Gruppe, in Einstellungen abschaltbar; aus = auch keine fremden Zeiten), weitere Messenger-Funktionen (gelesen, schreibt gerade, Profilbild/Status, Erwähnungen, stumm, anpinnen).
 
@@ -416,7 +447,7 @@ Neu 03.11. abends (Nutzer, Priorität nach Abhängigkeit gesetzt):
 8. Gestaltung §9: Lebendig/Warten, Papier, Braun-Technik, Kino-Stile, Leistungstest; Erststart-Tour auf Hinweise am Ort abgleichen.
 9. Technik: APK-Größe (`uvdoc.onnx` 31,6 MB), Release-Schlüssel, Akku mit laufendem Korn, SROIE nachmessen, `de-discount.png`.
 
-## Offen
+## Offen (alt, in „Noch offen“ oben übernommen)
 
 - Auf dem Handy testen (S23): Kamera, Galerie, Erkennungszeit, Akku mit laufendem Korn (siehe unten).
 - Bon-Variante: Der Zoom macht den Bon breiter als den Bildschirm; Beträge und Avatare liegen rechts, man muss
@@ -425,5 +456,5 @@ Neu 03.11. abends (Nutzer, Priorität nach Abhängigkeit gesetzt):
   30 Hz nur bei sichtbarem Glas. Verbrauch nicht gemessen (Effekt-Testseite zeigt Bildrate und Sensortakt).
 - `de-discount.png` und SROIE einzeln gegen Web vergleichen.
 - APK-Größe: `uvdoc.onnx` allein 31,6 MB; kleinere Variante (z. B. fp16) prüfen.
-- Release-Schlüssel als Secret hinterlegen (`FASAN_KEYSTORE_B64`, `FASAN_KEYSTORE_PASSWORD`).
+- Release-Schlüssel als Secret hinterlegen – ERLEDIGT 04.11. (Release-Schlüssel aktiv).
 - Code zieht später in Fasan Karte.
