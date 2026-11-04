@@ -68,6 +68,41 @@ class CollabService extends ChangeNotifier {
     return null;
   }
 
+  /// Account and shared groups for the backup file (state/backup.dart): identity from the vault, group keys, the stored
+  /// documents. The result is secret like the 12 words.
+  Future<Map<String, Object?>> exportSecrets() async {
+    saveDocs();
+    final v = <String, String>{};
+    for (final k in [...Identity.vaultKeys, _kGroups]) {
+      final x = await vault.read(k);
+      if (x != null) v[k] = x;
+    }
+    return {
+      'vault': v,
+      'prefs': {for (final k in prefs?.getKeys() ?? const <String>{}) if (k.startsWith(_kDocs) || k == _kJoins) k: prefs!.getString(k)},
+    };
+  }
+
+  /// Puts account and groups from a backup back, only if this device has no account and no groups yet (never mixes two
+  /// accounts). Takes effect after a restart of the app. Returns whether something was restored.
+  Future<bool> importSecrets(Map<String, Object?> m) async {
+    if (groups.isNotEmpty || await vault.read(Identity.vaultKeys.first) != null && identity?.pub != _pubOf(m)) return false;
+    final v = (m['vault'] as Map? ?? const {}).cast<String, String>();
+    if (v.isEmpty) return false;
+    for (final e in v.entries) {
+      await vault.write(e.key, e.value);
+    }
+    for (final e in (m['prefs'] as Map? ?? const {}).cast<String, String?>().entries) {
+      if (e.value != null) await prefs?.setString(e.key, e.value!);
+    }
+    return true;
+  }
+
+  static String? _pubOf(Map<String, Object?> m) {
+    final priv = (m['vault'] as Map?)?[Identity.vaultKeys.first] as String?;
+    return priv == null ? null : KeyPair.fromPrivate(priv).pub;
+  }
+
   /// Loads identity and groups and starts the sessions (connects only if there is a group).
   Future<void> init() async {
     final raw = await vault.read(_kGroups);

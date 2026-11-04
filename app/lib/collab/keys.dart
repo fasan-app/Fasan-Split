@@ -108,6 +108,9 @@ class Identity {
 
   static const _kKey = 'fasan.identity.priv', _kName = 'fasan.identity.name', _kWords = 'fasan.identity.words';
 
+  /// Everything of the identity in the vault (backup of the account, state/backup.dart).
+  static const vaultKeys = [_kKey, _kName, _kWords];
+
   /// Loads the stored identity; creates one (with a new 12-word phrase) on first use.
   static Future<Identity> loadOrCreate(Vault v, {String defaultName = ''}) async {
     final priv = await v.read(_kKey);

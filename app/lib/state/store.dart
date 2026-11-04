@@ -133,6 +133,18 @@ class BillStore extends ChangeNotifier {
   }
   void saveSettings(String s) => _prefs?.setString('fasan_ui.settings', s);
 
+  /// App settings as stored (backup.dart).
+  Map<String, Object?> get appSettings => Map.of(_app);
+  set appSettings(Map<String, Object?> m) {
+    _app = Map.of(m);
+    _prefs?.setString('split.settings', jsonEncode(_app));
+    BillItem.plainNames = plainNames;
+    notifyListeners();
+  }
+
+  /// Saves and shows bills that were added to [bills] directly (backup.dart).
+  void upsertAll() => _persist();
+
   /// Names of people from earlier bills (most recent first).
   List<String> get recentNames {
     final out = <String>[];

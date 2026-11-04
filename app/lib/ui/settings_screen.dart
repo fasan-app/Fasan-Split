@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
 import '../main.dart';
+import 'backup_ui.dart';
 import 'collab_ui.dart';
 import 'common.dart';
 import 'diagnose.dart';
@@ -113,6 +114,8 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(t.accountOpen),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AccountScreen())),
         ),
+        head(t.de ? 'Sichern' : 'Backup'),
+        ...backupTiles(context),
         head(t.setLook),
         ListTile(
           leading: const Icon(Icons.palette_outlined),

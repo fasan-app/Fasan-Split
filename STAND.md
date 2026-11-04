@@ -319,6 +319,18 @@ NOCH ZU BAUEN (Reihenfolge):
 Regeln: **Nie an öffentliche Relays senden, auch nicht zum Testen** (nur MemoryRelay); die App selbst nutzt sie nur nach Einwilligung des Nutzers. Lokal `app/pubspec_overrides.yaml` zeigt auf `../../fasan_ui` (gitignoriert, nicht committen; Vorlage `/tmp/po.yaml` kann fehlen: Inhalt `dependency_overrides:\n  fasan_ui:\n    path: ../../fasan_ui`).
 Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` (E2E nur mit `LD_LIBRARY_PATH=/home/claude/ort/onnxruntime-linux-x64-1.22.0/lib`, dauert ~13 min, im Hintergrund).
 
+## Sicherung und Schlüsselwechsel (04.11.)
+
+- Release-Schlüssel aktiv seit Lauf 453d4da (ci-logs/key.log: „Release-Schlüssel aktiv“, SHA256 7C:2B:13:B4:…:FE:A8, gleich
+  dem Eintrag in fasan-app.github.io/.well-known/assetlinks.json). Eine Release-APK passt nicht über die Testversion.
+- Neu: „Sichern“ in den Einstellungen (`state/backup.dart`, `ui/backup_ui.dart`): alle Bons mit Fotos und Protokollen,
+  Einstellungen, auf Wunsch Konto (Schlüssel, 12 Wörter) und geteilte Gruppen in eine JSON-Datei; Einspielen fügt fehlende
+  Bons hinzu, löscht nichts; Konto/Gruppen nur in eine Installation ohne anderes Konto, wirkt nach Neustart. Test:
+  `test/backup_test.dart`. Nicht auf dem Gerät geprüft.
+- Übergang: `FORCE_TEST_KEY: '1'` im Signaturschritt erzwingt einmal den Testschlüssel, damit die Sicherung per Update auf die
+  installierte Testversion kommt. Ablauf: Update installieren → Sicherung speichern → Flag entfernen (Sitzung) → Release-APK:
+  Testversion deinstallieren, neu installieren, Sicherung einspielen, App neu starten. OFFEN: Flag entfernen.
+
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
 Neu 03.11. abends (Nutzer, Priorität nach Abhängigkeit gesetzt):
