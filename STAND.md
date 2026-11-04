@@ -336,6 +336,13 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 Alles Unerledigte aus dem Verlauf unten steht hier. Erledigtes wandert mit Datum in den Verlauf. Priorität: erst was
 Einladen, Gruppen und Freunde blockiert (Nutzer 04.11.: „muss sofort funktionieren“), dann Bedienung, dann Neues.
 
+Zuerst in der nächsten Sitzung (Netz-Freigabe gilt erst in einer neuen Sitzung; hier gesperrt, 04.11.): Primärquellen
+nachlesen und Code/Recherche angleichen – (1) EPC069-12 v3.x PDF (europeanpaymentscouncil.eu): SEPA-QR-Aufbau in
+`model/pay.dart` prüfen, Test anpassen; (2) BIP 21/BIP 321 (github.com/bitcoin/bips) für `bitcoin:`-Links; (3) Monero
+`docs/URI_SCHEME.md` (github.com/monero-project); (4) Orbot-Doku (guardianproject.info / github.com/guardianproject/orbot):
+HTTP-Tunnel 8118 und VPN-Modus bestätigen; (5) api.dart.dev HttpClient.findProxy; (6) docs.joinmastodon.org Teilen-URL;
+(7) nostr.watch für .onion-Relays; (8) Wikipedia EPC QR (Versionen). Ergebnis in den Recherche-Dateien vom 04.11. nachtragen.
+
 Gruppen, Einladen, Freunde
 0. System-Benachrichtigungen – ERLEDIGT 04.11. (Gerät nicht geprüft); offen: Ablauf-Prüfung aller Bildschirme auf umständliches Verhalten.
 1. Auf dem S23 prüfen: offener Einladungslink, Freundeslink + Chat, Bon-Status („Eintragen“, „ausgleichen“), Schritt 4 „Übersicht“.
