@@ -137,6 +137,7 @@ class CollabService extends ChangeNotifier {
       _accountWatch = _relayFactory(_accountRelays)
           .subscribe(Filter(kinds: const [kindData], authors: [me.pub], tags: {'t': ['fs:account']}))
           .listen((e) => unawaited(_mergeAccountEvent(e)));
+      unawaited(syncAccount()); // groups from before 0.1.49 reach the account list without waiting for a change
     }
     try {
       for (final j in jsonDecode(prefs?.getString(_kJoins) ?? '[]') as List) {
