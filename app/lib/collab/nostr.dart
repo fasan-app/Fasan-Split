@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'crypto.dart';
+import 'ws_connect.dart';
 
 class NostrEvent {
   NostrEvent({required this.id, required this.pubkey, required this.createdAt, required this.kind, required this.tags, required this.content, required this.sig});
@@ -150,6 +151,9 @@ class MemoryRelayHub {
   }
 }
 
+/// Local proxy for all relay connections ("127.0.0.1:8118" = Orbot), set at start from the settings; null = direct.
+String? relayProxy;
+
 /// A WebSocket connection to one relay (wss://). Reconnects with growing pauses and restores subscriptions.
 class WsRelay implements Relay {
   WsRelay(this.url);
@@ -168,7 +172,7 @@ class WsRelay implements Relay {
 
   Future<void> _connect() => _connecting ??= () async {
         try {
-          final ch = WebSocketChannel.connect(Uri.parse(url));
+          final ch = openRelaySocket(Uri.parse(url), relayProxy); // Tor via Orbot when switched on
           await ch.ready.timeout(const Duration(seconds: 10));
           _ch = ch;
           _retry = 0;

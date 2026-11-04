@@ -11,6 +11,7 @@ import '../l10n.dart';
 import '../l10n_collab.dart';
 import '../main.dart';
 import '../collab/activity.dart';
+import '../collab/ws_connect.dart' show proxySupported, proxyReachable;
 import 'backup_ui.dart';
 import 'currency_ui.dart';
 import 'collab_ui.dart';
@@ -132,6 +133,7 @@ class SettingsScreen extends StatelessWidget {
         // one place for notifications (Nutzer 04.11.: no contradicting settings hidden in sub menus)
         head(t.de ? 'Benachrichtigungen' : 'Notifications'),
         if (deviceNotifier != null) const _DeviceNotifyTile(),
+        if (proxySupported) const _TorTile(),
         SwitchListTile(
           secondary: const Icon(Icons.visibility_outlined),
           title: TitleHelp(
@@ -314,6 +316,48 @@ class _DeviceNotifyTileState extends State<_DeviceNotifyTile> {
         if (v && !ok) {
           messenger.showSnackBar(SnackBar(content: Text(t.de ? 'Benachrichtigungen sind in den Geräte-Einstellungen gesperrt.' : 'Notifications are blocked in the device settings.')));
         }
+      },
+    );
+  }
+}
+
+
+/// „Über Tor verbinden“ (Nutzer 04.11.): all relay connections through Orbot (Guardian Project), so relays do not see
+/// the IP address. Needs Orbot running; takes effect after a restart of the app.
+class _TorTile extends StatefulWidget {
+  const _TorTile();
+
+  @override
+  State<_TorTile> createState() => _TorTileState();
+}
+
+class _TorTileState extends State<_TorTile> {
+  bool? _on;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    final prefs = CollabScope.read(context).prefs;
+    final on = _on ?? prefs?.getBool('net.tor') ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.security_rounded),
+      title: TitleHelp(
+        t.de ? 'Über Tor verbinden (Orbot)' : 'Connect through Tor (Orbot)',
+        t.de
+            ? 'Alle Verbindungen zu den Relays laufen über Tor. Dann sehen die Relays deine IP-Adresse nicht. Dafür muss die App Orbot (Guardian Project) installiert sein und laufen. Verbindungen werden langsamer. Gilt nach dem nächsten Start von Fasan Split.'
+            : 'All relay connections go through Tor, so relays do not see your IP address. Needs the Orbot app (Guardian Project) installed and running. Connections get slower. Takes effect after the next start of Fasan Split.',
+      ),
+      value: on,
+      onChanged: (v) async {
+        final messenger = ScaffoldMessenger.of(context);
+        if (v && !await proxyReachable('127.0.0.1:8118')) {
+          messenger.showSnackBar(SnackBar(content: Text(t.de ? 'Orbot läuft nicht. Erst Orbot starten, dann einschalten.' : 'Orbot is not running. Start Orbot first.')));
+          return;
+        }
+        await prefs?.setBool('net.tor', v);
+        if (!mounted) return;
+        setState(() => _on = v);
+        messenger.showSnackBar(SnackBar(content: Text(t.de ? 'Gilt nach dem nächsten Start der App.' : 'Takes effect after the next start.')));
       },
     );
   }

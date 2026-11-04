@@ -16,6 +16,7 @@ import 'collab_ui.dart';
 import 'common.dart';
 import 'groups.dart';
 import 'pairing_ui.dart';
+import 'pay_ui.dart';
 import 'settings_screen.dart';
 
 class _T {
@@ -242,6 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         FasanLabel(de ? 'Konto und Geräte' : 'Account and devices'),
         tile(Icons.qr_code_2_rounded, de ? 'Gerät hinzufügen' : 'Add a device', de ? 'Konto aufs Tablet, zweite Handy oder in den Browser' : 'Your account on a tablet, second phone or browser', () => open(const PairSendScreen())),
         tile(Icons.login_rounded, de ? 'Mit anderem Gerät anmelden' : 'Sign in with another device', null, () => open(const PairNewScreen())),
+        tile(Icons.payments_outlined, de ? 'So kann man dich bezahlen' : 'How people can pay you', de ? 'IBAN, PayPal.Me, Wallet – nur für deine Gruppen' : 'IBAN, PayPal.Me, wallet – only for your groups', () => open(const PaySetupScreen())),
         tile(Icons.save_alt_rounded, de ? 'Sicherung speichern' : 'Save a backup', de ? 'Mit Passwort, z. B. an dich selbst schicken' : 'With a password, e.g. send it to yourself', () => saveBackupFlow(context)),
         tile(Icons.key_rounded, de ? 'Wörter, Schlüssel, Vertrauen' : 'Words, key, trust', de ? '12 Wörter zum Wiederherstellen' : '12 words to restore', () => open(const AccountScreen())),
         const SizedBox(height: FasanSpace.m),

@@ -17,6 +17,7 @@ import 'bill_tile.dart';
 import 'collab_ui.dart';
 import 'common.dart';
 import 'my_balance.dart';
+import 'pay_ui.dart';
 import 'swipe.dart';
 
 /// All groups with their number of bills and sum; tap opens the group. Pending join requests are shown on top.
@@ -231,7 +232,19 @@ class GroupPeople extends StatelessWidget {
         const SizedBox(height: FasanSpace.s),
         if (moves.isEmpty) Text(t.groupSettled, style: tt.bodyMedium),
         for (final (from, to, c) in moves)
-          Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(t.owes(label(from), label(to), '${money(c, de: t.de)} ${signOf(context)}'), style: tt.bodyMedium)),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(children: [
+              Expanded(child: Text(t.owes(label(from), label(to), '${money(c, de: t.de)} ${signOf(context)}'), style: tt.bodyMedium)),
+              // my debt in this group: pay with one tap (pay_ui.dart)
+              if (myNames(context)(label(from)) || from == '@${CollabScope.read(context).identity?.pub}')
+                TextButton(
+                  onPressed: () => payFlow(context,
+                      name: label(to), pub: to.startsWith('@') ? to.substring(1) : live?.session.memberOfPerson(to), cents: c, currency: StoreScope.read(context).homeCurrency, purpose: name),
+                  child: Text(t.de ? 'Bezahlen' : 'Pay'),
+                ),
+            ]),
+          ),
         if (moves.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: FasanSpace.s),

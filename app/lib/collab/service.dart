@@ -11,6 +11,7 @@ import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/bill.dart';
+import '../model/pay.dart';
 import '../state/images.dart';
 import '../state/store.dart';
 import 'activity.dart';
@@ -493,6 +494,8 @@ class CollabService extends ChangeNotifier {
     _ensureInvitations(g);
     final myName = identity?.name.trim() ?? '';
     if (myName.isNotEmpty && session.doc(GroupSession.profile(me.pub)).get('name') == null) session.setMyName(myName);
+    final pay = myPay;
+    if (!pay.isEmpty && session.doc(GroupSession.profile(me.pub)).get('pay') == null) _publishPay(g, pay);
     // a new group key from an admin after someone was removed (rotateKey)
     g.rekeySub = relay
         .subscribe(Filter(kinds: const [kindData], tags: {'t': ['${secret.tag}:rekey'], 'p': [me.pub]}))
@@ -793,6 +796,35 @@ class CollabService extends ChangeNotifier {
     held.remove(h);
     if (take && h.group.session.doc(h.docId).apply(h.entry)) _onDocChanged(h.group, h.docId);
     notifyListeners();
+  }
+
+  // ---- how others can pay me back (model/pay.dart; Nutzer 04.11.) ----
+
+  static const _kPay = 'collab.pay';
+
+  /// My payment details, on this device; shared only in my groups' profiles (encrypted, members only).
+  PayInfo get myPay => PayInfo.fromJson((jsonDecode(prefs?.getString(_kPay) ?? '{}') as Map).cast<String, Object?>());
+  set myPay(PayInfo p) {
+    prefs?.setString(_kPay, jsonEncode(p.toJson()));
+    for (final g in groups.values) {
+      _publishPay(g, p);
+    }
+    notifyListeners();
+  }
+
+  void _publishPay(CollabGroup g, PayInfo p) {
+    final id = GroupSession.profile(g.session.me.pub);
+    g.session.doc(id).set('pay', p.isEmpty ? null : p.toJson());
+    g.session.touch(id);
+  }
+
+  /// What [pub] shared to be paid (newest group that has it), or null.
+  PayInfo? payOf(String pub) {
+    for (final g in groups.values) {
+      final v = g.session.doc(GroupSession.profile(pub)).get('pay');
+      if (v is Map) return PayInfo.fromJson(v.cast<String, Object?>());
+    }
+    return null;
   }
 
   // ---- deleting the account (Nutzer 04.11.) ----

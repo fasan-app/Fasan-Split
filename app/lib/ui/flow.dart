@@ -20,6 +20,8 @@ import 'currency_ui.dart';
 import 'collab_ui.dart';
 import '../model/scan_bill.dart' show remainderName;
 import 'bill_notes.dart';
+import 'my_balance.dart' show myNames;
+import 'pay_ui.dart';
 import 'common.dart';
 import 'when_where.dart';
 import 'diagnose.dart';
@@ -729,6 +731,15 @@ class ResultBody extends StatelessWidget {
             FasanAvatar(name: bill.ps[to].name, index: bill.ps[to].color, size: 26),
             const SizedBox(width: FasanSpace.m),
             Expanded(child: Text(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} ${billSign(context, bill)}'), style: tt.bodyMedium)),
+            // I owe: pay right here (Nutzer 04.11.; pay_ui.dart)
+            if (myNames(context)(bill.ps[from].name) && !bill.settled)
+              TextButton(
+                onPressed: () {
+                  final live = bill.group == null ? null : CollabScope.read(context).groupByLocalName(bill.group!);
+                  payFlow(context, name: bill.ps[to].name, pub: live?.session.memberOfPerson(bill.ps[to].name), cents: c, currency: bill.currency ?? StoreScope.read(context).homeCurrency, purpose: bill.purpose);
+                },
+                child: Text(t.de ? 'Bezahlen' : 'Pay'),
+              ),
           ]),
         ),
       const SizedBox(height: FasanSpace.m),

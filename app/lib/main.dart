@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'collab/group.dart';
 import 'collab/keys.dart';
+import 'collab/nostr.dart' show relayProxy;
 import 'collab/pairing.dart';
 import 'ui/pairing_ui.dart';
 import 'web_platform.dart';
@@ -42,6 +43,8 @@ Future<void> main() async {
   ui.start();
   // Collaboration: keys in the Android Keystore; the service only connects to relays if there is a group (Beschluss 03.11.).
   final collab = CollabService(store: store, vault: browserStorageWorks ? const SecureVault() : MemoryVault(), prefs: await SharedPreferences.getInstance());
+  // Tor via Orbot (Einstellungen → Datenschutz): every relay connection through Orbot's local tunnel
+  if ((await SharedPreferences.getInstance()).getBool('net.tor') == true) relayProxy = '127.0.0.1:8118';
   // news as device notifications while the app is in the background (state/notify.dart)
   deviceNotifier = DeviceNotifier(await SharedPreferences.getInstance());
   collab.onActivity = (a) => deviceNotifier?.show(a);
