@@ -22,6 +22,9 @@ abstract final class BillSync {
     set('meta/done', b.done);
     set('meta/refund', b.refund);
     set('meta/category', b.category); // shared like the other metadata (04.11.)
+    set('meta/currency', b.currency);
+    set('meta/rate', b.rate);
+    set('meta/rateDate', b.rateDate?.millisecondsSinceEpoch);
     set('meta/advance', b.advance);
     set('meta/date', b.receiptDate?.millisecondsSinceEpoch);
     set('meta/place', b.placeAddress);
@@ -111,6 +114,9 @@ abstract final class BillSync {
     b.done = doc.get('meta/done') == true;
     b.refund = doc.get('meta/refund') == true;
     b.category = doc.get('meta/category') as String?;
+    b.currency = doc.get('meta/currency') as String?;
+    b.rate = (doc.get('meta/rate') as num?)?.toDouble();
+    b.rateDate = switch (doc.get('meta/rateDate')) { final num t => DateTime.fromMillisecondsSinceEpoch(t.toInt()), _ => null };
     b.advance = (doc.get('meta/advance') as num?)?.toInt() ?? 0;
     final date = doc.get('meta/date');
     b.receiptDate = date is num ? DateTime.fromMillisecondsSinceEpoch(date.toInt()) : null;

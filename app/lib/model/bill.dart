@@ -184,6 +184,9 @@ class Bill {
     this.trashedAt,
     this.order,
     this.category,
+    this.currency,
+    this.rate,
+    this.rateDate,
     DateTime? updated,
   }) : updated = updated ?? created;
 
@@ -243,6 +246,15 @@ class Bill {
 
   /// Category id (model/category.dart): a base id like „restaurant“ or `c:<name>` for an own one; null = none yet.
   String? category;
+
+  /// Currency of the receipt (ISO code); null = the home currency (Einstellungen, default EUR). Amounts of the bill stay in
+  /// this currency; [rate] (home units per 1 unit of it) turns them into the home currency for balances across bills.
+  String? currency;
+  double? rate;
+  DateTime? rateDate;
+
+  /// Cents of this bill in the home currency.
+  int toHome(int cents) => currency == null || rate == null ? cents : (cents * rate!).round();
 
   /// Sort key of the bill lists: hand-made place, else newest change first.
   double get sortKey => order ?? -updated.millisecondsSinceEpoch.toDouble();
@@ -382,6 +394,9 @@ class Bill {
         'trashedAt': trashedAt?.toIso8601String(),
         if (order != null) 'order': order,
         if (category != null) 'category': category,
+        if (currency != null) 'currency': currency,
+        if (rate != null) 'rate': rate,
+        if (rateDate != null) 'rateDate': rateDate!.toIso8601String(),
         'updated': updated.toIso8601String(),
       };
 
@@ -413,6 +428,9 @@ class Bill {
         trashedAt: DateTime.tryParse(j['trashedAt'] as String? ?? ''),
         order: (j['order'] as num?)?.toDouble(),
         category: j['category'] as String?,
+        currency: j['currency'] as String?,
+        rate: (j['rate'] as num?)?.toDouble(),
+        rateDate: DateTime.tryParse(j['rateDate'] as String? ?? ''),
         updated: DateTime.tryParse(j['updated'] as String? ?? ''),
       );
 }

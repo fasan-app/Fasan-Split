@@ -13,8 +13,9 @@ Map<String, int> balances(Iterable<Bill> bills, {String Function(String name)? k
     if (!b.done || b.payer == null) continue;
     for (final (from, to, c) in b.transfers()) {
       if (from >= b.ps.length || to >= b.ps.length) continue;
-      out.update(k(b.ps[from].name), (x) => x - c, ifAbsent: () => -c);
-      out.update(k(b.ps[to].name), (x) => x + c, ifAbsent: () => c);
+      final h = b.toHome(c); // other currency → home currency with the bill's rate
+      out.update(k(b.ps[from].name), (x) => x - h, ifAbsent: () => -h);
+      out.update(k(b.ps[to].name), (x) => x + h, ifAbsent: () => h);
     }
   }
   return out;
@@ -49,8 +50,9 @@ Map<String, int> myDebts(Iterable<Bill> bills, bool Function(String name) isMe) 
     for (final (from, to, c) in b.transfers()) {
       if (from >= b.ps.length || to >= b.ps.length) continue;
       final f = b.ps[from].name, t = b.ps[to].name;
-      if (isMe(f) && !isMe(t)) out.update(t, (x) => x - c, ifAbsent: () => -c);
-      if (isMe(t) && !isMe(f)) out.update(f, (x) => x + c, ifAbsent: () => c);
+      final h = b.toHome(c);
+      if (isMe(f) && !isMe(t)) out.update(t, (x) => x - h, ifAbsent: () => -h);
+      if (isMe(t) && !isMe(f)) out.update(f, (x) => x + h, ifAbsent: () => h);
     }
   }
   out.removeWhere((_, v) => v == 0);

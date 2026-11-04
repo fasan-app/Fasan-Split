@@ -68,10 +68,10 @@ class GroupsPage extends StatelessWidget {
                       ]),
                     ),
                     Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('${money(sum, de: t.de)} €', style: tt.titleMedium),
+                      Text('${money(sum, de: t.de)} ${signOf(context)}', style: tt.titleMedium),
                       // my balance in this group (green = I get, red = I owe)
                       if (myDebts(store.inGroup(g, done: true), myNames(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
-                        Text('${money(v, de: t.de, sign: true)} €', style: tt.labelMedium!.copyWith(color: v > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
+                        Text('${money(v, de: t.de, sign: true)} ${signOf(context)}', style: tt.labelMedium!.copyWith(color: v > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
                     ]),
                   ]),
                 ),
@@ -122,7 +122,7 @@ class GroupScreen extends StatelessWidget {
         ],
       ),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
-        Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text('${t.billsCount(bills.length)} · ${money(sum, de: t.de)} €', style: tt.bodyMedium)),
+        Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text('${t.billsCount(bills.length)} · ${money(sum, de: t.de)} ${signOf(context)}', style: tt.bodyMedium)),
         if (live != null) CollabGroupPanel(group: live),
         GroupPeople(name: name),
         const SizedBox(height: FasanSpace.l),
@@ -188,7 +188,7 @@ class GroupPeople extends StatelessWidget {
               ]),
             ),
             if (label(keyOf(p)) == p && bal[keyOf(p)] != null && bal[keyOf(p)] != 0)
-              Text('${money(bal[keyOf(p)]!, de: t.de, sign: true)} €', style: tt.titleMedium!.copyWith(color: bal[keyOf(p)]! > 0 ? l.accent : null)),
+              Text('${money(bal[keyOf(p)]!, de: t.de, sign: true)} ${signOf(context)}', style: tt.titleMedium!.copyWith(color: bal[keyOf(p)]! > 0 ? l.accent : null)),
             if (store.isHandMember(name, p))
               IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: () => store.removeGroupMember(name, p)),
           ]),
@@ -211,7 +211,7 @@ class GroupPeople extends StatelessWidget {
         const SizedBox(height: FasanSpace.s),
         if (moves.isEmpty) Text(t.groupSettled, style: tt.bodyMedium),
         for (final (from, to, c) in moves)
-          Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(t.owes(label(from), label(to), '${money(c, de: t.de)} €'), style: tt.bodyMedium)),
+          Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(t.owes(label(from), label(to), '${money(c, de: t.de)} ${signOf(context)}'), style: tt.bodyMedium)),
         Text(t.groupBalanceHint, style: tt.bodySmall!.copyWith(color: l.textMuted)),
       ],
     ]);
@@ -314,7 +314,7 @@ class FriendsPage extends StatelessWidget {
                 FasanAvatar(name: f.name, index: f.color, size: 40),
                 const SizedBox(width: FasanSpace.m),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(f.name, style: tt.titleMedium), Text(t.billsCount(f.bills), style: tt.bodySmall)])),
-                if (f.bills > 0) Text('${money(f.sum, de: t.de)} €', style: tt.titleMedium),
+                if (f.bills > 0) Text('${money(f.sum, de: t.de)} ${signOf(context)}', style: tt.titleMedium),
               ]),
             ),
           ),

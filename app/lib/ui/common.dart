@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
+import '../state/rates.dart';
 import '../recognition/reader.dart' show nameAlternatives;
 import 'receipt_view.dart';
 import '../state/images.dart';
@@ -42,6 +43,12 @@ class StepScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = bill;
+    if (b == null) return _build(context);
+    return CurrencyScope(code: b.currency ?? StoreScope.read(context).homeCurrency, child: Builder(builder: _build));
+  }
+
+  Widget _build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
     final b = bill;
     if (b != null) {
@@ -148,6 +155,25 @@ class Snippet extends StatelessWidget {
   }
 }
 
+/// Currency shown by [Money] and the amount texts below it: the bill's currency on bill screens (StepScaffold,
+/// ResultScreen, BillTile), else the home currency.
+class CurrencyScope extends InheritedWidget {
+  const CurrencyScope({super.key, required this.code, required super.child});
+
+  final String code;
+
+  static String codeOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<CurrencyScope>()?.code ?? StoreScope.of(context).homeCurrency;
+
+  @override
+  bool updateShouldNotify(CurrencyScope old) => old.code != code;
+}
+
+/// Sign of the current currency (€, $, £ or the code).
+String signOf(BuildContext context) => currencySign(CurrencyScope.codeOf(context));
+
+/// Sign of a bill's currency.
+String billSign(BuildContext context, Bill b) => currencySign(b.currency ?? StoreScope.read(context).homeCurrency);
+
 class Money extends StatelessWidget {
   const Money(this.cents, {super.key, this.style, this.sign = false});
 
@@ -159,7 +185,7 @@ class Money extends StatelessWidget {
   Widget build(BuildContext context) {
     final de = S.of(context).de;
     final s = style ?? Theme.of(context).textTheme.bodyLarge!;
-    return Text('${money(cents, de: de, sign: sign)} €', style: s.copyWith(fontFeatures: const [FontFeature.tabularFigures()], fontWeight: s.fontWeight ?? FontWeight.w600));
+    return Text('${money(cents, de: de, sign: sign)} ${signOf(context)}', style: s.copyWith(fontFeatures: const [FontFeature.tabularFigures()], fontWeight: s.fontWeight ?? FontWeight.w600));
   }
 }
 
@@ -231,7 +257,7 @@ Future<bool> editItem(BuildContext context, BillItem it, {VoidCallback? onDelete
             flex: 2,
             child: TextField(
               controller: amount,
-              decoration: InputDecoration(labelText: t.amount, suffixText: '€'),
+              decoration: InputDecoration(labelText: t.amount, suffixText: signOf(context)),
               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[-−0-9.,]'))],
             ),

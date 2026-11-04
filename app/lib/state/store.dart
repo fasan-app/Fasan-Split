@@ -133,6 +133,14 @@ class BillStore extends ChangeNotifier {
   }
   void saveSettings(String s) => _prefs?.setString('fasan_ui.settings', s);
 
+  /// Home currency (ISO code): balances across bills are in it; a bill in another currency has its own rate.
+  String get homeCurrency => _app['currency'] as String? ?? 'EUR';
+  set homeCurrency(String c) => _setApp('currency', c);
+
+  /// Read exchange rates from the ECB (state/rates.dart); off = enter rates by hand.
+  bool get ratesOnline => _app['ratesOnline'] as bool? ?? true;
+  set ratesOnline(bool v) => _setApp('ratesOnline', v);
+
   /// Own categories (names), model/category.dart.
   List<String> get customCategories => [...?(_app['categories'] as List?)?.cast<String>()];
   void addCategory(String name) {

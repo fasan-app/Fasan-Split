@@ -9,6 +9,7 @@ import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import '../model/settle.dart';
+import 'common.dart';
 
 class _T {
   const _T(this.de);
@@ -67,7 +68,7 @@ class MyBalanceBadge extends StatelessWidget {
             ),
             if (v != 0) ...[
               const SizedBox(width: 6),
-              Text('${money(v, de: t.de, sign: true)} €', style: Theme.of(context).textTheme.labelLarge!.copyWith(color: color, fontWeight: FontWeight.w700)),
+              Text('${money(v, de: t.de, sign: true)} ${signOf(context)}', style: Theme.of(context).textTheme.labelLarge!.copyWith(color: color, fontWeight: FontWeight.w700)),
             ],
           ]),
         ),
@@ -95,7 +96,7 @@ class MyBalanceScreen extends StatelessWidget {
       body: ListView(padding: const EdgeInsets.all(FasanSpace.l), children: [
         if (store.me.isEmpty) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.l), child: Text(t.setMe, style: tt.bodyMedium!.copyWith(color: l.textMuted))),
         Text(t.total, style: tt.labelLarge),
-        Text(total == 0 ? t.even : '${total > 0 ? t.youGet : t.youOwe} ${money(total.abs(), de: t.de)} €', style: tt.headlineMedium!.copyWith(color: c(total))),
+        Text(total == 0 ? t.even : '${total > 0 ? t.youGet : t.youOwe} ${money(total.abs(), de: t.de)} ${signOf(context)}', style: tt.headlineMedium!.copyWith(color: c(total))),
         const SizedBox(height: FasanSpace.xl),
         FasanLabel(t.perGroup),
         for (final g in groups)
@@ -107,7 +108,7 @@ class MyBalanceScreen extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               leading: Icon(g == null ? Icons.receipt_long_outlined : Icons.folder_outlined, color: l.accent),
               title: Text(g ?? t.noGroup),
-              trailing: Text(mine == 0 ? '–' : '${money(mine, de: t.de, sign: true)} €', style: tt.titleMedium!.copyWith(color: c(mine))),
+              trailing: Text(mine == 0 ? '–' : '${money(mine, de: t.de, sign: true)} ${signOf(context)}', style: tt.titleMedium!.copyWith(color: c(mine))),
             );
           }),
         const SizedBox(height: FasanSpace.l),
@@ -118,7 +119,7 @@ class MyBalanceScreen extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             leading: FasanAvatar(name: e.key, index: e.key.hashCode % 8, size: 32),
             title: Text(e.value > 0 ? t.getsFrom(e.key) : t.owesTo(e.key)),
-            trailing: Text('${money(e.value.abs(), de: t.de)} €', style: tt.titleMedium!.copyWith(color: c(e.value))),
+            trailing: Text('${money(e.value.abs(), de: t.de)} ${signOf(context)}', style: tt.titleMedium!.copyWith(color: c(e.value))),
           ),
       ]),
     );

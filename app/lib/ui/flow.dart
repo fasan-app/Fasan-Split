@@ -14,6 +14,7 @@ import '../model/bill.dart';
 import '../recognition_service.dart';
 import 'assign.dart';
 import 'category_ui.dart';
+import 'currency_ui.dart';
 import 'collab_ui.dart';
 import 'common.dart';
 import 'when_where.dart';
@@ -59,7 +60,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final status = b.checked && diff == 0
         ? _Status(icon: Icons.verified_outlined, text: t.checked, color: l.accent)
         : (diff != 0 && b.total != null
-            ? _Status(icon: Icons.error_outline, text: t.diff('${money(diff.abs(), de: t.de)} €'), color: Theme.of(context).colorScheme.error)
+            ? _Status(icon: Icons.error_outline, text: t.diff('${money(diff.abs(), de: t.de)} ${billSign(context, b)}'), color: Theme.of(context).colorScheme.error)
             : (widget.scan?.contradiction == true ? _Status(icon: Icons.help_outline, text: t.contradiction, color: Theme.of(context).colorScheme.error) : null));
     return StepScaffold(
       title: t.totalAndPurpose,
@@ -97,7 +98,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               child: FasanGlow(pulse: _pulse, strength: 0, radius: 6, child: TextField(
                 controller: _total,
                 textAlign: TextAlign.end,
-                decoration: InputDecoration(labelText: t.total, suffixText: '€'),
+                decoration: InputDecoration(labelText: t.total, suffixText: billSign(context, b)),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 style: tt.titleLarge,
                 onChanged: (v) => setState(() {
@@ -107,6 +108,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
               )),
             ),
           ]),
+          const SizedBox(height: FasanSpace.s),
+          // currency and category right where the total is checked (Nutzer 04.11.)
+          Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [CurrencyChip(bill: b), CategoryChip(bill: b)]),
           const SizedBox(height: FasanSpace.s),
           WhenWhere(bill: b, compact: true, onChanged: () => setState(() {})),
           if (b.needsSignQuestion) ...[
@@ -388,7 +392,7 @@ class _PayScreenState extends State<PayScreen> {
           ]),
           if (b.advance > 0) ...[
             const SizedBox(height: FasanSpace.l),
-            Text('${t.advance}: ${money(b.advance, de: t.de)} €', style: Theme.of(context).textTheme.bodyMedium),
+            Text('${t.advance}: ${money(b.advance, de: t.de)} ${billSign(context, b)}', style: Theme.of(context).textTheme.bodyMedium),
           ],
           const SizedBox(height: FasanSpace.xl),
           if (b.payer != null) ResultBody(bill: b),
@@ -440,7 +444,7 @@ class ResultBody extends StatelessWidget {
             Money(pp[i] ?? 0),
           ]),
         ),
-      if (bill.difference != 0) Padding(padding: const EdgeInsets.only(top: 6), child: Text('${t.differenceSpread}: ${money(bill.difference, de: t.de, sign: true)} €', style: tt.bodySmall)),
+      if (bill.difference != 0) Padding(padding: const EdgeInsets.only(top: 6), child: Text('${t.differenceSpread}: ${money(bill.difference, de: t.de, sign: true)} ${billSign(context, bill)}', style: tt.bodySmall)),
       const SizedBox(height: FasanSpace.l),
       for (final (from, to, c) in bill.transfers())
         Padding(
@@ -452,7 +456,7 @@ class ResultBody extends StatelessWidget {
             const SizedBox(width: 6),
             FasanAvatar(name: bill.ps[to].name, index: bill.ps[to].color, size: 26),
             const SizedBox(width: FasanSpace.m),
-            Expanded(child: Text(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} €'), style: tt.bodyMedium)),
+            Expanded(child: Text(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} ${billSign(context, bill)}'), style: tt.bodyMedium)),
           ]),
         ),
       const SizedBox(height: FasanSpace.m),
@@ -487,7 +491,7 @@ class _AuditLine extends StatelessWidget {
         tilePadding: EdgeInsets.zero,
         childrenPadding: EdgeInsets.zero,
         leading: Icon(ok ? Icons.verified_outlined : Icons.error_outline_rounded, color: color),
-        title: Text(ok ? '${t.splitCheck}: ${money(total, de: t.de)} €' : t.splitCheckBad, style: tt.bodyMedium!.copyWith(color: color)),
+        title: Text(ok ? '${t.splitCheck}: ${money(total, de: t.de)} ${billSign(context, bill)}' : t.splitCheckBad, style: tt.bodyMedium!.copyWith(color: color)),
         children: [
           for (var p = 0; p < bill.ps.length; p++) ...[
             Align(alignment: Alignment.centerLeft, child: Padding(padding: const EdgeInsets.only(top: 6), child: Text(bill.ps[p].name, style: tt.labelLarge))),
@@ -495,7 +499,7 @@ class _AuditLine extends StatelessWidget {
               if (Bill.split(bill.its[n].amount, bill.its[n].shares, rotate: n)[p] case final c? when c != 0)
                 Row(children: [
                   Expanded(child: Text(bill.its[n].title, style: tt.bodySmall, overflow: TextOverflow.ellipsis)),
-                  Text('${money(c, de: t.de)} €', style: tt.bodySmall),
+                  Text('${money(c, de: t.de)} ${billSign(context, bill)}', style: tt.bodySmall),
                 ]),
           ],
           if (!ok)
@@ -511,14 +515,14 @@ class ResultScreen extends StatelessWidget {
 
   final Bill bill;
 
-  String _text(S t) {
-    final b = StringBuffer('${bill.purpose.isEmpty ? t.appName : bill.purpose}: ${money(bill.effectiveTotal, de: t.de)} €${bill.refund ? ' (${t.refundBadge})' : ''}\n');
+  String _text(S t, String cur) {
+    final b = StringBuffer('${bill.purpose.isEmpty ? t.appName : bill.purpose}: ${money(bill.effectiveTotal, de: t.de)} $cur${bill.refund ? ' (${t.refundBadge})' : ''}\n');
     final pp = bill.perPerson();
     for (var i = 0; i < bill.ps.length; i++) {
-      b.writeln('${bill.ps[i].name}: ${money(pp[i] ?? 0, de: t.de)} €');
+      b.writeln('${bill.ps[i].name}: ${money(pp[i] ?? 0, de: t.de)} $cur');
     }
     for (final (from, to, c) in bill.transfers()) {
-      b.writeln(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} €'));
+      b.writeln(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} $cur'));
     }
     return b.toString();
   }
@@ -527,7 +531,7 @@ class ResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = S.of(context);
     final store = StoreScope.of(context);
-    return Scaffold(
+    return CurrencyScope(code: bill.currency ?? store.homeCurrency, child: Scaffold(
       appBar: AppBar(
         title: Text(bill.purpose.isEmpty ? t.appName : bill.purpose),
         actions: [
@@ -556,12 +560,15 @@ class ResultScreen extends StatelessWidget {
         children: [
           Money(bill.effectiveTotal, style: Theme.of(context).textTheme.displaySmall),
           const SizedBox(height: FasanSpace.s),
-          Align(alignment: Alignment.centerLeft, child: CategoryChip(bill: bill)),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [CategoryChip(bill: bill), CurrencyChip(bill: bill)]),
+          ),
           if (bill.refund) ...[const SizedBox(height: FasanSpace.s), const RefundNote()],
           const SizedBox(height: FasanSpace.l),
           if (bill.payer != null) ResultBody(bill: bill) else Text(t.whoPaid),
           const SizedBox(height: FasanSpace.xl),
-          FasanButton(label: t.shareText, icon: Icons.ios_share_rounded, expand: true, onPressed: () => SharePlus.instance.share(ShareParams(text: _text(t)))),
+          FasanButton(label: t.shareText, icon: Icons.ios_share_rounded, expand: true, onPressed: () => SharePlus.instance.share(ShareParams(text: _text(t, billSign(context, bill))))),
           const SizedBox(height: FasanSpace.s),
           FasanButton(
             label: t.exportCsv,
@@ -574,6 +581,6 @@ class ResultScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

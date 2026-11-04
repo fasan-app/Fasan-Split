@@ -4,6 +4,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../main.dart';
 import '../l10n_bill.dart';
 import '../model/bill.dart';
 import '../state/scan_queue.dart';
@@ -125,11 +126,11 @@ class BillTile extends StatelessWidget {
                 FasanAvatarStack(people: [for (final p in bill.ps) (p.name, p.color)], size: 24, max: 3),
                 const SizedBox(width: FasanSpace.s),
                 Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Money(bill.effectiveTotal),
+                  CurrencyScope(code: bill.currency ?? StoreScope.read(context).homeCurrency, child: Money(bill.effectiveTotal)),
                   // my balance from this bill: green = I get, red = I owe (Nutzer 04.11.: indicators at a glance)
                   if (bill.done && bill.payer != null)
                     if (myDebts([bill], myNames(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
-                      Text('${money(v, de: t.de, sign: true)} €', style: tt.labelMedium!.copyWith(color: v > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
+                      Text('${money(v, de: t.de, sign: true)} ${signOf(context)}', style: tt.labelMedium!.copyWith(color: v > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
                 ]),
               ],
             ]),

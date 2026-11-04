@@ -573,7 +573,7 @@ class _PersonBar extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(bill.ps[p].name, style: Theme.of(context).textTheme.labelLarge),
                     const SizedBox(width: 8),
-                    Text('${money(sumOf(p), de: de)} €', style: Theme.of(context).textTheme.labelMedium),
+                    Text('${money(sumOf(p), de: de)} ${signOf(context)}', style: Theme.of(context).textTheme.labelMedium),
                   ]),
                 ),
               ),
@@ -684,19 +684,19 @@ class DigitalReceipt extends StatelessWidget {
                     child: Row(children: [
                       Expanded(child: ItemTitle(bill.its[k])),
                       if (bill.its[k].assigned) Padding(padding: const EdgeInsets.only(right: 8), child: ShareAvatars(bill: bill, item: bill.its[k], size: 18)),
-                      Text('${money(bill.its[k].amount, de: t.de)} €', style: mono),
+                      Text('${money(bill.its[k].amount, de: t.de)} ${signOf(context)}', style: mono),
                     ]),
                   ),
                 ),
               Divider(color: l.hairline),
               Row(children: [
                 Expanded(child: Text(t.total, style: tt.titleMedium)),
-                Text('${money(bill.effectiveTotal, de: t.de)} €', style: mono.copyWith(fontWeight: FontWeight.w700, fontSize: 18)),
+                Text('${money(bill.effectiveTotal, de: t.de)} ${signOf(context)}', style: mono.copyWith(fontWeight: FontWeight.w700, fontSize: 18)),
               ]),
               if (bill.difference != 0)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(t.diff('${money(bill.difference.abs(), de: t.de)} €'), style: tt.bodySmall!.copyWith(color: Theme.of(context).colorScheme.error)),
+                  child: Text(t.diff('${money(bill.difference.abs(), de: t.de)} ${signOf(context)}'), style: tt.bodySmall!.copyWith(color: Theme.of(context).colorScheme.error)),
                 ),
               if (bill.checked && bill.difference == 0)
                 Padding(
