@@ -20,6 +20,7 @@ abstract final class BillSync {
     set('meta/total', b.total);
     set('meta/payer', b.payer != null && b.payer! < b.ps.length ? b.ps[b.payer!].uid : null);
     set('meta/done', b.done);
+    set('meta/settled', b.settled ? true : null);
     set('meta/refund', b.refund);
     set('meta/category', b.category); // shared like the other metadata (04.11.)
     set('meta/currency', b.currency);
@@ -113,6 +114,7 @@ abstract final class BillSync {
     final payer = doc.get('meta/payer');
     b.payer = payer is String ? index[payer] : null;
     b.done = doc.get('meta/done') == true;
+    b.settled = doc.get('meta/settled') == true;
     b.refund = doc.get('meta/refund') == true;
     b.category = doc.get('meta/category') as String?;
     b.currency = doc.get('meta/currency') as String?;

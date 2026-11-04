@@ -502,14 +502,17 @@ class PayScreen extends StatefulWidget {
 class _PayScreenState extends State<PayScreen> {
   Bill get b => widget.bill;
 
+  // Step 4 is the summary (Nutzer 04.11.: the old „Wer hat bezahlt?“ screen asked again what step 3 already knew and
+  // raised question marks). Who paid stays changeable in one small row; the result is the main thing; „Eintragen“ puts
+  // the bill under Offen, it counts in the balances, and goes to the archive once it is settled.
   @override
   Widget build(BuildContext context) {
-    final t = S.of(context);
+    final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     return StepScaffold(
-      title: t.whoPaid,
+      title: t.de ? 'Übersicht' : 'Summary',
       step: 4,
       bill: b,
-      action: t.done,
+      action: t.de ? 'Eintragen' : 'Save',
       onAction: b.payer == null
           ? null
           : () {
@@ -520,22 +523,35 @@ class _PayScreenState extends State<PayScreen> {
                 return;
               }
               b.done = true;
+              if (b.transfers().isEmpty) b.settled = true; // nobody owes anything: nothing to settle
               StoreScope.read(context).upsert(b);
               Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => ResultScreen(bill: b)), (r) => r.isFirst);
             },
       body: ListView(
         padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context)),
         children: [
-          Wrap(spacing: 8, runSpacing: 8, children: [
+          Text(b.payer == null ? (t.de ? 'Wer hat bezahlt? Tippe auf eine Person.' : 'Who paid? Tap a person.') : (t.de ? 'Bezahlt hat' : 'Paid by'),
+              style: tt.labelLarge!.copyWith(color: b.payer == null ? l.accent : l.textMuted)),
+          const SizedBox(height: FasanSpace.xs),
+          Wrap(spacing: 6, runSpacing: 6, children: [
             for (var i = 0; i < b.ps.length; i++)
               FasanPersonChip(name: b.ps[i].name, index: b.ps[i].color, selected: b.payer == i, onTap: () => setState(() => b.payer = i)),
           ]),
           if (b.advance > 0) ...[
-            const SizedBox(height: FasanSpace.l),
-            Text('${t.advance}: ${money(b.advance, de: t.de)} ${billSign(context, b)}', style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: FasanSpace.m),
+            Text('${t.advance}: ${money(b.advance, de: t.de)} ${billSign(context, b)}', style: tt.bodyMedium),
           ],
-          const SizedBox(height: FasanSpace.xl),
-          if (b.payer != null) ResultBody(bill: b),
+          const SizedBox(height: FasanSpace.l),
+          if (b.payer != null) ...[
+            ResultBody(bill: b),
+            const SizedBox(height: FasanSpace.m),
+            Text(
+              t.de
+                  ? 'Nach „Eintragen“ steht der Bon unter Offen und zählt im Saldo. Ins Archiv kommt er, wenn alles bezahlt ist.'
+                  : 'After “Save” the receipt is under Open and counts in the balances. It goes to the archive once everything is paid.',
+              style: tt.bodySmall!.copyWith(color: l.textMuted),
+            ),
+          ],
         ],
       ),
     );
@@ -710,7 +726,23 @@ class ResultScreen extends StatelessWidget {
           const SizedBox(height: FasanSpace.l),
           if (bill.payer != null) ResultBody(bill: bill) else Text(t.whoPaid),
           const SizedBox(height: FasanSpace.xl),
-          FasanButton(label: t.shareText, icon: Icons.ios_share_rounded, expand: true, onPressed: () => SharePlus.instance.share(ShareParams(text: _text(t, billSign(context, bill))))),
+          // Nutzer 04.11.: the archive is for bills that are paid back; this is where one says so
+          if (bill.done && bill.payer != null && bill.transfers().isNotEmpty) ...[
+            FasanButton(
+              label: bill.settled ? (t.de ? 'Wieder offen (nicht bezahlt)' : 'Open again (not paid)') : (t.de ? 'Alles bezahlt – ausgleichen' : 'All paid – settle'),
+              icon: bill.settled ? Icons.undo_rounded : Icons.task_alt_rounded,
+              kind: bill.settled ? FasanButtonKind.secondary : FasanButtonKind.primary,
+              expand: true,
+              onPressed: () {
+                final settled = !bill.settled;
+                store.setSettled([bill], settled);
+                showNote(context, settled ? t.archivedN(1) : t.reopenedN(1));
+                if (settled) Navigator.of(context).maybePop();
+              },
+            ),
+            const SizedBox(height: FasanSpace.s),
+          ],
+          FasanButton(label: t.shareText, icon: Icons.ios_share_rounded, kind: FasanButtonKind.secondary, expand: true, onPressed: () => SharePlus.instance.share(ShareParams(text: _text(t, billSign(context, bill))))),
           const SizedBox(height: FasanSpace.s),
           FasanButton(
             label: t.exportCsv,

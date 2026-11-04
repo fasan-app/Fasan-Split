@@ -145,18 +145,30 @@ void main() {
       expect(find.byTooltip('Auswählen'), findsOneWidget);
     });
 
-    testWidgets('Wischen nach rechts schiebt ins Archiv, Rückgängig holt zurück', (tester) async {
+    testWidgets('Wischen nach rechts: eingetragener Bon wird ausgeglichen (Archiv), Rückgängig holt zurück', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück', done: true)]);
+      await app(tester, store, idle(store));
+      await tester.drag(find.byKey(const ValueKey('bill-open-a')), const Offset(500, 0));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(store.bills.single.settled, isTrue);
+      expect(find.text('Ausgeglichen, im Archiv'), findsOneWidget);
+      await tester.tap(find.text('Rückgängig'));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(store.bills.single.settled, isFalse);
+      expect(store.bills.single.done, isTrue, reason: 'bleibt eingetragen');
+    });
+
+    testWidgets('Wischen nach rechts: angefangener Bon kommt nicht ins Archiv, Hinweis', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück')]);
       await app(tester, store, idle(store));
       await tester.drag(find.byKey(const ValueKey('bill-open-a')), const Offset(500, 0));
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
-      expect(store.bills.single.done, isTrue);
-      expect(find.text('Ins Archiv verschoben'), findsOneWidget);
-      await tester.tap(find.text('Rückgängig'));
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(store.bills.single.done, isFalse);
+      expect(store.bills.single.settled, isFalse);
+      expect(find.textContaining('Erst eintragen'), findsOneWidget);
     });
 
     testWidgets('Wischen nach links: Papierkorb mit Rückgängig; der Bon bleibt gespeichert', (tester) async {
@@ -177,7 +189,7 @@ void main() {
     });
 
     testWidgets('Reiter: Archiv und Papierkorb zeigen ihre Bons, Wiederherstellen und Leeren', (tester) async {
-      final done = _bill('d', 'Taxi', done: true);
+      final done = _bill('d', 'Taxi', done: true)..settled = true;
       final gone = _bill('t', 'Kino')..trashedAt = DateTime.now().subtract(const Duration(days: 2));
       final store = BillStore.memory([_bill('a', 'Frühstück'), done, gone]);
       await app(tester, store, idle(store));
@@ -342,8 +354,8 @@ void main() {
       expect(store.daysLeft(store.bills.single, now: now), isNull);
     });
 
-    test('Archiv = Fertig, Papierkorb ist getrennt; Wiederherstellen bringt zurück', () {
-      final store = BillStore.memory([_bill('o', 'offen'), _bill('d', 'fertig', done: true)]);
+    test('Archiv = ausgeglichen, Papierkorb ist getrennt; Wiederherstellen bringt zurück', () {
+      final store = BillStore.memory([_bill('o', 'offen'), _bill('d', 'fertig', done: true)..settled = true]);
       expect(store.drafts.map((b) => b.id), ['o']);
       expect(store.finished.map((b) => b.id), ['d']);
       store.trash([store.bills.first]);

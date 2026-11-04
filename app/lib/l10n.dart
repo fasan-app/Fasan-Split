@@ -109,8 +109,9 @@ class S {
   String get saveClose => de ? 'Speichern' : 'Save';
   String get saved => de ? 'Gespeichert' : 'Saved';
   String get savedDraft => de ? 'Gespeichert. Unter „Angefangen“ geht es weiter.' : 'Saved. Continue under “In progress”.';
-  String get drafts => de ? 'Angefangen' : 'In progress';
-  String get finished => de ? 'Fertig' : 'Done';
+  // titles of the bills without a group: Offen holds started and entered bills, the archive settled ones (04.11.)
+  String get drafts => de ? 'Ohne Gruppe' : 'No group';
+  String get finished => de ? 'Ausgeglichen' : 'Settled';
   String get continueBill => de ? 'Weiter bearbeiten' : 'Continue';
   String get splitEvenly => de ? 'Alles gleich auf alle teilen' : 'Split everything evenly';
   String get splitEvenlyDone => de ? 'Alle Posten auf alle verteilt' : 'All items split between everyone';
@@ -132,7 +133,7 @@ class S {
   String get listArchive => de ? 'Archiv' : 'Archive';
   String get listTrash => de ? 'Papierkorb' : 'Trash';
   String trashedN(int n) => de ? (n == 1 ? 'Bon im Papierkorb' : '$n Bons im Papierkorb') : (n == 1 ? 'Receipt moved to trash' : '$n receipts moved to trash');
-  String archivedN(int n) => de ? (n == 1 ? 'Ins Archiv verschoben' : '$n Bons ins Archiv verschoben') : (n == 1 ? 'Moved to the archive' : '$n receipts moved to the archive');
+  String archivedN(int n) => de ? (n == 1 ? 'Ausgeglichen, im Archiv' : '$n Bons ausgeglichen, im Archiv') : (n == 1 ? 'Settled, in the archive' : '$n receipts settled, in the archive');
   String reopenedN(int n) => de ? (n == 1 ? 'Wieder geöffnet' : '$n Bons wieder geöffnet') : (n == 1 ? 'Reopened' : '$n receipts reopened');
   String get deleteForeverTitle => de ? 'Endgültig löschen?' : 'Delete for good?';
   String deleteForeverBody(int n) => de ? (n == 1 ? 'Dieser Bon ist danach weg und lässt sich nicht wiederherstellen.' : 'Diese $n Bons sind danach weg und lassen sich nicht wiederherstellen.') : (n == 1 ? 'This receipt is gone afterwards and cannot be restored.' : 'These $n receipts are gone afterwards and cannot be restored.');

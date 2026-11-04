@@ -80,7 +80,8 @@ class BillTile extends StatelessWidget {
       sub = [
         if (bill.refund) t.refundBadge,
         date,
-        bill.done ? '${bill.ps.length} ${t.de ? 'Pers.' : 'ppl'}' : t.stepOf(bill.step),
+        bill.settled ? (t.de ? 'ausgeglichen' : 'settled') : bill.done ? (t.de ? 'eingetragen' : 'entered') : t.stepOf(bill.step),
+        if (bill.done) '${bill.ps.length} ${t.de ? 'Pers.' : 'ppl'}',
         if (payer != null) t.de ? '$payer zahlte' : '$payer paid',
         ?city,
       ].join(' · ');
@@ -137,7 +138,7 @@ class BillTile extends StatelessWidget {
                 Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
                   CurrencyScope(code: bill.currency ?? StoreScope.read(context).homeCurrency, child: Money(bill.effectiveTotal)),
                   // my balance from this bill: green = I get, red = I owe (Nutzer 04.11.: indicators at a glance)
-                  if (bill.done && bill.payer != null)
+                  if (bill.done && !bill.settled && bill.payer != null)
                     if (myDebts([bill], myNames(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
                       Text('${money(v, de: t.de, sign: true)} ${signOf(context)}', style: tt.labelMedium!.copyWith(color: v > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
                 ]),

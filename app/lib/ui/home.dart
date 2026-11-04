@@ -301,10 +301,16 @@ class _HomeScreenState extends State<HomeScreen> {
     _undoable(context, t.trashedN(list.length), () => store.untrash(list));
   }
 
-  void _toArchive(BuildContext context, List<Bill> list, bool done) {
+  /// Archive = settled (paid back), Nutzer 04.11.; bills not entered yet stay under Offen with a note.
+  void _toArchive(BuildContext context, List<Bill> list, bool settled) {
     final store = StoreScope.read(context), t = S.of(context);
-    store.setDone(list, done);
-    _undoable(context, done ? t.archivedN(list.length) : t.reopenedN(list.length), () => store.setDone(list, !done));
+    final changed = store.setSettled(list, settled);
+    final skipped = list.length - changed.length;
+    if (changed.isEmpty) {
+      if (settled && skipped > 0) showNote(context, t.de ? 'Erst eintragen (alle Schritte), dann ausgleichen. Ins Archiv kommen nur ausgeglichene Bons.' : 'Enter it first (all steps), then settle. Only settled receipts go to the archive.');
+      return;
+    }
+    _undoable(context, settled ? t.archivedN(changed.length) : t.reopenedN(changed.length), () => store.setSettled(changed, !settled));
   }
 
   Future<bool> _confirmForever(BuildContext context, int n) async {
@@ -510,8 +516,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final done = mode == BillList.archive;
     // sort and category filter (Nutzer 04.11.), category_ui.dart
     final sort = store.sortMode;
-    final groups = [for (final g in store.groups) (g, arrange(store.inGroup(g, done: done), sort, _catFilter))].where((e) => e.$2.isNotEmpty).toList();
-    final loose = arrange(store.inGroup(null, done: done), sort, _catFilter);
+    final groups = [for (final g in store.groups) (g, arrange(store.inGroup(g, archived: done), sort, _catFilter))].where((e) => e.$2.isNotEmpty).toList();
+    final loose = arrange(store.inGroup(null, archived: done), sort, _catFilter);
     final empty = groups.isEmpty && loose.isEmpty;
     // one banner at a time, most important first: update, backup due, home-screen tip (iPhone browser)
     final Widget? banner = done

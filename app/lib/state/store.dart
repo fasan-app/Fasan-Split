@@ -241,20 +241,20 @@ class BillStore extends ChangeNotifier {
 
   bool _real(Bill b) => b.done || b.read != BillRead.ok || b.its.isNotEmpty || b.total != null || b.ps.isNotEmpty;
 
-  /// In progress (not finished, not in the trash).
-  List<Bill> get drafts => [for (final b in bills) if (_show(b) && !b.done && _real(b)) b]..sort((a, b) => b.updated.compareTo(a.updated));
+  /// Offen: in progress and entered but not settled yet (Nutzer 04.11.: the archive is only for paid-back bills).
+  List<Bill> get drafts => [for (final b in bills) if (_show(b) && !b.settled && _real(b)) b]..sort((a, b) => b.updated.compareTo(a.updated));
 
-  /// Archive: bills finished with „Fertig“ (Nutzer 02.11.).
-  List<Bill> get finished => [for (final b in bills) if (_show(b) && b.done) b]..sort((a, b) => b.created.compareTo(a.created));
+  /// Archive: bills settled (paid back), Nutzer 04.11.
+  List<Bill> get finished => [for (final b in bills) if (_show(b) && b.settled) b]..sort((a, b) => b.created.compareTo(a.created));
 
   /// Trash, most recently deleted first.
   List<Bill> get trashed => [for (final b in bills) if (b.trashedAt != null) b]..sort((a, b) => b.trashedAt!.compareTo(a.trashedAt!));
 
-  /// Visible bills of one group (null = without group), newest first; [done] picks the archive (true), the open ones (false)
-  /// or both (null).
-  List<Bill> inGroup(String? g, {bool? done}) => [
+  /// Visible bills of one group (null = without group), newest first; [done] picks entered (true) or unfinished (false)
+  /// bills, [archived] the archive (settled, true) or the Offen list (false); null = both.
+  List<Bill> inGroup(String? g, {bool? done, bool? archived}) => [
         for (final b in bills)
-          if (_show(b) && b.group == g && _real(b) && (done == null || b.done == done)) b
+          if (_show(b) && b.group == g && _real(b) && (done == null || b.done == done) && (archived == null || b.settled == archived)) b
       ]..sort((a, b) => a.sortKey.compareTo(b.sortKey));
 
   /// Groups created by hand (they exist without bills) and friends added by hand.
@@ -363,7 +363,7 @@ class BillStore extends ChangeNotifier {
   void moveBefore(List<Bill> moved, Bill target) {
     final ids = {for (final b in moved) b.id};
     if (ids.contains(target.id)) return;
-    final list = inGroup(target.group, done: target.done).where((b) => !ids.contains(b.id)).toList();
+    final list = inGroup(target.group, archived: target.settled).where((b) => !ids.contains(b.id)).toList();
     final i = list.indexWhere((b) => b.id == target.id);
     final hi = target.sortKey, lo = i > 0 ? list[i - 1].sortKey : hi - moved.length - 1;
     final ordered = [...moved]..sort((a, b) => a.sortKey.compareTo(b.sortKey));
@@ -391,9 +391,25 @@ class BillStore extends ChangeNotifier {
   void setDone(Iterable<Bill> list, bool done) {
     for (final b in list) {
       b.done = done;
+      if (!done) b.settled = false;
       b.updated = DateTime.now();
     }
     _persist();
+  }
+
+  /// Settled = paid back: to the archive, out of the balances. Only entered bills ([Bill.done]) can be settled; returns
+  /// the bills that changed (for „Rückgängig“).
+  List<Bill> setSettled(Iterable<Bill> list, bool settled) {
+    final changed = <Bill>[];
+    for (final b in list) {
+      if (settled && !b.done) continue;
+      if (b.settled == settled) continue;
+      b.settled = settled;
+      b.updated = DateTime.now();
+      changed.add(b);
+    }
+    if (changed.isNotEmpty) _persist();
+    return changed;
   }
 
   // ---- Papierkorb (Nutzer 02.11.: Löschen landet im Papierkorb; Fristen 7 / 30 Tage / nur manuell) ----

@@ -180,6 +180,7 @@ class Bill {
     this.logPath,
     this.step = 1,
     this.done = false,
+    this.settled = false,
     this.originalPath,
     this.receiptDate,
     this.placeAddress,
@@ -221,6 +222,10 @@ class Bill {
 
   /// Finished with „Fertig“. Unfinished bills are listed under „Angefangen“ and never discarded on close.
   bool done;
+
+  /// Paid back and balanced (Nutzer 04.11.: only then a bill goes to the archive). [done] alone means „eingetragen“:
+  /// it stays under Offen and counts in the balances; a settled bill no longer counts (its debts are paid).
+  bool settled;
 
   /// The photo exactly as taken, untouched (Beschluss 02.11.: Original immer sichtbar). imagePath is the cleaned scan.
   String? originalPath;
@@ -413,6 +418,7 @@ class Bill {
         'logPath': logPath,
         'step': step,
         'done': done,
+        if (settled) 'settled': true,
         'originalPath': originalPath,
         'receiptDate': receiptDate?.toIso8601String(),
         'placeAddress': placeAddress,
@@ -447,6 +453,7 @@ class Bill {
         step: (j['step'] as num?)?.toInt() ?? 4,
         // bills saved before 0.2 were only stored on „Fertig“
         done: j['done'] as bool? ?? true,
+        settled: j['settled'] as bool? ?? false,
         originalPath: j['originalPath'] as String?,
         receiptDate: DateTime.tryParse(j['receiptDate'] as String? ?? ''),
         placeAddress: j['placeAddress'] as String?,

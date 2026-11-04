@@ -2,6 +2,7 @@
 //
 // Balance per person in cents: positive = gets money, negative = owes money. Built from Bill.transfers(), so refunds
 // (Bill.refund) already point the right way. Only finished bills with a payer count; open bills could still change.
+// Settled bills (Bill.settled, paid back) do not count any more.
 import 'bill.dart';
 
 /// Net balance per person over [bills]. The key is the name (bills are separate, indices differ per bill), or what
@@ -10,7 +11,7 @@ Map<String, int> balances(Iterable<Bill> bills, {String Function(String name)? k
   final k = key ?? (String n) => n;
   final out = <String, int>{};
   for (final b in bills) {
-    if (!b.done || b.payer == null) continue;
+    if (!b.done || b.settled || b.payer == null) continue;
     for (final (from, to, c) in b.transfers()) {
       if (from >= b.ps.length || to >= b.ps.length) continue;
       final h = b.toHome(c); // other currency → home currency with the bill's rate
@@ -46,7 +47,7 @@ List<(String from, String to, int cents)> settle(Map<String, int> bal) {
 Map<String, int> myDebts(Iterable<Bill> bills, bool Function(String name) isMe) {
   final out = <String, int>{};
   for (final b in bills) {
-    if (!b.done || b.payer == null) continue;
+    if (!b.done || b.settled || b.payer == null) continue;
     for (final (from, to, c) in b.transfers()) {
       if (from >= b.ps.length || to >= b.ps.length) continue;
       final f = b.ps[from].name, t = b.ps[to].name;

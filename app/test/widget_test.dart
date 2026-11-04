@@ -93,7 +93,7 @@ void main() {
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(store.drafts.single.id, 'demo');
     expect(store.drafts.single.step, 2);
-    expect(find.text('In progress'), findsOneWidget);
+    expect(find.text('No group'), findsOneWidget);
     await tester.tap(find.text('Abendessen'));
     await tester.pumpAndSettle();
     expect(find.byType(PeopleScreen), findsOneWidget);

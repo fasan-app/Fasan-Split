@@ -212,6 +212,35 @@ class GroupPeople extends StatelessWidget {
         if (moves.isEmpty) Text(t.groupSettled, style: tt.bodyMedium),
         for (final (from, to, c) in moves)
           Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(t.owes(label(from), label(to), '${money(c, de: t.de)} ${signOf(context)}'), style: tt.bodyMedium)),
+        if (moves.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: FasanSpace.s),
+            child: FasanButton(
+              label: t.de ? 'Alle haben bezahlt – ausgleichen' : 'Everyone paid – settle',
+              icon: Icons.task_alt_rounded,
+              kind: FasanButtonKind.secondary,
+              expand: true,
+              onPressed: () async {
+                final list = store.inGroup(name, done: true, archived: false);
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    content: Text(t.de
+                        ? 'Alle ${list.length} eingetragenen Bons als bezahlt markieren? Sie kommen ins Archiv und zählen nicht mehr im Saldo.'
+                        : 'Mark all ${list.length} entered receipts as paid? They go to the archive and no longer count in the balances.'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.cancel)),
+                      FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(t.de ? 'Ausgleichen' : 'Settle')),
+                    ],
+                  ),
+                );
+                if (ok == true && context.mounted) {
+                  final changed = store.setSettled(list, true);
+                  showNote(context, t.archivedN(changed.length));
+                }
+              },
+            ),
+          ),
         Text(t.groupBalanceHint, style: tt.bodySmall!.copyWith(color: l.textMuted)),
       ],
     ]);
