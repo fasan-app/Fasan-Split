@@ -39,7 +39,7 @@ void main() {
     storeA.upsert(bill);
 
     // B öffnet die Einladung
-    final invite = ga.invitations!.create();
+    final invite = ga.invitations!.create(auto: false);
     expect(await b.join(invite.link, 'Andi'), isNull);
     await settle(200);
     expect(ga.invitations!.pending.length, 1);

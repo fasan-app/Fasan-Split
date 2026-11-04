@@ -528,6 +528,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (empty) {
       return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom), children: [
         ?banner,
+        if (!done) ...[const OpenInviteCard(), const PendingJoinCards()],
         const SizedBox(height: 80),
         Icon(done ? Icons.inventory_2_outlined : Icons.receipt_long_outlined, size: 56, color: l.textMuted),
         const SizedBox(height: FasanSpace.l),
@@ -552,6 +553,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom),
         children: [
           if (banner != null) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: banner),
+          if (!done) ...[const SizedBox(height: FasanSpace.s), const OpenInviteCard(), const PendingJoinCards()],
           if (!done) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: HintCard(id: 'swipe', text: t.hintSwipe, icon: Icons.swipe_rounded)),
           for (final (g, bills) in groups) _section(context, store, mode, g, g, bills),
           _section(context, store, mode, null, null, loose, title: done ? t.finished : t.drafts),

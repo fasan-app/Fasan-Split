@@ -220,28 +220,88 @@ String nip44Decrypt(String payload, Uint8List conversationKey) {
 /// Output: base64(0x01 || nonce(12) || ciphertext || tag(16)).
 String aeadSeal(String plaintext, Uint8List key, String aad) {
   final nonce = randomBytes(12);
-  final c = ChaCha20Poly1305(ChaCha7539Engine(), Poly1305())..init(true, AEADParameters(KeyParameter(key), 128, nonce, Uint8List.fromList(utf8.encode(aad))));
-  final input = Uint8List.fromList(utf8.encode(plaintext));
-  final out = Uint8List(c.getOutputSize(input.length));
-  var n = c.processBytes(input, 0, input.length, out, 0);
-  n += c.doFinal(out, n); // appends the Poly1305 tag
-  return base64.encode(_concat([[1], nonce, out.sublist(0, n)]));
+  final sealed = chacha20Poly1305Seal(key, nonce, Uint8List.fromList(utf8.encode(plaintext)), Uint8List.fromList(utf8.encode(aad)));
+  return base64.encode(_concat([[1], nonce, sealed]));
 }
 
 String aeadOpen(String payload, Uint8List key, String aad) {
   final data = base64.decode(payload);
   if (data.length < 1 + 12 + 16 || data[0] != 1) throw const FormatException('invalid payload');
   final nonce = Uint8List.fromList(data.sublist(1, 13));
-  final c = ChaCha20Poly1305(ChaCha7539Engine(), Poly1305())..init(false, AEADParameters(KeyParameter(key), 128, nonce, Uint8List.fromList(utf8.encode(aad))));
-  final input = Uint8List.fromList(data.sublist(13));
-  final out = Uint8List(c.getOutputSize(input.length));
-  try {
-    var n = c.processBytes(input, 0, input.length, out, 0);
-    n += c.doFinal(out, n); // checks the tag
-    return utf8.decode(out.sublist(0, n));
-  } on InvalidCipherTextException {
-    throw const FormatException('authentication failed');
-  } on ArgumentError {
-    throw const FormatException('authentication failed'); // pointycastle reports a wrong tag as ArgumentError
+  return utf8.decode(chacha20Poly1305Open(key, nonce, Uint8List.fromList(data.sublist(13)), Uint8List.fromList(utf8.encode(aad))));
+}
+
+// ChaCha20-Poly1305 AEAD exactly as RFC 8439 §2.8, with Poly1305 (§2.5) in BigInt arithmetic. Own code because
+// pointycastle's Poly1305 throws in the browser („full width integer not supported on this platform“, 04.11.: the web
+// app could not send a join request or read any group document). Output identical to pointycastle (test
+// crypto_web_test.dart: RFC 8439 vectors and random cross-checks), so existing group data stays readable.
+
+final _p1305 = (BigInt.one << 130) - BigInt.from(5);
+final _clamp = BigInt.parse('0ffffffc0ffffffc0ffffffc0fffffff', radix: 16);
+final _m128 = (BigInt.one << 128) - BigInt.one;
+
+BigInt _le(List<int> b) {
+  var x = BigInt.zero;
+  for (var i = b.length - 1; i >= 0; i--) {
+    x = (x << 8) | BigInt.from(b[i]);
   }
+  return x;
+}
+
+Uint8List _le16(BigInt x) {
+  final out = Uint8List(16);
+  for (var i = 0; i < 16; i++) {
+    out[i] = (x & BigInt.from(0xff)).toInt();
+    x = x >> 8;
+  }
+  return out;
+}
+
+/// Poly1305 one-time authenticator (RFC 8439 §2.5): 16-byte tag of [msg] with the 32-byte one-time [key].
+Uint8List poly1305(Uint8List key, Uint8List msg) {
+  final r = _le(key.sublist(0, 16)) & _clamp, s = _le(key.sublist(16, 32));
+  var acc = BigInt.zero;
+  for (var i = 0; i < msg.length; i += 16) {
+    final end = i + 16 < msg.length ? i + 16 : msg.length;
+    final n = _le([...msg.sublist(i, end), 1]);
+    acc = ((acc + n) * r) % _p1305;
+  }
+  return _le16((acc + s) & _m128);
+}
+
+Uint8List _chachaStream(Uint8List key, Uint8List nonce, Uint8List data, {required int skipBlocks}) {
+  final e = ChaCha7539Engine()..init(true, ParametersWithIV(KeyParameter(key), nonce));
+  if (skipBlocks > 0) {
+    final z = Uint8List(64 * skipBlocks);
+    e.processBytes(z, 0, z.length, Uint8List(z.length), 0);
+  }
+  final out = Uint8List(data.length);
+  e.processBytes(data, 0, data.length, out, 0);
+  return out;
+}
+
+Uint8List _macData(Uint8List aad, Uint8List ct) {
+  int pad(int n) => (16 - n % 16) % 16;
+  final len = Uint8List(16);
+  final bd = ByteData.view(len.buffer)
+    ..setUint32(0, aad.length, Endian.little)
+    ..setUint32(8, ct.length, Endian.little);
+  bd.setUint32(4, 0, Endian.little);
+  return _concat([aad, Uint8List(pad(aad.length)), ct, Uint8List(pad(ct.length)), len]);
+}
+
+/// Ciphertext || 16-byte tag.
+Uint8List chacha20Poly1305Seal(Uint8List key, Uint8List nonce, Uint8List plaintext, Uint8List aad) {
+  final polyKey = _chachaStream(key, nonce, Uint8List(32), skipBlocks: 0); // block 0
+  final ct = _chachaStream(key, nonce, plaintext, skipBlocks: 1); // counter 1 onwards
+  return _concat([ct, poly1305(polyKey, _macData(aad, ct))]);
+}
+
+/// Throws [FormatException] when the tag does not match.
+Uint8List chacha20Poly1305Open(Uint8List key, Uint8List nonce, Uint8List sealed, Uint8List aad) {
+  if (sealed.length < 16) throw const FormatException('authentication failed');
+  final ct = Uint8List.fromList(sealed.sublist(0, sealed.length - 16)), tag = sealed.sublist(sealed.length - 16);
+  final polyKey = _chachaStream(key, nonce, Uint8List(32), skipBlocks: 0);
+  if (!constantTimeEquals(poly1305(polyKey, _macData(aad, ct)), tag)) throw const FormatException('authentication failed');
+  return _chachaStream(key, nonce, ct, skipBlocks: 1);
 }

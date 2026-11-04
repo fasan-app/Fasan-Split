@@ -47,13 +47,16 @@ class GroupSecret {
 
 /// The invitation a new member opens. Carries no group key.
 class Invite {
-  Invite({required this.tag, required this.secret, required this.adminPub, required this.relays, required this.expires, required this.name, this.person});
+  Invite({required this.tag, required this.secret, required this.adminPub, required this.relays, required this.expires, required this.name, this.person, this.auto = false});
 
   final String tag, adminPub, name;
 
   /// Person in the group's bills this invitation is for (Nutzer 03.11.: people from a bill are invited and linked).
   /// The admin's phone links the new member to this name on approval; null = no person yet.
   final String? person;
+
+  /// Let in without asking (Nutzer 04.11.: people have little patience): the inviting phone approves at once.
+  final bool auto;
   final Uint8List secret; // 32 bytes, one-time
   final List<String> relays;
   final DateTime expires;
@@ -72,6 +75,7 @@ class Invite {
         'x': expires.millisecondsSinceEpoch ~/ 1000,
         'n': name,
         if (person != null) 'p': person,
+        if (auto) 'o': 1,
       }))).replaceAll('=', '');
 
   /// Link for sharing. The part after „#“ is never sent to a server: GitHub Pages only sees /Fasan-Split/join/.
@@ -97,6 +101,7 @@ class Invite {
         expires: DateTime.fromMillisecondsSinceEpoch((j['x'] as num).toInt() * 1000),
         name: j['n'] as String? ?? '',
         person: j['p'] as String?,
+        auto: j['o'] == 1,
       );
     } catch (_) {
       return null;
@@ -105,12 +110,13 @@ class Invite {
 }
 
 class JoinRequest {
-  JoinRequest(this.pub, this.name, this.at, {this.person});
+  JoinRequest(this.pub, this.name, this.at, {this.person, this.auto = false});
   final String pub, name;
   final DateTime at;
 
-  /// From the invitation that sealed the request (Invite.person).
+  /// From the invitation that sealed the request (Invite.person, Invite.auto).
   final String? person;
+  final bool auto;
 }
 
 /// Admin side of invitations: keeps the secrets of invitations it made, reads requests, approves.
@@ -125,16 +131,31 @@ class Invitations {
   StreamSubscription<NostrEvent>? _sub;
   final StreamController<void> changes = StreamController<void>.broadcast();
 
-  /// A new invitation valid for [valid].
-  Invite create({Duration valid = const Duration(days: 2), String? person}) {
+  /// Called when the issued invitations change: the service stores them (04.11.: they lived in memory only – after an
+  /// update or restart of the inviting phone, requests of invited people could not be read any more).
+  void Function(List<Invite>)? onIssued;
+
+  /// Invitations made earlier (stored by the service). Requests already on the relays are read again by [listen].
+  void restore(Iterable<Invite> l) {
+    for (final i in l) {
+      if (!i.expired && i.tag == secret.tag) _issued[toHex(i.secret)] = i;
+    }
+  }
+
+  /// A new invitation valid for [valid]; [auto] lets the person in without asking.
+  Invite create({Duration valid = const Duration(days: 7), String? person, bool auto = true}) {
     final inv = Invite(
-        tag: secret.tag, secret: randomBytes(32), adminPub: me.pub, relays: secret.relays, expires: DateTime.now().add(valid), name: secret.name, person: person);
+        tag: secret.tag, secret: randomBytes(32), adminPub: me.pub, relays: secret.relays, expires: DateTime.now().add(valid), name: secret.name, person: person, auto: auto);
     _issued[toHex(inv.secret)] = inv;
+    onIssued?.call(open);
     return inv;
   }
 
   /// Revokes all open invitations.
-  void revokeAll() => _issued.clear();
+  void revokeAll() {
+    _issued.clear();
+    onIssued?.call(open);
+  }
 
   List<Invite> get open => _issued.values.where((i) => !i.expired).toList();
 
@@ -150,7 +171,7 @@ class Invitations {
       if (inv.expired) continue;
       try {
         final j = jsonDecode(aeadOpen(e.content, inv.requestKey, d)) as Map<String, dynamic>;
-        pending[e.pubkey] = JoinRequest(e.pubkey, (j['name'] as String? ?? '').trim(), DateTime.fromMillisecondsSinceEpoch(e.createdAt * 1000), person: inv.person);
+        pending[e.pubkey] = JoinRequest(e.pubkey, (j['name'] as String? ?? '').trim(), DateTime.fromMillisecondsSinceEpoch(e.createdAt * 1000), person: inv.person, auto: inv.auto);
         changes.add(null);
         return;
       } on FormatException {

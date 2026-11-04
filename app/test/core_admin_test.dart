@@ -20,7 +20,7 @@ Future<(CollabService, BillStore)> phone(MemoryRelayHub hub, String name) async 
 }
 
 Future<void> invite(CollabService admin, CollabGroup g, CollabService joiner, String name) async {
-  expect(await joiner.join(g.invitations!.create().link, name), isNull);
+  expect(await joiner.join(g.invitations!.create(auto: false).link, name), isNull);
   await settle(200);
   await admin.approve(g, g.invitations!.pending.values.single);
   await settle();

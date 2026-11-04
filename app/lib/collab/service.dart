@@ -21,7 +21,9 @@ import 'notes.dart';
 import 'pairing.dart';
 
 /// Relays used for new groups. Not checked for availability here – the user can change them per group later.
-const List<String> defaultRelays = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
+// FASAN_RELAYS (compile-time, comma-separated) replaces them for the end-to-end test against a local relay only.
+const String _relaysOverride = String.fromEnvironment('FASAN_RELAYS');
+final List<String> defaultRelays = _relaysOverride.isEmpty ? const ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'] : _relaysOverride.split(',');
 
 class CollabGroup {
   CollabGroup(this.secret, this.localName, this.session, this.invitations);
@@ -394,7 +396,7 @@ class CollabService extends ChangeNotifier {
   Future<void> approve(CollabGroup g, JoinRequest r) async {
     final inv = g.invitations;
     if (inv == null) return;
-    g.session.addMember(r.pub, r.name.isEmpty ? r.pub.substring(0, 8) : r.name, person: r.person);
+    if (!g.session.memberKeys.contains(r.pub)) g.session.addMember(r.pub, r.name.isEmpty ? r.pub.substring(0, 8) : r.name, person: r.person);
     await g.session.flush(); // members first, then the key
     await inv.welcome(r.pub);
     notifyListeners();
@@ -485,8 +487,30 @@ class CollabService extends ChangeNotifier {
     if (me == null) return;
     final inv = Invitations(secret: g.secret, me: me.key, relay: g.session.relay);
     g.invitations = inv;
-    inv.listen();
-    inv.changes.stream.listen((_) => notifyListeners());
+    final key = 'fasan.invites.${g.secret.tag}';
+    inv.onIssued = (l) => unawaited(vault.write(key, jsonEncode([for (final i in l) i.encode()])));
+    inv.changes.stream.listen((_) {
+      _autoApprove(g);
+      notifyListeners();
+    });
+    () async {
+      // invitations of earlier runs first, then read the requests (also those sent while this phone was off)
+      try {
+        final raw = await vault.read(key);
+        if (raw != null) inv.restore([for (final c in jsonDecode(raw) as List) ?Invite.parse(c as String)]);
+      } catch (_) {}
+      inv.listen();
+    }();
+  }
+
+  /// Requests through an invitation with „let in at once“, and repeated requests of members (e.g. after a reinstall
+  /// that lost the welcome), are approved without asking.
+  void _autoApprove(CollabGroup g) {
+    final inv = g.invitations;
+    if (inv == null) return;
+    for (final r in inv.pending.values.toList()) {
+      if (r.auto || g.session.memberKeys.contains(r.pub)) unawaited(approve(g, r));
+    }
   }
 
   // ---- trust (Nutzer 04.11.: block changes of others that concern me; default: trust everyone) ----

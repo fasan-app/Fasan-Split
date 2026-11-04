@@ -36,7 +36,7 @@ void main() {
       ..group = 'WG'
       ..done = true);
 
-    final inv = ga.invitations!.create(person: 'Mia');
+    final inv = ga.invitations!.create(person: 'Mia', auto: false);
     expect(await b.join(inv.link, 'Mia B.'), isNull);
     await settle(200);
     final req = ga.invitations!.pending.values.single;

@@ -189,6 +189,51 @@ class _GroupChangeBuilderState extends State<GroupChangeBuilder> {
 }
 
 /// Pending join requests of this phone, shown on the groups page until the admin answers.
+/// An invitation that was opened but not used yet (the join screen was closed or covered): one big card on the start
+/// page until the request is out (Nutzer 04.11.: people have little patience, it must be impossible to miss).
+class OpenInviteCard extends StatelessWidget {
+  const OpenInviteCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    final code = takeJoinCode() ?? pendingInviteLink;
+    if (code == null) return const SizedBox.shrink();
+    final inv = Invite.parse(code);
+    if (inv == null || inv.expired || CollabScope.of(context).groups.containsKey(inv.tag) || CollabScope.of(context).joins.any((j) => j.invite.tag == inv.tag)) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: FasanSpace.s),
+      child: Material(
+        color: l.accent.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(l.radius * 0.7),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(l.radius * 0.7),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => JoinScreen(prefill: code.contains('#') ? code : '${Invite.inviteBase}#$code'))),
+          child: Padding(
+            padding: const EdgeInsets.all(FasanSpace.m),
+            child: Row(children: [
+              Icon(Icons.mail_outline_rounded, color: l.accent),
+              const SizedBox(width: FasanSpace.m),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(t.de ? 'Einladung zu „${inv.name}“' : 'Invitation to “${inv.name}”', style: tt.titleMedium),
+                  Text(t.de ? 'Tippe hier, gib deinen Namen ein und tritt bei.' : 'Tap here, enter your name and join.', style: tt.bodySmall),
+                ]),
+              ),
+              Icon(Icons.chevron_right_rounded, color: l.accent),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Invitation link that opened the app (Android/iOS link or web page), kept until the request is sent.
+String? pendingInviteLink;
+
 class PendingJoinCards extends StatelessWidget {
   const PendingJoinCards({super.key});
 
@@ -235,15 +280,30 @@ class _JoinScreenState extends State<JoinScreen> {
   final TextEditingController _name = TextEditingController();
   String? _error;
   bool _busy = false, _sent = false;
+  String? _tag; // group we asked to join: open it as soon as the welcome arrives (auto-approved invites, 04.11.)
+  CollabService? _service;
 
   @override
   void initState() {
     super.initState();
-    _name.text = CollabScope.read(context).identity?.name ?? '';
+    _service = CollabScope.read(context)..addListener(_onService);
+    // prefilled: the account name, else „Das bin ich“ (Angi 04.11. did not find where to put her name)
+    final n = CollabScope.read(context).identity?.name ?? '';
+    _name.text = n.isNotEmpty ? n : StoreScope.read(context).me;
+  }
+
+  void _onService() {
+    final g = _tag == null ? null : _service?.groups[_tag];
+    if (g == null || !mounted) return;
+    _tag = null;
+    final nav = Navigator.of(context);
+    nav.popUntil((r) => r.isFirst);
+    nav.push(MaterialPageRoute(builder: (_) => GroupScreen(name: g.localName, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)))));
   }
 
   @override
   void dispose() {
+    _service?.removeListener(_onService);
     _link.dispose();
     _name.dispose();
     super.dispose();
@@ -277,7 +337,11 @@ class _JoinScreenState extends State<JoinScreen> {
       _sent = err == null;
       _error = msg;
     });
-    if (err == null) clearJoinCode(); // the request is out: the code may leave the tab now
+    if (err == null) {
+      _tag = Invite.parse(text)?.tag;
+      clearJoinCode(); // the request is out: the code may leave the tab now
+      pendingInviteLink = null;
+    }
   }
 
   @override

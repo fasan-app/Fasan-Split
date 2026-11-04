@@ -44,7 +44,7 @@ void main() {
     final ga = await a.shareLocalGroup('Lissabon');
 
     // 2. invitation for „Angi“ from the bill, as https link; Angi opens it
-    final link = ga.invitations!.create(person: 'Angi').link;
+    final link = ga.invitations!.create(person: 'Angi', auto: false).link;
     expect(isInviteLink(Uri.parse(link)), isTrue);
     expect(await b.join(link, 'Angi'), isNull);
     await settle(300);
@@ -73,7 +73,7 @@ void main() {
     expect(sa.bills.single.its[0].shares, {0: 2, 1: 1});
 
     // 5. Ben joins with a general invitation and is linked by hand
-    expect(await c.join(ga.invitations!.create().link, 'Ben'), isNull);
+    expect(await c.join(ga.invitations!.create(auto: false).link, 'Ben'), isNull);
     await settle(300);
     await a.approve(ga, ga.invitations!.pending.values.single);
     await settle();
