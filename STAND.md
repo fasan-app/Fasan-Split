@@ -333,6 +333,12 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
+Nacht 04.11. (Einladung im Browser, Bon-Status, Freunde):
+- Behoben: Web-App konnte keine Beitrittsanfrage senden und keine Gruppe lesen (pointycastle-Poly1305 wirft im Browser „full width integer not supported“). Eigenes ChaCha20-Poly1305 nach RFC 8439, gleiche Bytes wie vorher (Test `crypto_web_test.dart`). Einladungen gespeichert und standardmäßig automatisch bestätigt (`invite_robust_test.dart`), Beitrittsseite öffnet die Gruppe, sobald sie da ist. Browser-Ende-zu-Ende lokal geprüft (lokales Relay `app/tool/e2e/relay.py`, `tool/e2e/joiner.js`, Admin `test/e2e_web_admin_test.dart`): Angi tritt im Browser bei, sieht Gruppe und Bon, ist verknüpft.
+- Freunde antippbar: zu Gruppe hinzufügen, einladen, Nachricht im Gruppen-Chat, gemeinsame Bons.
+- Als Nächstes (in dieser Reihenfolge, Grund: Nutzer „muss sofort funktionieren“): (1) Freigabe im Link – Beitritt ohne dass ein Verwalter online ist (Plan in `docs/recherche/2026-11-04-einladung-situationen.md`); (2) Browser-Test als CI-Schranke vor Pages (normal, ohne Service Worker, ohne Speicher); (3) Bon-Status „Eingetragen“ (Offen, zählt im Saldo) vs. „Ausgeglichen“ (Archiv, zählt nicht mehr), letzter Schritt als Übersicht mit „Eintragen“ statt doppelter Zahler-Frage (Nutzer 04.11.).
+- Wunsch Nutzer 04.11., später: Freunde „online“ / „zuletzt online“ (verschlüsselter Zeitstempel je Gruppe, in Einstellungen abschaltbar; aus = auch keine fremden Zeiten), weitere Messenger-Funktionen (gelesen, schreibt gerade, Profilbild/Status, Erwähnungen, stumm, anpinnen).
+
 Spätabend 04.11. (Tests, nicht auf dem Gerät):
 - Gerät koppeln per QR ohne Abtippen (Test `pairing_test.dart`): neues Gerät zeigt Code + Prüfcode, altes Gerät überträgt Konto verschlüsselt (NIP-44 an Einmal-Schlüssel) über ein Relay; Konto → „Mit anderem Gerät anmelden“ / „Gerät hinzufügen“; Link öffnet über die System-Kamera direkt die App. Einführung: „Schon ein Konto?“.
 - Sicherung mit Passwort und „Senden …“ (z. B. Mail an mich), Einspielen fragt das Passwort (Test).
