@@ -17,6 +17,7 @@ import '../collab/service.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
 import '../l10n_web.dart';
+import '../web_platform.dart';
 import '../l10n_groups.dart';
 import '../main.dart';
 import '../state/scan_queue.dart';
@@ -275,6 +276,7 @@ class _JoinScreenState extends State<JoinScreen> {
       _sent = err == null;
       _error = msg;
     });
+    if (err == null) clearJoinCode(); // the request is out: the code may leave the tab now
   }
 
   @override
@@ -283,15 +285,6 @@ class _JoinScreenState extends State<JoinScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(t.joinGroup)),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
-        // trust (Nutzer 04.11.): default everyone; switch on to confirm changes of others about me
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          secondary: const Icon(Icons.verified_user_outlined),
-          title: Text(t.confirmAllTitle),
-          subtitle: Text(t.trustAboutMeSub),
-          value: CollabScope.of(context).confirmAll,
-          onChanged: (v) => CollabScope.read(context).confirmAll = v,
-        ),
         if (kIsWeb) const _WebAppHint(),
         Text(t.joinText, style: tt.bodyMedium),
         const SizedBox(height: FasanSpace.l),
@@ -960,6 +953,15 @@ class _AccountScreenState extends State<AccountScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(t.collabTitle)),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
+        // trust (Nutzer 04.11.): default everyone; switch on to confirm changes of others about me
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          secondary: const Icon(Icons.verified_user_outlined),
+          title: Text(t.confirmAllTitle),
+          subtitle: Text(t.trustAboutMeSub),
+          value: CollabScope.of(context).confirmAll,
+          onChanged: (v) => CollabScope.read(context).confirmAll = v,
+        ),
         TextField(
           controller: _name,
           textCapitalization: TextCapitalization.words,

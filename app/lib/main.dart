@@ -79,6 +79,7 @@ class _SplitAppState extends State<SplitApp> {
 
   void _open(Uri? u) {
     if (u == null || !isInviteLink(u)) return;
+    startedWithInvite = true; // the introduction must not cover the join screen (also on Android)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final nav = navigatorKey.currentState;
       if (nav != null) nav.push(MaterialPageRoute(builder: (_) => JoinScreen(prefill: u.toString())));

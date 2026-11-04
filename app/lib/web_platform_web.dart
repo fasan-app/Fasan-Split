@@ -11,12 +11,15 @@ import 'package:web/web.dart' as web;
 const _key = 'fasan-join';
 const _build = String.fromEnvironment('FASAN_BUILD');
 
+/// Reads the code but keeps it in the tab until the join request is out ([clearJoinCode]): on the very first visit
+/// coi-serviceworker reloads the page once, and a code removed before that reload was lost – the invited person landed
+/// in an empty app (Nutzer 04.11., Angi).
 String? takeJoinCode() {
-  final s = web.window.sessionStorage;
-  final c = s.getItem(_key);
-  s.removeItem(_key);
+  final c = web.window.sessionStorage.getItem(_key);
   return c == null || c.isEmpty ? null : c;
 }
+
+void clearJoinCode() => web.window.sessionStorage.removeItem(_key);
 
 Future<bool> webUpdateAvailable() async {
   if (_build.isEmpty) return false; // local build without the define
