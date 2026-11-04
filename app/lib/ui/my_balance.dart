@@ -246,7 +246,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
         tile(Icons.key_rounded, de ? 'Wörter, Schlüssel, Vertrauen' : 'Words, key, trust', de ? '12 Wörter zum Wiederherstellen' : '12 words to restore', () => open(const AccountScreen())),
         const SizedBox(height: FasanSpace.m),
         tile(Icons.tune_rounded, de ? 'Einstellungen' : 'Settings', null, () => open(const SettingsScreen())),
+        const SizedBox(height: FasanSpace.xl),
+        if (collab.identity != null)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.person_off_outlined, color: Colors.red.shade600),
+            title: Text(de ? 'Konto löschen' : 'Delete account', style: TextStyle(color: Colors.red.shade600)),
+            onTap: () => _deleteAccount(context),
+          ),
       ]),
     );
   }
+}
+
+
+/// Deleting the account (Nutzer 04.11.): asks once, says what happens and what cannot be promised.
+Future<void> _deleteAccount(BuildContext context) async {
+  final de = S.of(context).de;
+  var alsoBills = false;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, set) => AlertDialog(
+        title: Text(de ? 'Konto löschen?' : 'Delete the account?'),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(de
+              ? 'Deine Gruppen und Freunde sehen „Konto gelöscht“. Du trittst überall aus. Schlüssel und 12 Wörter werden auf diesem Gerät gelöscht – ohne sie kommst du nicht zurück. Die Relays werden gebeten, deine Daten zu löschen (sie sind verschlüsselt; ganz sicher ist das Löschen dort nicht).'
+              : 'Your groups and friends see “account deleted”. You leave everywhere. Key and 12 words are deleted on this device – without them there is no way back. The relays are asked to delete your data (it is encrypted; deletion there cannot be guaranteed).'),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            value: alsoBills,
+            onChanged: (v) => set(() => alsoBills = v ?? false),
+            title: Text(de ? 'Auch alle Bons auf diesem Gerät löschen' : 'Also delete all receipts on this device'),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(de ? 'Abbrechen' : 'Cancel')),
+          FilledButton(style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600), onPressed: () => Navigator.pop(ctx, true), child: Text(de ? 'Endgültig löschen' : 'Delete for good')),
+        ],
+      ),
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  final nav = Navigator.of(context), messenger = ScaffoldMessenger.of(context);
+  await CollabScope.read(context).deleteAccount(alsoBills: alsoBills);
+  nav.popUntil((r) => r.isFirst);
+  messenger.showSnackBar(SnackBar(content: Text(de ? 'Konto gelöscht.' : 'Account deleted.')));
 }

@@ -385,8 +385,9 @@ class CollabService extends ChangeNotifier {
     final me = identity?.pub;
     final out = <String, String>{};
     for (final g in groups.values) {
+      final hidden = hiddenFriends;
       for (final k in g.session.memberKeys) {
-        if (k == me) continue;
+        if (k == me || hidden.contains(k)) continue;
         final n = g.secret.direct ? directName(g) : g.session.nameOf(k);
         if (n.trim().isNotEmpty && n != '—') out.putIfAbsent(k, () => n);
       }
@@ -794,6 +795,91 @@ class CollabService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---- deleting the account (Nutzer 04.11.) ----
+
+  /// Deletes my account: every group and friend first learns „Konto gelöscht“ (my profile there), I leave the members
+  /// lists, a NIP-09 deletion request (kind 5, `a` tags for my addressable events) asks relays to drop what I published
+  /// – honoured by many, not guaranteed – and key, words, group list and collaboration data go from this device.
+  /// [alsoBills] also empties the bills on this device.
+  Future<void> deleteAccount({bool alsoBills = false}) async {
+    final me = identity;
+    if (me == null) return;
+    final refs = <String>{'$kindData:${me.pub}:$_accountD'};
+    for (final g in groups.values.toList()) {
+      final s = g.session;
+      s.doc(GroupSession.profile(me.pub))
+        ..set('deleted', true)
+        ..set('seen', null);
+      s.touch(GroupSession.profile(me.pub));
+      if (s.doc(GroupSession.members).get('m/${me.pub}') != null && !s.isAdmin) {
+        s.doc(GroupSession.members).set('m/${me.pub}', null); // own entry: allowed (group.dart _validSelfEntry)
+        s.touch(GroupSession.members);
+      }
+      await s.flush();
+      for (final id in s.docIds) {
+        if (!id.startsWith('profile:')) refs.add('$kindData:${me.pub}:fs:${g.secret.tag}:$id');
+      }
+    }
+    // an empty account list, then the deletion request for everything else
+    try {
+      final empty = NostrEvent.create(me.key, kind: kindData, tags: [['d', _accountD], ['t', 'fs:account']], content: nip44Encrypt(jsonEncode({'groups': []}), nip44ConversationKey(me.key.priv, me.pub)));
+      final del = NostrEvent.create(me.key, kind: 5, tags: [for (final a in refs) ['a', a], ['k', '$kindData']], content: 'Fasan Split: Konto gelöscht');
+      final relay = _relayFactory(_accountRelays);
+      await relay.publish(empty);
+      await relay.publish(del);
+    } catch (_) {}
+    for (final g in groups.values.toList()) {
+      await leave(g);
+    }
+    for (final k in ['fasan.identity.priv', 'fasan.identity.name', 'fasan.identity.words', _kGroups]) {
+      await vault.delete(k);
+    }
+    for (final k in prefs?.getKeys().where((k) => k.startsWith('collab.')).toList() ?? <String>[]) {
+      await prefs?.remove(k);
+    }
+    _act = null;
+    _readCache = null;
+    joins.clear();
+    identity = null;
+    if (alsoBills) {
+      store.trash(store.bills.where((b) => b.trashedAt == null).toList());
+      store.deleteForever(store.bills.toList());
+      store.me = '';
+    }
+    notifyListeners();
+  }
+
+  /// People who deleted their account, from their profiles in my groups (they left the member lists): pub → name.
+  Map<String, String> get deletedFriends {
+    final out = <String, String>{}, hidden = hiddenFriends, me = identity?.pub;
+    for (final g in groups.values) {
+      for (final id in g.session.docIds) {
+        if (!id.startsWith('profile:')) continue;
+        final pub = id.substring('profile:'.length);
+        final d = g.session.doc(id);
+        if (pub == me || hidden.contains(pub) || d.get('deleted') != true) continue;
+        out.putIfAbsent(pub, () => d.get('name') is String ? d.get('name') as String : g.session.nameOf(pub));
+      }
+    }
+    return out;
+  }
+
+  /// [pub] deleted their account (their profile in a shared group says so).
+  bool isDeleted(String pub) => groups.values.any((g) => g.session.doc(GroupSession.profile(pub)).get('deleted') == true);
+
+  static const _kHidden = 'collab.hiddenFriends';
+
+  /// Friends removed from the list (e.g. after they deleted their account).
+  Set<String> get hiddenFriends => {...?prefs?.getStringList(_kHidden)};
+
+  /// Removes [pub] from my friends: hidden in the list, our direct chat is left.
+  Future<void> forgetFriendPub(String pub) async {
+    await prefs?.setStringList(_kHidden, {...hiddenFriends, pub}.toList());
+    final d = directWithPub(pub);
+    if (d != null) await leave(d);
+    notifyListeners();
+  }
+
   /// Leaves a group on this phone (the others keep it). Bills stay, without the shared link.
   Future<void> leave(CollabGroup g) async {
     await _subs.remove(g.secret.tag)?.cancel();
@@ -840,10 +926,9 @@ class CollabService extends ChangeNotifier {
 
   /// The chat is open: everything up to now is read.
   void markRead(CollabGroup g) {
-    final last = messages(g).lastOrNull?.at.millisecondsSinceEpoch ?? 0;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final v = last > now ? last : now;
-    if ((_read[g.secret.tag] ?? 0) >= v) return;
+    // up to the newest message (not „now“: every rebuild of the chat would send a new read mark)
+    final v = messages(g).lastOrNull?.at.millisecondsSinceEpoch ?? 0;
+    if (v == 0 || (_read[g.secret.tag] ?? 0) >= v) return;
     _read[g.secret.tag] = v;
     prefs?.setString(_kRead, jsonEncode(_read));
     // „gelesen“ for the others (only with presence on)

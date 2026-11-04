@@ -358,6 +358,12 @@ class FriendsPage extends StatelessWidget {
     for (final e in collab.memberFriends.entries) {
       at(e.value).pub ??= e.key;
     }
+    // deleted accounts stay visible as such until removed (Nutzer 04.11.)
+    for (final e in collab.deletedFriends.entries) {
+      at(e.value)
+        ..pub ??= e.key
+        ..deleted = true;
+    }
     final waiting = <CollabGroup>[];
     for (final g in collab.directs) {
       final n = collab.directName(g);
@@ -409,9 +415,11 @@ class FriendsPage extends StatelessWidget {
     }
 
     Widget row(_Friend f) {
-      final hasChat = f.pub != null || f.direct != null;
+      final hasChat = !f.deleted && (f.pub != null || f.direct != null);
       final bold = f.unread > 0;
-      final sub = f.last != null
+      final sub = f.deleted
+          ? (de ? 'Konto gelöscht' : 'Account deleted')
+          : f.last != null
           ? (f.last!.from == collab.identity?.pub ? (de ? 'Du: ' : 'You: ') : '') + f.last!.text
           : [
               if (f.bills > 0) t.billsCount(f.bills),
@@ -429,8 +437,9 @@ class FriendsPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(l.radius * 0.7),
         child: InkWell(
           borderRadius: BorderRadius.circular(l.radius * 0.7),
-          // with the app: tap writes (like a messenger), long press shows everything else; only in bills: the actions
-          onTap: hasChat ? () => openChat(f) : () => friendActions(context, f.name),
+          // with the app: tap writes (like a messenger), long press shows everything else; only in bills: the actions;
+          // a deleted account: offer to remove it from the list
+          onTap: f.deleted ? () => _removeDeleted(context, f.name, f.pub!) : (hasChat ? () => openChat(f) : () => friendActions(context, f.name)),
           onLongPress: () => friendActions(context, f.name),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s + 2),
@@ -502,12 +511,29 @@ class FriendsPage extends StatelessWidget {
   }
 }
 
+/// A friend deleted their account: remove them from the list (and leave the direct chat). Their names in old bills stay.
+Future<void> _removeDeleted(BuildContext context, String name, String pub) async {
+  final de = S.of(context).de;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(de ? '$name hat das Konto gelöscht' : '$name deleted the account'),
+      content: Text(de ? 'Aus der Freundesliste entfernen? Die Beträge in alten Bons bleiben, wie sie sind.' : 'Remove from your friends? Amounts in old receipts stay as they are.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(de ? 'Behalten' : 'Keep')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(de ? 'Entfernen' : 'Remove')),
+      ],
+    ),
+  );
+  if (ok == true && context.mounted) await CollabScope.read(context).forgetFriendPub(pub);
+}
+
 /// One row of the friends list (built from bills, groups and direct connections).
 class _Friend {
   _Friend(this.name);
   final String name;
   int color = 0, bills = 0, sum = 0, unread = 0;
-  bool fromBills = false;
+  bool fromBills = false, deleted = false;
   String? pub;
   CollabGroup? direct;
   ChatMessage? last;
