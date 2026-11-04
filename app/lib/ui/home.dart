@@ -19,6 +19,8 @@ import 'bill_tile.dart';
 import 'hints.dart';
 import 'flow.dart';
 import 'collab_ui.dart';
+import 'common.dart';
+import 'my_balance.dart';
 import 'groups.dart';
 import 'onboarding.dart';
 import 'scan_screen.dart';
@@ -44,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _webUpdate = false;
   ScanQueue? _queue;
   bool _selecting = false;
+  bool _dragging = false; // bills are lifted: drop targets light up (segments above, Gruppen tab)
   final Set<String> _selected = {};
   final _pager = PageController();
   int _page = 0; // 0 open, 1 archive, 2 trash, 3 groups, 4 friends
@@ -250,10 +253,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     c.dispose();
     if (r == null) return;
-    store.setGroup(list, r);
+    final same = existing.where((g) => g.toLowerCase() == r.trim().toLowerCase());
+    store.setGroup(list, same.isEmpty ? r : same.first); // no second „WG“ next to „wg“
+    if (same.isEmpty && r.trim().isNotEmpty && mounted) showNote(this.context, S.of(this.context).de ? 'Neue Gruppe „${r.trim()}“' : 'New group “${r.trim()}”');
     if (mounted) {
       FasanHaptics.of(this.context).snap();
       _exitSelect();
+    }
+  }
+
+  /// Bills dropped on Offen, Archiv or Papierkorb.
+  void _dropOnList(BuildContext context, BillStore store, List<Bill> list, BillList target) {
+    FasanHaptics.of(context).snap();
+    _exitSelect();
+    switch (target) {
+      case BillList.trash:
+        _toTrash(context, list);
+      case BillList.archive:
+        store.untrash(list.where((b) => b.trashedAt != null).toList());
+        _toArchive(context, list, true);
+      case BillList.open:
+        store.untrash(list.where((b) => b.trashedAt != null).toList());
+        _toArchive(context, list, false);
     }
   }
 
@@ -360,6 +381,8 @@ class _HomeScreenState extends State<HomeScreen> {
             : AppBar(
                 title: Text(_page <= 2 ? t.appName : (_page == 3 ? t.groupsTab : t.friendsTab)),
                 actions: [
+                  // my balance on every main page (Nutzer 04.11.)
+                  const MyBalanceBadge(),
                   if (list != null && _hasAny(store, list))
                     IconButton(tooltip: t.select, icon: const Icon(Icons.checklist_rounded), onPressed: () => setState(() => _selecting = true)),
                   IconButton(
@@ -371,16 +394,38 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
         body: Column(children: [
           // the three views of Rechnungen: they appear and disappear smoothly when the page changes
+          // stays while selecting (04.11.: hiding it made the list jump); while dragging its parts take the bills
           FasanReveal(
-            show: _page <= 2 && !selecting,
+            show: _page <= 2,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s),
-              child: FasanSegmented<int>(
-                values: const [0, 1, 2],
-                selected: _page.clamp(0, 2),
-                label: (i) => [t.listOpen, t.listArchive, t.listTrash][i],
-                onChanged: _goTo,
-              ),
+              child: Stack(children: [
+                FasanSegmented<int>(
+                  values: const [0, 1, 2],
+                  selected: _page.clamp(0, 2),
+                  label: (i) => [t.listOpen, t.listArchive, t.listTrash][i],
+                  onChanged: _goTo,
+                ),
+                if (_dragging)
+                  Positioned.fill(
+                    child: Row(children: [
+                      for (final target in BillList.values)
+                        Expanded(
+                          child: DragTarget<List<Bill>>(
+                            onWillAcceptWithDetails: (_) => target != list,
+                            onAcceptWithDetails: (d) => _dropOnList(context, store, d.data, target),
+                            builder: (context, cand, _) => AnimatedContainer(
+                              duration: FasanMotion.of(context).short,
+                              decoration: BoxDecoration(
+                                color: cand.isEmpty ? Colors.transparent : FasanLook.of(context).accent.withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(FasanLook.of(context).radius * 0.6),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ]),
+                  ),
+              ]),
             ),
           ),
           Expanded(
@@ -429,6 +474,8 @@ class _HomeScreenState extends State<HomeScreen> {
         bottomNavigationBar: _NavBar(
           selected: _page <= 2 ? 0 : _page - 2,
           onSelect: (i) => _goTo(i == 0 ? (_page <= 2 ? _page : 0) : i + 2),
+          // bills dropped on „Gruppen“: choose a group or name a new one (same dialog as the button)
+          onDropGroup: _dragging ? (list) => _groupDialog(context, list) : null,
         ),
       ),
     );
@@ -528,28 +575,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// A bill: tap opens it (or selects), swipe right moves it to the archive (or back), swipe left to the trash with
-  /// „Rückgängig“, long press starts selecting (Nutzer 03.11.). While selecting, a long press picks up all selected
-  /// bills: dropped on a group they move there, dropped on a bill they go right before it (own order, store.moveBefore).
+  /// „Rückgängig“. Long press lifts it at once (Nutzer 04.11.: move without letting go) and selects it; while selecting it
+  /// lifts all selected bills. Drop on a group, on a bill (goes right before it, store.moveBefore), on Offen/Archiv/
+  /// Papierkorb above or on the Gruppen tab below. Letting go without moving keeps the selection. The widget tree is the
+  /// same in both modes, so the drag survives the switch into the selection.
   Widget _row(BuildContext context, BillStore store, BillList mode, Bill b) {
     final t = S.of(context), l = FasanLook.of(context);
-    final tile = BillTile(
-      bill: b,
-      queue: queue,
-      selecting: _selecting,
-      selected: _selected.contains(b.id),
-      onToggle: () => _toggle(b.id),
-      onRetry: () => _retry(b),
-      onLongPress: () {
-        FasanHaptics.of(context).tap();
-        setState(() {
-          _selecting = true;
-          _selected.add(b.id);
-        });
+    final tile = BillTile(bill: b, queue: queue, selecting: _selecting, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () => _retry(b));
+    final moving = _selecting && _selected.contains(b.id) ? _picked(store) : [b];
+    final archive = mode == BillList.archive;
+    return Dismissible(
+      key: ValueKey('bill-${mode.name}-${b.id}'),
+      direction: _selecting ? DismissDirection.none : (b.read == BillRead.ok ? DismissDirection.horizontal : DismissDirection.endToStart),
+      background: _swipeBackground(l, archive ? Icons.unarchive_outlined : Icons.archive_outlined, archive ? t.markOpen : t.markDone, Alignment.centerLeft, l.accent),
+      secondaryBackground: _swipeBackground(l, Icons.delete_outline_rounded, t.delete, Alignment.centerRight, Colors.red.shade700),
+      onDismissed: (dir) {
+        if (dir == DismissDirection.startToEnd) {
+          _toArchive(context, [b], !archive);
+        } else {
+          _toTrash(context, [b]);
+        }
+        FasanHaptics.of(context).snap();
       },
-    );
-    if (_selecting) {
-      final moving = _selected.contains(b.id) ? _picked(store) : [b];
-      return DragTarget<List<Bill>>(
+      child: DragTarget<List<Bill>>(
         onWillAcceptWithDetails: (d) => !d.data.any((x) => x.id == b.id),
         onAcceptWithDetails: (d) {
           store.moveBefore(d.data, b);
@@ -561,42 +609,26 @@ class _HomeScreenState extends State<HomeScreen> {
           child: LongPressDraggable<List<Bill>>(
             data: moving,
             delay: const Duration(milliseconds: 300),
-            onDragStarted: () => FasanHaptics.of(context).tap(),
-            feedback: Material(
-              color: Colors.transparent,
-              child: SizedBox(
-                width: MediaQuery.sizeOf(context).width - 2 * FasanSpace.l,
-                child: Opacity(
-                  opacity: 0.9,
-                  child: Badge(
-                    isLabelVisible: moving.length > 1,
-                    label: Text('${moving.length}'),
-                    child: BillTile(bill: b, queue: queue, selecting: true, selected: true, onToggle: () {}, onRetry: () {}),
-                  ),
-                ),
-              ),
-            ),
+            hapticFeedbackOnStart: false,
+            onDragStarted: () {
+              FasanHaptics.of(context).tap();
+              if (!_selected.contains(b.id)) {
+                setState(() {
+                  _selecting = true;
+                  _selected.add(b.id);
+                });
+              }
+              setState(() => _dragging = true);
+            },
+            onDragEnd: (_) {
+              if (mounted) setState(() => _dragging = false);
+            },
+            feedback: _DragFeedback(width: MediaQuery.sizeOf(context).width - 2 * FasanSpace.l, count: moving.length, child: BillTile(bill: b, queue: queue, selecting: true, selected: true, onToggle: () {}, onRetry: () {})),
             childWhenDragging: Opacity(opacity: 0.35, child: tile),
             child: tile,
           ),
         ),
-      );
-    }
-    final archive = mode == BillList.archive;
-    return Dismissible(
-      key: ValueKey('bill-${mode.name}-${b.id}'),
-      direction: b.read == BillRead.ok ? DismissDirection.horizontal : DismissDirection.endToStart,
-      background: _swipeBackground(l, archive ? Icons.unarchive_outlined : Icons.archive_outlined, archive ? t.markOpen : t.markDone, Alignment.centerLeft, l.accent),
-      secondaryBackground: _swipeBackground(l, Icons.delete_outline_rounded, t.delete, Alignment.centerRight, Colors.red.shade700),
-      onDismissed: (dir) {
-        if (dir == DismissDirection.startToEnd) {
-          _toArchive(context, [b], !archive);
-        } else {
-          _toTrash(context, [b]);
-        }
-        FasanHaptics.of(context).snap();
-      },
-      child: tile,
+      ),
     );
   }
 
@@ -675,10 +707,13 @@ class _HomeScreenState extends State<HomeScreen> {
 /// The three main places (Rechnungen, Gruppen, Freunde) as a glass bar at the bottom: icon and label, colour for the active
 /// one (no check marks; Nutzer 02.11.). Material 3: a navigation bar holds three to five destinations.
 class _NavBar extends StatelessWidget {
-  const _NavBar({required this.selected, required this.onSelect});
+  const _NavBar({required this.selected, required this.onSelect, this.onDropGroup});
 
   final int selected;
   final ValueChanged<int> onSelect;
+
+  /// While bills are dragged: the Gruppen tab takes them.
+  final void Function(List<Bill>)? onDropGroup;
 
   @override
   Widget build(BuildContext context) {
@@ -702,14 +737,23 @@ class _NavBar extends StatelessWidget {
                 selected: i == selected,
                 button: true,
                 label: items[i].$3,
-                child: InkWell(
+                child: DragTarget<List<Bill>>(
+                  onWillAcceptWithDetails: (_) => i == 1 && onDropGroup != null,
+                  onAcceptWithDetails: (d) => onDropGroup?.call(d.data),
+                  builder: (context, cand, _) => InkWell(
                   borderRadius: BorderRadius.circular(l.radius * 0.7),
                   onTap: () => onSelect(i),
                   child: AnimatedContainer(
                     duration: FasanMotion.of(context).short,
                     curve: FasanCurves.short,
                     constraints: BoxConstraints(minHeight: l.minTap + 8),
-                    decoration: BoxDecoration(color: i == selected ? l.accent.withValues(alpha: 0.14) : Colors.transparent, borderRadius: BorderRadius.circular(l.radius * 0.7)),
+                    decoration: BoxDecoration(
+                        color: cand.isNotEmpty
+                            ? l.accent.withValues(alpha: 0.3)
+                            : i == selected || (i == 1 && onDropGroup != null)
+                                ? l.accent.withValues(alpha: 0.14)
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.circular(l.radius * 0.7)),
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Icon(i == selected ? items[i].$2 : items[i].$1, color: i == selected ? l.accent : l.textMuted, size: 24),
@@ -718,6 +762,7 @@ class _NavBar extends StatelessWidget {
                     ]),
                   ),
                 ),
+                ),
               ),
             ),
         ]),
@@ -725,4 +770,25 @@ class _NavBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// What follows the finger while bills are dragged: the bill, raised, with the number of bills when there are more.
+class _DragFeedback extends StatelessWidget {
+  const _DragFeedback({required this.width, required this.count, required this.child});
+
+  final double width;
+  final int count;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          width: width,
+          child: Transform.scale(
+            scale: 1.03,
+            child: Opacity(opacity: 0.92, child: Badge(isLabelVisible: count > 1, label: Text('$count'), child: child)),
+          ),
+        ),
+      );
 }

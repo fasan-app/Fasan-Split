@@ -98,20 +98,28 @@ class GroupScreen extends StatelessWidget {
             IconButton(tooltip: t.invite, icon: const Icon(Icons.person_add_alt_1_outlined), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: live)))),
           PopupMenuButton<String>(
             onSelected: (v) async {
-              if (v == 'delete') {
+              if (v == 'leave' && live != null) {
+                await leaveGroupFlow(context, live);
+                return;
+              }
+              if (v == 'delete' && await confirmDialog(context, t.deleteGroup, name, t.deleteGroup) && context.mounted) {
                 store.deleteGroup(name);
                 Navigator.of(context).pop();
               }
             },
-            itemBuilder: (_) => [PopupMenuItem(value: 'delete', child: Text(t.deleteGroup))],
+            itemBuilder: (_) => [
+              if (live != null) PopupMenuItem(value: 'leave', child: Text(t.leaveGroup)),
+              if (live == null) PopupMenuItem(value: 'delete', child: Text(t.deleteGroup)),
+            ],
           ),
         ],
       ),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text('${t.billsCount(bills.length)} · ${money(sum, de: t.de)} €', style: tt.bodyMedium)),
+        if (live != null) CollabGroupPanel(group: live),
         GroupPeople(name: name),
         const SizedBox(height: FasanSpace.l),
-        if (live != null) CollabGroupPanel(group: live) else _ShareButton(name: name),
+        if (live == null) _ShareButton(name: name),
         if (bills.isEmpty) Text(t.groupEmpty, style: tt.bodyMedium),
         for (final b in bills)
           Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {})),

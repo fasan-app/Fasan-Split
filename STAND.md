@@ -333,6 +333,23 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
+Neu 04.11. (Nutzer; Recherche: docs/recherche/2026-11-04-konkurrenz-bedienung-saldo.md). Reihenfolge: erst Fehler und
+Bedienung, die stören, dann Saldo-Sicht, dann neue Funktionen:
+A1. Sicherung mit Konto/Gruppen ging nicht (Liste im Speicher) – ERLEDIGT 04.11. (fe5b884, Test); danach echten Schlüssel einschalten (FORCE_TEST_KEY entfernen, sobald gesichert).
+A2. ERLEDIGT 04.11. (Widget-Tests, nicht auf dem Gerät): Langdruck: hebt sofort an (ohne Loslassen), Ablegen auf Gruppe, Bon, Reiter unten (Archiv, Papierkorb, Gruppen → Gruppe wählen/neu, Duplikat prüfen); Auswahlleiste ohne Rutschen/Ausblenden.
+A3. TEIL ERLEDIGT 04.11.: Einladen nur oben, Mitglieder/Notizen/Chat als kleine Chips, „Gruppe verlassen“ im Menü mit Abfrage (Verwaltung wird gewarnt), Löschen mit Abfrage. OFFEN: Gründer verlässt Gruppe → heute bleibt die Gruppe lesbar und beschreibbar, aber niemand kann einladen oder Mitglieder ändern (adminPub steckt im Gruppengeheimnis); Lösung: Verwaltung übergeben bzw. mehrere Verwalter (Kern, Entwurf), dann ist der ehemalige Gründer wieder einladbar.
+A4. TEIL ERLEDIGT 04.11.: Saldo-Plakette oben auf den Hauptseiten (Ring grün/rot, Betrag), „Mein Stand“ (gesamt, je Gruppe mit „Als Nächstes zahlt“, je Person), `model/settle.dart` myDebts/nextPayer. OFFEN: Plakette auch auf Unterseiten, Visualisierung. Ursprünglich: Profil-Avatar auf allen Seiten mit Stand; „Mein Stand“ gesamt, je Gruppe, über Gruppen, je Person; „Wer zahlt als Nächstes?“.
+A5. Sortieren: Status, Datum, Ort, Betrag, Kategorie, Gruppe, Person, eigene Reihenfolge; Filter.
+A6. Kategorien: Grundliste, automatisch aus Bon (Händler/Posten), eigene Kategorien.
+A7. Web: dauerhafter Speicher + Hinweis Home-Bildschirm (iOS); mehrere Threads (coi-serviceworker); Modelle zwischenspeichern (offline).
+A8. Erinnerung an Sicherung (wöchentlich oder nach vielen Änderungen).
+A9. Gruppenschlüssel rotieren beim Entfernen eines Mitglieds (Kern).
+A10. Vertrauen: Eintragungen anderer, die mich betreffen, je Person oder für alle sperren/freigeben (Standard: allen vertrauen). Entwurf nötig (Kern: Prüfung beim Zusammenführen).
+A11. Avatar und Gruppenbild, Namen ändern, Standardwährung, Fremdwährung mit EZB-Kurs (Datum, manuell aktualisieren).
+A12. Indikatoren, Farben, Visualisierung, Animation nach Regelwerk und Recherchen; Übergänge ohne Ruckeln; Menüs und Einstellungen neu ordnen; Leistung auf alten Geräten messen.
+A13. Integration in Fasan Karte/Reise: Fundament (Module ohne App-Abhängigkeiten: model, collab, recognition, state) halten.
+A14. Roadmap: Widgets; sehr große und kleine Bildschirme; MCP-Schnittstelle für KI; Import aus Splitwise/Tricount; weitere Konkurrenz-Apps einzeln ansehen (Splidu, Splidit, Splital, Wexpense, Cashinator, Splitser, Finanzguru Split, iOS, Open Source).
+
 Neu 03.11. abends (Nutzer, Priorität nach Abhängigkeit gesetzt):
 1. ERLEDIGT 03.11. (Tests, nicht auf dem Gerät): Bon-Modell: Betrag immer positiv + Richtung `Bill.refund` (Ausgabe/Erstattung, Zahler bei Erstattung hält den Anteil der anderen). Negative Bon-Summe: Abfrage „Bezahlt oder Geld zurück?“ in Schritt 1, „Weiter“ gesperrt bis zur Antwort. Negative Zeilen bleiben Zeilen. `meta/refund` im Gruppenabgleich ergänzt (bill_sync.dart, kleine Ergänzung im Kern). Nachtrag 03.11. (Branch `mitarbeit/erstattung-anzeigen`, Tests, nicht auf dem Gerät): Richtung sichtbar in Bon-Liste (Untertitel „Erstattung ·“), Ergebnis (Hinweis unter der Summe), Teilen-Text, CSV („Erstattung erhalten von“); Personen-Summe zieht Erstattungen ab statt sie zu addieren
 2. Gruppen ohne Bon anlegen (Name, Mitglieder), Gruppenseite mit Personen und Saldo. ERLEDIGT 03.11. (Branch `mitarbeit/gruppen-ohne-bon`, Tests, nicht auf dem Gerät): Mitglieder von Hand je Gruppe (`groupMembers` in den App-Einstellungen), dazu alle aus den Bons der Gruppe; Saldo je Person über fertige Bons mit Zahler (`model/settle.dart`, Erstattung beachtet), Ausgleich mit wenigen Überweisungen; neue Gruppe „nur hier“ öffnet gleich die Gruppenseite; in „Wer war dabei?“ Knopf „Alle aus <Gruppe>“. Offen dazu: Mitglieder von Hand werden im Live-Teil noch nicht abgeglichen (nur lokal); „Als bezahlt markieren“ für Ausgleichszahlungen fehlt.

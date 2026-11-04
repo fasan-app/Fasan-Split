@@ -39,3 +39,27 @@ List<(String from, String to, int cents)> settle(Map<String, int> bal) {
   }
   return out;
 }
+
+/// What [me] gets (+) or owes (−) to each other person over [bills], from the transfers of each bill. [isMe] decides
+/// which names are me (own name, names linked to my member key in live groups).
+Map<String, int> myDebts(Iterable<Bill> bills, bool Function(String name) isMe) {
+  final out = <String, int>{};
+  for (final b in bills) {
+    if (!b.done || b.payer == null) continue;
+    for (final (from, to, c) in b.transfers()) {
+      if (from >= b.ps.length || to >= b.ps.length) continue;
+      final f = b.ps[from].name, t = b.ps[to].name;
+      if (isMe(f) && !isMe(t)) out.update(t, (x) => x - c, ifAbsent: () => -c);
+      if (isMe(t) && !isMe(f)) out.update(f, (x) => x + c, ifAbsent: () => c);
+    }
+  }
+  out.removeWhere((_, v) => v == 0);
+  return out;
+}
+
+/// Who should pay the next bill in a group: the one with the lowest balance (owes most); null when all are even.
+String? nextPayer(Map<String, int> balance) {
+  if (balance.isEmpty) return null;
+  final e = balance.entries.reduce((a, b) => b.value < a.value || b.value == a.value && b.key.compareTo(a.key) < 0 ? b : a);
+  return e.value < 0 ? e.key : null;
+}

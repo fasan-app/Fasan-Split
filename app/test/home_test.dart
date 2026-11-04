@@ -98,6 +98,22 @@ void main() {
       expect(store.inGroup(null, done: false).first.purpose, 'Taxi');
     });
 
+    testWidgets('Langdruck hebt sofort an: ohne Loslassen auf „Papierkorb“ ziehen', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Taxi')]);
+      await app(tester, store, idle(store));
+      final g = await tester.startGesture(tester.getCenter(find.text('Taxi')));
+      await tester.pump(const Duration(milliseconds: 400)); // lifted, selection started, no letting go
+      await g.moveBy(const Offset(0, -20));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('1 ausgewählt'), findsOneWidget);
+      await g.moveTo(tester.getCenter(find.text('Papierkorb')));
+      await tester.pump(const Duration(milliseconds: 100));
+      await g.up();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(store.bills.firstWhere((b) => b.id == 'b').trashedAt, isNotNull);
+      expect(store.bills.firstWhere((b) => b.id == 'a').trashedAt, isNull);
+    });
+
     test('moveBefore: mehrere Bons vor ein Ziel, Reihenfolge bleibt, Gruppe des Ziels', () {
       final store = BillStore.memory([_bill('a', 'A'), _bill('b', 'B'), _bill('c', 'C'), _bill('d', 'D')..group = 'WG']);
       final list = store.inGroup(null, done: false);

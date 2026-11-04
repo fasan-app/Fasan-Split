@@ -40,6 +40,14 @@ void main() {
     expect(settle(bal), [('Ben', 'Anna', 1000)]);
   });
 
+  test('Mein Stand: je Person über alle Bons, wer zahlt als Nächstes', () {
+    final bills = [paid('a', 3000, ['Anna', 'Ben', 'Cem']), paid('b', 1200, ['Ben', 'Anna'], group: 'Urlaub')];
+    final mine = myDebts(bills, (n) => n == 'Anna');
+    expect(mine, {'Ben': 1000 - 600, 'Cem': 1000});
+    expect(nextPayer(balances(bills.where((b) => b.group == 'WG'))), 'Ben'); // Ben and Cem owe 1000, Ben first by name
+    expect(nextPayer({'Anna': 0, 'Ben': 0}), isNull);
+  });
+
   test('Offene Bons und Bons ohne Zahler zählen nicht', () {
     final open = paid('o', 1000, ['Anna', 'Ben'])..done = false;
     final noPayer = paid('n', 1000, ['Anna', 'Ben'])..payer = null;

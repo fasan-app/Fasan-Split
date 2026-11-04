@@ -761,29 +761,40 @@ class CollabGroupPanel extends StatelessWidget {
 
   final CollabGroup group;
 
+  /// One compact row (Nutzer 04.11.: invite and leave were large and doubled): members, notes, chat. Inviting sits in the
+  /// app bar, leaving in its menu (leaveGroupFlow).
   @override
   Widget build(BuildContext context) {
-    final t = S.of(context), s = CollabScope.read(context), g = group;
+    final t = S.of(context), g = group;
     return GroupChangeBuilder(
       group: g,
-      builder: (context) => Column(children: [
-        collabTile(context, Icons.group_outlined, t.membersTitle, () => _open(context, MembersScreen(group: g)), subtitle: t.members(g.session.memberKeys.length)),
-        collabTile(context, Icons.edit_note_rounded, t.notesTitle, () => _open(context, NotesScreen(group: g))),
-        collabTile(context, Icons.chat_bubble_outline_rounded, t.chatTitle, () => _open(context, ChatScreen(group: g))),
-        if (g.isAdmin) collabTile(context, Icons.person_add_alt_1_outlined, t.invite, () => _open(context, InviteScreen(group: g))),
-        collabTile(context, Icons.logout_rounded, t.leaveGroup, () async {
-          if (!await confirmDialog(context, t.leaveGroup, t.leaveText, t.leaveGroup)) return;
-          await s.leave(g);
-          if (context.mounted) Navigator.of(context).maybePop();
-        }),
-      ]),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(bottom: FasanSpace.m),
+        child: Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [
+          ActionChip(avatar: const Icon(Icons.group_outlined, size: 18), label: Text('${t.membersTitle} · ${g.session.memberKeys.length}'), onPressed: () => _open(context, MembersScreen(group: g))),
+          ActionChip(avatar: const Icon(Icons.edit_note_rounded, size: 18), label: Text(t.notesTitle), onPressed: () => _open(context, NotesScreen(group: g))),
+          ActionChip(avatar: const Icon(Icons.chat_bubble_outline_rounded, size: 18), label: Text(t.chatTitle), onPressed: () => _open(context, ChatScreen(group: g))),
+        ]),
+      ),
     );
   }
 
   static void _open(BuildContext context, Widget page) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
 }
 
-/// One row with an icon, title, optional subtitle and a chevron. Used by the group panel.
+/// Leave a shared group, after asking. The admin is told that nobody can invite afterwards (handing over the admin role
+/// is not built yet, STAND A3).
+Future<void> leaveGroupFlow(BuildContext context, CollabGroup g) async {
+  final t = S.of(context), s = CollabScope.read(context);
+  final text = g.isAdmin
+      ? '${t.leaveText} ${t.de ? 'Du verwaltest die Gruppe: danach kann niemand mehr einladen oder Mitglieder ändern.' : 'You manage this group: afterwards nobody can invite or change members.'}'
+      : t.leaveText;
+  if (!await confirmDialog(context, t.leaveGroup, text, t.leaveGroup)) return;
+  await s.leave(g);
+  if (context.mounted) Navigator.of(context).maybePop();
+}
+
+/// One row with an icon, title, optional subtitle and a chevron.
 Widget collabTile(BuildContext context, IconData icon, String title, VoidCallback onTap, {String? subtitle}) {
   final l = FasanLook.of(context), tt = Theme.of(context).textTheme;
   return Padding(
