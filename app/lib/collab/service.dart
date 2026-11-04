@@ -929,11 +929,31 @@ class CollabService extends ChangeNotifier {
 
   List<ChatMessage> messages(CollabGroup g) => Notes.messages(g.session.doc(GroupSession.chat));
 
-  void sendMessage(CollabGroup g, String text, {String? bill}) {
+  void sendMessage(CollabGroup g, String text, {String? bill, String? reply}) {
     final me = identity;
     final t = text.trim();
     if (me == null || t.isEmpty && bill == null) return;
-    Notes.send(g.session.doc(GroupSession.chat), me.pub, t, bill: bill);
+    Notes.send(g.session.doc(GroupSession.chat), me.pub, t, bill: bill, reply: reply);
+    g.session.touch(GroupSession.chat);
+  }
+
+  /// Own message: change its text (Nutzer 04.11.: edit and delete in the chat).
+  void editMessage(CollabGroup g, String id, String text) {
+    final me = identity;
+    if (me != null && Notes.editMessage(g.session.doc(GroupSession.chat), id, me.pub, text)) g.session.touch(GroupSession.chat);
+  }
+
+  /// Own message: delete for everyone (a marker stays).
+  void deleteMessage(CollabGroup g, String id) {
+    final me = identity;
+    if (me != null && Notes.deleteMessage(g.session.doc(GroupSession.chat), id, me.pub)) g.session.touch(GroupSession.chat);
+  }
+
+  /// React with an emoji; the same emoji again takes the reaction back.
+  void reactToMessage(CollabGroup g, String id, String emoji) {
+    final me = identity;
+    if (me == null) return;
+    Notes.reactMessage(g.session.doc(GroupSession.chat), id, me.pub, emoji);
     g.session.touch(GroupSession.chat);
   }
 

@@ -12,8 +12,17 @@ class NoteInfo {
 }
 
 class ChatMessage {
-  ChatMessage(this.id, this.from, this.text, this.at, {this.bill});
+  ChatMessage(this.id, this.from, this.text, this.at, {this.bill, this.reply, this.edited = false, this.deleted = false, this.reactions = const {}});
   final String id, from, text;
+
+  /// Id of the message this one answers (quote), or null.
+  final String? reply;
+
+  /// Text was changed after sending / message was deleted (the entry stays so quotes still resolve; text is empty).
+  final bool edited, deleted;
+
+  /// Reactions: person (public key) → emoji. One per person and message; the same emoji again takes it back.
+  final Map<String, String> reactions;
 
   /// A bill mentioned in the message (Nutzer 04.11.: bills tagged in the chat); shown as a card.
   final String? bill;
@@ -124,9 +133,19 @@ abstract final class Notes {
 
   static List<ChatMessage> messages(LwwDoc doc) {
     final out = <ChatMessage>[];
+    final reactions = <String, Map<String, String>>{}; // message id → person → emoji (keys `c/<id>/e/<pub>`)
     for (final k in doc.keys('c/')) {
+      final parts = k.split('/');
+      if (parts.length == 4 && parts[2] == 'e' && doc.get(k) is String) (reactions[parts[1]] ??= {})[parts[3]] = doc.get(k) as String;
+    }
+    for (final k in doc.keys('c/')) {
+      if (k.indexOf('/', 2) >= 0) continue; // only `c/<id>` entries are messages
       final v = doc.get(k);
-      if (v is Map) out.add(ChatMessage(k.substring(2), v['f'] as String? ?? '', v['x'] as String? ?? '', DateTime.fromMillisecondsSinceEpoch((v['t'] as num?)?.toInt() ?? 0), bill: v['b'] as String?));
+      if (v is Map) {
+        final id = k.substring(2);
+        out.add(ChatMessage(id, v['f'] as String? ?? '', v['x'] as String? ?? '', DateTime.fromMillisecondsSinceEpoch((v['t'] as num?)?.toInt() ?? 0),
+            bill: v['b'] as String?, reply: v['r'] as String?, edited: v['ed'] == 1, deleted: v['d'] == 1, reactions: reactions[id] ?? const {}));
+      }
     }
     out.sort((a, b) => a.at != b.at ? a.at.compareTo(b.at) : a.id.compareTo(b.id));
     return out;
@@ -142,5 +161,35 @@ abstract final class Notes {
     return _lastSentMs;
   }
 
-  static void send(LwwDoc doc, String from, String text, {String? bill}) => doc.set('c/${newUid()}', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill});
+  static void send(LwwDoc doc, String from, String text, {String? bill, String? reply}) =>
+      doc.set('c/${newUid()}', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill, 'r': ?reply});
+
+  static Map<String, Object?>? _raw(LwwDoc doc, String id) {
+    final v = doc.get('c/$id');
+    return v is Map ? Map<String, Object?>.from(v) : null;
+  }
+
+  /// Changes the text of a message of [from]. Only the author edits (checked here, not cryptographically – group members are
+  /// trusted like everywhere in this document). Returns false if there is nothing to edit.
+  static bool editMessage(LwwDoc doc, String id, String from, String text) {
+    final m = _raw(doc, id);
+    if (m == null || m['f'] != from || m['d'] == 1 || m['b'] != null || text.trim().isEmpty) return false;
+    doc.set('c/$id', {...m, 'x': text.trim(), 'ed': 1});
+    return true;
+  }
+
+  /// „Delete for everyone“: the entry stays as a marker without text (quotes and reactions still resolve).
+  static bool deleteMessage(LwwDoc doc, String id, String from) {
+    final m = _raw(doc, id);
+    if (m == null || m['f'] != from || m['d'] == 1) return false;
+    doc.set('c/$id', {'f': m['f'], 'x': '', 't': m['t'], 'd': 1, 'r': ?m['r']});
+    return true;
+  }
+
+  /// Sets, changes or (same emoji again) removes the reaction of [pub] to a message.
+  static void reactMessage(LwwDoc doc, String id, String pub, String emoji) {
+    if (_raw(doc, id) == null) return;
+    final key = 'c/$id/e/$pub';
+    doc.set(key, doc.get(key) == emoji ? null : emoji);
+  }
 }

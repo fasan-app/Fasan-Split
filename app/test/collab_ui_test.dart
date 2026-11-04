@@ -97,4 +97,55 @@ void main() {
     expect(svc.messages(g).single.text, 'Hallo');
     await tester.pump(const Duration(seconds: 1));
   });
+
+  testWidgets('Chat: lang drücken – reagieren, antworten, bearbeiten, löschen', (tester) async {
+    final g = await svc.createGroup('Hütte');
+    await tester.pumpWidget(host(ChatScreen(group: g)));
+    await tester.enterText(find.byType(TextField), 'Pizza heute?');
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await tester.pump();
+
+    // react: the same emoji twice takes it back
+    await tester.longPress(find.text('Pizza heute?'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('👍'));
+    await tester.pumpAndSettle();
+    expect(svc.messages(g).single.reactions.values, ['👍']);
+    expect(find.text('👍 1'), findsOneWidget);
+
+    // reply: quote shows in the bubble and in the input banner
+    await tester.longPress(find.text('Pizza heute?'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Antworten'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Antwort an'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Ja, gern');
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await tester.pump();
+    final msgs = svc.messages(g);
+    expect(msgs.length, 2);
+    expect(msgs[1].reply, msgs[0].id);
+    expect(find.textContaining('Antwort an'), findsNothing, reason: 'banner gone after sending');
+
+    // edit the first message
+    await tester.longPress(find.text('Pizza heute?').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bearbeiten'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Pizza morgen?');
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await tester.pump();
+    expect(svc.messages(g)[0].text, 'Pizza morgen?');
+    expect(svc.messages(g)[0].edited, isTrue);
+    expect(svc.messages(g).length, 2, reason: 'editing does not add a message');
+
+    // delete the reply: marker stays
+    await tester.longPress(find.text('Ja, gern'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Für alle löschen'));
+    await tester.pump();
+    expect(svc.messages(g)[1].deleted, isTrue);
+    expect(find.text('Nachricht gelöscht'), findsWidgets);
+    await tester.pump(const Duration(seconds: 1));
+  });
 }

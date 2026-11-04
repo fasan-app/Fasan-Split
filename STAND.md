@@ -336,12 +336,12 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 Alles Unerledigte aus dem Verlauf unten steht hier. Erledigtes wandert mit Datum in den Verlauf. Priorität: erst was
 Einladen, Gruppen und Freunde blockiert (Nutzer 04.11.: „muss sofort funktionieren“), dann Bedienung, dann Neues.
 
-Zuerst in der nächsten Sitzung (Netz-Freigabe gilt erst in einer neuen Sitzung; hier gesperrt, 04.11.): Primärquellen
-nachlesen und Code/Recherche angleichen – (1) EPC069-12 v3.x PDF (europeanpaymentscouncil.eu): SEPA-QR-Aufbau in
-`model/pay.dart` prüfen, Test anpassen; (2) BIP 21/BIP 321 (github.com/bitcoin/bips) für `bitcoin:`-Links; (3) Monero
-`docs/URI_SCHEME.md` (github.com/monero-project); (4) Orbot-Doku (guardianproject.info / github.com/guardianproject/orbot):
-HTTP-Tunnel 8118 und VPN-Modus bestätigen; (5) api.dart.dev HttpClient.findProxy; (6) docs.joinmastodon.org Teilen-URL;
-(7) nostr.watch für .onion-Relays; (8) Wikipedia EPC QR (Versionen). Ergebnis in den Recherche-Dateien vom 04.11. nachtragen.
+Quellen nachlesen (Stand 04.11. spät, Gesamtliste mit Zeilen: Fasan `NACHPRUEFEN.md`): Netz-Freigabe wirkt in der laufenden
+Sitzung, sobald die Umgebung geändert ist. Gelesen und in `docs/recherche/2026-11-04-anbindungen-zahlung-netz.md` (Nachtrag 2)
+eingetragen: BIP 21/321, Monero-URI, Orbot-Ports, `HttpClient.findProxy`, Mastodon-Teilen-URL, GitHub-Release-`digest`,
+EZB (kein CORS-Header → im Browser nicht lesbar), EPC-QR (nur Zweitquelle). **Offen:** EPC069-12-PDF (Cloudflare-Prüfung, nicht
+umgangen; Version 002 und leeres BIC-Feld mit einer Banking-App prüfen), nostr.watch (nur JavaScript), Passkey-PRF (keine
+offizielle Seite, Messprobe S23), Material-3-Seiten (nur JavaScript), Okabe-Ito-Hexwerte (nicht im Seitentext).
 
 Gruppen, Einladen, Freunde
 0. System-Benachrichtigungen – ERLEDIGT 04.11. (Gerät nicht geprüft); offen: Ablauf-Prüfung aller Bildschirme auf umständliches Verhalten.
@@ -356,7 +356,7 @@ Gruppen, Einladen, Freunde
 Anbindungen (Recherche `docs/recherche/2026-11-04-anbindungen-zahlung-netz.md`)
 6b. ERLEDIGT 04.11. (SEPA-QR ungeprüft gegen EPC-PDF). Bezahlen-Knopf beim Ausgleichen: SEPA-QR (EPC/GiroCode) und PayPal.Me zuerst, Bitcoin/Lightning/Monero als Option; Angaben verschlüsselt im Profil der Gruppe, nur auf Tipp, kein Geld durch Fasan.
 6c. ERLEDIGT 04.11. (Gerät nicht geprüft; .onion offen). „Über Tor verbinden“ (Orbot-Proxy) + .onion-Relays als Option; I2P vorerst nicht (kein Weg für Nostr gefunden).
-6d. Messenger: Antworten/Zitat, Reaktionen, bearbeiten/löschen, @ im Chat, Umfragen, schreibt gerade, Profil-/Gruppenbild, stumm/anpinnen/Suche, Blockieren, Freund per QR, Fotos im Chat.
+6d. Messenger: Antworten/Zitat, Reaktionen, bearbeiten/löschen ERLEDIGT 04.11. (Modell `collab/notes.dart`, Tests `chat_test.dart` und `collab_ui_test.dart`; lang drücken auf eine Nachricht; NICHT auf dem Gerät geprüft; Löschen = „für alle“, Marker bleibt; Bearbeiten/Löschen prüft nur den Absender im Code, nicht kryptografisch). Offen: @ im Chat, Umfragen, schreibt gerade, Profil-/Gruppenbild, stumm/anpinnen/Suche, Blockieren, Freund per QR, Fotos im Chat, Reaktionen antippen (Chips sind nur Anzeige, Ändern im Menü).
 
 Bedienung, Saldo, Bons
 7b. Visualisierung (Nutzer 04.11. abends): Stand/Kategorien als Diagramm mit Animation, Vorschläge; Leerräume je Bildschirm prüfen; „?“-Hilfen überall; Ziehen-Regel systemweit.

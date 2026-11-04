@@ -865,6 +865,9 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _input = TextEditingController();
 
+  /// Message I answer (quote above the input) or edit (the input holds its text); at most one of the two.
+  ChatMessage? _replyTo, _editing;
+
   @override
   void dispose() {
     _input.dispose();
@@ -874,9 +877,71 @@ class _ChatScreenState extends State<ChatScreen> {
   void _send() {
     final text = _input.text.trim();
     if (text.isEmpty) return;
-    CollabScope.read(context).sendMessage(widget.group, text);
+    final c = CollabScope.read(context);
+    final edit = _editing;
+    if (edit != null) {
+      c.editMessage(widget.group, edit.id, text);
+    } else {
+      c.sendMessage(widget.group, text, reply: _replyTo?.id);
+    }
     _input.clear();
+    setState(() => _replyTo = _editing = null);
   }
+
+  static const _emojis = ['👍', '❤️', '😂', '😮', '🙏'];
+
+  /// Long press on a message: react, answer, copy, and – for my own – edit or delete (Nutzer 04.11.).
+  Future<void> _actions(ChatMessage m, bool mine) async {
+    if (m.deleted) return;
+    final de = S.of(context).de, c = CollabScope.read(context), me = c.identity?.pub;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              for (final e in _emojis)
+                IconButton(
+                  tooltip: e,
+                  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                  style: m.reactions[me] == e ? IconButton.styleFrom(backgroundColor: FasanLook.of(ctx).accent.withValues(alpha: 0.25)) : null,
+                  icon: Text(e, style: const TextStyle(fontSize: 24)),
+                  onPressed: () => Navigator.pop(ctx, 'react:$e'),
+                ),
+            ]),
+          ),
+          ListTile(leading: const Icon(Icons.reply_rounded), title: Text(de ? 'Antworten' : 'Reply'), onTap: () => Navigator.pop(ctx, 'reply')),
+          if (m.text.isNotEmpty) ListTile(leading: const Icon(Icons.copy_rounded), title: Text(de ? 'Kopieren' : 'Copy'), onTap: () => Navigator.pop(ctx, 'copy')),
+          if (mine && m.bill == null) ListTile(leading: const Icon(Icons.edit_outlined), title: Text(de ? 'Bearbeiten' : 'Edit'), onTap: () => Navigator.pop(ctx, 'edit')),
+          if (mine) ListTile(leading: const Icon(Icons.delete_outline_rounded), title: Text(de ? 'Für alle löschen' : 'Delete for everyone'), onTap: () => Navigator.pop(ctx, 'delete')),
+        ]),
+      ),
+    );
+    if (!mounted || choice == null) return;
+    if (choice.startsWith('react:')) {
+      c.reactToMessage(widget.group, m.id, choice.substring(6));
+    } else if (choice == 'reply') {
+      setState(() {
+        _replyTo = m;
+        _editing = null;
+      });
+    } else if (choice == 'copy') {
+      await Clipboard.setData(ClipboardData(text: m.text));
+    } else if (choice == 'edit') {
+      setState(() {
+        _editing = m;
+        _replyTo = null;
+        _input.text = m.text;
+        _input.selection = TextSelection.collapsed(offset: m.text.length);
+      });
+    } else if (choice == 'delete') {
+      c.deleteMessage(widget.group, m.id);
+    }
+  }
+
+  /// Short one-line description of a message for quotes.
+  String _preview(ChatMessage m, bool de) => m.deleted ? (de ? 'Nachricht gelöscht' : 'Message deleted') : (m.bill != null ? (de ? 'Bon: ${m.text}' : 'Receipt: ${m.text}') : m.text);
 
   /// Tag a bill in the chat: the bills of this group, or – writing to a friend – of the groups we share.
   Future<void> _attach() async {
@@ -954,13 +1019,30 @@ class _ChatScreenState extends State<ChatScreen> {
                   final m = msgs[i], mine = m.from == me;
                   return Align(
                     alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onLongPress: () => _actions(m, mine),
+                      child: Container(
                       margin: const EdgeInsets.only(bottom: FasanSpace.s),
                       padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s),
                       decoration: BoxDecoration(color: mine ? l.accent.withValues(alpha: 0.18) : l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                         Text(mine ? t.you : widget.group.session.nameOf(m.from), style: tt.labelSmall),
-                        if (m.bill != null)
+                        // quote of the message this one answers
+                        if (m.reply != null)
+                          Builder(builder: (context) {
+                            final q = msgs.where((x) => x.id == m.reply).firstOrNull;
+                            return Container(
+                              margin: const EdgeInsets.only(top: 2, bottom: 4),
+                              padding: const EdgeInsets.only(left: FasanSpace.s),
+                              decoration: BoxDecoration(border: Border(left: BorderSide(color: l.accent, width: 3))),
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                                if (q != null) Text(q.from == me ? t.you : widget.group.session.nameOf(q.from), style: tt.labelSmall),
+                                Text(q == null ? (t.de ? 'Nachricht nicht mehr da' : 'Message no longer available') : _preview(q, t.de), maxLines: 2, overflow: TextOverflow.ellipsis, style: tt.bodySmall),
+                              ]),
+                            );
+                          }),
+                        if (m.bill != null && !m.deleted)
                           // a tagged bill: the card opens it (Nutzer 04.11.)
                           switch (StoreScope.read(context).bills.where((b) => b.id == m.bill).firstOrNull) {
                             final b? => ConstrainedBox(
@@ -972,7 +1054,20 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             _ => Text(t.de ? '(Bon nicht verfügbar)' : '(receipt not available)', style: tt.bodySmall),
                           },
-                        if (m.text.isNotEmpty && m.bill == null) Text(m.text, style: tt.bodyMedium),
+                        if (m.deleted)
+                          Text(t.de ? 'Nachricht gelöscht' : 'Message deleted', style: tt.bodySmall?.copyWith(fontStyle: FontStyle.italic, color: l.textMuted))
+                        else if (m.text.isNotEmpty && m.bill == null)
+                          Text(m.text, style: tt.bodyMedium),
+                        if (m.edited && !m.deleted) Text(t.de ? 'bearbeitet' : 'edited', style: tt.labelSmall),
+                        // reactions: emoji with the number of people; changed through the long-press menu
+                        if (m.reactions.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Wrap(spacing: 6, children: [
+                              for (final e in {...m.reactions.values})
+                                Text('$e ${m.reactions.values.where((x) => x == e).length}', style: tt.labelMedium?.copyWith(fontWeight: m.reactions[me] == e ? FontWeight.w700 : null)),
+                            ]),
+                          ),
                         // ✓ sent, ✓✓ read (direct: the friend; group: how many have read it) – only with presence on
                         if (mine)
                           Builder(builder: (context) {
@@ -988,6 +1083,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           }),
                       ]),
                     ),
+                    ),
                   );
                 },
               );
@@ -998,7 +1094,34 @@ class _ChatScreenState extends State<ChatScreen> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, FasanSpace.s),
-            child: Row(children: [
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              if (_replyTo != null || _editing != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: FasanSpace.s),
+                  padding: const EdgeInsets.only(left: FasanSpace.m),
+                  decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
+                  child: Row(children: [
+                    Icon(_editing != null ? Icons.edit_outlined : Icons.reply_rounded, size: 18, color: l.accent),
+                    const SizedBox(width: FasanSpace.s),
+                    Expanded(
+                      child: Text(
+                        _editing != null ? (t.de ? 'Nachricht bearbeiten' : 'Edit message') : '${t.de ? 'Antwort an' : 'Reply to'} ${_replyTo!.from == CollabScope.read(context).identity?.pub ? t.you : widget.group.session.nameOf(_replyTo!.from)}: ${_preview(_replyTo!, t.de)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: tt.bodySmall,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: t.de ? 'Abbrechen' : 'Cancel',
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => setState(() {
+                        if (_editing != null) _input.clear();
+                        _replyTo = _editing = null;
+                      }),
+                    ),
+                  ]),
+                ),
+              Row(children: [
               IconButton(tooltip: t.de ? 'Bon anhängen' : 'Attach a receipt', icon: const Icon(Icons.attach_file_rounded), onPressed: _attach),
               Expanded(
                 child: TextField(
@@ -1012,6 +1135,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               const SizedBox(width: FasanSpace.s),
               IconButton.filled(tooltip: t.chatSend, icon: const Icon(Icons.send_rounded), onPressed: _send),
+              ]),
             ]),
           ),
         ),
