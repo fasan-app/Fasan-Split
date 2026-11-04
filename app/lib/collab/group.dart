@@ -342,7 +342,12 @@ class GroupSession {
       // entries); m/<pub> = member, l/admin = the founder's own person link (linkPerson)
       final adm = admins;
       final Iterable<Entry> accepted;
-      if (!isMembersDoc) {
+      if (id.startsWith('profile:')) {
+        // a profile (name, later picture and status) is written by its owner only, from the owner's own event
+        final owner = id.substring('profile:'.length);
+        if (e.pubkey != owner) return;
+        accepted = entries.where((x) => x.author == owner);
+      } else if (!isMembersDoc) {
         accepted = acceptEntry == null ? entries : entries.where((x) => x.author == me.pub || acceptEntry!(id, x));
       } else if (fromAdmin) {
         accepted = entries.where((x) => (x.key.startsWith('m/') || x.key == 'l/admin' || x.key.startsWith('i/')) && adm.contains(x.author));
@@ -510,8 +515,24 @@ class GroupSession {
     touch(members);
   }
 
-  /// Name of a member for display.
+  /// Profile document of a member (`profile:<pub>`, written only by that member): the name the person gave themselves.
+  static String profile(String pub) => 'profile:$pub';
+
+  /// Sets my name in this group (my profile; as admin also my entry in the members list, for older app versions).
+  void setMyName(String name) {
+    if (name.isEmpty) return;
+    doc(profile(me.pub)).set('name', name);
+    touch(profile(me.pub));
+    if (!isAdmin) return;
+    if (doc(members).get('m/${me.pub}') case final Map m when m['name'] != name) {
+      doc(members).set('m/${me.pub}', {...m.cast<String, Object?>(), 'name': name});
+      touch(members);
+    }
+  }
+
+  /// Name of a member for display: the own profile first (Nutzer 04.11.: a renamed person stayed „—“), then the members list.
   String nameOf(String pub) {
+    if (doc(profile(pub)).get('name') case final String n when n.trim().isNotEmpty) return n;
     final m = doc(members).get('m/$pub');
     if (m is Map && m['name'] is String) return m['name'] as String;
     return pub.substring(0, 8);

@@ -149,6 +149,10 @@ class CollabService extends ChangeNotifier {
         if (inv != null && !inv.expired) _waitForWelcome(PendingJoin(inv, m['name'] as String, DateTime.tryParse(m['since'] as String? ?? '') ?? DateTime.now()));
       }
     } catch (_) {}
+    if (groups.isNotEmpty) {
+      await ensureIdentity();
+      await _syncName();
+    }
     notifyListeners();
   }
 
@@ -157,11 +161,36 @@ class CollabService extends ChangeNotifier {
     return identity!;
   }
 
+  /// One name everywhere (Nutzer 04.11.): the account name is also „Ich bin“ in the bills and my name in every group
+  /// (my profile document there). Before 04.11. the two were separate and the account name often stayed empty („—“).
   Future<void> setName(String name) async {
+    final n = name.trim();
     final id = await ensureIdentity();
-    id.name = name.trim();
+    if (n.isEmpty) return;
+    final old = id.name;
+    id.name = n;
     await id.save(vault);
+    if (store.me.trim().isEmpty || store.me.trim() == old.trim()) store.me = n;
+    for (final g in groups.values) {
+      g.session.setMyName(n);
+    }
     notifyListeners();
+  }
+
+  /// Start: an account without a name takes „Ich bin“; groups get my name if they do not have it yet.
+  Future<void> _syncName() async {
+    final id = identity;
+    if (id == null) return;
+    if (id.name.trim().isEmpty && store.me.trim().isNotEmpty) {
+      id.name = store.me.trim();
+      await id.save(vault);
+    } else if (store.me.trim().isEmpty && id.name.trim().isNotEmpty) {
+      store.me = id.name.trim();
+    }
+    if (id.name.trim().isEmpty) return;
+    for (final g in groups.values) {
+      if (g.session.doc(GroupSession.profile(id.pub)).get('name') != id.name.trim()) g.session.setMyName(id.name.trim());
+    }
   }
 
   /// Restores the account from the 12 words and fetches its groups from the relays (account list, [syncAccount]).
@@ -365,6 +394,8 @@ class CollabService extends ChangeNotifier {
     _subs[secret.tag] = session.changes.listen((id) => _onDocChanged(g, id));
     session.start();
     _ensureInvitations(g);
+    final myName = identity?.name.trim() ?? '';
+    if (myName.isNotEmpty && session.doc(GroupSession.profile(me.pub)).get('name') == null) session.setMyName(myName);
     // a new group key from an admin after someone was removed (rotateKey)
     g.rekeySub = relay
         .subscribe(Filter(kinds: const [kindData], tags: {'t': ['${secret.tag}:rekey'], 'p': [me.pub]}))
@@ -717,7 +748,7 @@ class CollabService extends ChangeNotifier {
 
   void _onDocChanged(CollabGroup g, String id) {
     _scheduleSave();
-    if (id == GroupSession.members || id == GroupSession.chat || id == GroupSession.notes) {
+    if (id == GroupSession.members || id == GroupSession.chat || id == GroupSession.notes || id.startsWith('profile:')) {
       if (id == GroupSession.members) _ensureInvitations(g); // someone made me admin
       notifyListeners();
       return;

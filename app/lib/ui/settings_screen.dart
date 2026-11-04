@@ -53,7 +53,10 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
-    if (v != null) store.me = v;
+    if (v != null && v.trim().isNotEmpty) {
+      store.me = v;
+      if (context.mounted) CollabScope.read(context).setName(v); // one name everywhere (04.11.)
+    }
   }
 
   @override

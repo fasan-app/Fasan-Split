@@ -1058,14 +1058,19 @@ class _AccountScreenState extends State<AccountScreen> {
   final TextEditingController _name = TextEditingController(), _words = TextEditingController();
   bool _showWords = false;
 
+  Timer? _nameTimer;
+
   @override
   void initState() {
     super.initState();
-    _name.text = CollabScope.read(context).identity?.name ?? '';
+    final n = CollabScope.read(context).identity?.name ?? '';
+    _name.text = n.isNotEmpty ? n : StoreScope.read(context).me;
   }
 
   @override
   void dispose() {
+    _nameTimer?.cancel();
+    if (_name.text.trim().isNotEmpty) CollabScope.read(context).setName(_name.text);
     _name.dispose();
     _words.dispose();
     super.dispose();
@@ -1105,8 +1110,13 @@ class _AccountScreenState extends State<AccountScreen> {
         TextField(
           controller: _name,
           textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(labelText: t.accountName),
-          onSubmitted: (v) => s.setName(v.trim()),
+          decoration: InputDecoration(labelText: t.accountName, helperText: t.de ? 'Gilt überall: Bons, Gruppen, Freunde.' : 'Used everywhere: receipts, groups, friends.'),
+          // saved while typing (04.11.: only Enter saved, leaving the field lost the name)
+          onChanged: (v) {
+            _nameTimer?.cancel();
+            _nameTimer = Timer(const Duration(milliseconds: 600), () => s.setName(v));
+          },
+          onSubmitted: (v) => s.setName(v),
         ),
         const SizedBox(height: FasanSpace.l),
         if (id == null) Text(t.accountMissing, style: tt.bodyMedium),
