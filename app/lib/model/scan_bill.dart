@@ -39,6 +39,16 @@ Future<Bill> billFromScan(ScanResultData r, Uint8List photo,
     originalAspect: r.photoAspect,
   );
   b.category = guessCategory(b); // first guess, changed with one tap (category.dart)
+  // Amount without an item line, visible only in the VAT table as a 0 % row (Ferreiras LX 04.11.: „0.00 e 7.90 e 0.00
+  // e 7.90“, items 79,00, total 86,90): added as its own item, marked unsure, so the bill adds up and nothing is lost.
+  final sum = b.its.fold<int>(0, (a, x) => a + x.amount);
+  final diff = (b.total ?? 0) - sum;
+  if (diff > 0) {
+    final euros = '${diff ~/ 100}', cents = (diff % 100).toString().padLeft(2, '0');
+    final amount = RegExp('(^|\\s)$euros[.,]$cents(\\s|\$)');
+    final zeroRow = r.lines.map((l) => l.$1).any((t) => RegExp(r'^\s*0[.,]00\b').hasMatch(t) && amount.hasMatch(t));
+    if (zeroRow) b.its.add(BillItem(name: 'Ohne Postenzeile (0 % MwSt.)', amount: diff, sure: false, note: 'aus der Steuertabelle'));
+  }
   return b;
 }
 

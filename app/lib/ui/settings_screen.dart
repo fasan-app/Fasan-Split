@@ -89,6 +89,14 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
         ),
+        FasanSwitchTile(
+          padded: true,
+          secondary: const Icon(Icons.view_carousel_outlined),
+          title: Text(t.de ? 'Fokus und Karten beim Zuordnen' : 'Focus and cards when assigning'),
+          subtitle: Text(t.de ? 'Zusätzlich zu Bon und Liste.' : 'In addition to receipt and list.'),
+          value: store.assignExtraModes,
+          onChanged: (v) => store.assignExtraModes = v,
+        ),
         head(t.setPeople),
         ListTile(
           leading: const Icon(Icons.person_outline_rounded),

@@ -25,7 +25,7 @@ class AssignScreen extends StatefulWidget {
   final AssignMode? initialMode;
 
   /// Last chosen variant (kept while the app runs).
-  static AssignMode lastMode = AssignMode.focus;
+  static AssignMode lastMode = AssignMode.receipt;
 
   @override
   State<AssignScreen> createState() => _AssignScreenState();
@@ -60,8 +60,10 @@ class _AssignScreenState extends State<AssignScreen> {
   Widget build(BuildContext context) {
     final t = S.of(context);
     final hasImage = imageExists(b.imagePath);
-    final modes = [AssignMode.focus, AssignMode.list, if (hasImage) AssignMode.receipt, AssignMode.cards];
-    if (!modes.contains(mode)) mode = AssignMode.focus;
+    // big overviews first (Nutzer 04.11.): receipt and list; focus and cards only when switched on (Einstellungen)
+    final extra = StoreScope.of(context).assignExtraModes;
+    final modes = [if (hasImage) AssignMode.receipt, AssignMode.list, if (extra) AssignMode.focus, if (extra) AssignMode.cards];
+    if (!modes.contains(mode)) mode = modes.first;
     final open = b.unassigned;
     final body = switch (mode) {
       AssignMode.focus => FocusAssign(bill: b, onChanged: _changed),

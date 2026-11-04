@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../model/category.dart';
 import '../model/settle.dart';
 import '../model/bill.dart';
 import 'images.dart';
@@ -35,6 +36,7 @@ class BillStore extends ChangeNotifier {
       }
     } catch (_) {/* damaged data: start empty, never crash */}
     s.purgeTrash();
+    s.migrateCategories();
     return s;
   }
 
@@ -169,6 +171,25 @@ class BillStore extends ChangeNotifier {
     return c >= 40 || (c > 0 && now.difference(last).inDays >= 7);
   }
 
+  /// Bills from before categories (0.1.41 and older) get the guess once, like new scans (Nutzer 04.11.: new features
+  /// must reach existing bills). Never overwrites a category the user chose or cleared later.
+  void migrateCategories() {
+    if (_app['catMigrated'] == true) return;
+    for (final b in bills) {
+      b.category ??= guessCategory(b);
+    }
+    _app['catMigrated'] = true;
+    _write();
+    _setApp('catMigrated', true);
+  }
+
+  /// „Fokus“ and „Karten“ in Zuordnen (off by default, Nutzer 04.11.).
+  bool get assignExtraModes => _app['assignExtra'] == true;
+  set assignExtraModes(bool v) => _setApp('assignExtra', v);
+
+  /// Bills in the trash that still carry [name] (shown when removing a name).
+  int trashedWith(String name) => bills.where((b) => b.trashedAt != null && b.ps.any((p) => p.name == name)).length;
+
   /// Own categories (names), model/category.dart.
   List<String> get customCategories => [...?(_app['categories'] as List?)?.cast<String>()];
   void addCategory(String name) {
@@ -194,6 +215,7 @@ class BillStore extends ChangeNotifier {
     final gone = forgotten;
     if (me.isNotEmpty) out.add(me);
     for (final b in bills.reversed) {
+      if (b.trashedAt != null) continue; // trash does not suggest names
       for (final p in b.ps) {
         if (!out.contains(p.name) && !gone.contains(p.name)) out.add(p.name);
       }

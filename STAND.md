@@ -333,6 +333,15 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
+Rückmeldung 04.11. vormittags (S23, 0.1.46) – ERLEDIGT 04.11. (Tests/E2E, nicht auf dem Gerät):
+- Kategorie wird sofort angezeigt und gespeichert (Chip hört auf den Speicher); vorhandene Bons bekommen die Kategorie einmal nachgetragen (`migrateCategories`).
+- Wischfläche so groß wie die Karte (Ablagelinie als foregroundDecoration statt 3 px Rand); weniger Platz über „Angefangen“; letzte Karte rollt ganz über Plus-Knopf und Leiste (Abstand 200); Plus-Knopf schlicht: Akzent, Kartenradius, Kartenschatten, kein Leuchten.
+- Erkennung Ferreiras LX: Steuerspalte + „e“ (€) aus den Namen, „z“ vorn = Menge 2, verlesener Name per Mehrheit der Durchläufe (`recognition/name_repair.dart`, Test mit den Lesarten aus dem S23-Protokoll); Betrag ohne Postenzeile aus der 0-%-Zeile der Steuertabelle wird eigener Posten „Ohne Postenzeile (0 % MwSt.)“. E2E echte Bons weiter 13/13, Posten 98/98. Wirkt bei neuem Lesen („Erneut lesen“).
+- Namen: „Zuletzt dabei“ ohne Bons im Papierkorb; Langdruck entfernt einen Namen aus den Vorschlägen mit Meldung, wo er noch steht.
+- Schritt 1: „Wer war dabei“ und „Wer hat bezahlt“ als Chips direkt unter der Summe; mit ≥ 2 Personen weiter direkt zum Zuordnen.
+- Zuordnen: Bon und Liste; Fokus und Karten nur per Einstellung.
+- Bon-Ansicht: weicher Schleier statt harter Kante, der Bereich in der Bildschirmmitte bleibt klar; zurück zum Scan → wieder bei den Posten; beide Fotos vorab geladen, Bilder ohne Lücke (gaplessPlayback) gegen Flackern/schwarze Bilder (nicht auf dem Gerät geprüft).
+
 Neu 04.11. (Nutzer; Recherche: docs/recherche/2026-11-04-konkurrenz-bedienung-saldo.md). Reihenfolge: erst Fehler und
 Bedienung, die stören, dann Saldo-Sicht, dann neue Funktionen:
 A1. Sicherung mit Konto/Gruppen ging nicht (Liste im Speicher) – ERLEDIGT 04.11. (fe5b884, Test); danach echten Schlüssel einschalten (FORCE_TEST_KEY entfernen, sobald gesichert).

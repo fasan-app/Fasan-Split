@@ -15,6 +15,7 @@ import 'package:zxing2/qrcode.dart';
 
 import 'image.dart';
 import 'model.dart';
+import 'name_repair.dart';
 import 'paddle.dart';
 import 'place.dart';
 import 'reader.dart';
@@ -428,6 +429,17 @@ class Recognizer {
         prev.name = '${prev.name} (mit ${p.name.replaceFirst(RegExp(r'^\s*\d+\s+'), '').trim()})';
         r.items.removeAt(i);
       }
+    }
+    // names: VAT column and € letter, quantity letters, majority of the passes (name_repair.dart, Nutzer 04.11.)
+    try {
+      final others = [for (final p in all) if (!identical(p.r, r)) p.r.items];
+      for (final o in [r.items, ...others]) {
+        cleanColumns(o);
+        fixQuantityLetters(o);
+      }
+      voteNames(r.items, others);
+    } catch (e) {
+      _err('namen', e);
     }
     // winner with a contradiction in a line: never "checked", even if the total adds up
     if (r.check.ok && contradictions(r) > 0) r.check = Check(ok: false, source: r.check.source, corrected: r.check.corrected, targets: r.check.targets, contradiction: true);

@@ -19,6 +19,7 @@ class CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = S.of(context);
+    StoreScope.of(context); // rebuild right after choosing (04.11.: showed the old one until leaving the bill)
     final c = categoryById(bill.category);
     return ActionChip(
       avatar: Icon(c?.icon ?? Icons.category_outlined, size: 18, color: c?.color),

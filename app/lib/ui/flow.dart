@@ -72,7 +72,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
           : () {
               b.purpose = _purpose.text.trim();
               StoreScope.read(context).upsert(b);
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => PeopleScreen(bill: b)));
+              // people already chosen here (Nutzer 04.11.): straight to assigning, else the people step
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => b.ps.length >= 2 ? AssignScreen(bill: b) : PeopleScreen(bill: b)));
             },
       body: ListView(
         padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, bottomBarSpace(context)),
@@ -111,6 +112,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
           const SizedBox(height: FasanSpace.s),
           // currency and category right where the total is checked (Nutzer 04.11.)
           Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [CurrencyChip(bill: b), CategoryChip(bill: b)]),
+          const SizedBox(height: FasanSpace.s),
+          // who was there and who paid, right at the start (Nutzer 04.11.: not only at the end)
+          QuickPeople(bill: b, onChanged: () => setState(() {})),
           const SizedBox(height: FasanSpace.s),
           WhenWhere(bill: b, compact: true, onChanged: () => setState(() {})),
           if (b.needsSignQuestion) ...[
@@ -339,11 +343,119 @@ class _PeopleScreenState extends State<PeopleScreen> {
             const SizedBox(height: FasanSpace.xl),
             FasanLabel(t.recent),
             const SizedBox(height: FasanSpace.s),
-            Wrap(spacing: 8, runSpacing: 8, children: [for (final n in recent) ActionChip(label: Text(n), onPressed: () => _add(n))]),
+            // long press removes a name from the suggestions; the app says when bills still hold it (Nutzer 04.11.)
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final n in recent)
+                GestureDetector(
+                  onLongPress: () {
+                    final s = StoreScope.read(context);
+                    s.forget(n);
+                    final inTrash = s.trashedWith(n);
+                    final live = s.bills.where((x) => x.trashedAt == null && x.ps.any((p) => p.name == n)).length;
+                    showNote(
+                      context,
+                      [
+                        t.de ? '„$n“ ist aus den Vorschlägen entfernt.' : '“$n” removed from the suggestions.',
+                        if (live > 0) t.de ? 'In $live Bons bleibt der Name stehen (dort hat die Person Kosten).' : 'It stays in $live receipts (costs there).',
+                        if (inTrash > 0) t.de ? '$inTrash Bons im Papierkorb tragen ihn noch.' : '$inTrash receipts in the trash still carry it.',
+                      ].join(' '),
+                    );
+                  },
+                  child: ActionChip(label: Text(n), onPressed: () => _add(n)),
+                ),
+            ]),
           ],
         ],
       ),
     );
+  }
+}
+
+/// Adds [name] to the bill with the first free colour; false if the name is there already.
+bool addPersonTo(Bill b, String name) {
+  final n = name.trim();
+  if (n.isEmpty || b.ps.any((p) => p.name.toLowerCase() == n.toLowerCase())) return false;
+  final used = b.ps.map((p) => p.color).toSet();
+  var c = 0;
+  while (used.contains(c) && c < 64) {
+    c++;
+  }
+  b.ps.add(Person(n, c));
+  return true;
+}
+
+/// Removes person [i]; shares and payer move with the indices.
+void removePersonFrom(Bill b, int i) {
+  b.ps.removeAt(i);
+  for (final it in b.its) {
+    it.shares = {for (final e in it.shares.entries) if (e.key != i) (e.key > i ? e.key - 1 : e.key): e.value};
+  }
+  if (b.payer == i) {
+    b.payer = null;
+  } else if (b.payer != null && b.payer! > i) {
+    b.payer = b.payer! - 1;
+  }
+}
+
+/// Step 1: who was there and who paid, in one row of chips. Tap a person = paid (again = not); x = remove; + and the
+/// recent names add someone.
+class QuickPeople extends StatelessWidget {
+  const QuickPeople({super.key, required this.bill, required this.onChanged});
+
+  final Bill bill;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    final store = StoreScope.of(context), b = bill;
+    final recent = store.recentNames.where((n) => !b.ps.any((p) => p.name == n)).take(6).toList();
+    void changed() {
+      FasanHaptics.of(context).tap();
+      store.upsert(b);
+      onChanged();
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(
+        b.ps.isEmpty ? t.whoWasThere : (b.payer == null ? (t.de ? 'Wer war dabei? Tippe, wer bezahlt hat.' : 'Who was there? Tap who paid.') : t.whoWasThere),
+        style: tt.labelLarge!.copyWith(color: l.textMuted),
+      ),
+      const SizedBox(height: FasanSpace.xs),
+      Wrap(spacing: 6, runSpacing: 6, children: [
+        for (var i = 0; i < b.ps.length; i++)
+          InputChip(
+            avatar: FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 24),
+            label: Text(b.payer == i ? '${b.ps[i].name} · ${t.de ? 'bezahlt' : 'paid'}' : b.ps[i].name),
+            selected: b.payer == i,
+            showCheckmark: false,
+            selectedColor: l.accent.withValues(alpha: 0.2),
+            onPressed: () {
+              b.payer = b.payer == i ? null : i;
+              changed();
+            },
+            onDeleted: () {
+              removePersonFrom(b, i);
+              changed();
+            },
+          ),
+        ActionChip(
+          avatar: const Icon(Icons.person_add_alt_rounded, size: 18),
+          label: Text(t.addPerson),
+          onPressed: () async {
+            final n = await askText(context, t.addPerson, t.friendName);
+            if (n != null && addPersonTo(b, n)) changed();
+          },
+        ),
+        for (final n in recent)
+          ActionChip(
+            label: Text('+ $n'),
+            onPressed: () {
+              if (addPersonTo(b, n)) changed();
+            },
+          ),
+      ]),
+    ]);
   }
 }
 

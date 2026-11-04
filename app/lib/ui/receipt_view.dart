@@ -222,6 +222,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
                 _back = order.indexOf(v) < order.indexOf(layer);
                 layer = v;
                 _tc.value = Matrix4.identity();
+                _placed = false; // the scan starts at the items again (Nutzer 04.11.)
               }),
             ),
           ),
@@ -280,6 +281,18 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
   }
 
   bool _placed = false;
+  bool _precached = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_precached) return;
+    _precached = true;
+    // decode scan and original before the first switch, so a view change never shows an empty or black frame (04.11.)
+    for (final p in [b.imagePath, b.originalPath]) {
+      if (imageExists(p)) precacheImage(imageProvider(p!), context);
+    }
+  }
 
   Widget _scan(Size view) {
     final aspect = b.imageAspect ?? 0.4;
@@ -331,7 +344,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
           width: view.width,
           height: h,
           child: Stack(children: [
-            Positioned(left: 0, top: 0, width: w, height: h, child: Image(image: imageProvider(b.imagePath!), fit: BoxFit.fill, filterQuality: FilterQuality.medium)),
+            Positioned(left: 0, top: 0, width: w, height: h, child: Image(image: imageProvider(b.imagePath!), fit: BoxFit.fill, filterQuality: FilterQuality.medium, gaplessPlayback: true)),
             Positioned(
               left: 0,
               top: 0,
@@ -342,6 +355,12 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
                   rows: rows,
                   bill: b,
                   selected: sel,
+                  repaint: _tc,
+                  visible: () {
+                    // screen rect in receipt coordinates from the zoom/pan matrix
+                    final m = _tc.value, s = m.getMaxScaleOnAxis(), tr = m.getTranslation();
+                    return Rect.fromLTWH(-tr.x / s, -tr.y / s, view.width / s, view.height / s);
+                  },
                   look: FasanLook.of(context),
                   error: Theme.of(context).colorScheme.error,
                 ),
@@ -437,7 +456,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
               width: view.width,
               height: view.height,
               child: Stack(children: [
-                Positioned.fill(child: Image(image: imageProvider(b.originalPath!), fit: BoxFit.contain, filterQuality: FilterQuality.medium)),
+                Positioned.fill(child: Image(image: imageProvider(b.originalPath!), fit: BoxFit.contain, filterQuality: FilterQuality.medium, gaplessPlayback: true)),
                 if (polys.isNotEmpty)
                   Positioned.fill(
                     child: IgnorePointer(
@@ -463,7 +482,10 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
 /// Item rows: thin outline; assigned = colour of the first person as soft fill plus a bar on the left;
 /// unassigned = dashed-looking thin outline in the error colour; header and footer of the receipt paler.
 class _RowsPainter extends CustomPainter {
-  _RowsPainter({required this.rows, required this.bill, required this.selected, required this.look, required this.error});
+  _RowsPainter({required this.rows, required this.bill, required this.selected, required this.look, required this.error, this.visible, super.repaint});
+
+  /// Part of the receipt on screen (child coordinates); the middle of it is always clear (Nutzer 04.11.).
+  final Rect Function()? visible;
 
   final List<Rect> rows;
   final Bill bill;
@@ -475,12 +497,30 @@ class _RowsPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final real = [for (final r in rows) if (r != Rect.zero) r];
     if (real.isEmpty) return;
-    final top = real.map((r) => r.top).reduce(math.min) * size.height - 6;
-    final bottom = real.map((r) => r.bottom).reduce(math.max) * size.height + 6;
-    // Regel 3.1: header/footer stay visible, only paler
-    final veil = Paint()..color = look.background.withValues(alpha: 0.45);
-    canvas.drawRect(Rect.fromLTRB(0, 0, size.width, math.max(0, top)), veil);
-    canvas.drawRect(Rect.fromLTRB(0, bottom, size.width, size.height), veil);
+    var top = real.map((r) => r.top).reduce(math.min) * size.height - 6;
+    var bottom = real.map((r) => r.bottom).reduce(math.max) * size.height + 6;
+    // Regel 3.1: header/footer stay visible, only paler. The pale veil fades in softly (no hard edge) and gives way to
+    // whatever is in the middle of the screen when the user scrolls to the header or the footer (Nutzer 04.11.).
+    final v = visible?.call();
+    if (v != null) {
+      top = math.min(top, v.center.dy - v.height * 0.22);
+      bottom = math.max(bottom, v.center.dy + v.height * 0.22);
+    }
+    const soft = 90.0;
+    final c0 = look.background.withValues(alpha: 0.45), c1 = look.background.withValues(alpha: 0);
+    if (top > 0) {
+      canvas.drawRect(
+        Rect.fromLTRB(0, 0, size.width, top),
+        Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [c0, c0, c1], stops: [0, math.max(0, (top - soft) / top), 1]).createShader(Rect.fromLTRB(0, 0, size.width, top)),
+      );
+    }
+    if (bottom < size.height) {
+      final hgt = size.height - bottom;
+      canvas.drawRect(
+        Rect.fromLTRB(0, bottom, size.width, size.height),
+        Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [c1, c0, c0], stops: [0, math.min(1, soft / hgt), 1]).createShader(Rect.fromLTRB(0, bottom, size.width, size.height)),
+      );
+    }
     for (var k = 0; k < rows.length; k++) {
       final n = rows[k];
       if (n == Rect.zero) continue;

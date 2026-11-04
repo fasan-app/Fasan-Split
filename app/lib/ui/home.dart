@@ -465,24 +465,24 @@ class _HomeScreenState extends State<HomeScreen> {
             ? null
             : PulseRing(
                 active: store0.bills.isEmpty && !store0.hintDone('plus'),
-                child: FasanGlow(
-                radius: 18,
-                // the plus button floats: three-layer shadow with its own colour, turns with the tilt
+                // same radius and shadow as the cards, solid accent (04.11.: glow and tinted halo looked off)
                 child: FasanDepth(
-                  radius: 18,
-                  level: 3,
-                  tint: FasanLook.of(context).accent,
+                  radius: FasanLook.of(context).radius * 0.7,
+                  level: 2,
                   child: FloatingActionButton(
                     elevation: 0,
                     focusElevation: 0,
                     hoverElevation: 0,
                     highlightElevation: 0,
+                    backgroundColor: FasanLook.of(context).accent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(FasanLook.of(context).radius * 0.7)),
                     tooltip: _page <= 2 ? t.newBill : (_page == 3 ? t.newGroup : t.newFriend),
                     onPressed: () => _plus(context),
                     child: const Icon(Icons.add_rounded, size: 28),
                   ),
                 ),
-              )),
+              ),
         bottomNavigationBar: _NavBar(
           selected: _page <= 2 ? 0 : _page - 2,
           onSelect: (i) => _goTo(i == 0 ? (_page <= 2 ? _page : 0) : i + 2),
@@ -505,7 +505,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final t = S.of(context), l = FasanLook.of(context);
     final store = StoreScope.of(context);
     final tt = Theme.of(context).textTheme;
-    final bottom = 150 + MediaQuery.paddingOf(context).bottom;
+    final bottom = 200 + MediaQuery.paddingOf(context).bottom; // the last card scrolls fully above the plus button and the bar
     if (mode == BillList.trash) return _trashPage(context, store, bottom);
     final done = mode == BillList.archive;
     // sort and category filter (Nutzer 04.11.), category_ui.dart
@@ -580,7 +580,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(4, FasanSpace.m, 4, FasanSpace.s),
+            padding: const EdgeInsets.fromLTRB(4, FasanSpace.s, 4, FasanSpace.s),
             child: Row(children: [
               if (groupName != null) ...[Icon(Icons.folder_outlined, size: 16, color: l.textMuted), const SizedBox(width: 6)],
               Expanded(child: FasanLabel(heading)),
@@ -624,8 +624,9 @@ class _HomeScreenState extends State<HomeScreen> {
           FasanHaptics.of(context).snap();
         },
         builder: (context, candidate, _) => Container(
-          // drop line above the bill the dragged ones will go before
-          decoration: BoxDecoration(border: Border(top: BorderSide(color: candidate.isEmpty ? Colors.transparent : l.accent, width: 3))),
+          // drop line above the bill the dragged ones will go before; painted on top, so the row keeps the card's size
+          // (a border in `decoration` made it 3 px taller: the swipe surface stood out, Nutzer 04.11.)
+          foregroundDecoration: candidate.isEmpty ? null : BoxDecoration(border: Border(top: BorderSide(color: l.accent, width: 3))),
           child: LongPressDraggable<List<Bill>>(
             data: moving,
             delay: const Duration(milliseconds: 300),
