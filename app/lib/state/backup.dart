@@ -6,12 +6,62 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show compute;
+import 'package:pointycastle/export.dart';
+
+import '../collab/crypto.dart' show aeadOpen, aeadSeal, randomBytes;
+
 import '../collab/service.dart';
 import '../model/bill.dart';
 import 'images.dart';
 import 'store.dart';
 
 const backupFormat = 'fasan-split-backup';
+const backupFormatLocked = 'fasan-split-backup-enc';
+
+// ---- password (Nutzer 04.11.: send the backup to yourself, e.g. by mail; research konto-wiederherstellung.md) ----
+// Like NIP-49: scrypt (N 2^15, r 8, p 1; ~0.8 s on a test PC) turns the password into a key, ChaCha20-Poly1305 seals
+// the backup. Wrong password = the seal does not open.
+
+/// Thrown by [restoreBackup] for a file that needs its password.
+class BackupLocked implements Exception {
+  const BackupLocked();
+}
+
+Uint8List _scrypt((String, Uint8List) a) =>
+    (Scrypt()..init(ScryptParameters(1 << 15, 8, 1, 32, a.$2))).process(Uint8List.fromList(utf8.encode(a.$1)));
+
+Future<Uint8List> lockBackup(Uint8List data, String password) async {
+  final salt = randomBytes(16);
+  final key = await compute(_scrypt, (password, salt));
+  return Uint8List.fromList(utf8.encode(jsonEncode({
+    'format': backupFormatLocked,
+    'v': 1,
+    'kdf': {'name': 'scrypt', 'n': 1 << 15, 'r': 8, 'p': 1, 'salt': base64Encode(salt)},
+    'data': aeadSeal(utf8.decode(data), key, backupFormatLocked),
+  })));
+}
+
+bool isLockedBackup(Uint8List data) {
+  try {
+    final j = jsonDecode(utf8.decode(data));
+    return j is Map && j['format'] == backupFormatLocked;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Opens a password backup; throws [FormatException] for a wrong password.
+Future<Uint8List> unlockBackup(Uint8List data, String password) async {
+  final j = jsonDecode(utf8.decode(data)) as Map<String, dynamic>;
+  final k = (j['kdf'] as Map).cast<String, dynamic>();
+  final key = await compute(_scrypt, (password, base64Decode(k['salt'] as String)));
+  try {
+    return Uint8List.fromList(utf8.encode(aeadOpen(j['data'] as String, key, backupFormatLocked)));
+  } catch (_) {
+    throw const FormatException('wrong password');
+  }
+}
 
 Future<Uint8List> makeBackup(BillStore store, {CollabService? collab}) async {
   final files = <String, String>{};
@@ -46,6 +96,7 @@ Future<RestoreResult> restoreBackup(BillStore store, Uint8List data, {CollabServ
   } catch (_) {
     throw const FormatException('not a backup');
   }
+  if (j is Map && j['format'] == backupFormatLocked) throw const BackupLocked();
   if (j is! Map || j['format'] != backupFormat) throw const FormatException('not a backup');
   final files = (j['files'] as Map? ?? const {}).cast<String, String>();
   final have = {for (final b in store.bills) b.id};

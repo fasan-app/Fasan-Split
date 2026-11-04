@@ -333,6 +333,11 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (selbst priorisiert, Stand 03.11.; nach jedem Paket aktualisieren, nichts streichen ohne Erledigt-Vermerk)
 
+Spätabend 04.11. (Tests, nicht auf dem Gerät):
+- Gerät koppeln per QR ohne Abtippen (Test `pairing_test.dart`): neues Gerät zeigt Code + Prüfcode, altes Gerät überträgt Konto verschlüsselt (NIP-44 an Einmal-Schlüssel) über ein Relay; Konto → „Mit anderem Gerät anmelden“ / „Gerät hinzufügen“; Link öffnet über die System-Kamera direkt die App. Einführung: „Schon ein Konto?“.
+- Sicherung mit Passwort und „Senden …“ (z. B. Mail an mich), Einspielen fragt das Passwort (Test).
+- Passkey: nicht gebaut, offizielle Doku zu PRF auf Android fehlt; zuerst Messprobe auf dem S23 (Recherche-Nachtrag).
+
 Abend 04.11. (Tests, nicht auf dem Gerät):
 - Gruppe nach Neuinstallation weg – Ursachen: (1) Gruppen lagen nur auf dem Gerät, 12 Wörter brachten sie nicht zurück; (2) eine Sicherung mit Konto wurde still verworfen, wenn auf dem neuen Gerät schon ein frisches Konto angelegt war (z. B. „Konto“ geöffnet), und wirkte erst nach Neustart.
 - Behoben: Konto-Abgleich (Kern `service.dart`): Gruppenliste als verschlüsseltes Ereignis an mich selbst (NIP-44, d `fs:account:v1`) auf den Relays, nach jeder Änderung veröffentlicht; „Konto aus 12 Wörtern“ holt die Gruppen zurück und meldet die Anzahl; laufende Geräte mit denselben Wörtern bekommen neue Gruppen live. Sicherung mit Konto ersetzt ein leeres Konto und wirkt sofort. Test `account_sync_test.dart` (Neuinstallation, zweites Gerät, Sicherung) grün. Entscheidung in Fasan/ENTSCHEIDUNGEN.md.

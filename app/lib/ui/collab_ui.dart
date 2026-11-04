@@ -22,6 +22,7 @@ import '../l10n_groups.dart';
 import '../main.dart';
 import '../state/scan_queue.dart';
 import 'groups.dart';
+import 'pairing_ui.dart';
 
 const _kConsent = 'collab.consent';
 bool _consentInMemory = false; // used when there are no preferences (tests)
@@ -466,6 +467,21 @@ class _InviteScreenState extends State<InviteScreen> {
       ]),
     );
   }
+}
+
+/// A QR code on a white square (readable in dark mode too).
+class QrView extends StatelessWidget {
+  const QrView(this.text, {super.key, this.size = 220});
+
+  final String text;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        color: Colors.white,
+        padding: const EdgeInsets.all(12),
+        child: SizedBox.square(dimension: size, child: CustomPaint(painter: _QrPainter(Encoder.encode(text, ErrorCorrectionLevel.m)))),
+      );
 }
 
 class _QrPainter extends CustomPainter {
@@ -986,6 +1002,23 @@ class _AccountScreenState extends State<AccountScreen> {
               ]),
           ],
         ],
+        const Divider(height: FasanSpace.xl),
+        // several devices, one account (Nutzer 04.11.): no typing of the 12 words
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.qr_code_2_rounded),
+          title: Text(t.de ? 'Mit anderem Gerät anmelden' : 'Sign in with another device'),
+          subtitle: Text(t.de ? 'Dieses Gerät zeigt einen Code, dein anderes Gerät überträgt das Konto.' : 'This device shows a code, your other device transfers the account.'),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PairNewScreen())),
+        ),
+        if (id != null)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.add_to_home_screen_rounded),
+            title: Text(t.de ? 'Gerät hinzufügen' : 'Add device'),
+            subtitle: Text(t.de ? 'Den Code eines neuen Geräts scannen und dieses Konto dorthin übertragen.' : 'Scan the code of a new device and transfer this account there.'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PairSendScreen())),
+          ),
         const Divider(height: FasanSpace.xl),
         Text(t.accountRestore, style: tt.titleSmall),
         const SizedBox(height: FasanSpace.s),

@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'collab/group.dart';
 import 'collab/keys.dart';
+import 'collab/pairing.dart';
+import 'ui/pairing_ui.dart';
 import 'web_platform.dart';
 import 'collab/service.dart';
 import 'state/store.dart';
@@ -79,6 +81,11 @@ class _SplitAppState extends State<SplitApp> {
 
   void _open(Uri? u) {
     if (u == null || !isInviteLink(u)) return;
+    final pair = PairOffer.parse(u.fragment);
+    if (pair != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => PairSendScreen(initial: pair))));
+      return;
+    }
     startedWithInvite = true; // the introduction must not cover the join screen (also on Android)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final nav = navigatorKey.currentState;

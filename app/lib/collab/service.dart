@@ -18,6 +18,7 @@ import 'lww.dart';
 import 'keys.dart';
 import 'nostr.dart';
 import 'notes.dart';
+import 'pairing.dart';
 
 /// Relays used for new groups. Not checked for availability here – the user can change them per group later.
 const List<String> defaultRelays = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
@@ -167,6 +168,28 @@ class CollabService extends ChangeNotifier {
     identity = await Identity.restore(vault, words, name: name ?? identity?.name ?? '');
     notifyListeners();
     return recoverGroups();
+  }
+
+  // ---- linking a second device (pairing.dart) ----
+
+  /// New device: one-time offer to show as QR code, and the result once the old device answered (number of groups).
+  (PairOffer, Future<int>) startPairing() {
+    final eph = KeyPair.generate();
+    final offer = PairOffer(eph.pub, defaultRelays);
+    final done = () async {
+      final a = await waitForAccount(_relayFactory(offer.relays), eph);
+      return restoreIdentity(a.words, name: a.name);
+    }();
+    return (offer, done);
+  }
+
+  /// Old device: sends this account (12 words, name) to the device that shows [offer]. False without words (an account
+  /// restored from an old backup without them) or without network.
+  Future<bool> sendPairing(PairOffer offer) async {
+    final me = await ensureIdentity();
+    final words = me.mnemonic;
+    if (words == null || words.isEmpty) return false;
+    return sendAccount(_relayFactory(offer.relays), me.key, offer, words: words, name: me.name);
   }
 
   // ---- account across devices (Nutzer 04.11.: reinstall, several devices; no server and no login beyond the 12 words) ----

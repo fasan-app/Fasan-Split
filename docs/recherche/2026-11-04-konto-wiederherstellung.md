@@ -43,3 +43,15 @@ aus 12 Wörtern, Gruppenliste verschlüsselt an sich selbst auf den Relays (Ents
   Änderungen derselben Zeile entscheidet die Uhr.
 - Relays können Ereignisse löschen: Gruppenliste auf mehreren Relays, Sicherungsdatei bleibt wichtig.
 - Datenschutz: Telefonnummern verknüpfen Personen über Apps hinweg; Fasan sammelt keine.
+
+## Nachtrag 04.11. abends: Stand der Umsetzung
+
+- Gebaut: Gerät koppeln per QR (`collab/pairing.dart`, `ui/pairing_ui.dart`; System-Kamera öffnet den Link als App
+  Link, Foto des Codes, eingefügter Link; 6-stelliger Prüfcode auf beiden Geräten), „Schon ein Konto?“ beim ersten Start,
+  Sicherung mit Passwort (scrypt N 2^15 + ChaCha20-Poly1305, `state/backup.dart`) und „Senden …“ (z. B. Mail an mich).
+- Passkey (PRF) NICHT gebaut: offizielle Android-Doku zu PRF über Credential Manager nicht gefunden; einzig belegt ist
+  „PRF creation for Android 13 and below“ in androidx.credentials 1.3.0-alpha04 (developer.android.com/jetpack/androidx/
+  releases/credentials). Ob der Google-Passwortmanager PRF an Apps liefert: nicht geprüft. Für App-Passkeys braucht
+  assetlinks.json zusätzlich die Beziehung `delegate_permission/common.get_login_creds` und eine Web-Domain als RP-ID
+  (fasan-app.github.io). Nächster Schritt: Messprobe auf dem S23 (Passkey anlegen mit PRF, Ergebnis im Protokoll),
+  erst danach bauen.

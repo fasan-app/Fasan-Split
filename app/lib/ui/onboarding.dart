@@ -10,6 +10,7 @@ import '../main.dart';
 import '../model/bill.dart';
 import '../state/store.dart';
 import 'assign.dart';
+import 'collab_ui.dart' show AccountScreen;
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -57,7 +58,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: FasanLabel('${page + 1} / ${pages.length}'),
-        actions: [TextButton(onPressed: _done, child: Text(t.skip))],
+        actions: [
+          // first start on a new device (Nutzer 04.11.): sign in with the other device or the 12 words
+          TextButton(
+            onPressed: () {
+              _done();
+              navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => const AccountScreen()));
+            },
+            child: Text(t.de ? 'Schon ein Konto?' : 'Have an account?'),
+          ),
+          TextButton(onPressed: _done, child: Text(t.skip)),
+        ],
       ),
       body: SafeArea(
         child: Column(children: [

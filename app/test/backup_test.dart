@@ -61,4 +61,16 @@ void main() {
     c2.dispose();
     c3.dispose();
   });
+
+  test('Sicherung mit Passwort: richtiges Passwort öffnet, falsches nicht, ohne Passwort gesperrt', () async {
+    final old = BillStore.memory([Bill(id: 'x2', created: DateTime(2026, 11, 4), purpose: 'Taxi', total: 900, items: [BillItem(name: 'Taxi', amount: 900)])]);
+    final plain = await makeBackup(old);
+    final locked = await lockBackup(plain, 'Fasan 2026');
+    expect(isLockedBackup(locked), isTrue);
+    expect(() => restoreBackup(BillStore.memory(), locked), throwsA(isA<BackupLocked>()));
+    expect(() => unlockBackup(locked, 'falsch'), throwsFormatException);
+    final fresh = BillStore.memory();
+    final r = await restoreBackup(fresh, await unlockBackup(locked, 'Fasan 2026'));
+    expect((r.added, fresh.bills.single.purpose), (1, 'Taxi'));
+  });
 }
