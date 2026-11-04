@@ -7,6 +7,9 @@ import '../l10n.dart';
 import '../l10n_bill.dart';
 import '../model/bill.dart';
 import '../state/scan_queue.dart';
+import '../model/category.dart';
+import '../model/settle.dart';
+import 'my_balance.dart';
 import 'scan_stage.dart';
 import 'flow.dart';
 import 'common.dart';
@@ -109,7 +112,11 @@ class BillTile extends StatelessWidget {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(bill.purpose.isEmpty ? (waiting || failed ? t.photoBill : t.appName) : bill.purpose, style: tt.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
-                  Text(sub, style: tt.bodySmall),
+                  Row(children: [
+                    // category at a glance (category.dart)
+                    if (categoryById(bill.category) case final c?) ...[Icon(c.icon, size: 14, color: c.color), const SizedBox(width: 4)],
+                    Expanded(child: Text(sub, style: tt.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  ]),
                 ]),
               ),
               if (failed && !selecting)
@@ -117,7 +124,13 @@ class BillTile extends StatelessWidget {
               else if (!waiting && !failed || bill.total != null && !failed) ...[
                 FasanAvatarStack(people: [for (final p in bill.ps) (p.name, p.color)], size: 24, max: 3),
                 const SizedBox(width: FasanSpace.s),
-                Money(bill.effectiveTotal),
+                Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Money(bill.effectiveTotal),
+                  // my balance from this bill: green = I get, red = I owe (Nutzer 04.11.: indicators at a glance)
+                  if (bill.done && bill.payer != null)
+                    if (myDebts([bill], myNames(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
+                      Text('${money(v, de: t.de, sign: true)} €', style: tt.labelMedium!.copyWith(color: v > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
+                ]),
               ],
             ]),
           ),

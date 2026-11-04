@@ -13,6 +13,7 @@ import '../main.dart';
 import '../model/bill.dart';
 import '../recognition_service.dart';
 import 'assign.dart';
+import 'category_ui.dart';
 import 'collab_ui.dart';
 import 'common.dart';
 import 'when_where.dart';
@@ -554,6 +555,8 @@ class ResultScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.xxxl),
         children: [
           Money(bill.effectiveTotal, style: Theme.of(context).textTheme.displaySmall),
+          const SizedBox(height: FasanSpace.s),
+          Align(alignment: Alignment.centerLeft, child: CategoryChip(bill: bill)),
           if (bill.refund) ...[const SizedBox(height: FasanSpace.s), const RefundNote()],
           const SizedBox(height: FasanSpace.l),
           if (bill.payer != null) ResultBody(bill: bill) else Text(t.whoPaid),

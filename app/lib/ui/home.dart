@@ -19,6 +19,7 @@ import 'bill_tile.dart';
 import 'hints.dart';
 import 'flow.dart';
 import 'collab_ui.dart';
+import 'category_ui.dart';
 import 'common.dart';
 import 'my_balance.dart';
 import 'swipe.dart';
@@ -47,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _webUpdate = false;
   ScanQueue? _queue;
   bool _selecting = false;
+  String? _catFilter; // category filter of the lists, null = all
   bool _dragging = false; // bills are lifted: drop targets light up (segments above, Gruppen tab)
   final Set<String> _selected = {};
   final _pager = PageController();
@@ -384,6 +386,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 actions: [
                   // my balance on every main page (Nutzer 04.11.)
                   const MyBalanceBadge(),
+                  if (list != null && list != BillList.trash && _hasAny(store, list))
+                    IconButton(
+                      tooltip: t.de ? 'Sortieren und filtern' : 'Sort and filter',
+                      icon: Badge(isLabelVisible: _catFilter != null || store.sortMode != BillSort.own, smallSize: 8, child: const Icon(Icons.sort_rounded)),
+                      onPressed: () => sortSheet(context, filter: _catFilter, onFilter: (f) => setState(() => _catFilter = f)),
+                    ),
                   if (list != null && _hasAny(store, list))
                     IconButton(tooltip: t.select, icon: const Icon(Icons.checklist_rounded), onPressed: () => setState(() => _selecting = true)),
                   IconButton(
@@ -497,8 +505,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final bottom = 150 + MediaQuery.paddingOf(context).bottom;
     if (mode == BillList.trash) return _trashPage(context, store, bottom);
     final done = mode == BillList.archive;
-    final groups = [for (final g in store.groups) (g, store.inGroup(g, done: done))].where((e) => e.$2.isNotEmpty).toList();
-    final loose = store.inGroup(null, done: done);
+    // sort and category filter (Nutzer 04.11.), category_ui.dart
+    final sort = store.sortMode;
+    final groups = [for (final g in store.groups) (g, arrange(store.inGroup(g, done: done), sort, _catFilter))].where((e) => e.$2.isNotEmpty).toList();
+    final loose = arrange(store.inGroup(null, done: done), sort, _catFilter);
     final empty = groups.isEmpty && loose.isEmpty;
     final banner = done
         ? null

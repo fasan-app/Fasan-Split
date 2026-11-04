@@ -133,6 +133,13 @@ class BillStore extends ChangeNotifier {
   }
   void saveSettings(String s) => _prefs?.setString('fasan_ui.settings', s);
 
+  /// Own categories (names), model/category.dart.
+  List<String> get customCategories => [...?(_app['categories'] as List?)?.cast<String>()];
+  void addCategory(String name) {
+    if (name.isEmpty || customCategories.contains(name)) return;
+    _setApp('categories', [...customCategories, name]);
+  }
+
   /// App settings as stored (backup.dart).
   Map<String, Object?> get appSettings => Map.of(_app);
   set appSettings(Map<String, Object?> m) {

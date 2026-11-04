@@ -183,6 +183,7 @@ class Bill {
     this.originalAspect,
     this.trashedAt,
     this.order,
+    this.category,
     DateTime? updated,
   }) : updated = updated ?? created;
 
@@ -239,6 +240,9 @@ class Bill {
   /// Place in the list after the user moved it by hand (smaller = higher); null = by last change. Only on this phone,
   /// not shared with the group (everyone sorts their own list).
   double? order;
+
+  /// Category id (model/category.dart): a base id like „restaurant“ or `c:<name>` for an own one; null = none yet.
+  String? category;
 
   /// Sort key of the bill lists: hand-made place, else newest change first.
   double get sortKey => order ?? -updated.millisecondsSinceEpoch.toDouble();
@@ -377,6 +381,7 @@ class Bill {
         'originalAspect': originalAspect,
         'trashedAt': trashedAt?.toIso8601String(),
         if (order != null) 'order': order,
+        if (category != null) 'category': category,
         'updated': updated.toIso8601String(),
       };
 
@@ -407,6 +412,7 @@ class Bill {
         originalAspect: (j['originalAspect'] as num?)?.toDouble(),
         trashedAt: DateTime.tryParse(j['trashedAt'] as String? ?? ''),
         order: (j['order'] as num?)?.toDouble(),
+        category: j['category'] as String?,
         updated: DateTime.tryParse(j['updated'] as String? ?? ''),
       );
 }

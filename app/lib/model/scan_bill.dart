@@ -6,6 +6,7 @@ import '../recognition/place.dart';
 import '../recognition_service.dart';
 import '../state/store.dart';
 import 'bill.dart';
+import 'category.dart';
 
 /// Saves the scan image, the log and (unless [saveOriginal] is false) the photo as taken, and builds the bill from the result.
 /// The header comes from the best read pass (bestHeader); the lines of the winner are only the fallback.
@@ -18,7 +19,7 @@ Future<Bill> billFromScan(ScanResultData r, Uint8List photo,
   // the photo exactly as taken (Beschluss 02.11.: Original immer sichtbar, für alle)
   final orig = saveOriginal ? await BillStore.saveFile('$id.orig.jpg', photo) : null;
   final meta = extractMeta([for (final l in r.lines) l.$1]);
-  return Bill(
+  final b = Bill(
     id: id,
     receiptDate: r.date ?? meta.date,
     placeAddress: r.address ?? meta.address,
@@ -37,6 +38,8 @@ Future<Bill> billFromScan(ScanResultData r, Uint8List photo,
     originalQuad: r.photoQuad,
     originalAspect: r.photoAspect,
   );
+  b.category = guessCategory(b); // first guess, changed with one tap (category.dart)
+  return b;
 }
 
 String titleCase(String s) => s

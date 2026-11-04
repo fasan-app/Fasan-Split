@@ -15,6 +15,7 @@ import '../state/scan_queue.dart';
 import 'bill_tile.dart';
 import 'collab_ui.dart';
 import 'common.dart';
+import 'my_balance.dart';
 import 'swipe.dart';
 
 /// All groups with their number of bills and sum; tap opens the group. Pending join requests are shown on top.
@@ -66,7 +67,12 @@ class GroupsPage extends StatelessWidget {
                         Text(live ? '${t.billsCount(bills.length)} · ${t.shared}' : t.billsCount(bills.length), style: tt.bodySmall),
                       ]),
                     ),
-                    Text('${money(sum, de: t.de)} €', style: tt.titleMedium),
+                    Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                      Text('${money(sum, de: t.de)} €', style: tt.titleMedium),
+                      // my balance in this group (green = I get, red = I owe)
+                      if (myDebts(store.inGroup(g, done: true), myNames(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
+                        Text('${money(v, de: t.de, sign: true)} €', style: tt.labelMedium!.copyWith(color: v > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
+                    ]),
                   ]),
                 ),
               ),
