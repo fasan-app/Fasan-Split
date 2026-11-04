@@ -1,11 +1,13 @@
 // Fasan Split – backup file: everything out, into a fresh install back (Nutzer 03.11.: key switch needs one uninstall).
 import 'package:fasan_split/collab/keys.dart';
+import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/model/bill.dart';
 import 'package:fasan_split/state/backup.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('Sicherung: Bons und Konto kommen in eine leere Installation, doppelte Bons nicht', () async {
@@ -31,5 +33,32 @@ void main() {
     final again = await restoreBackup(fresh, file, collab: freshCollab);
     expect((again.added, again.skipped), (0, 1));
     expect(() => restoreBackup(fresh, Uint8List.fromList([1, 2, 3])), throwsFormatException);
+  });
+
+  test('Sicherung mit geteilter Gruppe (Speicher mit Listen): Gruppe kommt nach Neustart zurück', () async {
+    SharedPreferences.setMockInitialValues({});
+    final hub = MemoryRelayHub();
+    final store = BillStore.memory();
+    final c = CollabService(store: store, vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => MemoryRelay(hub));
+    await c.init();
+    await c.ensureIdentity(name: 'Chris');
+    final g = await c.createGroup('WG');
+    c.saveDocs();
+    final file = await makeBackup(store, collab: c);
+    c.dispose();
+
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final vault = MemoryVault();
+    final store2 = BillStore.memory();
+    final c2 = CollabService(store: store2, vault: vault, prefs: prefs, relayFactory: (_) => MemoryRelay(hub));
+    expect((await restoreBackup(store2, file, collab: c2)).secret, isTrue);
+    expect(prefs.getStringList('collab.doc.${g.secret.tag}.ids'), isNotEmpty);
+    // „restart“: a new service on the same vault and prefs has the group again
+    final c3 = CollabService(store: store2, vault: vault, prefs: prefs, relayFactory: (_) => MemoryRelay(hub));
+    await c3.init();
+    expect(c3.groups.values.single.secret.tag, g.secret.tag);
+    c2.dispose();
+    c3.dispose();
   });
 }

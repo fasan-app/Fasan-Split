@@ -1,5 +1,7 @@
 // Fasan Split – „Sichern“ in the settings: save everything into one file, put a file back (state/backup.dart).
 // Files through file_picker (saveFile / pickFiles, file_picker 13.3.2 API). MPL-2.0
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +19,7 @@ extension _T on S {
   String get backupSecretHint => de
       ? 'Dann ist die Datei so geheim wie deine 12 Wörter. Gib sie niemandem.'
       : 'Then the file is as secret as your 12 words. Never share it.';
+  String get backupFailed => de ? 'Sicherung ging nicht' : 'Backup failed';
   String get backupSaved => de ? 'Sicherung gespeichert.' : 'Backup saved.';
   String get backupBad => de ? 'Das ist keine Sicherung von Fasan Split.' : 'This is not a Fasan Split backup.';
   String backupDone(int a, int s) => de ? '$a Bons eingespielt, $s waren schon da.' : '$a receipts restored, $s were here already.';
@@ -43,7 +46,15 @@ Future<void> saveBackupFlow(BuildContext context) async {
     ),
   );
   if (ok != true || !context.mounted) return;
-  final bytes = await makeBackup(StoreScope.read(context), collab: withAccount ? CollabScope.read(context) : null);
+  final Uint8List bytes;
+  try {
+    bytes = await makeBackup(StoreScope.read(context), collab: withAccount ? CollabScope.read(context) : null);
+  } catch (e) {
+    // never silent (04.11.: with account nothing happened)
+    if (context.mounted) showNote(context, '${t.backupFailed}: $e');
+    return;
+  }
+  if (!context.mounted) return;
   final day = DateTime.now().toIso8601String().substring(0, 10);
   final uri = await FilePicker.saveFile(fileName: 'fasan-split-sicherung-$day.json', bytes: bytes, mimeType: 'application/json');
   if (uri != null && context.mounted) showNote(context, t.backupSaved);

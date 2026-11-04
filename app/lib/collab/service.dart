@@ -79,7 +79,8 @@ class CollabService extends ChangeNotifier {
     }
     return {
       'vault': v,
-      'prefs': {for (final k in prefs?.getKeys() ?? const <String>{}) if (k.startsWith(_kDocs) || k == _kJoins) k: prefs!.getString(k)},
+      // documents are strings, the id lists string lists (saveDocs): keep the type (04.11.: getString on a list failed)
+      'prefs': {for (final k in prefs?.getKeys() ?? const <String>{}) if (k.startsWith(_kDocs) || k == _kJoins) k: prefs!.get(k)},
     };
   }
 
@@ -92,8 +93,10 @@ class CollabService extends ChangeNotifier {
     for (final e in v.entries) {
       await vault.write(e.key, e.value);
     }
-    for (final e in (m['prefs'] as Map? ?? const {}).cast<String, String?>().entries) {
-      if (e.value != null) await prefs?.setString(e.key, e.value!);
+    for (final e in (m['prefs'] as Map? ?? const {}).cast<String, Object?>().entries) {
+      final v = e.value;
+      if (v is String) await prefs?.setString(e.key, v);
+      if (v is List) await prefs?.setStringList(e.key, [for (final x in v) '$x']);
     }
     return true;
   }
