@@ -346,6 +346,11 @@ Gruppen, Einladen, Freunde
 6. Gruppe verlassen auf allen eigenen Geräten; Mitglieder von Hand auch im Live-Teil abgleichen; verknüpfte Person umbenennen.
 7. Konto: Passkey-Messprobe auf dem S23, danach bauen; soziale Wiederherstellung (2 von 3) als Entwurf.
 
+Anbindungen (Recherche `docs/recherche/2026-11-04-anbindungen-zahlung-netz.md`)
+6b. Bezahlen-Knopf beim Ausgleichen: SEPA-QR (EPC/GiroCode) und PayPal.Me zuerst, Bitcoin/Lightning/Monero als Option; Angaben verschlüsselt im Profil der Gruppe, nur auf Tipp, kein Geld durch Fasan.
+6c. „Über Tor verbinden“ (Orbot-Proxy) + .onion-Relays als Option; I2P vorerst nicht (kein Weg für Nostr gefunden).
+6d. Messenger: Antworten/Zitat, Reaktionen, bearbeiten/löschen, @ im Chat, Umfragen, schreibt gerade, Profil-/Gruppenbild, stumm/anpinnen/Suche, Blockieren, Freund per QR, Fotos im Chat.
+
 Bedienung, Saldo, Bons
 7b. Visualisierung (Nutzer 04.11. abends): Stand/Kategorien als Diagramm mit Animation, Vorschläge; Leerräume je Bildschirm prüfen; „?“-Hilfen überall; Ziehen-Regel systemweit.
 8. Saldo-Plakette auch auf Unterseiten, Visualisierung; Filter nach Gruppe/Person/„ich schulde“, Suche.
