@@ -74,7 +74,7 @@ class S {
   String get hintOk => de ? 'Verstanden' : 'Got it';
   String get hintPlus => de ? 'Tippe auf das Plus. Dort startest du: Kamera, Galerie oder ohne Bon.' : 'Tap the plus. That is where you start: camera, gallery or no receipt.';
   String get hintAssign => de ? 'Tippe auf Namen, wer dabei war. Halte einen Namen gedrückt für mehr. Mit + fügst du jemanden hinzu.' : 'Tap the names of who had it. Press and hold a name for more. Use + to add someone.';
-  String get hintSwipe => de ? 'Wische eine Rechnung nach rechts ins Archiv, nach links in den Papierkorb.' : 'Swipe a bill right to archive it, left for the trash.';
+  String get hintSwipe => de ? 'Nach rechts wischen: ausgeglichen (Archiv). Nach links: Papierkorb. Gedrückt halten: auswählen und ziehen.' : 'Swipe right: settled (archive). Left: trash. Press and hold: select and drag.';
   String get emptyCamera => de ? 'Bon fotografieren' : 'Photograph a receipt';
   String get emptyOr => de ? 'Oder tippe unten rechts auf das Plus.' : 'Or tap the plus at the bottom right.';
   String get archiveHow => de ? 'Fertige Rechnungen landen hier. Du kannst auch eine Rechnung nach rechts wischen.' : 'Finished bills end up here. You can also swipe a bill to the right.';
@@ -172,7 +172,7 @@ class S {
   String get groupTitle => de ? 'Gruppe' : 'Group';
   String get groupName => de ? 'Name der Gruppe, z. B. Urlaub' : 'Group name, e.g. Holiday';
   String get ungroup => de ? 'Aus Gruppe nehmen' : 'Take out of group';
-  String get markDone => de ? 'Als fertig markieren' : 'Mark as done';
+  String get markDone => de ? 'Ausgleichen (bezahlt)' : 'Settle (paid)';
   String get markOpen => de ? 'Wieder öffnen' : 'Reopen';
   String get ok => 'OK';
   String deletedN(int n) => de ? (n == 1 ? 'Bon gelöscht' : '$n Bons gelöscht') : (n == 1 ? 'Receipt deleted' : '$n receipts deleted');

@@ -2,6 +2,8 @@
 // the group may be incomplete and a program telling people to pay feels wrong; always visible at a glance; research docs/recherche/2026-11-04-konkurrenz-bedienung-saldo.md §3).
 // Only finished bills with a payer count. Me = the name in Einstellungen → „Das bin ich“ and, in live groups, the
 // names linked to my member key. MPL-2.0
+import 'dart:async';
+
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +11,12 @@ import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import '../model/settle.dart';
+import 'backup_ui.dart';
+import 'collab_ui.dart';
 import 'common.dart';
+import 'groups.dart';
+import 'pairing_ui.dart';
+import 'settings_screen.dart';
 
 class _T {
   const _T(this.de);
@@ -54,10 +61,11 @@ class MyBalanceBadge extends StatelessWidget {
     final v = myTotal(context);
     final color = v > 0 ? Colors.green.shade600 : (v < 0 ? Colors.red.shade600 : l.textMuted);
     return Tooltip(
-      message: t.title,
+      message: t.de ? 'Profil' : 'Profile',
       child: InkWell(
         customBorder: const StadiumBorder(),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyBalanceScreen())),
+        // the whole profile behind the avatar (Nutzer 04.11.: not hidden in the menu)
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen())),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -121,6 +129,113 @@ class MyBalanceScreen extends StatelessWidget {
             title: Text(e.value > 0 ? t.getsFrom(e.key) : t.owesTo(e.key)),
             trailing: Text('${money(e.value.abs(), de: t.de)} ${signOf(context)}', style: tt.titleMedium!.copyWith(color: c(e.value))),
           ),
+      ]),
+    );
+  }
+}
+
+/// Profile (Nutzer 04.11.): who I am, my balance, account and devices, friends – one tap from every main page.
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final TextEditingController _name = TextEditingController();
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    final n = CollabScope.read(context).identity?.name ?? '';
+    _name.text = n.isNotEmpty ? n : StoreScope.read(context).me;
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _save();
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final n = _name.text.trim();
+    if (n.isEmpty) return;
+    StoreScope.read(context).me = n;
+    CollabScope.read(context).setName(n);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final de = S.of(context).de, t = _T(de), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    final collab = CollabScope.of(context);
+    final total = myTotal(context);
+    Color c(int v) => v > 0 ? Colors.green.shade600 : (v < 0 ? Colors.red.shade600 : l.textMuted);
+    void open(Widget w) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => w));
+    Widget tile(IconData i, String title, String? sub, VoidCallback onTap) => ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(i, color: l.accent),
+          title: Text(title),
+          subtitle: sub == null ? null : Text(sub),
+          trailing: Icon(Icons.chevron_right_rounded, color: l.textMuted),
+          onTap: onTap,
+        );
+    return Scaffold(
+      appBar: AppBar(title: Text(de ? 'Profil' : 'Profile')),
+      body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
+        Row(children: [
+          ListenableBuilder(listenable: _name, builder: (context, _) => FasanAvatar(name: _name.text.trim().isEmpty ? '?' : _name.text.trim(), index: 0, size: 64)),
+          const SizedBox(width: FasanSpace.m),
+          Expanded(
+            child: TextField(
+              controller: _name,
+              textCapitalization: TextCapitalization.words,
+              style: tt.titleLarge,
+              decoration: InputDecoration(labelText: de ? 'Dein Name' : 'Your name', helperText: de ? 'Gilt überall: Bons, Gruppen, Freunde' : 'Used everywhere: receipts, groups, friends'),
+              onChanged: (_) {
+                _timer?.cancel();
+                _timer = Timer(const Duration(milliseconds: 600), _save);
+              },
+              onSubmitted: (_) => _save(),
+            ),
+          ),
+        ]),
+        const SizedBox(height: FasanSpace.l),
+        Material(
+          color: l.surfaceAlt,
+          borderRadius: BorderRadius.circular(l.radius * 0.7),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(l.radius * 0.7),
+            onTap: () => open(const MyBalanceScreen()),
+            child: Padding(
+              padding: const EdgeInsets.all(FasanSpace.m),
+              child: Row(children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(t.title, style: tt.labelLarge!.copyWith(color: l.textMuted)),
+                    Text(total == 0 ? t.even : '${total > 0 ? t.youGet : t.youOwe} ${money(total.abs(), de: de)} ${signOf(context)}', style: tt.titleLarge!.copyWith(color: c(total))),
+                  ]),
+                ),
+                Icon(Icons.chevron_right_rounded, color: l.textMuted),
+              ]),
+            ),
+          ),
+        ),
+        const SizedBox(height: FasanSpace.l),
+        FasanLabel(de ? 'Freunde' : 'Friends'),
+        tile(Icons.person_add_alt_1_rounded, de ? 'Freund einladen' : 'Invite a friend', de ? 'Link schicken: chatten und die App testen' : 'Send a link: chat and try the app', () => FriendsPage.inviteFriend(context)),
+        if (collab.directs.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: Text(de ? '${collab.directs.length} verbunden' : '${collab.directs.length} connected', style: tt.bodySmall)),
+        const SizedBox(height: FasanSpace.m),
+        FasanLabel(de ? 'Konto und Geräte' : 'Account and devices'),
+        tile(Icons.qr_code_2_rounded, de ? 'Gerät hinzufügen' : 'Add a device', de ? 'Konto aufs Tablet, zweite Handy oder in den Browser' : 'Your account on a tablet, second phone or browser', () => open(const PairSendScreen())),
+        tile(Icons.login_rounded, de ? 'Mit anderem Gerät anmelden' : 'Sign in with another device', null, () => open(const PairNewScreen())),
+        tile(Icons.save_alt_rounded, de ? 'Sicherung speichern' : 'Save a backup', de ? 'Mit Passwort, z. B. an dich selbst schicken' : 'With a password, e.g. send it to yourself', () => saveBackupFlow(context)),
+        tile(Icons.key_rounded, de ? 'Wörter, Schlüssel, Vertrauen' : 'Words, key, trust', de ? '12 Wörter zum Wiederherstellen' : '12 words to restore', () => open(const AccountScreen())),
+        const SizedBox(height: FasanSpace.m),
+        tile(Icons.tune_rounded, de ? 'Einstellungen' : 'Settings', null, () => open(const SettingsScreen())),
       ]),
     );
   }

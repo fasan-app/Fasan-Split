@@ -21,6 +21,7 @@ import '../web_platform.dart';
 import '../l10n_groups.dart';
 import '../main.dart';
 import '../state/scan_queue.dart';
+import 'common.dart' show TitleHelp;
 import 'groups.dart';
 import 'pairing_ui.dart';
 
@@ -1102,8 +1103,7 @@ class _AccountScreenState extends State<AccountScreen> {
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           secondary: const Icon(Icons.verified_user_outlined),
-          title: Text(t.confirmAllTitle),
-          subtitle: Text(t.trustAboutMeSub),
+          title: TitleHelp(t.confirmAllTitle, t.trustAboutMeSub),
           value: CollabScope.of(context).confirmAll,
           onChanged: (v) => CollabScope.read(context).confirmAll = v,
         ),

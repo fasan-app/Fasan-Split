@@ -29,7 +29,15 @@ Future<void> main() async {
     SharedPreferences.setMockInitialValues({});
   }
   final store = await BillStore.load();
-  final ui = FasanController(settings: FasanSettings.decode(store.settingsJson), onChanged: (s) => store.saveSettings(s.encode()));
+  var look = FasanSettings.decode(store.settingsJson);
+  // Nutzer 04.11.: the standard look of Fasan Split is glass without grain. Applied once to existing installs too; any
+  // later choice in Erscheinungsbild stays.
+  if (!store.hintDone('look-glass-v1')) {
+    look = look.copyWith(style: FasanStyle.fullGlass, effects: look.effects.copyWith(grain: 0));
+    store.saveSettings(look.encode());
+    store.hintDismiss('look-glass-v1');
+  }
+  final ui = FasanController(settings: look, onChanged: (s) => store.saveSettings(s.encode()));
   ui.start();
   // Collaboration: keys in the Android Keystore; the service only connects to relays if there is a group (Beschluss 03.11.).
   final collab = CollabService(store: store, vault: browserStorageWorks ? const SecureVault() : MemoryVault(), prefs: await SharedPreferences.getInstance());

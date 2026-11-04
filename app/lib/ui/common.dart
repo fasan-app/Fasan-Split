@@ -328,3 +328,36 @@ class ItemTitle extends StatelessWidget {
     ]);
   }
 }
+
+
+/// Title with a small „?“ that opens the explanation (Nutzer 04.11.: hint texts behind a question mark, as usual in
+/// apps; Apple HIG keeps only short footers in lists and puts longer help behind an info button). Values that change
+/// (a name, a version) stay visible as subtitle; only explanations move here.
+class TitleHelp extends StatelessWidget {
+  const TitleHelp(this.title, this.help, {super.key});
+
+  final String title, help;
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        Flexible(child: Text(title)),
+        IconButton(
+          tooltip: S.of(context).de ? 'Erklärung' : 'Explanation',
+          visualDensity: VisualDensity.compact,
+          icon: Icon(Icons.help_outline_rounded, size: 18, color: FasanLook.of(context).textMuted),
+          onPressed: () => showModalBottomSheet<void>(
+            context: context,
+            builder: (ctx) => SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, FasanSpace.l),
+                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(title, style: Theme.of(ctx).textTheme.titleMedium),
+                  const SizedBox(height: FasanSpace.s),
+                  Text(help, style: Theme.of(ctx).textTheme.bodyMedium),
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ]);
+}

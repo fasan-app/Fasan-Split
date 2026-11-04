@@ -353,8 +353,9 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: selecting
             ? AppBar(
                 leading: IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: _exitSelect),
-                title: Text(any ? t.nSelected(selected.length) : t.selectHint),
-                actions: [
+                title: Text(_dragging ? (t.de ? 'Auf ein Ziel unten ziehen' : 'Drag onto a target below') : any ? t.nSelected(selected.length) : t.selectHint),
+                // while dragging only the targets below act (Nutzer 04.11.: two sets of archive/trash symbols)
+                actions: _dragging ? const [] : [
                   if (inTrash) ...[
                     IconButton(tooltip: t.restore, icon: const Icon(Icons.restore_from_trash_rounded), onPressed: !any ? null : () {
                       store.untrash(selected);
@@ -371,7 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     IconButton(tooltip: t.groupTitle, icon: const Icon(Icons.folder_outlined), onPressed: any ? () => _groupDialog(context, selected) : null),
                     IconButton(
                       tooltip: inArchive ? t.markOpen : t.markDone,
-                      icon: Icon(inArchive ? Icons.unarchive_outlined : Icons.archive_outlined),
+                      icon: Icon(inArchive ? Icons.unarchive_outlined : Icons.task_alt_rounded),
                       onPressed: !any ? null : () {
                         final l = selected;
                         _exitSelect();
@@ -424,25 +425,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: (i) => [t.listOpen, t.listArchive, t.listTrash][i],
                   onChanged: _goTo,
                 ),
-                if (_dragging)
-                  Positioned.fill(
-                    child: Row(children: [
-                      for (final target in BillList.values)
-                        Expanded(
-                          child: DragTarget<List<Bill>>(
-                            onWillAcceptWithDetails: (_) => target != list,
-                            onAcceptWithDetails: (d) => _dropOnList(context, store, d.data, target),
-                            builder: (context, cand, _) => AnimatedContainer(
-                              duration: FasanMotion.of(context).short,
-                              decoration: BoxDecoration(
-                                color: cand.isEmpty ? Colors.transparent : FasanLook.of(context).accent.withValues(alpha: 0.22),
-                                borderRadius: BorderRadius.circular(FasanLook.of(context).radius * 0.6),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ]),
-                  ),
               ]),
             ),
           ),
@@ -489,7 +471,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-        bottomNavigationBar: _NavBar(
+        bottomNavigationBar: _dragging && list != null
+            ? _DropDock(
+                from: list,
+                onList: (bills, target) => _dropOnList(context, store, bills, target),
+                onGroup: (bills) => _groupDialog(context, bills),
+              )
+            : _NavBar(
           selected: _page <= 2 ? 0 : _page - 2,
           onSelect: (i) => _goTo(i == 0 ? (_page <= 2 ? _page : 0) : i + 2),
           // bills dropped on „Gruppen“: choose a group or name a new one (same dialog as the button)
@@ -615,7 +603,7 @@ class _HomeScreenState extends State<HomeScreen> {
       key: ValueKey('bill-${mode.name}-${b.id}'),
       id: '${mode.name}-${b.id}',
       enabled: !_selecting,
-      start: b.read == BillRead.ok ? SwipeSide(archive ? Icons.unarchive_outlined : Icons.archive_outlined, archive ? t.markOpen : t.markDone, l.accent) : null,
+      start: b.read == BillRead.ok ? SwipeSide(archive ? Icons.unarchive_outlined : Icons.task_alt_rounded, archive ? t.markOpen : t.markDone, archive ? l.accent : Colors.green.shade600) : null,
       end: SwipeSide(Icons.delete_outline_rounded, t.delete, Colors.red.shade700),
       onDismissed: (dir) {
         if (dir == DismissDirection.startToEnd) {
@@ -652,7 +640,10 @@ class _HomeScreenState extends State<HomeScreen> {
             onDragEnd: (_) {
               if (mounted) setState(() => _dragging = false);
             },
-            feedback: _DragFeedback(width: MediaQuery.sizeOf(context).width - 2 * FasanSpace.l, count: moving.length, child: BillTile(bill: b, queue: queue, selecting: true, selected: true, onToggle: () {}, onRetry: () {})),
+            // small stack of receipts under the finger (Nutzer 04.11.): the targets below stay visible
+            feedback: _DragFeedback(bills: moving),
+            // above the finger: the target and its text stay readable
+            dragAnchorStrategy: (draggable, context, position) => const Offset(44, 120),
             childWhenDragging: Opacity(opacity: 0.35, child: tile),
             child: tile,
           ),
@@ -796,23 +787,123 @@ class _NavBar extends StatelessWidget {
   }
 }
 
-/// What follows the finger while bills are dragged: the bill, raised, with the number of bills when there are more.
+/// What follows the finger while bills are dragged: a small stack of the receipts with their number (Nutzer 04.11.:
+/// the full-width card covered where it would land).
 class _DragFeedback extends StatelessWidget {
-  const _DragFeedback({required this.width, required this.count, required this.child});
+  const _DragFeedback({required this.bills});
 
-  final double width;
-  final int count;
-  final Widget child;
+  final List<Bill> bills;
 
   @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: SizedBox(
-          width: width,
-          child: Transform.scale(
-            scale: 1.03,
-            child: Opacity(opacity: 0.92, child: Badge(isLabelVisible: count > 1, label: Text('$count'), child: child)),
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context);
+    final shown = bills.take(3).toList();
+    Widget card(Bill b) => Container(
+          width: 56,
+          height: 72,
+          decoration: BoxDecoration(
+            color: l.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: l.accent, width: 1.5),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 6))],
           ),
-        ),
-      );
+          clipBehavior: Clip.antiAlias,
+          child: imageExists(b.imagePath)
+              ? Image(image: ResizeImage(imageProvider(b.imagePath!), width: 120), fit: BoxFit.cover, gaplessPlayback: true)
+              : Icon(Icons.receipt_long_rounded, color: l.textMuted),
+        );
+    return Material(
+      color: Colors.transparent,
+      child: SizedBox(
+        width: 88,
+        height: 96,
+        child: Stack(clipBehavior: Clip.none, children: [
+          for (var i = shown.length - 1; i >= 0; i--)
+            Positioned(left: 6.0 * i, top: 4.0 * i, child: Transform.rotate(angle: (i - 1) * 0.06, child: card(shown[i]))),
+          if (bills.length > 1)
+            Positioned(
+              right: 0,
+              top: -6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(color: l.accent, borderRadius: BorderRadius.circular(12)),
+                child: Text('${bills.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              ),
+            ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// While bills are dragged the bottom bar becomes the drop targets (Nutzer 04.11.: „beim Verschieben auf den darunter
+/// liegenden Papierkorb muss er deutlich animiert zeigen, dass beim Loslassen gelöscht wird – systemweit die Regel“).
+/// The target under the finger grows, takes its colour and says what happens on release.
+class _DropDock extends StatelessWidget {
+  const _DropDock({required this.from, required this.onList, required this.onGroup});
+
+  final BillList from;
+  final void Function(List<Bill>, BillList) onList;
+  final void Function(List<Bill>) onGroup;
+
+  @override
+  Widget build(BuildContext context) {
+    final de = S.of(context).de, l = FasanLook.of(context);
+    final targets = <(IconData, String, String, Color, void Function(List<Bill>))>[
+      if (from != BillList.open) (Icons.inbox_rounded, de ? 'Offen' : 'Open', de ? 'Loslassen: wieder offen' : 'Release: open again', l.accent, (b) => onList(b, BillList.open)),
+      (Icons.folder_rounded, de ? 'Gruppe' : 'Group', de ? 'Loslassen: Gruppe wählen' : 'Release: choose a group', l.accent, onGroup),
+      if (from != BillList.archive) (Icons.task_alt_rounded, de ? 'Ausgleichen' : 'Settle', de ? 'Loslassen: bezahlt, ins Archiv' : 'Release: paid, to the archive', Colors.green.shade600, (b) => onList(b, BillList.archive)),
+      if (from != BillList.trash) (Icons.delete_rounded, de ? 'Papierkorb' : 'Trash', de ? 'Loslassen: in den Papierkorb' : 'Release: to the trash', Colors.red.shade600, (b) => onList(b, BillList.trash)),
+    ];
+    return Padding(
+      padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s + MediaQuery.paddingOf(context).bottom),
+      child: SizedBox(
+        height: l.minTap + 56,
+        child: Row(children: [
+          for (final (icon, label, action, color, drop) in targets)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: DragTarget<List<Bill>>(
+                  onWillAcceptWithDetails: (_) {
+                    FasanHaptics.of(context).tap(); // entering a target is felt
+                    return true;
+                  },
+                  onAcceptWithDetails: (d) => drop(d.data),
+                  builder: (context, cand, _) {
+                    final over = cand.isNotEmpty;
+                    final motion = FasanMotion.of(context);
+                    return AnimatedScale(
+                      duration: motion.short,
+                      curve: Curves.easeOutBack,
+                      scale: over ? 1.08 : 1,
+                      child: AnimatedContainer(
+                        duration: motion.short,
+                        curve: FasanCurves.short,
+                        decoration: BoxDecoration(
+                          color: over ? color : color.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(l.radius * 0.7),
+                          border: Border.all(color: color.withValues(alpha: over ? 1 : 0.5), width: 1.5),
+                        ),
+                        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          AnimatedScale(duration: motion.short, scale: over ? 1.25 : 1, child: Icon(icon, color: over ? Colors.white : color, size: 26)),
+                          const SizedBox(height: 4),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(over ? action : label,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                style: Theme.of(context).textTheme.labelSmall!.copyWith(color: over ? Colors.white : color, fontWeight: FontWeight.w700)),
+                          ),
+                        ]),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+        ]),
+      ),
+    );
+  }
 }

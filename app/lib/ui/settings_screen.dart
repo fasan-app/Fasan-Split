@@ -73,8 +73,7 @@ class SettingsScreen extends StatelessWidget {
         FasanSwitchTile(
           padded: true,
           secondary: const Icon(Icons.translate_rounded),
-          title: Text(t.setPlainNames),
-          subtitle: Text(t.setPlainNamesSub),
+          title: TitleHelp(t.setPlainNames, t.setPlainNamesSub),
           value: store.plainNames,
           onChanged: (v) => store.plainNames = v,
         ),
@@ -95,8 +94,7 @@ class SettingsScreen extends StatelessWidget {
         FasanSwitchTile(
           padded: true,
           secondary: const Icon(Icons.view_carousel_outlined),
-          title: Text(t.de ? 'Fokus und Karten beim Zuordnen' : 'Focus and cards when assigning'),
-          subtitle: Text(t.de ? 'Zusätzlich zu Bon und Liste.' : 'In addition to receipt and list.'),
+          title: TitleHelp(t.de ? 'Fokus und Karten beim Zuordnen' : 'Focus and cards when assigning', t.de ? 'Zusätzlich zu Bon und Liste.' : 'In addition to receipt and list.'),
           value: store.assignExtraModes,
           onChanged: (v) => store.assignExtraModes = v,
         ),
@@ -134,7 +132,7 @@ class SettingsScreen extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.palette_outlined),
           title: Text(t.appearance),
-          subtitle: Text(t.de ? 'Stil, Akzent, Schrift, Filmeffekte, Bewegung, Akku, Haptik, große Bedienung' : 'Style, accent, font, film effects, motion, battery, haptics, large controls'),
+          subtitle: Text(t.de ? 'Stil, Farbe, Schrift, Bewegung' : 'Style, colour, font, motion'),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FasanAppearancePage())),
         ),
         ListTile(
@@ -144,8 +142,7 @@ class SettingsScreen extends StatelessWidget {
         ),
         ListTile(
           leading: const Icon(Icons.school_outlined),
-          title: Text(t.setIntro),
-          subtitle: Text(t.setIntroSub),
+          title: TitleHelp(t.setIntro, t.setIntroSub),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingScreen())),
         ),
         ListTile(
@@ -178,21 +175,18 @@ class SettingsScreen extends StatelessWidget {
         ),
         ListTile(
           leading: const Icon(Icons.lock_outline_rounded),
-          title: Text(t.setLocal),
-          subtitle: Text(t.setLocalSub),
+          title: TitleHelp(t.setLocal, t.setLocalSub),
         ),
         ListTile(
           leading: const Icon(Icons.ios_share_rounded),
-          title: Text(t.setExport),
-          subtitle: Text(t.setExportSub),
+          title: TitleHelp(t.setExport, t.setExportSub),
           onTap: () => SharePlus.instance.share(ShareParams(files: [
             XFile.fromData(Uint8List.fromList(utf8.encode(store.exportJson())), mimeType: 'application/json', name: 'fasan-split-export.json'),
           ])),
         ),
         ListTile(
           leading: Icon(Icons.hide_image_outlined, color: Theme.of(context).colorScheme.error),
-          title: Text(t.setDeletePhotos),
-          subtitle: Text(t.setDeletePhotosSub),
+          title: TitleHelp(t.setDeletePhotos, t.setDeletePhotosSub),
           onTap: () async {
             if (await _confirm(context, t.setDeletePhotos, t.setDeletePhotosSub, t.delete) && context.mounted) {
               final n = StoreScope.read(context).removePhotos();
@@ -202,8 +196,7 @@ class SettingsScreen extends StatelessWidget {
         ),
         ListTile(
           leading: Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
-          title: Text(t.setDeleteAll),
-          subtitle: Text(t.setDeleteAllSub(store.bills.length)),
+          title: TitleHelp(t.setDeleteAll, t.setDeleteAllSub(store.bills.length)),
           onTap: () async {
             if (await _confirm(context, t.setDeleteAll, t.setDeleteAllSub(store.bills.length), t.delete) && context.mounted) {
               StoreScope.read(context).removeAll();
@@ -242,8 +235,7 @@ class SettingsScreen extends StatelessWidget {
         FasanSwitchTile(
           padded: true,
           secondary: const Icon(Icons.update_rounded),
-          title: Text(t.autoUpdate),
-          subtitle: Text(t.autoUpdateSub),
+          title: TitleHelp(t.autoUpdate, t.autoUpdateSub),
           value: store.autoUpdate,
           onChanged: (v) => store.autoUpdate = v,
         ),

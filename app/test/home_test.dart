@@ -105,9 +105,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400)); // lifted, selection started, no letting go
       await g.moveBy(const Offset(0, -20));
       await tester.pump(const Duration(milliseconds: 100));
-      expect(find.text('1 ausgewählt'), findsOneWidget);
-      await g.moveTo(tester.getCenter(find.text('Papierkorb')));
+      // while dragging: the app bar only says where to go, the targets sit below (Nutzer 04.11.)
+      expect(find.text('Auf ein Ziel unten ziehen'), findsOneWidget);
+      await g.moveTo(tester.getCenter(find.text('Papierkorb').last));
       await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Loslassen: in den Papierkorb'), findsOneWidget, reason: 'das Ziel sagt, was passiert');
       await g.up();
       await tester.pump(const Duration(milliseconds: 400));
       expect(store.bills.firstWhere((b) => b.id == 'b').trashedAt, isNotNull);

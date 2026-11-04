@@ -89,35 +89,59 @@ class BillTile extends StatelessWidget {
     if (subtitle != null) sub = subtitle!;
     // reading: date as soon as the first pass knows it, then the state
     if (bill.read == BillRead.reading && bill.receiptDate != null) sub = '$date · $sub';
+    final motion = FasanMotion.of(context);
+    // Selecting changes nothing in the layout (Nutzer 04.11.: the tile grew and all text jumped right for a check box):
+    // a check mark fades and scales in on the thumbnail, border and fill only change colour.
+    final Widget thumb = waiting || failed
+        ? _thumb(context)
+        : imageExists(bill.imagePath)
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image(image: ResizeImage(imageProvider(bill.imagePath!), width: 120), width: 34, height: 44, fit: BoxFit.cover, gaplessPlayback: true),
+              )
+            : SizedBox(width: 34, height: 44, child: Icon(failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted));
     Widget body(VoidCallback? open) => FasanDepth(
         radius: r,
-        level: selected ? 1 : 2,
+        level: 2,
         child: InkWell(
           borderRadius: BorderRadius.circular(r),
           onTap: selecting ? onToggle : open,
           onLongPress: selecting ? null : onLongPress,
-          child: Container(
+          child: AnimatedContainer(
+            duration: motion.short,
+            curve: FasanCurves.short,
             constraints: BoxConstraints(minHeight: l.minTap + 8),
             padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(r),
-              border: Border.all(color: selected ? l.accent : l.hairline, width: selected ? 2 : 1),
-              color: selected ? Color.alphaBlend(l.accent.withValues(alpha: 0.08), l.surface) : l.surface,
+              border: Border.all(color: selected ? l.accent : l.hairline, width: 1.5),
+              color: selected ? Color.alphaBlend(l.accent.withValues(alpha: 0.10), l.surface) : l.surface,
             ),
             child: Row(children: [
-              if (selecting) ...[
-                Icon(selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded, color: selected ? l.accent : l.textMuted),
-                const SizedBox(width: FasanSpace.m),
-              ],
-              if (waiting || failed)
-                _thumb(context)
-              else if (imageExists(bill.imagePath))
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image(image: ResizeImage(imageProvider(bill.imagePath!), width: 120), width: 34, height: 44, fit: BoxFit.cover, gaplessPlayback: true),
-                )
-              else
-                SizedBox(width: 34, height: 44, child: Icon(failed ? Icons.error_outline_rounded : Icons.receipt_outlined, color: l.textMuted)),
+              Stack(clipBehavior: Clip.none, children: [
+                AnimatedOpacity(duration: motion.short, opacity: selected ? 0.55 : 1, child: thumb),
+                // check mark at the lower right corner of the thumbnail, like photo pickers
+                Positioned(
+                  right: -6,
+                  bottom: -4,
+                  child: AnimatedScale(
+                    duration: motion.short,
+                    curve: Curves.easeOutBack,
+                    scale: selecting ? 1 : 0,
+                    child: AnimatedContainer(
+                      duration: motion.short,
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: selected ? l.accent : l.surface,
+                        border: Border.all(color: selected ? l.accent : l.textMuted, width: 1.5),
+                      ),
+                      child: selected ? const Icon(Icons.check_rounded, size: 14, color: Colors.white) : null,
+                    ),
+                  ),
+                ),
+              ]),
               const SizedBox(width: FasanSpace.m),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
