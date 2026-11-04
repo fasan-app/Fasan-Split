@@ -28,8 +28,17 @@ class CollabGroup {
   final GroupSecret secret;
   String localName; // name of the group in the bill list
   final GroupSession session;
-  final Invitations? invitations; // only the admin
-  bool get isAdmin => invitations != null;
+  Invitations? invitations; // admins only; made when someone becomes admin (CollabService._ensureInvitations)
+  bool get isAdmin => session.isAdmin;
+  StreamSubscription<NostrEvent>? rekeySub;
+}
+
+/// A change by someone else that concerns me and waits for my confirmation (trust settings).
+class HeldChange {
+  HeldChange(this.group, this.docId, this.entry);
+  final CollabGroup group;
+  final String docId;
+  final Entry entry;
 }
 
 /// An invitation we opened and wait for the admin's answer.
@@ -187,17 +196,17 @@ class CollabService extends ChangeNotifier {
     final me = await ensureIdentity();
     final relay = _relayFactory(secret.relays);
     final session = GroupSession(secret: secret, me: me.key, relay: relay);
-    final admin = me.pub == secret.adminPub;
-    final inv = admin ? Invitations(secret: secret, me: me.key, relay: relay) : null;
-    final g = CollabGroup(secret, local, session, inv);
+    final g = CollabGroup(secret, local, session, null);
+    session.acceptEntry = (docId, e) => _accept(g, docId, e);
     groups[secret.tag] = g;
     if (restoreDocs) _restoreDocs(g);
     _subs[secret.tag] = session.changes.listen((id) => _onDocChanged(g, id));
     session.start();
-    if (inv != null) {
-      inv.listen();
-      inv.changes.stream.listen((_) => notifyListeners());
-    }
+    _ensureInvitations(g);
+    // a new group key from an admin after someone was removed (rotateKey)
+    g.rekeySub = relay
+        .subscribe(Filter(kinds: const [kindData], tags: {'t': ['${secret.tag}:rekey'], 'p': [me.pub]}))
+        .listen((e) => _onRekey(g, e));
     if (!_storeListening) {
       _storeListening = true;
       store.addListener(_onStoreChanged);
@@ -285,8 +294,129 @@ class CollabService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeMember(CollabGroup g, String pub) {
+  /// Removes a member and gives everyone else a new group key, so the removed one cannot read anything new (04.11.).
+  Future<CollabGroup> removeMember(CollabGroup g, String pub) async {
     g.session.removeMember(pub);
+    await g.session.flush();
+    final ng = await rotateKey(g);
+    notifyListeners();
+    return ng;
+  }
+
+  /// Admin: makes a member admin too (or takes it back). Then the group keeps an admin when the founder leaves.
+  void setAdmin(CollabGroup g, String pub, bool admin) {
+    g.session.setAdmin(pub, admin);
+    notifyListeners();
+  }
+
+  /// Admin: new group key for everyone in the members list except me; they get it as a NIP-44 message bound to the old
+  /// group, then all documents move to the new key. Returns the group under its new key.
+  Future<CollabGroup> rotateKey(CollabGroup g) async {
+    final me = await ensureIdentity();
+    if (!g.isAdmin) throw StateError('only an admin rotates the key');
+    final s = g.secret;
+    final ns = GroupSecret(key: randomBytes(32), adminPub: s.adminPub, name: s.name, relays: s.relays);
+    final body = jsonEncode({'key': toHex(ns.key), 'name': ns.name, 'admin': ns.adminPub, 'relays': ns.relays});
+    for (final pub in g.session.memberKeys) {
+      if (pub == me.pub) continue;
+      final ev = NostrEvent.create(me.key, kind: kindData, tags: [['d', 'fs:${s.tag}:rekey:$pub'], ['t', '${s.tag}:rekey'], ['p', pub]], content: nip44Encrypt(body, nip44ConversationKey(me.key.priv, pub)));
+      await g.session.relay.publish(ev);
+    }
+    return _switchKey(g, ns);
+  }
+
+  void _onRekey(CollabGroup g, NostrEvent e) {
+    final me = identity;
+    if (me == null || !e.valid || !g.session.admins.contains(e.pubkey) || e.tag('d') != 'fs:${g.secret.tag}:rekey:${me.pub}') return;
+    try {
+      final j = jsonDecode(nip44Decrypt(e.content, nip44ConversationKey(me.key.priv, e.pubkey))) as Map<String, dynamic>;
+      final ns = GroupSecret(key: fromHex(j['key'] as String), adminPub: j['admin'] as String? ?? g.secret.adminPub, name: j['name'] as String? ?? g.secret.name, relays: [for (final r in j['relays'] as List) '$r']);
+      if (ns.adminPub != g.secret.adminPub || groups.containsKey(ns.tag)) return; // other group or already there
+      _switchKey(g, ns);
+    } catch (_) {
+      // not for us or damaged
+    }
+  }
+
+  /// Moves a group to a new key: new session, all documents copied (and published again), old session closed.
+  Future<CollabGroup> _switchKey(CollabGroup g, GroupSecret ns) async {
+    final ng = await _activate(ns, g.localName);
+    for (final id in g.session.docIds.toList()) {
+      ng.session.doc(id).merge(g.session.doc(id).entries);
+      ng.session.touch(id);
+    }
+    await g.rekeySub?.cancel();
+    await _subs.remove(g.secret.tag)?.cancel();
+    await g.session.close();
+    await g.invitations?.close();
+    groups.remove(g.secret.tag);
+    held.removeWhere((h) => h.group == g);
+    await _persistGroups();
+    saveDocs();
+    notifyListeners();
+    return ng;
+  }
+
+  void _ensureInvitations(CollabGroup g) {
+    if (!g.session.isAdmin || g.invitations != null) return;
+    final me = identity;
+    if (me == null) return;
+    final inv = Invitations(secret: g.secret, me: me.key, relay: g.session.relay);
+    g.invitations = inv;
+    inv.listen();
+    inv.changes.stream.listen((_) => notifyListeners());
+  }
+
+  // ---- trust (Nutzer 04.11.: block changes of others that concern me; default: trust everyone) ----
+
+  static const _kTrust = 'collab.trust';
+
+  Map<String, Object?> get _trust => (jsonDecode(prefs?.getString(_kTrust) ?? '{}') as Map).cast<String, Object?>();
+
+  /// Changes by anyone else that touch my shares, my person or the payer wait for me.
+  bool get confirmAll => _trust['all'] == true;
+  set confirmAll(bool v) {
+    prefs?.setString(_kTrust, jsonEncode({..._trust, 'all': v}));
+    notifyListeners();
+  }
+
+  /// Members whose changes about me wait for me.
+  Set<String> get distrusted => {...?(_trust['people'] as List?)?.cast<String>()};
+  void setTrusted(String pub, bool trusted) {
+    final p = distrusted;
+    trusted ? p.remove(pub) : p.add(pub);
+    prefs?.setString(_kTrust, jsonEncode({..._trust, 'people': p.toList()}));
+    notifyListeners();
+  }
+
+  /// Changes held back for my confirmation.
+  final List<HeldChange> held = [];
+
+  bool _accept(CollabGroup g, String docId, Entry e) {
+    final me = identity;
+    if (me == null || e.author == me.pub || !docId.startsWith('bill:')) return true;
+    if (!confirmAll && !distrusted.contains(e.author)) return true;
+    // which persons of this bill are me: my name or names linked to my key
+    final names = {store.me.trim().toLowerCase(), ...g.session.personsOf(me.pub).map((n) => n.toLowerCase())}..remove('');
+    final doc = g.session.doc(docId);
+    final mine = <String>{
+      for (final k in doc.keys('p/'))
+        if (doc.get(k) case final Map p when names.contains('${p['name']}'.trim().toLowerCase())) k.substring(2),
+    };
+    if (mine.isEmpty) return true;
+    final concerns = e.key == 'meta/payer' || mine.any((u) => e.key == 'p/$u' || (e.key.startsWith('s/') && e.key.endsWith('/$u')));
+    if (!concerns) return true;
+    if (!held.any((h) => h.docId == docId && h.entry.key == e.key && h.entry.ts == e.ts && h.entry.author == e.author)) {
+      held.add(HeldChange(g, docId, e));
+      scheduleMicrotask(notifyListeners);
+    }
+    return false;
+  }
+
+  /// Takes a held change (it is applied as if it had come in now) or drops it.
+  void decideHeld(HeldChange h, bool take) {
+    held.remove(h);
+    if (take && h.group.session.doc(h.docId).apply(h.entry)) _onDocChanged(h.group, h.docId);
     notifyListeners();
   }
 
@@ -352,6 +482,7 @@ class CollabService extends ChangeNotifier {
   void _onDocChanged(CollabGroup g, String id) {
     _scheduleSave();
     if (id == GroupSession.members || id == GroupSession.chat || id == GroupSession.notes) {
+      if (id == GroupSession.members) _ensureInvitations(g); // someone made me admin
       notifyListeners();
       return;
     }
@@ -407,6 +538,7 @@ class CollabService extends ChangeNotifier {
       s.cancel();
     }
     for (final g in groups.values) {
+      g.rekeySub?.cancel();
       g.session.close();
       g.invitations?.close();
     }

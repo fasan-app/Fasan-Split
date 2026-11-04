@@ -8,8 +8,11 @@
 //    admin key to the joiner key). Before approval a person with the link cannot read the group.
 // 5. Everyone publishes their copy of each document as an encrypted snapshot (ChaCha20-Poly1305 with K, bound to the d tag);
 //    everyone merges what the others publish (LwwDoc). Missed updates arrive with the next snapshot, no extra sync step.
-// Members trust each other: anyone who holds K can write. The member list is changed by the admin only. Removing a member:
-// the admin rotates K (next stage; until then „remove“ only stops their changes from being applied – shown in the app).
+// Members trust each other: anyone who holds K can write. The member list is changed by admins only: the founder (adminPub
+// in the secret, always admin) and members marked admin by an admin (m/<pub>.admin, 04.11.: the group survives when the
+// founder leaves). Removing a member: an admin rotates K (CollabService.rotateKey: new K, sent with NIP-44 to everyone
+// else as a „rekey“ event; the removed one cannot read anything new). Changes that concern me from people I do not trust
+// can be held back as suggestions (GroupSession.acceptEntry, CollabService trust settings).
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -159,7 +162,8 @@ class Invitations {
   /// Sends the welcome (group key) to an approved person. The caller also adds them to the members document.
   Future<bool> welcome(String pub) {
     final conv = nip44ConversationKey(me.priv, pub);
-    final body = nip44Encrypt(jsonEncode({'key': toHex(secret.key), 'name': secret.name, 'admin': me.pub, 'relays': secret.relays}), conv);
+    // 'admin' is the founder (the group's adminPub), also when another admin sends the welcome
+    final body = nip44Encrypt(jsonEncode({'key': toHex(secret.key), 'name': secret.name, 'admin': secret.adminPub, 'relays': secret.relays}), conv);
     final ev = NostrEvent.create(me, kind: kindData, tags: [['d', 'fs:${secret.tag}:welcome:$pub'], ['t', '${secret.tag}:welcome'], ['p', pub]], content: body);
     pending.remove(pub);
     changes.add(null);
@@ -200,7 +204,7 @@ class JoinFlow {
       if (!e.valid || e.pubkey != invite.adminPub || e.tag('d') != 'fs:${invite.tag}:welcome:${me.pub}') return;
       try {
         final j = jsonDecode(nip44Decrypt(e.content, nip44ConversationKey(me.priv, invite.adminPub))) as Map<String, dynamic>;
-        final g = GroupSecret(key: fromHex(j['key'] as String), adminPub: invite.adminPub, name: j['name'] as String? ?? invite.name, relays: [for (final r in j['relays'] as List) '$r']);
+        final g = GroupSecret(key: fromHex(j['key'] as String), adminPub: j['admin'] as String? ?? invite.adminPub, name: j['name'] as String? ?? invite.name, relays: [for (final r in j['relays'] as List) '$r']);
         if (g.tag != invite.tag) return; // not the group we asked for
         if (!c.isCompleted) c.complete(g);
         sub.cancel();
@@ -237,7 +241,17 @@ class GroupSession {
   /// Counters for the log and tests.
   int received = 0, rejected = 0, published = 0, failedPublishes = 0;
 
-  bool get isAdmin => me.pub == secret.adminPub;
+  bool get isAdmin => admins.contains(me.pub);
+
+  /// The founder and every member an admin marked as admin.
+  Set<String> get admins => {
+        secret.adminPub,
+        for (final k in doc(members).keys('m/'))
+          if (doc(members).get(k) case final Map m when m['admin'] == true) k.substring(2),
+      };
+
+  /// Filter for entries of others in the bill documents (trust, CollabService). Null = take all.
+  bool Function(String docId, Entry e)? acceptEntry;
 
   /// Fixed document ids.
   static const members = 'members', chat = 'chat', notes = 'notes';
@@ -267,8 +281,8 @@ class GroupSession {
     if (d == null || !d.startsWith(prefix)) return;
     final id = d.substring(prefix.length);
     final isMembersDoc = id == members;
-    // only members write (the members document itself only from the admin)
-    if (isMembersDoc && e.pubkey != secret.adminPub) {
+    // only members write (the members document itself only from an admin)
+    if (isMembersDoc && !admins.contains(e.pubkey)) {
       rejected++;
       return;
     }
@@ -280,9 +294,12 @@ class GroupSession {
     }
     try {
       final entries = LwwDoc.decode(aeadOpen(e.content, secret.key, d));
-      // the members document: only the admin's own entries count (entries about other keys cannot be forged by others)
-      // m/<pub> = member, l/admin = the admin's own person link (linkPerson); both only from the admin (see above)
-      final accepted = id == members ? entries.where((x) => x.key.startsWith('m/') || x.key == 'l/admin') : entries;
+      // the members document: only entries written by admins count (an admin's snapshot also carries the other admins'
+      // entries); m/<pub> = member, l/admin = the founder's own person link (linkPerson)
+      final adm = admins;
+      final accepted = id == members
+          ? entries.where((x) => (x.key.startsWith('m/') || x.key == 'l/admin') && adm.contains(x.author))
+          : (acceptEntry == null ? entries : entries.where((x) => x.author == me.pub || acceptEntry!(id, x)));
       if (doc(id).merge(accepted) > 0) _changes.add(id);
       if (isMembersDoc && _waiting.isNotEmpty) {
         final again = _waiting.toList();
@@ -387,6 +404,18 @@ class GroupSession {
       if (personsOf(k).contains(person)) return k;
     }
     return null;
+  }
+
+  /// Admin: makes a member admin too, or takes it back. The founder stays admin always.
+  void setAdmin(String pub, bool admin) {
+    if (!isAdmin) throw StateError('only the admin changes members');
+    if (pub == secret.adminPub) return;
+    final m = doc(members).get('m/$pub');
+    if (m is! Map) return;
+    final v = Map<String, Object?>.of(m.cast<String, Object?>());
+    admin ? v['admin'] = true : v.remove('admin');
+    doc(members).set('m/$pub', v);
+    touch(members);
   }
 
   void removeMember(String pub) {

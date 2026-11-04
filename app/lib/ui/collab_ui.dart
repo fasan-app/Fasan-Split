@@ -283,6 +283,15 @@ class _JoinScreenState extends State<JoinScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(t.joinGroup)),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
+        // trust (Nutzer 04.11.): default everyone; switch on to confirm changes of others about me
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          secondary: const Icon(Icons.verified_user_outlined),
+          title: Text(t.confirmAllTitle),
+          subtitle: Text(t.trustAboutMeSub),
+          value: CollabScope.of(context).confirmAll,
+          onChanged: (v) => CollabScope.read(context).confirmAll = v,
+        ),
         if (kIsWeb) const _WebAppHint(),
         Text(t.joinText, style: tt.bodyMedium),
         const SizedBox(height: FasanSpace.l),
@@ -509,17 +518,13 @@ class MembersScreen extends StatelessWidget {
               ListTile(
                 leading: CircleAvatar(child: Text(group.session.nameOf(k).characters.first.toUpperCase())),
                 title: Text(k == me ? '${group.session.nameOf(k)} (${t.you})' : group.session.nameOf(k)),
-                subtitle: Text([k == admin ? t.admin : k.substring(0, 12), if (group.session.personsOf(k) case final ps when ps.isNotEmpty) t.linkedTo(ps.join(', '))].join(' · ')),
-                onTap: group.isAdmin ? () => pickPersonFor(context, group, k) : null,
-                trailing: group.isAdmin && k != admin
-                    ? IconButton(
-                        tooltip: t.removeMember,
-                        icon: const Icon(Icons.person_remove_outlined),
-                        onPressed: () async {
-                          if (await confirmDialog(context, t.removeMember, group.session.nameOf(k), t.removeMember)) s.removeMember(group, k);
-                        },
-                      )
-                    : null,
+                subtitle: Text([
+                  k == admin ? t.founder : (group.session.admins.contains(k) ? t.admin : k.substring(0, 12)),
+                  if (group.session.personsOf(k) case final ps when ps.isNotEmpty) t.linkedTo(ps.join(', ')),
+                  if (s.distrusted.contains(k)) t.confirmsAboutMe,
+                ].join(' · ')),
+                trailing: k == me ? null : const Icon(Icons.more_vert_rounded),
+                onTap: k == me && !group.isAdmin ? null : () => _memberActions(context, group, k),
               ),
           ]);
         },
@@ -774,6 +779,8 @@ class CollabGroupPanel extends StatelessWidget {
           ActionChip(avatar: const Icon(Icons.group_outlined, size: 18), label: Text('${t.membersTitle} · ${g.session.memberKeys.length}'), onPressed: () => _open(context, MembersScreen(group: g))),
           ActionChip(avatar: const Icon(Icons.edit_note_rounded, size: 18), label: Text(t.notesTitle), onPressed: () => _open(context, NotesScreen(group: g))),
           ActionChip(avatar: const Icon(Icons.chat_bubble_outline_rounded, size: 18), label: Text(t.chatTitle), onPressed: () => _open(context, ChatScreen(group: g))),
+          if (CollabScope.of(context).held.where((h) => h.group.secret.tag == g.secret.tag).length case final n when n > 0)
+            ActionChip(avatar: const Icon(Icons.pending_actions_outlined, size: 18), label: Text('${t.heldTitle} · $n'), onPressed: () => _open(context, HeldChangesScreen(group: g))),
         ]),
       ),
     );
@@ -782,12 +789,95 @@ class CollabGroupPanel extends StatelessWidget {
   static void _open(BuildContext context, Widget page) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
 }
 
+/// What can be done with one member: link a person, give or take the admin role, trust, remove (with a new group key).
+Future<void> _memberActions(BuildContext context, CollabGroup g, String pub) async {
+  final t = S.of(context), s = CollabScope.read(context);
+  final me = s.identity?.pub, isFounder = pub == g.secret.adminPub, isAdm = g.session.admins.contains(pub);
+  final trusted = !s.distrusted.contains(pub);
+  final choice = await showModalBottomSheet<String>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: ListView(shrinkWrap: true, children: [
+        ListTile(title: Text(g.session.nameOf(pub), style: Theme.of(ctx).textTheme.titleMedium)),
+        if (g.isAdmin) ListTile(leading: const Icon(Icons.link_rounded), title: Text(t.linkPerson), onTap: () => Navigator.pop(ctx, 'link')),
+        if (g.isAdmin && !isFounder && pub != me)
+          ListTile(leading: Icon(isAdm ? Icons.remove_moderator_outlined : Icons.add_moderator_outlined), title: Text(isAdm ? t.takeAdmin : t.giveAdmin), onTap: () => Navigator.pop(ctx, 'admin')),
+        if (pub != me)
+          SwitchListTile(
+            secondary: const Icon(Icons.verified_user_outlined),
+            title: Text(t.trustAboutMe),
+            subtitle: Text(t.trustAboutMeSub),
+            value: trusted,
+            onChanged: (v) => Navigator.pop(ctx, v ? 'trust' : 'distrust'),
+          ),
+        if (g.isAdmin && !isFounder && pub != me)
+          ListTile(leading: Icon(Icons.person_remove_outlined, color: Colors.red.shade700), title: Text(t.removeMember), subtitle: Text(t.removeMemberSub), onTap: () => Navigator.pop(ctx, 'remove')),
+      ]),
+    ),
+  );
+  if (choice == null || !context.mounted) return;
+  switch (choice) {
+    case 'link':
+      await pickPersonFor(context, g, pub);
+    case 'admin':
+      s.setAdmin(g, pub, !isAdm);
+    case 'trust' || 'distrust':
+      s.setTrusted(pub, choice == 'trust');
+    case 'remove':
+      if (await confirmDialog(context, t.removeMember, '${g.session.nameOf(pub)}. ${t.removeMemberSub}', t.removeMember)) {
+        await s.removeMember(g, pub);
+        if (context.mounted) Navigator.of(context).maybePop(); // the group moved to its new key
+      }
+  }
+}
+
+/// Changes of others that concern me and wait for my answer (trust settings).
+class HeldChangesScreen extends StatelessWidget {
+  const HeldChangesScreen({super.key, required this.group});
+
+  final CollabGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context), s = CollabScope.of(context), store = StoreScope.of(context);
+    final list = s.held.where((h) => h.group.secret.tag == group.secret.tag).toList();
+    String what(HeldChange h) {
+      final id = h.docId.substring(5);
+      final bill = store.bills.where((b) => b.id == id).firstOrNull;
+      final kind = h.entry.key == 'meta/payer' ? t.heldPayer : (h.entry.key.startsWith('s/') ? t.heldShare : t.heldPerson);
+      return '${group.session.nameOf(h.entry.author)}: $kind · ${bill?.purpose ?? id}';
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: Text(t.heldTitle)),
+      body: ListView(padding: const EdgeInsets.all(FasanSpace.l), children: [
+        if (list.isEmpty) Text(t.heldNone),
+        for (final h in list)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(FasanSpace.m),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(what(h)),
+                const SizedBox(height: FasanSpace.s),
+                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  TextButton(onPressed: () => s.decideHeld(h, false), child: Text(t.heldDecline)),
+                  FilledButton(onPressed: () => s.decideHeld(h, true), child: Text(t.heldAccept)),
+                ]),
+              ]),
+            ),
+          ),
+      ]),
+    );
+  }
+}
+
 /// Leave a shared group, after asking. The admin is told that nobody can invite afterwards (handing over the admin role
 /// is not built yet, STAND A3).
 Future<void> leaveGroupFlow(BuildContext context, CollabGroup g) async {
   final t = S.of(context), s = CollabScope.read(context);
-  final text = g.isAdmin
-      ? '${t.leaveText} ${t.de ? 'Du verwaltest die Gruppe: danach kann niemand mehr einladen oder Mitglieder ändern.' : 'You manage this group: afterwards nobody can invite or change members.'}'
+  // only a warning when nobody else can manage the group afterwards (several admins, 04.11.)
+  final text = g.isAdmin && g.session.admins.length == 1
+      ? '${t.leaveText} ${t.de ? 'Du bist die einzige Verwaltung: gib die Verwaltung vorher in „Mitglieder“ weiter, sonst kann niemand mehr einladen.' : 'You are the only admin: hand it over in “Members” first, or nobody can invite any more.'}'
       : t.leaveText;
   if (!await confirmDialog(context, t.leaveGroup, text, t.leaveGroup)) return;
   await s.leave(g);
