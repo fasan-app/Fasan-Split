@@ -49,7 +49,7 @@ void main() {
     expect(parsed.tag, secret.tag);
     expect(parsed.name, 'Lissabon');
     expect(inv.link.contains(toHex(secret.key)), isFalse);
-    expect(utf8.decode(base64Url.decode(base64Url.normalize(inv.encode()))).contains(toHex(secret.key)), isFalse);
+    expect(toHex(base64Url.decode(base64Url.normalize(inv.encode()))).contains(toHex(secret.key)), isFalse);
     expect(Invite.parse('Quatsch'), isNull);
     final old = Invite(tag: 'x', secret: randomBytes(32), adminPub: 'a', relays: const [], expires: DateTime.now().subtract(const Duration(minutes: 1)), name: '');
     expect(old.expired, isTrue);

@@ -108,7 +108,7 @@ void main() {
             // the model stays consistent whatever was tapped
             for (final it in b.its) {
               for (final k in it.shares.keys) {
-                expect(k >= 0 && k < b.ps.length, isTrue, reason: '${e.key} $lang seed $seed step $step ($what): share of a person that is not there');
+                expect(k >= 0 && k < b.ps.length, isTrue, reason: '${e.key} $lang seed $seed step $step ($what): share of a person that is not there: shares=${it.shares} ps=${b.ps.map((p) => p.name).toList()} payer=${b.payer}');
               }
               expect(it.amount.abs() < 1 << 50, isTrue);
               expect(it.qty >= 1, isTrue, reason: '${e.key} $lang seed $seed step $step ($what): quantity ${it.qty}');

@@ -4,11 +4,9 @@
 import 'dart:async';
 
 import 'package:fasan_ui/fasan_ui.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:zxing2/qrcode.dart';
 
 import '../collab/activity.dart';
@@ -17,7 +15,6 @@ import '../collab/notes.dart';
 import '../collab/service.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
-import '../l10n_web.dart';
 import '../web_platform.dart';
 import '../l10n_groups.dart';
 import '../main.dart';
@@ -28,6 +25,9 @@ import '../model/bill.dart' show money;
 import 'groups.dart';
 import 'pairing_ui.dart';
 import 'marquee_text.dart';
+import 'join_screen.dart';
+// The screen an invitation link opens lives in join_screen.dart (exported here for the old imports).
+export 'join_screen.dart' show JoinScreen, AccountSafetyCard;
 
 const _kConsent = 'collab.consent';
 bool _consentInMemory = false; // used when there are no preferences (tests)
@@ -307,109 +307,6 @@ class PendingJoinCards extends StatelessWidget {
   }
 }
 
-/// Opens an invitation link (typed, pasted or from the link that started the app).
-class JoinScreen extends StatefulWidget {
-  const JoinScreen({super.key, this.prefill});
-
-  final String? prefill;
-
-  @override
-  State<JoinScreen> createState() => _JoinScreenState();
-}
-
-class _JoinScreenState extends State<JoinScreen> {
-  late final TextEditingController _link = TextEditingController(text: widget.prefill ?? '');
-  final TextEditingController _name = TextEditingController();
-  String? _error;
-  bool _busy = false, _sent = false;
-  String? _tag; // group we asked to join: open it as soon as the welcome arrives (auto-approved invites, 04.11.)
-  CollabService? _service;
-
-  @override
-  void initState() {
-    super.initState();
-    _service = CollabScope.read(context)..addListener(_onService);
-    // prefilled: the account name, else „Das bin ich“ (Angi 04.11. did not find where to put her name)
-    final n = CollabScope.read(context).identity?.name ?? '';
-    _name.text = n.isNotEmpty ? n : StoreScope.read(context).me;
-  }
-
-  void _onService() {
-    final g = _tag == null ? null : _service?.groups[_tag];
-    if (g == null || !mounted) return;
-    _tag = null;
-    final nav = Navigator.of(context);
-    nav.popUntil((r) => r.isFirst);
-    nav.push(MaterialPageRoute(
-        builder: (_) => g.secret.direct ? ChatScreen(group: g) : GroupScreen(name: g.localName, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)))));
-  }
-
-  @override
-  void dispose() {
-    _service?.removeListener(_onService);
-    _link.dispose();
-    _name.dispose();
-    super.dispose();
-  }
-
-  Future<void> _paste() async {
-    final d = await Clipboard.getData(Clipboard.kTextPlain);
-    if (d?.text != null) _link.text = d!.text!.trim();
-  }
-
-  Future<void> _send() async {
-    final t = S.of(context), s = CollabScope.read(context);
-    final text = _link.text.trim();
-    if (text.isEmpty) return;
-    if (!await ensureConsent(context, s) || !mounted) return;
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    final err = await s.join(text, _name.text);
-    if (!mounted) return;
-    final msg = switch (err) {
-      null => null,
-      'invalid' => t.joinBad,
-      'expired' => t.joinExpired,
-      'member' => t.joinMember,
-      _ => t.joinNoSend,
-    };
-    setState(() {
-      _busy = false;
-      _sent = err == null;
-      _error = msg;
-    });
-    if (err == null) {
-      _tag = Invite.parse(text)?.tag;
-      scheduleMicrotask(_onService); // open link: the group is already there
-      clearJoinCode(); // the request is out: the code may leave the tab now
-      pendingInviteLink = null;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = S.of(context), tt = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(title: Text(Invite.parse(_link.text)?.direct == true ? (t.de ? 'Verbinden' : 'Connect') : t.joinGroup)),
-      body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
-        if (kIsWeb) const _WebAppHint(),
-        Text(t.joinText, style: tt.bodyMedium),
-        const SizedBox(height: FasanSpace.l),
-        TextField(controller: _link, minLines: 1, maxLines: 3, decoration: InputDecoration(labelText: t.joinLink)),
-        Align(alignment: Alignment.centerLeft, child: TextButton.icon(icon: const Icon(Icons.content_paste_rounded), label: Text(t.joinPaste), onPressed: _paste)),
-        const SizedBox(height: FasanSpace.s),
-        TextField(controller: _name, textCapitalization: TextCapitalization.words, decoration: InputDecoration(labelText: t.joinName)),
-        const SizedBox(height: FasanSpace.l),
-        if (_error != null) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
-        if (_sent) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text(t.joinSent, style: tt.bodyMedium)),
-        FilledButton(onPressed: _busy || _sent ? null : _send, child: Text(t.joinSend)),
-      ]),
-    );
-  }
-}
-
 /// Admin: choose which person of the group's bills a member is (or unlink). Names come from the bills and the people
 /// added by hand (BillStore.groupMembers).
 Future<void> pickPersonFor(BuildContext context, CollabGroup g, String pub) async {
@@ -434,43 +331,6 @@ Future<void> pickPersonFor(BuildContext context, CollabGroup g, String pub) asyn
   if (choice == null) return;
   // tap toggles: a linked name is unlinked, another one is added (a member can have several spellings)
   cur.contains(choice) ? s.unlinkPerson(g, pub, choice) : s.linkPerson(g, pub, choice);
-}
-
-/// Browser only: says what the web app can do and offers the Android app. „In der App öffnen“ uses the old scheme
-/// fasansplit://join, which the installed app always handles (the https App Link needs assetlinks.json, docs/WEB.md).
-class _WebAppHint extends StatelessWidget {
-  const _WebAppHint();
-
-  static final _apk = Uri.parse('https://github.com/fasan-app/Fasan-Split/releases/tag/neueste');
-
-  @override
-  Widget build(BuildContext context) {
-    final t = S.of(context), l = FasanLook.of(context);
-    final code = context.findAncestorStateOfType<_JoinScreenState>()?._link.text ?? '';
-    final i = code.indexOf('#');
-    return Container(
-      margin: const EdgeInsets.only(bottom: FasanSpace.l),
-      padding: const EdgeInsets.all(FasanSpace.m),
-      decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.7)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(t.webHint, style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: FasanSpace.s),
-        Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [
-          if (i >= 0)
-            FilledButton.tonalIcon(
-              icon: const Icon(Icons.open_in_new_rounded),
-              label: Text(t.webOpenApp),
-              onPressed: () => launchUrl(Uri.parse('fasansplit://join${code.substring(i)}')),
-            ),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.android_rounded),
-            label: Text(t.webGetApp),
-            onPressed: () => launchUrl(_apk, mode: LaunchMode.externalApplication),
-          ),
-        ]),
-      ]),
-    );
-  }
 }
 
 /// Invitation for this group (admin only): QR code, link, requests to accept or decline, revoke.

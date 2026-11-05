@@ -211,7 +211,9 @@ class PeoplePicker extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
       Wrap(spacing: 8, runSpacing: 8, children: [
         for (var i = 0; i < bill.ps.length; i++)
-          Builder(
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width - 2 * FasanSpace.l),
+            child: FittedBox(fit: BoxFit.scaleDown, child: Builder(
             builder: (ctx) => FasanPersonChip(
               name: bill.ps[i].name,
               index: bill.ps[i].color,
@@ -230,6 +232,7 @@ class PeoplePicker extends StatelessWidget {
                 _menu(context, i, box.localToGlobal(Offset(box.size.width / 2, box.size.height)));
               },
             ),
+          )),
           ),
         ChoiceChip(
           label: Text(t.everyone),

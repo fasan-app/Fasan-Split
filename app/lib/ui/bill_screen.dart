@@ -205,8 +205,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   void _tapItem(BillItem it) {
-    final a = _active;
+    // the active person may have been removed in the item sheet meanwhile: then it is just a tap on the item
+    final a = _active != null && _active! < b.ps.length ? _active : null;
     if (a == null) {
+      _active = null;
       _openItem(it);
       return;
     }

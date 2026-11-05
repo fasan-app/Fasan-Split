@@ -333,6 +333,17 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (aufgeräumt 04.11. abends; die einzige Liste, die gepflegt wird)
 
+### Einladung, Beitritt, Konto-Hinweis (05.11. nachts)
+Erledigt (Branch `mitarbeit/erkennung-und-ein-bildschirm`, nicht auf main): Link v2 mit Prüfsumme und nachsichtigem Parser, Landing-Seite
+`join/index.html` (prüft den Code, Einfügefeld), neuer Beitrittsbildschirm `ui/join_screen.dart` (wer lädt wohin ein, Schritte, Status
+„verbunden“, Konto-Sicherung gleich danach), Home-Hinweis zur Kontosicherung (`AccountSafetyCard`, bis Sicherung oder „später“),
+sofortiges Speichern beim Beitritt, `wake()` beim Zurückkehren. Tests: `join_screen_test`, `invite_format_test`, `join_flaky_test`.
+Zufallstest fand zwei echte Fehler (Personen-Chip lief bei langen Namen über; aktive Person blieb nach Entfernen im Blatt stehen) – behoben.
+Gesamtlauf: 298 Tests grün. SROIE 0–60: 55/60 Summe richtig (wie vorher), 1 falsch als „geprüft“ gemeldet.
+Plattformgrenzen des Browsers: `docs/WEB-GRENZEN.md`.
+Nicht geprüft: echtes iPhone, Messenger-In-App-Browser, Web-E2E mit dem neuen Bundle (Build liegt bereit, Lauf steht aus).
+
+
 Alles Unerledigte aus dem Verlauf unten steht hier. Erledigtes wandert mit Datum in den Verlauf. Priorität: erst was
 Einladen, Gruppen und Freunde blockiert (Nutzer 04.11.: „muss sofort funktionieren“), dann Bedienung, dann Neues.
 

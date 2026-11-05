@@ -521,7 +521,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? UpdateBanner(info: _update!, onClose: () => setState(() => _update = null))
                 : store.backupDue
                     ? const BackupReminder()
-                    : kIsWeb && !store.hintDone('homescreen') && needsHomeScreenHint()
+                    // a fresh account that was never saved: say how to keep it (friends asked „what if I close the browser?“)
+                    : CollabScope.of(context).identity != null && store.lastBackup == null && !store.hintDone('accountSafe')
+                        ? AccountSafetyCard(compact: true, onDone: () => store.hintDismiss('accountSafe'))
+                        : kIsWeb && !store.hintDone('homescreen') && needsHomeScreenHint()
                         ? HomeScreenHint(onClose: () => store.hintDismiss('homescreen'))
                         : null;
     if (empty) {

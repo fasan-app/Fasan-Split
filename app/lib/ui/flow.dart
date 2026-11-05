@@ -61,18 +61,7 @@ bool addPersonTo(Bill b, String name) {
 }
 
 /// Removes person [i]; shares and payer move with the indices.
-void removePersonFrom(Bill b, int i) {
-  b.ps.removeAt(i);
-  for (final it in b.its) {
-    it.shares = {for (final e in it.shares.entries) if (e.key != i) (e.key > i ? e.key - 1 : e.key): e.value};
-  }
-  if (b.payer == i) {
-    b.payer = null;
-  } else if (b.payer != null && b.payer! > i) {
-    b.payer = b.payer! - 1;
-  }
-  b.paid = {for (final e in b.paid.entries) if (e.key != i) (e.key > i ? e.key - 1 : e.key): e.value};
-}
+void removePersonFrom(Bill b, int i) => b.removePerson(i);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // 4. who paid + result

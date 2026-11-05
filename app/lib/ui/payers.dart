@@ -123,7 +123,7 @@ class _PayersSheetState extends State<_PayersSheet> {
           const SizedBox(height: FasanSpace.s),
           Wrap(spacing: 6, runSpacing: 6, children: [
             for (var i = 0; i < b.ps.length; i++)
-              FasanPersonChip(name: b.ps[i].name, index: b.ps[i].color, selected: _multi ? b.paid.containsKey(i) : b.payer == i, onTap: () => _toggle(i)),
+              ConstrainedBox(constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width - 2 * FasanSpace.l), child: FittedBox(fit: BoxFit.scaleDown, child: FasanPersonChip(name: b.ps[i].name, index: b.ps[i].color, selected: _multi ? b.paid.containsKey(i) : b.payer == i, onTap: () => _toggle(i)))),
           ]),
           Align(
             alignment: Alignment.centerLeft,
