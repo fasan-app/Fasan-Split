@@ -61,7 +61,12 @@ String _dot(int cents) => '${cents ~/ 100}.${(cents % 100).toString().padLeft(2,
 
 /// Text of the SEPA transfer QR for [cents] euros to [name] / [iban] with the transfer text [text].
 String epcPayload({required String name, required String iban, required int cents, String text = ''}) {
-  String cut(String s, int n) => s.length <= n ? s : s.substring(0, n);
+  // The payload is LF separated: a line break (or other control character) in a name or text would shift every field after it.
+  String cut(String s, int n) {
+    final clean = s.replaceAll(RegExp(r'[\u0000-\u001f\u007f]+'), ' ').trim();
+    return clean.length <= n ? clean : String.fromCharCodes(clean.runes.take(n));
+  }
+
   return [
     'BCD',
     '002',
@@ -80,7 +85,11 @@ String epcPayload({required String name, required String iban, required int cent
 /// PayPal.Me link with amount and currency.
 Uri paypalUri(String name, int cents, String currency) => Uri.parse('https://paypal.me/$name/${_dot(cents)}${currency.toUpperCase()}');
 
-Uri bitcoinUri(String address, {String label = ''}) =>
-    Uri.parse('bitcoin:${address.trim()}${label.isEmpty ? '' : '?label=${Uri.encodeQueryComponent(label)}'}');
-Uri moneroUri(String address, {String name = ''}) =>
-    Uri.parse('monero:${address.trim()}${name.isEmpty ? '' : '?recipient_name=${Uri.encodeQueryComponent(name)}'}');
+// Query values are percent-encoded per RFC 3986 (UTF-8 bytes, a space is %20). NOT Uri.encodeQueryComponent: it writes a space as
+// „+“, and neither BIP 21 (example `message=Donation%20for%20project%20xyz`, „percent-encoded as described in RFC 3986“) nor the
+// Monero parser (wallet2::parse_uri → convert_from_url_format, decodes only %xx; docs/URI_SCHEME.md: „Spaces must be … %20“)
+// turns „+“ back into a space – the wallet would show „Angi+Muster“. Read 05.11. in bitcoin/bips and monero-project/monero.
+String _q(String v) => Uri.encodeComponent(v.trim());
+
+Uri bitcoinUri(String address, {String label = ''}) => Uri.parse('bitcoin:${address.trim()}${label.trim().isEmpty ? '' : '?label=${_q(label)}'}');
+Uri moneroUri(String address, {String name = ''}) => Uri.parse('monero:${address.trim()}${name.trim().isEmpty ? '' : '?recipient_name=${_q(name)}'}');

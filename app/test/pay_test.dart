@@ -1,4 +1,6 @@
 // Fasan Split – payment helpers (model/pay.dart). MPL-2.0
+import 'dart:math';
+
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
@@ -38,5 +40,50 @@ void main() {
     expect(hub.stored.any((e) => e.content.contains('AngiM')), isFalse, reason: 'auf dem Relay nur verschlüsselt');
     a.dispose();
     b.dispose();
+  });
+
+  /// What a wallet does with the query: split at & and =, percent-decode only (as Bitcoin per RFC 3986 / BIP 21 and Monero's
+  /// convert_from_url_format do – „+“ stays „+“).
+  Map<String, String> walletParse(Uri u) {
+    final raw = u.toString();
+    final q = raw.contains('?') ? raw.substring(raw.indexOf('?') + 1) : '';
+    String dec(String v) => Uri.decodeComponent(v);
+    return {for (final kv in q.split('&').where((x) => x.isNotEmpty)) dec(kv.split('=').first): dec(kv.substring(kv.indexOf('=') + 1))};
+  }
+
+  test('Bitcoin/Monero-Link: Leerzeichen als %20 (nie +), Name kommt in der Wallet unverändert an', () {
+    const addr = '175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W';
+    expect(bitcoinUri(addr, label: 'Angi Muster').toString(), 'bitcoin:$addr?label=Angi%20Muster');
+    expect(moneroUri('44AFFq5kSiGBoZ', name: 'Angi Muster').toString(), 'monero:44AFFq5kSiGBoZ?recipient_name=Angi%20Muster');
+    expect(bitcoinUri(' $addr ').toString(), 'bitcoin:$addr', reason: 'no name: no query');
+    expect(bitcoinUri(addr, label: '  ').toString(), 'bitcoin:$addr');
+    expect(walletParse(bitcoinUri(addr, label: 'Jörg & Co = 100% + #1?')), {'label': 'Jörg & Co = 100% + #1?'});
+  });
+
+  test('Bitcoin/Monero-Link: 2000 zufällige Namen bleiben beim Dekodieren gleich, keine Steuerzeichen im Link', () {
+    final r = Random(7);
+    const pieces = ['a', 'Z', '7', ' ', '+', '&', '=', '#', '?', '%', '/', 'ä', 'ß', '€', '😀', '你', '"', "'", '<', '>', '\\'];
+    for (var i = 0; i < 2000; i++) {
+      final name = [for (var k = 0; k < 1 + r.nextInt(12); k++) pieces[r.nextInt(pieces.length)]].join();
+      if (name.trim().isEmpty) continue;
+      final b = bitcoinUri('bc1qexample', label: name), m = moneroUri('44Aexample', name: name);
+      expect(walletParse(b), {'label': name.trim()}, reason: 'bitcoin „$name“');
+      expect(walletParse(m), {'recipient_name': name.trim()}, reason: 'monero „$name“');
+      final query = b.toString().substring(b.toString().indexOf('?') + 1);
+      expect(query.substring('label='.length).contains(RegExp(r'[&=# +?]')), isFalse, reason: 'raw separator in value „$query“');
+    }
+  });
+
+  test('SEPA-QR: Zeilenumbrüche und Steuerzeichen in Name und Text verschieben keine Felder', () {
+    final q = epcPayload(name: 'Angi\nMuster\r\n', iban: 'DE89370400440532013000', cents: 5, text: 'Zeile1\nZeile2\t\u0000x');
+    final lines = q.split('\n');
+    expect(lines.length, 11, reason: 'always 11 fields');
+    expect(lines[5], 'Angi Muster');
+    expect(lines[6], 'DE89370400440532013000');
+    expect(lines[7], 'EUR0.05');
+    expect(lines[10], 'Zeile1 Zeile2 x');
+    // over-long values are cut in characters, not in the middle of a surrogate pair
+    final long = epcPayload(name: '😀' * 100, iban: 'DE89370400440532013000', cents: 100);
+    expect(long.split('\n')[5].runes.length, 70);
   });
 }

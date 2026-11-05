@@ -108,8 +108,11 @@ class ScanQueue extends ChangeNotifier {
     final live = ScanLive();
     _live = live;
     notifyListeners();
-    late StreamSubscription<ScanEvent> sub;
-    sub = _recognize(photo).listen((e) async {
+    // Events are handled one after the other, and „done“ is only reported after the last handler has finished: the ScanDone
+    // handler is async (it builds the bill), and the stream ending must not let the queue move on – or say „nothing open“ –
+    // before the result is in the store (found by the stress test `scan_queue_test.dart`).
+    var chain = Future<void>.value();
+    Future<void> handle(ScanEvent e) async {
       switch (e) {
         case ScanProgress():
           stage = e.stage;
@@ -170,11 +173,28 @@ class ScanQueue extends ChangeNotifier {
           _fail(placeholder);
           if (!done.isCompleted) done.complete();
       }
-    }, onError: (_) {
-      _fail(placeholder);
-      if (!done.isCompleted) done.complete();
+    }
+
+    late StreamSubscription<ScanEvent> sub;
+    sub = _recognize(photo).listen((e) {
+      chain = chain.then((_) => handle(e)).catchError((Object _) {
+        _fail(placeholder);
+        if (!done.isCompleted) done.complete();
+      });
+    }, onError: (Object _) {
+      chain = chain.then((_) {
+        _fail(placeholder);
+        if (!done.isCompleted) done.complete();
+      });
     }, onDone: () {
-      if (!done.isCompleted) done.complete();
+      // the stream ended: wait for the handlers; if it ended without a result or an error, the bill failed (never „reading“ for ever)
+      chain.whenComplete(() {
+        if (!done.isCompleted) {
+          final cur = store.bills.where((x) => x.id == placeholder.id).firstOrNull;
+          if (cur != null && cur.read == BillRead.reading) _fail(placeholder);
+          done.complete();
+        }
+      });
     });
     await done.future;
     await sub.cancel();
