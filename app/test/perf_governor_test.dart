@@ -24,7 +24,9 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     var now = DateTime(2026, 11, 5);
     final ui = SplitController();
-    final g = PerfGovernor(ui, prefs, now: () => now)..start();
+    final g = PerfGovernor(ui, prefs, now: () => now);
+    expect(g.mode, PerfMode.light, reason: 'default is maximum performance');
+    await g.setMode(PerfMode.auto);
     expect(ui.level, FasanPowerLevel.full);
     g.feed(_ms(10, 300)); // warm-up: ignored
     expect(ui.tier, PerfTier.good);
@@ -40,6 +42,7 @@ void main() {
     // next start: remembered, no probing needed
     final ui2 = SplitController();
     final g2 = PerfGovernor(ui2, prefs, now: () => now)..start();
+    expect(g2.mode, PerfMode.auto);
     expect(ui2.tier, PerfTier.slow);
     g2.dispose();
 

@@ -346,6 +346,8 @@ Bewegung (Idle 8 Bilder/s auch im Sparmodus). Jetzt: höchstens 1 Text gleichzei
 Idle Startseite im Sparmodus 57–60 Bilder/s (CPU 4× gedrosselt: 60), Bon-Bildschirm 61. „Alle Effekte“ bleibt im Browser bei ca. 7 Bildern/s
 (Blur + bewegter Hintergrund, Software-Rendering) – deshalb schaltet die Automatik dort ab. Folge: im Browser sieht es dann ruhiger aus
 als in der Handy-App (kein Glas-Blur). Messskripte: /home/user/tools/perf/{seed,run2}.js (nicht im Repo).
+Beschluss Nutzer 05.11. abends: Grundeinstellung ist „Sparsam“ (maximale Leistung: kein Blur, kein bewegter Hintergrund, kein Korn, keine Laufschrift);
+„Automatisch“ und „Alle Effekte“ in Einstellungen → Leistung zuschaltbar. Gilt für App und Browser, auch für bestehende Installationen.
 Offen: Schwellen (24/45 ms) sind eigene Wahl, nicht auf echten alten Geräten geprüft; Messskript `/home/user/tools/perf/run.js` (nicht im Repo);
 echte Bon-Liste im Browser nicht gemessen (nur Start-/Einführungsbildschirm); Renderer `--wasm`/skwasm nicht ausprobiert.
 

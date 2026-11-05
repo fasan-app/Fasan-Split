@@ -20,7 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum PerfTier { good, slow, veryslow }
 
-/// What the user chose in the settings: automatic (default), always full effects, always light.
+/// What the user chose in the settings: light (default: maximum performance), automatic (measures at the start), always full effects.
 enum PerfMode { auto, full, light }
 
 /// Classifies frame times (microseconds, build + raster). Pure function, tested without a device.
@@ -78,7 +78,7 @@ class PerfGovernor {
   int _seen = 0;
   bool _running = false;
 
-  PerfMode get mode => PerfMode.values.firstWhere((m) => m.name == prefs.getString(_kMode), orElse: () => PerfMode.auto);
+  PerfMode get mode => PerfMode.values.firstWhere((m) => m.name == prefs.getString(_kMode), orElse: () => PerfMode.light); // default: maximum performance (Nutzer 05.11.), effects are opt-in
 
   Future<void> setMode(PerfMode m) async {
     await prefs.setString(_kMode, m.name);
