@@ -17,6 +17,7 @@ Future<void> showItemSheet(BuildContext context, Bill bill, BillItem item, {requ
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      showDragHandle: true,
       builder: (_) => _ItemSheet(bill: bill, item: item, changed: changed, onDelete: onDelete, signContext: context),
     );
 

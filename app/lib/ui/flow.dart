@@ -25,6 +25,7 @@ import 'diagnose.dart';
 
 // The bill screen (total, people, who paid, items) lives in bill_screen.dart; ReviewScreen is its name here for the old imports.
 import 'bill_screen.dart' show ReviewScreen;
+import 'marquee_text.dart';
 export 'bill_screen.dart' show ReviewScreen;
 
 /// „Bon neu lesen“: after asking, the newest recognition reads the original photo again (ScanQueue.reread).
@@ -253,7 +254,7 @@ class _AuditLine extends StatelessWidget {
             for (var n = 0; n < bill.its.length; n++)
               if (bill.partsOf(n)[p] case final c? when c != 0)
                 Row(children: [
-                  Expanded(child: Text(bill.its[n].title, style: tt.bodySmall, overflow: TextOverflow.ellipsis)),
+                  Expanded(child: MarqueeText(bill.its[n].title, style: tt.bodySmall)),
                   Text('${money(c, de: t.de)} ${billSign(context, bill)}', style: tt.bodySmall),
                 ]),
           ],

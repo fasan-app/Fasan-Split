@@ -6,7 +6,9 @@ import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/model/bill.dart';
 import 'package:fasan_split/state/store.dart';
+import 'package:fasan_split/ui/common.dart' show ItemTitle;
 import 'package:fasan_split/ui/flow.dart';
+import 'package:fasan_split/ui/marquee_text.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -247,4 +249,85 @@ void main() {
     expect(g2.invitations!.open.any((i) => i.person == 'Angi'), isFalse);
     await tester.pump(const Duration(seconds: 12));
   });
+
+  testWidgets('Posten wischen: rechts = für alle / niemand (die Zeile federt zurück und bleibt), links = löschen mit Rückgängig', (tester) async {
+    final b = _bill(people: ['Anna', 'Jo', 'Mia']);
+    await _pump(tester, b);
+    await tester.drag(find.text('Pizza'), const Offset(600, 0));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(b.its.map((i) => i.name), ['Pizza', 'Wine'], reason: 'the row is still there');
+    expect(b.its[0].shares.keys.toSet(), {0, 1, 2}, reason: 'everyone has it');
+    expect(find.text('Pizza'), findsOneWidget);
+    await tester.drag(find.text('Pizza'), const Offset(600, 0));
+    await tester.pumpAndSettle();
+    expect(b.its[0].shares, isEmpty, reason: 'swiping again: nobody');
+    // delete to the left, undo
+    await tester.drag(find.text('Wine'), const Offset(-600, 0));
+    await tester.pumpAndSettle();
+    expect(b.its.map((i) => i.name), ['Pizza']);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(b.its.map((i) => i.name), ['Pizza', 'Wine']);
+    // many swipes in a row do not break anything
+    for (var i = 0; i < 12; i++) {
+      await tester.drag(find.text('Wine'), Offset(i.isEven ? 500 : 80, 0));
+      await tester.pumpAndSettle(); // the row springs back before the next swipe
+    }
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Wischen ohne Personen: freundlicher Hinweis statt Fehler', (tester) async {
+    final b = _bill();
+    await _pump(tester, b);
+    await tester.drag(find.text('Pizza'), const Offset(600, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Add at least two people.'), findsOneWidget);
+    expect(b.its[0].shares, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Person lang drücken: hat bezahlt, alle offenen Posten, vom Bon entfernen', (tester) async {
+    final b = _bill(people: ['Anna', 'Jo']);
+    await _pump(tester, b);
+    await tester.longPress(find.byKey(const ValueKey('person-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Paid'));
+    await tester.pumpAndSettle();
+    expect(b.payer, 1);
+    await tester.longPress(find.byKey(const ValueKey('person-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('All open items'));
+    await tester.pumpAndSettle();
+    expect(b.its.every((i) => (i.shares[0] ?? 0) > 0), isTrue);
+    await tester.longPress(find.byKey(const ValueKey('person-0')));
+    await tester.pumpAndSettle();
+    expect(find.text('All open items'), findsOneWidget);
+    await tester.tap(find.text('Remove from receipt'));
+    await tester.pumpAndSettle();
+    expect(b.ps.map((p) => p.name), ['Jo']);
+    expect(b.payer, 0, reason: 'Jo moved up and is still the payer');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Sehr langer Postenname: läuft als Laufschrift, Antippen öffnet das Blatt, Wischen nach rechts ordnet allen zu', (tester) async {
+    final b = _bill(people: ['Anna', 'Jo']);
+    b.its[0].name = 'Gin Tonico Martini Bianco mit Zitrone, Eis, Rosmarin und einem sehr langen Namen der nicht passt';
+    await _pump(tester, b);
+    expect(find.byType(ShaderMask), findsWidgets, reason: 'the long name fades out at the edge instead of ending in „…“');
+    final longName = find.descendant(of: find.byType(ItemTitle).first, matching: find.byType(MarqueeText)).last; // the receipt name under the plain name
+    await tester.tap(longName); // the visible part, where a finger would hit
+    await tester.pumpAndSettle();
+    expect(find.text('Who had this?'), findsOneWidget, reason: 'a tap on the long name opens the sheet');
+    await tester.tap(find.text('Done').last);
+    await tester.pumpAndSettle();
+    await tester.drag(longName, const Offset(600, 0));
+    await tester.pumpAndSettle();
+    expect(b.its[0].shares.keys.toSet(), {0, 1}, reason: 'the swipe on the long name reaches the row');
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 12)); // the marquee plays and rests without errors
+    expect(tester.takeException(), isNull);
+  });
 }
+

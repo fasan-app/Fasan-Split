@@ -90,4 +90,10 @@ const Map<String, String> stringsEn = {
   'check.setTotal': 'Set total to {0}',
   'check.addRemainder': 'Add {0} as “{1}”, shared proportionally',
   'check.noTotal': 'No total entered.',
+  // --- swipe and long-press menus ---
+  'item.swipeAll': 'Everyone',
+  'item.swipeNone': 'Nobody',
+  'person.setPayer': 'Paid',
+  'person.allOpen': 'All open items',
+  'person.remove': 'Remove from receipt',
 };

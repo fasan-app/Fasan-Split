@@ -19,6 +19,7 @@ import 'common.dart';
 import 'my_balance.dart';
 import 'pay_ui.dart';
 import 'swipe.dart';
+import 'marquee_text.dart';
 
 /// All groups with their number of bills and sum; tap opens the group. Pending join requests are shown on top.
 class GroupsPage extends StatelessWidget {
@@ -471,7 +472,7 @@ class FriendsPage extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(f.name, style: tt.titleMedium!.copyWith(fontWeight: bold ? FontWeight.w800 : null)),
-                  Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: tt.bodySmall!.copyWith(fontWeight: bold ? FontWeight.w700 : null, color: bold ? tt.bodyLarge!.color : null)),
+                  MarqueeText(sub, style: tt.bodySmall!.copyWith(fontWeight: bold ? FontWeight.w700 : null, color: bold ? tt.bodyLarge!.color : null)),
                 ]),
               ),
               const SizedBox(width: FasanSpace.s),

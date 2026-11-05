@@ -17,6 +17,7 @@ import 'flow.dart';
 import 'common.dart';
 import 'resume.dart';
 import '../state/images.dart';
+import 'marquee_text.dart';
 
 /// One bill on the overview: thumbnail, name, state (waiting / reading / failed / date and step) and sum.
 class BillTile extends StatelessWidget {
@@ -166,13 +167,13 @@ class BillTile extends StatelessWidget {
                       Container(width: 9, height: 9, decoration: BoxDecoration(color: l.accent, shape: BoxShape.circle)),
                       const SizedBox(width: 6),
                     ],
-                    Expanded(child: Text(bill.purpose.isEmpty ? (waiting || failed ? t.photoBill : t.appName) : bill.purpose, style: tt.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Expanded(child: MarqueeText(bill.purpose.isEmpty ? (waiting || failed ? t.photoBill : t.appName) : bill.purpose, style: tt.titleMedium)),
                   ]),
                   const SizedBox(height: 2),
                   Row(children: [
                     // category at a glance (category.dart)
                     if (categoryById(bill.category) case final c?) ...[Icon(c.icon, size: 14, color: c.color), const SizedBox(width: 4)],
-                    Expanded(child: Text(sub, style: tt.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Expanded(child: MarqueeText(sub, style: tt.bodySmall)),
                   ]),
                 ]),
               ),

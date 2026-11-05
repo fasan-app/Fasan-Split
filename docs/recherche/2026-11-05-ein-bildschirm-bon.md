@@ -70,3 +70,27 @@ Posten bearbeiten und zuordnen im selben Blatt, aktive Person, mehrere Zahler, F
 Tablet, Desktop-Spalte; Sprachen de/en. Dazu Zufallsbedienung (Monkey: 500 zufällige Tipps/Eingaben, keine Ausnahme, kein
 Überlauf) und Browser-Läufe mit Playwright (Handy- und Desktop-Fenster) mit Bildschirmfotos. Was davon nicht automatisch geht,
 steht in `STAND.md` als „nicht geprüft“.
+
+## Lange Namen und Wischmenüs (Nutzer 05.11., Nachtrag)
+
+**Recherche** (alles Zweitquellen; die HIG-Seite zu Swipe Actions und Material 3 ließen sich nicht abrufen, nicht geprüft):
+- iOS (SwiftUI-Doku `swipeActions`): Aktionen hängen am führenden oder nachlaufenden Rand, die erste Aktion liegt am nächsten am
+  Rand, ganzes Durchwischen führt die erste Aktion aus, „destruktiv“ ist eigens gekennzeichnet; Warnung vor versehentlichem Löschen
+  durch volles Durchwischen → bei uns Löschen immer mit „Rückgängig“.
+- Android/Chrome-Hinweise: die Geste enthüllt schrittweise einen Hintergrund, der das Ergebnis zeigt (Mülleimer); kurzes Wischen
+  federt ohne Aktion zurück; Trennlinien zeigen, dass etwas wischbar ist.
+- Rechnungs-Apps (App-Store-Texte): Tab Team „wischen = für sich/alle teilen“, SplitApp „Posten per Wischen bearbeiten“, Tippen zum
+  Zuordnen, Ziehen auf Personen. Folge: rechts wischen = für alle (nochmal = niemand), links = löschen, Tippen = Blatt (bearbeiten
+  und zuordnen), langes Drücken auf eine Person = Menü (hat bezahlt, alle offenen Posten, entfernen).
+- Laufschrift (WCAG-Hinweise zu `<marquee>`): bewegter Text braucht Kontrolle, darf mit „Animationen reduzieren“ nicht von selbst
+  laufen, WCAG 2.2.2: länger als 5 s braucht eine Pause. Folge: **ein** kurzer Durchgang (höchstens 3,4 s + 0,65 s Halt + Feder)
+  nach 1,4 s, dann alle 10 s nur solange sichtbar; nie bei reduzierter Bewegung; Volltext in der Semantik; ausgeblendeter Rand
+  statt hartem Schnitt.
+
+**Beschluss:** `MarqueeText` (`ui/marquee_text.dart`): überlanger einzeiliger Text blendet am Rand aus, scrollt langsam und
+gleichmäßig (ca. 34 px/s) zur Seite und federt zurück. Er hat **keine eigenen Gesten**: Antippen und Wischen gehören der Zeile
+(ein Test hat gezeigt, dass eine eigene Antippen-Geste das Antippen langer Namen verschluckt hätte). Chips nutzen `MarqueeLabel`
+(feste Breite, weil Chips Größen ohne Layout abfragen). Eingebaut in Posten, Personen-Chips, Zahler-Chip, Rechnungskacheln,
+Gruppenzeilen, Notizen und Zusammenfassung. Nicht eingebaut (noch harter Schnitt, mehrzeilig oder schmal): Chat-Reiterbeschriftung,
+Ort-Zeile.
+

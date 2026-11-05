@@ -20,6 +20,7 @@ import 'common.dart';
 import 'currency_ui.dart';
 import 'flow.dart' show PayScreen, RefundNote, addPersonTo, removePersonFrom, rereadFlow;
 import 'item_sheet.dart';
+import 'marquee_text.dart';
 import 'payers.dart';
 import 'person_picker.dart';
 import 'swipe.dart';
@@ -127,6 +128,50 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   // ---- items ----
 
+  bool _everyone(BillItem it) => b.ps.isNotEmpty && List.generate(b.ps.length, (i) => (it.shares[i] ?? 0) > 0).every((x) => x);
+
+  /// Swipe right: everyone has this item, or – if everyone already has it – nobody.
+  void _toggleEveryone(BillItem it) {
+    if (b.ps.isEmpty) {
+      showNote(context, context.tr('bill.needPeople'));
+      return;
+    }
+    FasanHaptics.of(context).confirm();
+    setState(() => it.shares = _everyone(it) ? {} : {for (var i = 0; i < b.ps.length; i++) i: 1});
+  }
+
+  /// Long press on a person: paid, all open items, remove.
+  Future<void> _personMenu(int i) async {
+    final name = b.ps[i].name;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(leading: FasanAvatar(name: name, index: b.ps[i].color, size: 32), title: MarqueeText(name, style: Theme.of(ctx).textTheme.titleMedium)),
+          ListTile(leading: const Icon(Icons.payments_outlined), title: Text(ctx.tr('person.setPayer')), onTap: () => Navigator.pop(ctx, 'payer')),
+          ListTile(leading: const Icon(Icons.done_all_rounded), title: Text(ctx.tr('person.allOpen')), enabled: b.unassigned > 0, onTap: () => Navigator.pop(ctx, 'open')),
+          ListTile(leading: const Icon(Icons.person_remove_outlined), title: Text(ctx.tr('person.remove')), onTap: () => Navigator.pop(ctx, 'remove')),
+        ]),
+      ),
+    );
+    if (!mounted || choice == null) return;
+    setState(() {
+      switch (choice) {
+        case 'payer':
+          b.paid.clear();
+          b.payer = i;
+        case 'open':
+          for (final it in b.its.where((x) => !x.assigned)) {
+            it.shares[i] = 1;
+          }
+        case 'remove':
+          removePersonFrom(b, i);
+          _active = null;
+      }
+    });
+  }
+
   Future<void> _openItem(BillItem it) async {
     await showItemSheet(context, b, it, changed: _changed, onDelete: () => _deleteItem(it));
     if (mounted) {
@@ -200,6 +245,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      showDragHandle: true,
       builder: (ctx) => StatefulBuilder(builder: (ctx, set) {
         final tt = Theme.of(ctx).textTheme, l = FasanLook.of(ctx);
         final diff = b.difference, hasTotal = b.total != null;
@@ -373,20 +419,24 @@ class _ReviewScreenState extends State<ReviewScreen> {
           const SizedBox(height: FasanSpace.xs),
           Wrap(spacing: 4, runSpacing: 0, children: [
             for (var i = 0; i < b.ps.length; i++)
-              InputChip(
-                key: ValueKey('person-$i'),
-                visualDensity: VisualDensity.compact,
-                labelPadding: const EdgeInsets.only(right: 2),
-                avatar: FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 22),
-                label: Text(b.ps[i].name),
-                selected: active == i,
-                showCheckmark: false,
-                selectedColor: l.accent.withValues(alpha: 0.25),
-                onPressed: () => setState(() => _active = active == i ? null : i),
-                onDeleted: () {
-                  removePersonFrom(b, i);
-                  setState(() => _active = null);
-                },
+              // long press: the same things as a menu (paid, all open items, remove) – tap = their items, x = remove
+              GestureDetector(
+                onLongPress: () => _personMenu(i),
+                child: InputChip(
+                  key: ValueKey('person-$i'),
+                  visualDensity: VisualDensity.compact,
+                  labelPadding: const EdgeInsets.only(right: 2),
+                  avatar: FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 22),
+                  label: MarqueeLabel(b.ps[i].name, style: Theme.of(context).chipTheme.labelStyle ?? tt.labelLarge),
+                  selected: active == i,
+                  showCheckmark: false,
+                  selectedColor: l.accent.withValues(alpha: 0.25),
+                  onPressed: () => setState(() => _active = active == i ? null : i),
+                  onDeleted: () {
+                    removePersonFrom(b, i);
+                    setState(() => _active = null);
+                  },
+                ),
               ),
             ActionChip(
               key: const ValueKey('add-person'),
@@ -451,7 +501,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     key: const ValueKey('payer'),
                     visualDensity: VisualDensity.compact,
                     avatar: Icon(Icons.payments_outlined, size: 18, color: payer.isEmpty ? l.accent : null),
-                    label: Text(payer.isEmpty ? context.tr('bill.paidByNone') : payer, maxLines: 1, overflow: TextOverflow.ellipsis, style: payer.isEmpty ? TextStyle(color: l.accent) : null),
+                    label: MarqueeLabel(payer.isEmpty ? context.tr('bill.paidByNone') : payer, maxWidth: 230, style: (Theme.of(context).chipTheme.labelStyle ?? tt.labelLarge)?.copyWith(color: payer.isEmpty ? l.accent : null)),
                     onPressed: () => showPayersSheet(context, b, changed: _changed),
                   ),
                 ),
@@ -507,10 +557,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
           for (var i = 0; i < b.its.length; i++)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
+              // like the bills on the start page: right = the main action (everyone / nobody), left = delete (with „undo“)
               child: SwipeActions(
                 key: ValueKey('item-${b.its[i].hashCode}'),
                 id: 'item-${identityHashCode(b.its[i])}',
+                start: SwipeSide(_everyone(b.its[i]) ? Icons.person_off_outlined : Icons.groups_2_outlined, context.tr(_everyone(b.its[i]) ? 'item.swipeNone' : 'item.swipeAll'), l.accent),
                 end: SwipeSide(Icons.delete_outline_rounded, context.tr('item.delete'), Colors.red.shade700),
+                // the right swipe does its work here and says „no“: the row springs back (a Dismissible that is dismissed but stays
+                // in the list is an error of the framework)
+                confirmDismiss: (dir) async {
+                  if (dir == DismissDirection.startToEnd) {
+                    _toggleEveryone(b.its[i]);
+                    return false;
+                  }
+                  return true;
+                },
                 onDismissed: (_) => _deleteItem(b.its[i]),
                 child: _ItemTile(
                   bill: b,

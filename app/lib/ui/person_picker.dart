@@ -87,6 +87,7 @@ Future<PickedPerson?> pickPerson(BuildContext context, Bill b) {
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
+    showDragHandle: true,
     builder: (_) => _PickerSheet(all: all, hasGroup: b.group != null),
   );
 }

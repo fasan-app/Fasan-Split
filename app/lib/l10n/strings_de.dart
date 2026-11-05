@@ -90,4 +90,10 @@ const Map<String, String> stringsDe = {
   'check.setTotal': 'Summe auf {0} setzen',
   'check.addRemainder': '{0} als Zeile „{1}“ anteilig verteilen',
   'check.noTotal': 'Keine Summe eingetragen.',
+  // --- swipe and long-press menus ---
+  'item.swipeAll': 'Für alle',
+  'item.swipeNone': 'Niemand',
+  'person.setPayer': 'Hat bezahlt',
+  'person.allOpen': 'Alle offenen Posten',
+  'person.remove': 'Vom Bon entfernen',
 };

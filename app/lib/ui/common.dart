@@ -12,6 +12,7 @@ import '../main.dart';
 import '../model/bill.dart';
 import '../state/rates.dart';
 import '../recognition/reader.dart' show nameAlternatives;
+import 'marquee_text.dart';
 import 'receipt_view.dart';
 import '../state/images.dart';
 
@@ -339,9 +340,12 @@ class ItemTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final sub = item.subtitle;
+    // one line: a long name fades out and scrolls slowly sideways (marquee_text.dart) instead of being cut off with „…“
     return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-      Text(item.title, style: style ?? tt.bodyLarge, maxLines: maxLines, overflow: TextOverflow.ellipsis),
-      if (sub != null) Text(sub, style: tt.bodySmall!.copyWith(color: FasanLook.of(context).textMuted), maxLines: 1, overflow: TextOverflow.ellipsis),
+      maxLines == 1
+          ? MarqueeText(item.title, style: style ?? tt.bodyLarge)
+          : Text(item.title, style: style ?? tt.bodyLarge, maxLines: maxLines, overflow: TextOverflow.ellipsis),
+      if (sub != null) MarqueeText(sub, style: tt.bodySmall!.copyWith(color: FasanLook.of(context).textMuted)),
     ]);
   }
 }

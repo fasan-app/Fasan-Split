@@ -27,6 +27,7 @@ import 'common.dart' show TitleHelp, showNote;
 import '../model/bill.dart' show money;
 import 'groups.dart';
 import 'pairing_ui.dart';
+import 'marquee_text.dart';
 
 const _kConsent = 'collab.consent';
 bool _consentInMemory = false; // used when there are no preferences (tests)
@@ -748,7 +749,7 @@ class NotesScreen extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.description_outlined),
                 title: Text(n.title.isEmpty ? t.noteTitle : n.title),
-                subtitle: Text(n.text.split('\n').first, maxLines: 1, overflow: TextOverflow.ellipsis),
+                subtitle: MarqueeText(n.text.split('\n').first, style: Theme.of(context).textTheme.bodyMedium),
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => NoteEditor(group: group, noteId: n.id))),
               ),
           ]);

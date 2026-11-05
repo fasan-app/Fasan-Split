@@ -37,6 +37,7 @@ Future<void> showPayersSheet(BuildContext context, Bill b, {required VoidCallbac
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      showDragHandle: true,
       builder: (_) => _PayersSheet(bill: b, changed: changed, signContext: context),
     );
 
