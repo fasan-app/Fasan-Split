@@ -1,23 +1,187 @@
 <!doctype html>
 <!-- Fasan Split – invitation page. MPL-2.0
      The link is https://fasan-app.github.io/Fasan-Split/join/#<code>. The part after "#" never reaches the server.
-     This page puts the code into sessionStorage (same tab only) and opens the app without the code in the address bar
-     or the history; lib/web_platform_web.dart reads and removes it. -->
+     This page checks the code (it has a built-in check, so a link that was cut when it was copied is recognised), puts it into
+     sessionStorage (same tab only) and opens the app without the code in the address bar or the history;
+     lib/web_platform_web.dart reads and removes it. Without a usable code the page explains what happened and takes the whole
+     link pasted (Nutzer 05.11.: friends copied only a part of the link and landed in an empty app). -->
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
 <title>Fasan Split – Einladung</title>
-<script>
-  var c = location.hash.slice(1);
-  var ok = true;
-  try { if (c) sessionStorage.setItem('fasan-join', c); } catch (e) { ok = false; }
-  // storage blocked (private window, in-app browser): hand the code over in the address; the app removes it at once
-  location.replace(ok || !c ? '../' : '../#fasan-join=' + c);
-</script>
+<style>
+  :root { --bg:#fff; --fg:#15181d; --muted:#5a6270; --card:#f1f3f6; --accent:#3d5af1; --err:#b3261e; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1115; --fg:#eceff4; --muted:#a3acba; --card:#1b1f27; --accent:#8da2ff; --err:#ffb4ab; } }
+  html { background: var(--bg); color: var(--fg); font: 17px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; padding: 24px 20px 40px; max-width: 560px; margin-inline: auto; }
+  h1 { font-size: 1.5rem; margin: 8px 0 12px; }
+  p { margin: 0 0 14px; }
+  .muted { color: var(--muted); font-size: .94rem; }
+  .card { background: var(--card); border-radius: 16px; padding: 16px; margin: 16px 0; }
+  ol { padding-left: 22px; margin: 8px 0 0; } li { margin: 6px 0; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 92px; border-radius: 12px; border: 1px solid var(--muted); background: var(--bg); color: var(--fg); padding: 10px; font: 15px/1.3 ui-monospace, Menlo, monospace; }
+  button, a.btn { display: inline-block; min-height: 48px; padding: 12px 20px; border-radius: 24px; border: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+  @media (prefers-color-scheme: dark) { button, a.btn { color: #0f1115; } }
+  a.quiet { color: var(--accent); }
+  .err { color: var(--err); font-weight: 600; }
+  .spin { width: 28px; height: 28px; border: 3px solid var(--muted); border-top-color: var(--accent); border-radius: 50%; animation: s 1s linear infinite; margin: 16px 0; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+  [hidden] { display: none !important; }
+</style>
 </head>
 <body>
-<noscript>Fasan Split braucht JavaScript. / Fasan Split needs JavaScript.</noscript>
+<noscript><p>Fasan Split braucht JavaScript. / Fasan Split needs JavaScript.</p></noscript>
+
+<main id="opening" hidden>
+  <h1 data-t="openTitle"></h1>
+  <div class="spin" aria-hidden="true"></div>
+  <p data-t="openText"></p>
+  <p class="muted" id="slow" hidden><span data-t="slowText"></span> <a class="quiet" id="go" href="../" data-t="slowLink"></a></p>
+</main>
+
+<main id="broken" hidden>
+  <h1 data-t="brokenTitle"></h1>
+  <p class="err" id="why"></p>
+  <div class="card">
+    <strong data-t="howTitle"></strong>
+    <ol>
+      <li data-t="how1"></li>
+      <li data-t="how2"></li>
+      <li data-t="how3"></li>
+    </ol>
+  </div>
+  <p><label for="paste" data-t="pasteLabel"></label></p>
+  <textarea id="paste" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-describedby="why"></textarea>
+  <p><button id="use" type="button" data-t="use"></button></p>
+  <p class="muted"><a class="quiet" href="../" data-t="openAnyway"></a></p>
+</main>
+
+<script>
+(function () {
+  var T = {
+    de: {
+      openTitle: 'Einladung wird geöffnet …',
+      openText: 'Fasan Split öffnet sich gleich. Dein Konto entsteht auf diesem Gerät – ohne E-Mail und ohne Passwort.',
+      slowText: 'Dauert es länger?', slowLink: 'Hier tippen, um weiterzugehen.',
+      brokenTitle: 'Der Einladungslink ist unvollständig',
+      howTitle: 'So klappt es:',
+      how1: 'Öffne die Nachricht mit der Einladung noch einmal und tippe direkt auf den Link, statt ihn zu kopieren.',
+      how2: 'Oder bitte die Person, dir den Link erneut zu schicken. Er muss bis zum Ende vollständig sein (er ist lang, etwa 200 Zeichen).',
+      how3: 'Oder füge den ganzen Link hier ein:',
+      pasteLabel: 'Link oder Code der Einladung',
+      use: 'Einladung öffnen', openAnyway: 'Fasan Split ohne Einladung öffnen',
+      none: 'In diesem Link fehlt der geheime Teil hinter dem „#“. Er wurde beim Kopieren oder Weiterleiten abgeschnitten.',
+      cut: 'Der Link endet zu früh: Ein Stück am Ende fehlt. Er wurde beim Kopieren oder Weiterleiten abgeschnitten.',
+      bad: 'Das ist kein Fasan-Split-Einladungslink. Bitte den ganzen Link aus der Nachricht einfügen.',
+      expired: 'Diese Einladung ist abgelaufen. Bitte die Person, dir eine neue zu schicken.'
+    },
+    en: {
+      openTitle: 'Opening the invitation …',
+      openText: 'Fasan Split opens in a moment. Your account is created on this device – no email and no password.',
+      slowText: 'Taking long?', slowLink: 'Tap here to continue.',
+      brokenTitle: 'The invitation link is incomplete',
+      howTitle: 'How to fix it:',
+      how1: 'Open the message with the invitation again and tap the link directly instead of copying it.',
+      how2: 'Or ask the person to send the link again. It has to be complete to the very end (it is long, about 200 characters).',
+      how3: 'Or paste the whole link here:',
+      pasteLabel: 'Invitation link or code',
+      use: 'Open the invitation', openAnyway: 'Open Fasan Split without an invitation',
+      none: 'The secret part behind the “#” is missing in this link. It was cut off when it was copied or forwarded.',
+      cut: 'The link ends too early: a piece at the end is missing. It was cut off when it was copied or forwarded.',
+      bad: 'This is not a Fasan Split invitation link. Please paste the whole link from the message.',
+      expired: 'This invitation has expired. Please ask the person for a new one.'
+    }
+  };
+  var lang = /^de/i.test(navigator.language || '') ? 'de' : 'en';
+  var t = T[lang];
+  document.documentElement.lang = lang;
+  document.title = lang === 'de' ? 'Fasan Split – Einladung' : 'Fasan Split – Invitation';
+  Array.prototype.forEach.call(document.querySelectorAll('[data-t]'), function (n) { n.textContent = t[n.getAttribute('data-t')]; });
+  var $ = function (id) { return document.getElementById(id); };
+
+  // --- the code: find it in whatever was pasted, join pieces a messenger broke apart, check it ---
+  function b64bytes(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '=';
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function candidates(text) {
+    text = String(text || '').replace(/%23/g, '#').replace(/[<>"“”«»]/g, ' ').replace(/#+\s*$/, '').trim();
+    if (!text) return [];
+    var out = [], hash = text.lastIndexOf('#'), tail = hash >= 0 ? text.slice(hash + 1) : text;
+    var words = tail.split(/\s+/).filter(Boolean), cur = '';
+    for (var i = 0; i < words.length && i < 6; i++) {
+      var w = words[i].replace(/[.,;:!?)\]]+$/, '');
+      if (!/^[A-Za-z0-9_\-=]+$/.test(w) && w.indexOf('/') < 0) break;
+      if (w.indexOf('/') >= 0) w = w.slice(w.lastIndexOf('/') + 1);
+      if (!w) break;
+      cur += w; out.push(cur);
+    }
+    out.reverse();
+    if (hash < 0) (text.match(/[A-Za-z0-9_\-]{40,}/g) || []).forEach(function (m) { if (out.indexOf(m) < 0) out.push(m); });
+    return out;
+  }
+  // resolves to {ok:code} or {problem:'none'|'cut'|'bad'|'expired'}
+  function check(text) {
+    var cs = candidates(text);
+    // something behind the „#“ but nothing that looks like a code: not our link
+    if (!cs.length) return Promise.resolve({ problem: /#\s*\S/.test(String(text || '').replace(/%23/g, '#')) ? 'bad' : 'none' });
+    var i = 0, cut = false;
+    function next() {
+      if (i >= cs.length) return Promise.resolve({ problem: cut ? 'cut' : 'bad' });
+      var c = cs[i++], bytes;
+      try { bytes = b64bytes(c); } catch (e) { cut = cut || c.length > 20; return next(); }
+      if (bytes.length && bytes[0] === 2) {                       // v2: binary, 3-byte check at the end
+        // the shortest v2 code is 94 bytes (version, flags, secret, admin key, tag, expiry, name length, check): shorter = cut
+        if (bytes.length < 94) { cut = true; return next(); }
+        if (!window.crypto || !crypto.subtle) return Promise.resolve({ ok: c }); // cannot check here: the app does
+        var body = bytes.slice(0, bytes.length - 3);
+        return crypto.subtle.digest('SHA-256', body).then(function (h) {
+          var d = new Uint8Array(h);
+          var good = d[0] === bytes[bytes.length - 3] && d[1] === bytes[bytes.length - 2] && d[2] === bytes[bytes.length - 1];
+          if (!good) { cut = true; return next(); }
+          // expiry: 4 bytes behind flags, secret, admin key and group key (or tag)
+          var flags = bytes[1], p = 2 + 32 + 32 + ((flags & 2) ? 32 : 16);
+          var x = ((bytes[p] << 24) | (bytes[p + 1] << 16) | (bytes[p + 2] << 8) | bytes[p + 3]) >>> 0;
+          if (x * 1000 < Date.now()) return { problem: 'expired' };
+          return { ok: c };
+        }, function () { return { ok: c }; });
+      }
+      try {                                                        // v1: JSON
+        var j = JSON.parse(new TextDecoder().decode(bytes));
+        if (j && j.v === 1) return Promise.resolve(j.x * 1000 < Date.now() ? { problem: 'expired' } : { ok: c });
+      } catch (e) { cut = cut || c.length > 40; }
+      return next();
+    }
+    return next();
+  }
+
+  function show(id) { ['opening', 'broken'].forEach(function (k) { $(k).hidden = k !== id; }); }
+  function broken(problem) { $('why').textContent = t[problem] || t.none; show('broken'); }
+  function open(code) {
+    show('opening');
+    var ok = true;
+    try { sessionStorage.setItem('fasan-join', code); } catch (e) { ok = false; }
+    // storage blocked (private window, in-app browser): hand the code over in the address; the app removes it at once
+    var target = ok ? '../' : '../#fasan-join=' + code;
+    $('go').setAttribute('href', target);
+    setTimeout(function () { $('slow').hidden = false; }, 4000);
+    location.replace(target);
+  }
+
+  check(location.hash).then(function (r) {
+    if (r.ok) return open(r.ok);
+    broken(r.problem);
+  });
+  $('use').addEventListener('click', function () {
+    check($('paste').value).then(function (r) { if (r.ok) open(r.ok); else broken(r.problem); });
+  });
+})();
+</script>
 </body>
 </html>

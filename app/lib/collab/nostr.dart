@@ -83,6 +83,11 @@ class Filter {
       };
 }
 
+/// Relays used for new groups. Not checked for availability here – the user can change them per group later.
+// FASAN_RELAYS (compile-time, comma-separated) replaces them for the end-to-end test against a local relay only.
+const String _relaysOverride = String.fromEnvironment('FASAN_RELAYS');
+final List<String> defaultRelays = _relaysOverride.isEmpty ? const ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'] : _relaysOverride.split(',');
+
 /// What a group needs from a relay: publish an event, listen for events (stored ones first, then live).
 abstract class Relay {
   /// Completes with true if the relay accepted the event.
@@ -90,6 +95,10 @@ abstract class Relay {
   Stream<NostrEvent> subscribe(Filter f);
   Future<void> close();
   String get name;
+
+  /// The app came back to the front (iPhone: the browser froze the connections while another app was in front): connect again
+  /// at once instead of waiting for the next retry. Default: nothing to do.
+  void wake() {}
 }
 
 /// In-process relay for tests: addressable events (kind 30000–39999) replace older ones with the same author and d tag.
@@ -103,6 +112,9 @@ class MemoryRelay implements Relay {
 
   @override
   Future<bool> publish(NostrEvent e) async => hub.accept(e);
+
+  @override
+  void wake() {}
 
   @override
   Stream<NostrEvent> subscribe(Filter f) {
@@ -192,6 +204,20 @@ class WsRelay implements Relay {
     _in?.cancel();
     _ch = null;
     _scheduleReconnect();
+  }
+
+  @override
+  void wake() {
+    if (_closed || _subs.isEmpty && _acks.isEmpty) return;
+    // after the system froze the connection it may look open and be dead: start a new one now, the subscriptions are sent again
+    _retry = 0;
+    _in?.cancel();
+    try {
+      _ch?.sink.close();
+    } catch (_) {}
+    _ch = null;
+    _connecting = null;
+    _connect();
   }
 
   void _scheduleReconnect() {
@@ -290,6 +316,13 @@ class RelayPool implements Relay {
       }
     };
     return c.stream;
+  }
+
+  @override
+  void wake() {
+    for (final r in relays) {
+      r.wake();
+    }
   }
 
   @override

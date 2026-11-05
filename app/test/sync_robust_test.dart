@@ -30,6 +30,8 @@ class FlakyRelay implements Relay {
   Future<void> close() => inner.close();
   @override
   String get name => 'flaky';
+  @override
+  void wake() {}
 }
 
 Future<void> settle([int ms = 1200]) => Future<void>.delayed(Duration(milliseconds: ms));

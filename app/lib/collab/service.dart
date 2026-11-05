@@ -24,10 +24,7 @@ import 'nostr.dart';
 import 'notes.dart';
 import 'pairing.dart';
 
-/// Relays used for new groups. Not checked for availability here – the user can change them per group later.
-// FASAN_RELAYS (compile-time, comma-separated) replaces them for the end-to-end test against a local relay only.
-const String _relaysOverride = String.fromEnvironment('FASAN_RELAYS');
-final List<String> defaultRelays = _relaysOverride.isEmpty ? const ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'] : _relaysOverride.split(',');
+export 'nostr.dart' show defaultRelays; // defined next to the relays (the invitation format needs it too)
 
 /// An invitation sent to a friend from a bill: kept for a moment so it can be taken back ([CollabService.undoFriendInvite]).
 class FriendInvite {
@@ -554,8 +551,11 @@ class CollabService extends ChangeNotifier {
     if (!secret.direct) store.addGroup(local);
     final g = await _activate(secret, local);
     g.session.joinWithTicket(inv, name);
-    await g.session.flush();
+    // saved at once, not 600 ms later: closing the browser or the app right after joining (iPhone: switching to the messenger)
+    // must not lose the entry – it is sent when the app is opened again (_activate → republishAll)
+    saveDocs();
     await _persistGroups();
+    await g.session.flush();
     unawaited(JoinFlow(invite: inv, me: me.key, relay: _relayFactory(inv.relays), name: name).sendRequest());
     notifyListeners();
     return null;
@@ -1077,9 +1077,24 @@ class CollabService extends ChangeNotifier {
   bool _front = false;
 
   /// The app came to the front or left it (main.dart): while in front „seen“ is renewed every 3 minutes.
+  /// The app is in front again after it was away (the browser or the phone may have frozen the connections): connect again at once
+  /// and send what is still waiting – a join that did not get through, a change from the bus.
+  void wake() {
+    if (_disposed) return;
+    for (final g in groups.values) {
+      g.session.relay.wake();
+      unawaited(g.session.flush());
+    }
+    for (final p in joins) {
+      p.error = null;
+    }
+  }
+
   void setForeground(bool front) {
+    final wasAway = !_front && front;
     _front = front;
     _heart?.cancel();
+    if (wasAway) wake();
     if (front) {
       _beat();
       _heart = Timer.periodic(const Duration(minutes: 3), (_) => _beat());
@@ -1367,8 +1382,20 @@ class CollabService extends ChangeNotifier {
     }
   }
 
+  bool _disposed = false;
+
+  /// Async work that was under way when the service was closed (an approval, a send) must not touch the listeners any more:
+  /// „A CollabService was used after being disposed“ would be an unhandled error.
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
+    // a change that was waiting for its 600 ms save must not be lost when the app is closed: save it now
+    if (_saveTimer?.isActive ?? false) saveDocs();
     _saveTimer?.cancel();
     if (_storeListening) store.removeListener(_onStoreChanged);
     for (final s in _subs.values) {

@@ -86,7 +86,37 @@ class Invite {
   /// Key that seals join requests.
   Uint8List get requestKey => sha256([...utf8.encode('fasan-split/invite/v1'), ...secret]);
 
-  String encode() => base64Url.encode(utf8.encode(jsonEncode({
+  /// Compact binary form (v2, 05.11.): the JSON form was ~490 characters (hex keys, the tag twice, relay URLs spelled out) and a link of
+  /// 534 characters got cut when friends copied it from messengers – the key behind „#“ was missing and they landed in an empty app.
+  /// v2 is ~160 characters: version, flags, one-time secret, admin key, group key (the tag follows from it), expiry, names, relays
+  /// only when they are not the default ones, and a 3-byte check so that a cut link is recognised as such. Old v1 links still open.
+  String encode() {
+    // not real hex keys (hand-made test data, damaged state): the old text form can carry anything
+    final hex = RegExp(r'^[0-9a-f]+$');
+    if (!hex.hasMatch(adminPub) || adminPub.length != 64 || secret.length != 32 || (groupKey == null && !(hex.hasMatch(tag) && tag.length == 32)) || (groupKey != null && groupKey!.length != 32)) return _encodeV1();
+    final b = BytesBuilder();
+    final defaults = _sameRelays(relays, defaultRelays);
+    final flags = (auto ? 1 : 0) | (groupKey != null ? 2 : 0) | (direct ? 4 : 0) | (person != null ? 8 : 0) | (defaults ? 16 : 0);
+    b.addByte(2);
+    b.addByte(flags);
+    b.add(secret);
+    b.add(fromHex(adminPub));
+    b.add(groupKey ?? fromHex(tag)); // with the key the tag is derived (GroupSecret.tag); without it, the 16 bytes of the tag
+    final x = expires.millisecondsSinceEpoch ~/ 1000;
+    b.add([(x >> 24) & 255, (x >> 16) & 255, (x >> 8) & 255, x & 255]);
+    _putString(b, name);
+    if (person != null) _putString(b, person!);
+    if (!defaults) {
+      b.addByte(relays.length.clamp(0, 255));
+      for (final r in relays.take(255)) {
+        _putString(b, r);
+      }
+    }
+    final body = b.toBytes();
+    return base64Url.encode([...body, ...sha256(body).sublist(0, 3)]).replaceAll('=', '');
+  }
+
+  String _encodeV1() => base64Url.encode(utf8.encode(jsonEncode({
         'v': 1,
         't': tag,
         's': toHex(secret),
@@ -100,6 +130,22 @@ class Invite {
         if (direct) 'd': 1,
       }))).replaceAll('=', '');
 
+  static bool _sameRelays(List<String> a, List<String> b) => a.length == b.length && List.generate(a.length, (i) => a[i] == b[i]).every((e) => e);
+
+  /// Length byte and UTF-8 bytes (at most 100 bytes, cut at a character boundary).
+  static void _putString(BytesBuilder b, String s) {
+    var bytes = utf8.encode(s);
+    if (bytes.length > 100) {
+      var end = 100;
+      while (end > 0 && (bytes[end] & 0xC0) == 0x80) {
+        end--;
+      }
+      bytes = bytes.sublist(0, end);
+    }
+    b.addByte(bytes.length);
+    b.add(bytes);
+  }
+
   /// Link for sharing. The part after „#“ is never sent to a server: GitHub Pages only sees /Fasan-Split/join/.
   /// Opens the app (Android App Link, needs assetlinks.json on the host) or the web app (docs/WEB.md).
   String get link => '$inviteBase#${encode()}';
@@ -107,28 +153,135 @@ class Invite {
   /// Web address of invitations. Older links „fasansplit://join#…“ still work (parse reads the part after „#“).
   static const inviteBase = 'https://fasan-app.github.io/Fasan-Split/join/';
 
-  static Invite? parse(String input) {
+  static Invite? parse(String input) => parseDetailed(input).invite;
+
+  /// Like [parse], but says what is wrong with text that holds no usable invitation: `empty` (nothing there), `incomplete` (it ends
+  /// too early or fails its check: the link was cut when it was copied), `invalid` (not one of ours), `expired` is the caller's job.
+  static ({Invite? invite, String problem}) parseDetailed(String input) {
+    final candidates = _candidates(input);
+    if (candidates.isEmpty) return (invite: null, problem: 'empty');
+    var problem = 'invalid';
+    for (final c in candidates) {
+      final r = _decode(c);
+      if (r.invite != null) return (invite: r.invite, problem: '');
+      if (r.problem == 'incomplete') problem = 'incomplete';
+    }
+    return (invite: null, problem: problem);
+  }
+
+  static final _b64 = RegExp(r'^[A-Za-z0-9_\-=]+$');
+
+  /// Possible payloads in a pasted text: the part behind „#“, then the same joined with the following words (a link that was wrapped
+  /// by a messenger), then a bare code on its own.
+  static List<String> _candidates(String input) {
+    var s = input.replaceAll('%23', '#').replaceAll(RegExp(r'[<>"\u201c\u201d\u00ab\u00bb]'), ' ').trim();
+    s = s.replaceAll(RegExp(r'#+\s*$'), '').trim(); // a stray „#“ after the link
+    if (s.isEmpty) return [];
+    final out = <String>[];
+    final hash = s.lastIndexOf('#');
+    final tail = hash >= 0 ? s.substring(hash + 1) : s;
+    final words = tail.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    var cur = '';
+    for (var i = 0; i < words.length && i < 6; i++) {
+      var w = words[i];
+      // a link at the end of a sentence: drop the punctuation after it
+      w = w.replaceAll(RegExp(r'[.,;:!?)\]]+$'), '');
+      if (!_b64.hasMatch(w) && !w.contains('/')) break;
+      if (w.contains('/')) w = w.substring(w.lastIndexOf('/') + 1);
+      if (w.isEmpty) break;
+      cur += w;
+      out.add(cur);
+    }
+    final joined = out.reversed.toList(); // the longest first: a wrapped link is the whole
+    if (hash < 0) {
+      // a code without any link around it („Code: …“): every long word of its own
+      for (final m in RegExp(r'[A-Za-z0-9_\-]{40,}').allMatches(s)) {
+        if (!joined.contains(m[0]!)) joined.add(m[0]!);
+      }
+    }
+    return joined;
+  }
+
+  static ({Invite? invite, String problem}) _decode(String payload) {
     try {
-      var s = input.trim();
-      final i = s.indexOf('#');
-      if (i >= 0) s = s.substring(i + 1);
-      if (s.contains('/')) s = s.substring(s.lastIndexOf('/') + 1);
-      final j = jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(s)))) as Map<String, dynamic>;
-      if (j['v'] != 1) return null;
-      return Invite(
-        tag: j['t'] as String,
-        secret: fromHex(j['s'] as String),
-        adminPub: j['a'] as String,
-        relays: [for (final r in j['r'] as List) '$r'],
-        expires: DateTime.fromMillisecondsSinceEpoch((j['x'] as num).toInt() * 1000),
-        name: j['n'] as String? ?? '',
-        person: j['p'] as String?,
-        auto: j['o'] == 1,
-        groupKey: j['k'] is String ? fromHex(j['k'] as String) : null,
-        direct: j['d'] == 1,
+      final bytes = base64Url.decode(base64Url.normalize(payload));
+      if (bytes.isEmpty) return (invite: null, problem: 'invalid');
+      if (bytes[0] == 2) return _decodeV2(bytes);
+      // v1: JSON (links made before 05.11.)
+      final j = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+      if (j['v'] != 1) return (invite: null, problem: 'invalid');
+      return (
+        invite: Invite(
+          tag: j['t'] as String,
+          secret: fromHex(j['s'] as String),
+          adminPub: j['a'] as String,
+          relays: [for (final r in j['r'] as List) '$r'],
+          expires: DateTime.fromMillisecondsSinceEpoch((j['x'] as num).toInt() * 1000),
+          name: j['n'] as String? ?? '',
+          person: j['p'] as String?,
+          auto: j['o'] == 1,
+          groupKey: j['k'] is String ? fromHex(j['k'] as String) : null,
+          direct: j['d'] == 1,
+        ),
+        problem: ''
+      );
+    } on FormatException {
+      // base64 that stops in the middle, or JSON that stops in the middle: a cut link
+      return (invite: null, problem: payload.length > 20 ? 'incomplete' : 'invalid');
+    } catch (_) {
+      return (invite: null, problem: 'invalid');
+    }
+  }
+
+  static ({Invite? invite, String problem}) _decodeV2(List<int> all) {
+    if (all.length < 4 + 3) return (invite: null, problem: 'incomplete');
+    final body = all.sublist(0, all.length - 3), check = all.sublist(all.length - 3);
+    final want = sha256(body).sublist(0, 3);
+    if (check[0] != want[0] || check[1] != want[1] || check[2] != want[2]) return (invite: null, problem: 'incomplete');
+    var p = 1;
+    int u8() => body[p++];
+    List<int> take(int n) {
+      if (p + n > body.length) throw const FormatException('short');
+      final r = body.sublist(p, p + n);
+      p += n;
+      return r;
+    }
+
+    String str() => utf8.decode(take(u8()), allowMalformed: true);
+    try {
+      final flags = u8();
+      final secret = Uint8List.fromList(take(32));
+      final admin = toHex(Uint8List.fromList(take(32)));
+      final hasKey = flags & 2 != 0;
+      final keyOrTag = Uint8List.fromList(take(hasKey ? 32 : 16));
+      final x = take(4);
+      final exp = (x[0] << 24) | (x[1] << 16) | (x[2] << 8) | x[3];
+      final name = str();
+      final person = flags & 8 != 0 ? str() : null;
+      var relays = defaultRelays;
+      if (flags & 16 == 0) {
+        final n = u8();
+        relays = [for (var i = 0; i < n; i++) str()];
+      }
+      final direct = flags & 4 != 0;
+      final tag = hasKey ? GroupSecret(key: keyOrTag, adminPub: admin, name: name, relays: relays, direct: direct).tag : toHex(keyOrTag);
+      return (
+        invite: Invite(
+          tag: tag,
+          secret: secret,
+          adminPub: admin,
+          relays: relays,
+          expires: DateTime.fromMillisecondsSinceEpoch(exp * 1000),
+          name: name,
+          person: person,
+          auto: flags & 1 != 0,
+          groupKey: hasKey ? keyOrTag : null,
+          direct: direct,
+        ),
+        problem: ''
       );
     } catch (_) {
-      return null;
+      return (invite: null, problem: 'invalid');
     }
   }
 }
@@ -154,6 +307,12 @@ class Invitations {
   final Map<String, JoinRequest> pending = {};
   StreamSubscription<NostrEvent>? _sub;
   final StreamController<void> changes = StreamController<void>.broadcast();
+
+  /// Tells the listeners; harmless after [close] (an approval that was under way when the group was closed used to throw
+  /// „Cannot add new events after calling close“).
+  void _changed() {
+    if (!changes.isClosed) changes.add(null);
+  }
 
   /// Called when the issued invitations change: the service stores them (04.11.: they lived in memory only – after an
   /// update or restart of the inviting phone, requests of invited people could not be read any more).
@@ -181,7 +340,7 @@ class Invitations {
   void revoke(Invite i) {
     _issued.remove(toHex(i.secret));
     onIssued?.call(open);
-    changes.add(null);
+    _changed();
   }
 
   /// Revokes all open invitations.
@@ -205,7 +364,7 @@ class Invitations {
       try {
         final j = jsonDecode(aeadOpen(e.content, inv.requestKey, d)) as Map<String, dynamic>;
         pending[e.pubkey] = JoinRequest(e.pubkey, (j['name'] as String? ?? '').trim(), DateTime.fromMillisecondsSinceEpoch(e.createdAt * 1000), person: inv.person, auto: inv.auto);
-        changes.add(null);
+        _changed();
         return;
       } on FormatException {
         continue; // sealed with another invitation's key (or garbage)
@@ -220,13 +379,13 @@ class Invitations {
     final body = nip44Encrypt(jsonEncode({'key': toHex(secret.key), 'name': secret.name, 'admin': secret.adminPub, 'relays': secret.relays, if (secret.direct) 'direct': true}), conv);
     final ev = NostrEvent.create(me, kind: kindData, tags: [['d', 'fs:${secret.tag}:welcome:$pub'], ['t', '${secret.tag}:welcome'], ['p', pub]], content: body);
     pending.remove(pub);
-    changes.add(null);
+    _changed();
     return relay.publish(ev);
   }
 
   void decline(String pub) {
     pending.remove(pub);
-    changes.add(null);
+    _changed();
   }
 
   Future<void> close() async {
@@ -369,7 +528,7 @@ class GroupSession {
         }
         accepted = self;
       }
-      if (doc(id).merge(accepted) > 0) _changes.add(id);
+      if (doc(id).merge(accepted) > 0 && !_changes.isClosed) _changes.add(id);
       if (isMembersDoc && _waiting.isNotEmpty) {
         final again = _waiting.toList();
         _waiting.clear();
@@ -417,7 +576,7 @@ class GroupSession {
 
   /// Marks a document as changed locally; the snapshot goes out after a short pause (many edits, one message).
   void touch(String id) {
-    _changes.add(id);
+    if (!_changes.isClosed) _changes.add(id);
     _dirty.add(id);
     _timer?.cancel();
     _timer = Timer(publishDelay, flush);
