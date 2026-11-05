@@ -638,7 +638,8 @@ class Recognizer {
     final S = strip.copy();
     final colSet = col.toSet();
     for (final x in w) {
-      if (!colSet.contains(x) && l2.hasMatch(x.text) && x.box.x1 > X0 && x.box.x0 < X1 && x.box.y1 > Y0 && x.box.y0 < Y1) {
+      // hairline boxes (noise, see [isHairline]) are not names: painting them white wiped real amounts („easo“, „roozao“)
+      if (!colSet.contains(x) && !isHairline(x, h) && l2.hasMatch(x.text) && x.box.x1 > X0 && x.box.x0 < X1 && x.box.y1 > Y0 && x.box.y0 < Y1) {
         for (var yy = math.max(0, (x.box.y0 - Y0).floor()); yy < math.min(SH, (x.box.y1 - Y0).ceil()); yy++) {
           for (var xx = math.max(0, (x.box.x0 - X0).floor()); xx < math.min(SW, (x.box.x1 - X0).ceil()); xx++) {
             final o = (yy * SW + xx) * 4;
@@ -751,8 +752,7 @@ class Recognizer {
     // („€ 2.50 13“ and the strip's „0 13 € 2.50“): the row would fall into two lines („Pedras 25 cl € 2.50 13“ / „0 13 € 2.50“).
     // The re-read replaces it. Words with letters (names) always stay.
     bool coveredByNew(Word x) =>
-        digit.hasMatch(x.text) &&
-        !l3.hasMatch(x.text) &&
+        ((digit.hasMatch(x.text) && !l3.hasMatch(x.text)) || isHairline(x, h)) &&
         neu.any((n) => n.box.x0 < x.box.x1 && n.box.x1 > x.box.x0 && math.min(n.box.y1, x.box.y1) - math.max(n.box.y0, x.box.y0) > 0.5 * math.min(n.box.h, x.box.h));
     return [...words.where((x) => !inStrip(x) && !coveredByNew(x)), ...neu];
   }

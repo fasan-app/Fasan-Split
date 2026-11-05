@@ -18,11 +18,13 @@ List<Word> withoutCrumbs(List<Word> words) {
   final w = words.where((x) => x.text.trim().isNotEmpty && x.conf > 15).toList();
   final mh = medianOf(w.map((x) => x.box.h));
   final nonAlnum = RegExp(r'[^A-Za-z0-9]');
-  // Hairline boxes: the detector sometimes boxes a dotted rule or glare as „text“ 8 px high next to lines of 55 px („easo“, „ua“,
-  // „roozao“ on a Confeitaria Nacional photo, 05.11.). They are no text; left in, they were painted white over real amounts in the
-  // amount strip and split rows in two. A real line is never below a third of the median height.
-  return w.where((x) => !(x.conf < 60 && x.text.replaceAll(nonAlnum, '').length <= 3 && x.box.h < 0.6 * mh) && !(mh > 0 && x.box.h < 0.3 * mh)).toList();
+  return w.where((x) => !(x.conf < 60 && x.text.replaceAll(nonAlnum, '').length <= 3 && x.box.h < 0.6 * mh)).toList();
 }
+
+/// A hairline box: the detector sometimes boxes a dotted rule or glare as „text“ 8 px high next to lines of 55 px („easo“, „ua“,
+/// „roozao“ on a Confeitaria Nacional photo, 05.11.). It is not text – but it must not be dropped for good: in scans (SROIE 016) such
+/// boxes hold the garbled start of a real line. Callers that mask or merge treat it as noise.
+bool isHairline(Word x, double medianHeight) => medianHeight > 0 && x.box.h < 0.2 * medianHeight;
 
 /// Groups words into lines; tolerant to slanted lines using the local tilt of long boxes [zeilenAus].
 Lines linesFrom(List<Word> words, {bool straight = false}) {
