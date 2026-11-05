@@ -38,6 +38,7 @@ Future<Bill> billFromScan(ScanResultData r, Uint8List photo,
     originalQuad: r.photoQuad,
     originalAspect: r.photoAspect,
   );
+  b.alignSigns(); // „-198,00“ printed for a charge: items and total must agree in sign before the difference is looked at
   b.category = guessCategory(b); // first guess, changed with one tap (category.dart)
   // Amount without an item line, visible only in the VAT table as a 0 % row (Ferreiras LX 04.11.: „0.00 e 7.90 e 0.00
   // e 7.90“, items 79,00, total 86,90): added as its own item, marked unsure, so the bill adds up and nothing is lost.

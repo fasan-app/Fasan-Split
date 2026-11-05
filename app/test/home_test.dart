@@ -171,6 +171,10 @@ void main() {
       }
       expect(store.bills.single.settled, isFalse);
       expect(find.textContaining('Erst eintragen'), findsOneWidget);
+      expect(find.byKey(const ValueKey('bill-open-a')), findsOneWidget, reason: 'the card is still there and visible again');
+      expect(tester.takeException(), isNull);
+      // the card must be back in place (not half way out)
+      expect(tester.getTopLeft(find.byKey(const ValueKey('bill-open-a'))).dx, lessThan(40));
     });
 
     testWidgets('Wischen nach links: Papierkorb mit Rückgängig; der Bon bleibt gespeichert', (tester) async {

@@ -175,4 +175,29 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(DigitalReceipt), findsOneWidget);
   });
+
+  testWidgets('Schritt 1: Posten −198, Summe auf 198 getippt – Vorzeichen wird gedreht, keine 396-€-Differenz, Rückgängig geht', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    final store = BillStore.memory();
+    final b = Bill(id: 'neg', created: DateTime(2026, 11, 5), purpose: 'City Sightseeing', items: [BillItem(name: 'City Sightseeing', amount: -19800)]);
+    store.upsert(b);
+    final ui = FasanController(settings: const FasanSettings(reduceMotion: true));
+    await tester.pumpWidget(SplitApp(store: store, ui: ui, home: ReviewScreen(bill: b)));
+    await tester.pumpAndSettle();
+    // total empty, item negative: the sign question comes first (paid or refund) – the user instead types the total
+    final totalField = find.byWidgetPredicate((w) => w is TextField && w.decoration?.labelText == 'Total');
+    await tester.enterText(totalField, '198,00');
+    await tester.pumpAndSettle();
+    expect(b.total, 19800);
+    expect(b.its.single.amount, 19800, reason: 'item turned');
+    expect(find.textContaining('differ by'), findsNothing);
+    expect(find.textContaining('Signs of the items turned'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(b.its.single.amount, -19800);
+    expect(b.total, 19800);
+  });
 }
+

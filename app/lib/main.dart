@@ -14,6 +14,7 @@ import 'collab/nostr.dart' show relayProxy;
 import 'collab/pairing.dart';
 import 'ui/pairing_ui.dart';
 import 'web_platform.dart';
+import 'collab/activity.dart' show activityGerman;
 import 'collab/service.dart';
 import 'state/notify.dart';
 import 'state/store.dart';
@@ -99,9 +100,19 @@ class _SplitAppState extends State<SplitApp> {
   late final CollabService collab = widget.collab ?? CollabService(store: widget.store, vault: MemoryVault());
   StreamSubscription<Uri>? _links;
 
+  /// News and device notifications follow the language setting (system = the phone's language; anything but English is German,
+  /// like S.of).
+  void _syncLanguage() => activityGerman = switch (widget.store.language) {
+        'de' => true,
+        'en' => false,
+        _ => WidgetsBinding.instance.platformDispatcher.locale.languageCode != 'en',
+      };
+
   @override
   void initState() {
     super.initState();
+    _syncLanguage();
+    widget.store.addListener(_syncLanguage);
     // Web: join/index.html handed the invitation over (web_platform_web.dart).
     final code = kIsWeb ? takeJoinCode() : null;
     if (code != null) {
@@ -133,6 +144,7 @@ class _SplitAppState extends State<SplitApp> {
 
   @override
   void dispose() {
+    widget.store.removeListener(_syncLanguage);
     _links?.cancel();
     super.dispose();
   }
@@ -147,10 +159,12 @@ class _SplitAppState extends State<SplitApp> {
         child: CollabScope(
           service: collab,
           child: ListenableBuilder(
-            listenable: ui,
+            listenable: Listenable.merge([ui, widget.store]),
             builder: (context, _) => MaterialApp(
               navigatorKey: navigatorKey,
               title: 'Fasan Split',
+              // Settings → Language: German, English, or the phone's language (null)
+              locale: switch (widget.store.language) { 'de' => const Locale('de'), 'en' => const Locale('en'), _ => null },
               debugShowCheckedModeBanner: false,
               theme: ui.theme(Brightness.light),
               darkTheme: ui.theme(Brightness.dark),

@@ -338,6 +338,28 @@ class Bill {
     checked = false;
   }
 
+  /// Institutions often print an amount with a minus („-198,00 EUR“: money that left the account). When the total is positive
+  /// (read, or corrected by the user) and every item is negative, and the items turned around add up to exactly the total,
+  /// the signs of the items were just the wrong way round: turn them. Returns true when something changed (Nutzer 05.11.:
+  /// „ich musste im einzigen Posten sagen, das ist kein −198 €“; the app showed a difference of 396 €). The mirror case – a
+  /// negative total, positive items adding up to it – turns the total.
+  bool alignSigns() {
+    final t = total;
+    if (t == null || t == 0 || its.isEmpty) return false;
+    final sum = itemSum;
+    if (t > 0 && sum == -t && its.every((p) => p.amount <= 0)) {
+      for (final p in its) {
+        p.amount = -p.amount;
+      }
+      return true;
+    }
+    if (t < 0 && sum == -t && its.every((p) => p.amount >= 0)) {
+      total = -t;
+      return true;
+    }
+    return false;
+  }
+
   /// Difference between total and items (positive: items missing).
   int get difference => effectiveTotal - itemSum;
 

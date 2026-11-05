@@ -79,7 +79,7 @@ class DeviceNotifier with WidgetsBindingObserver {
       await _plugin.show(
         id: _id++ % 1000,
         title: title,
-        body: a.text,
+        body: a.shown,
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails('fasan-news', 'Neuigkeiten', channelDescription: 'Nachrichten, Beitritte, neue und geänderte Bons', importance: Importance.defaultImportance),
         ),

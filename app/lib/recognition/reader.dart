@@ -1314,7 +1314,12 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
       total = pickE.sum;
     }
   } else {
-    total = qr != null && qr.total != 0 ? qr.total : (totalRead ?? (given.isNotEmpty ? given[0] - (change.isNotEmpty ? change[0] : 0) : null));
+    // A „total“ of zero or less next to items that add up to a positive amount is a misread (a rounding line „-0.02“ or „0.00“
+    // that slipped into the total's row when the amount column is shifted by one line, SROIE 008/020/034) – better unknown than
+    // wrong. Real refunds have negative items too and keep their negative total.
+    final itemSum = items.fold<int>(0, (a, p) => a + p.amount);
+    final read = totalRead != null && totalRead <= 0 && itemSum > 0 ? null : totalRead;
+    total = qr != null && qr.total != 0 ? qr.total : (read ?? (given.isNotEmpty ? given[0] - (change.isNotEmpty ? change[0] : 0) : null));
     for (final p in items) {
       p.sure = false;
       if (p.cands.length > 2) p.suggestions = p.cands.where((c) => c.why != 'weg' && c.v != p.amount).take(3).map((c) => c.v).toList();

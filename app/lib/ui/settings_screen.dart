@@ -71,6 +71,21 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(t.settings)),
       body: ListView(padding: EdgeInsets.only(bottom: FasanSpace.xxl + MediaQuery.paddingOf(context).bottom), children: [
+        // always in both languages, so it can be found when the app is in the wrong one
+        head('Sprache · Language'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l),
+          child: SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'system', label: Text('System'), icon: Icon(Icons.smartphone_rounded)),
+              ButtonSegment(value: 'de', label: Text('Deutsch')),
+              ButtonSegment(value: 'en', label: Text('English')),
+            ],
+            selected: {store.language},
+            showSelectedIcon: false,
+            onSelectionChanged: (s) => store.language = s.first,
+          ),
+        ),
         head(t.setBill),
         FasanSwitchTile(
           padded: true,

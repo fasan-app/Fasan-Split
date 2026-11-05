@@ -1638,7 +1638,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 final a = list[i], fresh = a.at.millisecondsSinceEpoch > _seenBefore;
                 return ListTile(
                   leading: CircleAvatar(backgroundColor: l.accent.withValues(alpha: fresh ? 0.25 : 0.1), child: Icon(icon(a.kind), color: l.accent, size: 20)),
-                  title: Text(a.text, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: fresh ? FontWeight.w700 : null)),
+                  title: Text(a.shown, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: fresh ? FontWeight.w700 : null)),
                   subtitle: Text(when(a.at)),
                   onTap: () => open(a),
                 );

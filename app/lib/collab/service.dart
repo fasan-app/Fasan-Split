@@ -1213,7 +1213,7 @@ class CollabService extends ChangeNotifier {
       _knownMembers[g.secret.tag] = now;
       if (before == null || _quiet(g) || g.secret.direct) return;
       for (final k in now.difference(before)) {
-        if (k != me) _note(Activity(ActivityKind.joined, DateTime.now(), g.secret.tag, '${s.nameOf(k)} ist „${g.localName}“ beigetreten'));
+        if (k != me) _note(Activity(ActivityKind.joined, DateTime.now(), g.secret.tag, '${s.nameOf(k)} ist „${g.localName}“ beigetreten', en: '${s.nameOf(k)} joined “${g.localName}”'));
       }
     } else if (id == GroupSession.chat) {
       final msgs = messages(g);
@@ -1227,9 +1227,9 @@ class CollabService extends ChangeNotifier {
         if (known == null && DateTime.now().difference(m.at) > const Duration(seconds: 30)) continue;
         if (me != null && m.mentions.contains(me)) {
           // mentions get through even when the chat is muted
-          _note(Activity(ActivityKind.mention, m.at, g.secret.tag, '${s.nameOf(m.from)} hat dich in „${_groupLabel(g)}“ erwähnt: ${m.text}', ref: m.id));
+          _note(Activity(ActivityKind.mention, m.at, g.secret.tag, '${s.nameOf(m.from)} hat dich in „${_groupLabel(g)}“ erwähnt: ${m.text}', ref: m.id, en: '${s.nameOf(m.from)} mentioned you in “${_groupLabel(g)}”: ${m.text}'));
         } else if (!isMuted(g)) {
-          _note(Activity(ActivityKind.message, m.at, g.secret.tag, '${s.nameOf(m.from)} in „${_groupLabel(g)}“: ${m.text}', ref: m.id));
+          _note(Activity(ActivityKind.message, m.at, g.secret.tag, '${s.nameOf(m.from)} in „${_groupLabel(g)}“: ${m.text}', ref: m.id, en: '${s.nameOf(m.from)} in “${_groupLabel(g)}”: ${m.text}'));
         }
       }
     } else if (id.startsWith('bill:')) {
@@ -1251,7 +1251,8 @@ class CollabService extends ChangeNotifier {
           final ms = [for (final m in (v['m'] as List?) ?? const []) '$m'.toLowerCase()];
           if (ms.contains(me) || myName.isNotEmpty && ms.contains(myName)) {
             final p = doc.get('meta/purpose');
-            _note(Activity(ActivityKind.mention, DateTime.now(), g.secret.tag, '${v['f']} hat dich in „${p is String && p.isNotEmpty ? p : 'Bon'}“ erwähnt: ${v['x']}', ref: billId));
+            _note(Activity(ActivityKind.mention, DateTime.now(), g.secret.tag, '${v['f']} hat dich in „${p is String && p.isNotEmpty ? p : 'Bon'}“ erwähnt: ${v['x']}', ref: billId,
+                en: '${v['f']} mentioned you in “${p is String && p.isNotEmpty ? p : 'Receipt'}”: ${v['x']}'));
           }
         }
       }
@@ -1261,7 +1262,8 @@ class CollabService extends ChangeNotifier {
       final title = purpose is String && purpose.isNotEmpty ? purpose : 'Bon';
       final who = s.nameOf(last.author);
       _note(Activity(isNew ? ActivityKind.billNew : ActivityKind.billChanged, DateTime.now(), g.secret.tag,
-          isNew ? '$who hat „$title“ in „${g.localName}“ eingetragen' : '$who hat „$title“ geändert', ref: billId));
+          isNew ? '$who hat „$title“ in „${g.localName}“ eingetragen' : '$who hat „$title“ geändert', ref: billId,
+          en: isNew ? '$who added “${title == 'Bon' ? 'Receipt' : title}” to “${g.localName}”' : '$who changed “${title == 'Bon' ? 'Receipt' : title}”'));
       final c = changedBills..add(billId);
       prefs?.setStringList(_kChanged, c.toList());
     }

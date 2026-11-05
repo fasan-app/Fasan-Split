@@ -135,6 +135,10 @@ class BillStore extends ChangeNotifier {
   }
   void saveSettings(String s) => _prefs?.setString('fasan_ui.settings', s);
 
+  /// Language of the app: 'system' (follows the phone or browser), 'de' or 'en' (Nutzer 05.11.: a switch in the settings).
+  String get language => const ['de', 'en'].contains(_app['language']) ? _app['language'] as String : 'system';
+  set language(String v) => _setApp('language', const ['de', 'en'].contains(v) ? v : 'system');
+
   /// Home currency (ISO code): balances across bills are in it; a bill in another currency has its own rate.
   String get homeCurrency => _app['currency'] as String? ?? 'EUR';
   set homeCurrency(String c) => _setApp('currency', c);

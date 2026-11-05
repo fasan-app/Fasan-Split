@@ -48,6 +48,18 @@ class _ReviewScreenState extends State<ReviewScreen> {
   bool _wasOk = false;
 
   @override
+  void initState() {
+    super.initState();
+    // a bill saved before this rule: turn the signs once when it is opened (quietly; the status line shows the result)
+    if (b.alignSigns()) {
+      _total.text = b.total == null ? '' : money(b.total!);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) StoreScope.read(context).upsert(b);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = S.of(context);
     final l = FasanLook.of(context);
@@ -112,10 +124,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 decoration: InputDecoration(labelText: t.total, suffixText: billSign(context, b)),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 style: tt.titleLarge,
-                onChanged: (v) => setState(() {
-                  b.total = parseMoney(v);
-                  b.checked = false;
-                }),
+                onChanged: (v) {
+                  setState(() {
+                    b.total = parseMoney(v);
+                    b.checked = false;
+                  });
+                  _alignSigns();
+                },
               )),
             ),
           ]),
@@ -190,6 +205,35 @@ class _ReviewScreenState extends State<ReviewScreen> {
     StoreScope.read(context).upsert(b);
   }
 
+  /// Items and total point opposite ways (a „-198,00“ from the institution, total corrected to 198): turn the items, say so,
+  /// and let the user take it back with one tap. Looked at after the total is typed or an item is changed.
+  void _alignSigns() {
+    final before = [for (final p in b.its) p.amount], beforeTotal = b.total;
+    if (!b.alignSigns()) return;
+    StoreScope.read(context).upsert(b);
+    setState(() {
+      _total.text = b.total == null ? '' : money(b.total!);
+    });
+    final de = S.of(context).de;
+    showNote(
+      context,
+      de ? 'Vorzeichen der Posten umgekehrt: sie ergeben jetzt genau die Summe.' : 'Signs of the items turned: they now add up to the total.',
+      actionLabel: de ? 'Rückgängig' : 'Undo',
+      onAction: () {
+        setState(() {
+          for (var i = 0; i < b.its.length && i < before.length; i++) {
+            b.its[i].amount = before[i];
+          }
+          b.total = beforeTotal;
+          _total.text = b.total == null ? '' : money(b.total!);
+          b.checked = false;
+        });
+        StoreScope.read(context).upsert(b);
+      },
+      duration: const Duration(seconds: 8),
+    );
+  }
+
   Future<void> _edit(int i) async {
     final it = b.its[i];
     var deleted = false;
@@ -199,11 +243,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
       if (deleted) b.its.removeAt(i);
       b.checked = false;
     });
+    _alignSigns();
   }
 
   Future<void> _add() async {
     final it = BillItem(name: S.of(context).de ? 'Posten' : 'Item', amount: 0);
     if (await editItem(context, it)) setState(() => b.its.add(it));
+    _alignSigns();
   }
 }
 

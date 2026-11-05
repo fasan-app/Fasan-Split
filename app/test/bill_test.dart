@@ -50,4 +50,38 @@ void main() {
     expect(c.its.first.boxes.first.y1, 0.25);
     expect(c.ps.first.color, 3);
   });
+
+  test('Vorzeichen: Posten −198 und Summe 198 – Posten werden umgekehrt, sonst nichts', () {
+    final b = Bill(id: 'v', created: DateTime(2026, 11, 5), total: 19800, items: [BillItem(name: 'City Sightseeing', amount: -19800)]);
+    expect(b.difference, 39600, reason: 'before: the 396,00 difference of the screenshot');
+    expect(b.alignSigns(), isTrue);
+    expect(b.its.single.amount, 19800);
+    expect(b.difference, 0);
+    expect(b.alignSigns(), isFalse, reason: 'nothing more to do');
+  });
+
+  test('Vorzeichen: mehrere negative Posten, negative Summe mit positiven Posten, und Fälle, die bleiben müssen', () {
+    final two = Bill(id: 'a', created: DateTime(2026, 11, 5), total: 3000, items: [BillItem(name: 'a', amount: -1000), BillItem(name: 'b', amount: -2000)]);
+    expect(two.alignSigns(), isTrue);
+    expect(two.its.map((p) => p.amount), [1000, 2000]);
+    final mirror = Bill(id: 'b', created: DateTime(2026, 11, 5), total: -3000, items: [BillItem(name: 'a', amount: 1000), BillItem(name: 'b', amount: 2000)]);
+    expect(mirror.alignSigns(), isTrue);
+    expect(mirror.total, 3000);
+    // a discount line in a positive bill is not a sign problem
+    final rabatt = Bill(id: 'c', created: DateTime(2026, 11, 5), total: 800, items: [BillItem(name: 'a', amount: 1000), BillItem(name: 'Rabatt', amount: -200)]);
+    expect(rabatt.alignSigns(), isFalse);
+    expect(rabatt.its.map((p) => p.amount), [1000, -200]);
+    // a real refund: negative total and negative items – stays (the app asks paid or refund)
+    final refund = Bill(id: 'd', created: DateTime(2026, 11, 5), total: -500, items: [BillItem(name: 'Rückgabe', amount: -500)]);
+    expect(refund.alignSigns(), isFalse);
+    expect(refund.needsSignQuestion, isTrue);
+    // a real difference stays a difference
+    final off = Bill(id: 'e', created: DateTime(2026, 11, 5), total: 1000, items: [BillItem(name: 'a', amount: -700)]);
+    expect(off.alignSigns(), isFalse);
+    // no total, zero total, no items
+    expect(Bill(id: 'f', created: DateTime(2026, 11, 5), items: [BillItem(name: 'a', amount: -5)]).alignSigns(), isFalse);
+    expect(Bill(id: 'g', created: DateTime(2026, 11, 5), total: 0, items: [BillItem(name: 'a', amount: 0)]).alignSigns(), isFalse);
+    expect(Bill(id: 'h', created: DateTime(2026, 11, 5), total: 100).alignSigns(), isFalse);
+  });
 }
+

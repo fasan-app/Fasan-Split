@@ -610,6 +610,16 @@ class _HomeScreenState extends State<HomeScreen> {
       enabled: !_selecting,
       start: b.read == BillRead.ok ? SwipeSide(archive ? Icons.unarchive_outlined : Icons.task_alt_rounded, archive ? t.markOpen : t.markDone, archive ? l.accent : Colors.green.shade600) : null,
       end: SwipeSide(Icons.delete_outline_rounded, t.delete, Colors.red.shade700),
+      // A swipe that would change nothing is refused before the card slides away: a card that was dismissed but stays in the list
+      // is an error of the framework („A dismissed Dismissible widget is still part of the tree“). Unfinished bills cannot go
+      // to the archive: the card springs back and says why.
+      confirmDismiss: (dir) async {
+        if (dir == DismissDirection.startToEnd && !archive && !b.done) {
+          showNote(context, t.de ? 'Erst eintragen (alle Schritte), dann ausgleichen. Ins Archiv kommen nur ausgeglichene Bons.' : 'Enter it first (all steps), then settle. Only settled receipts go to the archive.');
+          return false;
+        }
+        return true;
+      },
       onDismissed: (dir) {
         if (dir == DismissDirection.startToEnd) {
           _toArchive(context, [b], !archive);
