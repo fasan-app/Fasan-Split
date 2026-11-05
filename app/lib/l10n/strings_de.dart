@@ -117,6 +117,8 @@ const Map<String, String> stringsDe = {
   'join.step3': 'Danach siehst du die gemeinsamen Rechnungen und kannst mitmachen.',
   'join.name': 'Wie sollen dich die anderen nennen?',
   'join.button': 'Beitreten',
+  'join.step2Direct': 'Tippe auf „Verbinden“. Dein Konto entsteht auf diesem Gerät – ohne E-Mail und ohne Passwort.',
+  'join.step3Direct': 'Danach könnt ihr euch schreiben und Rechnungen teilen.',
   'join.buttonDirect': 'Verbinden',
   'join.privacy': 'Alles ist Ende-zu-Ende verschlüsselt. Es gibt kein Konto bei uns und keinen Server, der mitliest.',
   'join.linkLabel': 'Einladungslink',

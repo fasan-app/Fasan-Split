@@ -40,8 +40,10 @@ const mode = process.env.MODE || 'normal';
   await shot('1-join');
   const click = async (name) => { await p.getByRole('button', { name }).first().click({ timeout: 20000 }); await p.waitForTimeout(1500); };
   try {
-    await click('Beitritt anfragen');
+    await click(/^(Beitreten|Verbinden|Beitritt anfragen)$/);
     await click('Verstanden, teilen');
+    // the join screen says „Du bist dabei“ and offers the way into the group (it no longer jumps there by itself)
+    await click("Zur Gruppe");
   } catch (e) { console.log('FAIL Knopf fehlt', String(e).slice(0, 200)); await shot('fail'); await b.close(); process.exit(1); }
   let inGroup = false;
   if (mode === 'friend') {

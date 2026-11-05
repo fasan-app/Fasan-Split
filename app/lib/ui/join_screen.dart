@@ -188,7 +188,7 @@ class _JoinScreenState extends State<JoinScreen> {
       if (problem.isEmpty) ...[
         Text(context.tr('join.stepsTitle'), style: tt.titleSmall),
         const SizedBox(height: FasanSpace.xs),
-        for (final (i, k) in const ['join.step1', 'join.step2', 'join.step3'].indexed)
+        for (final (i, k) in (direct ? const ['join.step1', 'join.step2Direct', 'join.step3Direct'] : const ['join.step1', 'join.step2', 'join.step3']).indexed)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 3),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [

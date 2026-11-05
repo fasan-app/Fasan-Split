@@ -117,6 +117,8 @@ const Map<String, String> stringsEn = {
   'join.step3': 'Then you see the shared bills and can take part.',
   'join.name': 'What should the others call you?',
   'join.button': 'Join',
+  'join.step2Direct': 'Tap “Connect”. Your account is created on this device – no email and no password.',
+  'join.step3Direct': 'Then you can write to each other and share bills.',
   'join.buttonDirect': 'Connect',
   'join.privacy': 'Everything is end-to-end encrypted. There is no account with us and no server that reads along.',
   'join.linkLabel': 'Invitation link',
