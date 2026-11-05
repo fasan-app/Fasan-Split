@@ -207,7 +207,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: Row(children: [
                 Expanded(child: Text(ctx.tr(k), style: tt.bodyMedium)),
-                Text('${money(cents, de: de)} $sign', style: tt.bodyLarge!.copyWith(fontWeight: strong ? FontWeight.w700 : null)),
+                const SizedBox(width: FasanSpace.s),
+                Flexible(child: FittedBox(fit: BoxFit.scaleDown, child: Text('${money(cents, de: de)} $sign', style: tt.bodyLarge!.copyWith(fontWeight: strong ? FontWeight.w700 : null)))),
               ]),
             );
         final ok = hasTotal && diff == 0 && b.its.isNotEmpty;
@@ -444,12 +445,15 @@ class _ReviewScreenState extends State<ReviewScreen> {
               child: Row(children: [
                 Text('${context.tr('bill.paidBy')}:', style: tt.labelLarge!.copyWith(color: l.textMuted)),
                 const SizedBox(width: FasanSpace.s),
-                ActionChip(
-                  key: const ValueKey('payer'),
-                  visualDensity: VisualDensity.compact,
-                  avatar: Icon(Icons.payments_outlined, size: 18, color: payer.isEmpty ? l.accent : null),
-                  label: Text(payer.isEmpty ? context.tr('bill.paidByNone') : payer, style: payer.isEmpty ? TextStyle(color: l.accent) : null),
-                  onPressed: () => showPayersSheet(context, b, changed: _changed),
+                // a long name is cut inside the chip instead of pushing the row wider than the screen
+                Flexible(
+                  child: ActionChip(
+                    key: const ValueKey('payer'),
+                    visualDensity: VisualDensity.compact,
+                    avatar: Icon(Icons.payments_outlined, size: 18, color: payer.isEmpty ? l.accent : null),
+                    label: Text(payer.isEmpty ? context.tr('bill.paidByNone') : payer, maxLines: 1, overflow: TextOverflow.ellipsis, style: payer.isEmpty ? TextStyle(color: l.accent) : null),
+                    onPressed: () => showPayersSheet(context, b, changed: _changed),
+                  ),
                 ),
               ]),
             ),
