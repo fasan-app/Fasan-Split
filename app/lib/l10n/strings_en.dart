@@ -1,6 +1,14 @@
 // Fasan Split – English texts. Same keys as strings_de.dart (a test checks it). MPL-2.0
 const Map<String, String> stringsEn = {
   // --- bill screen ---
+  'perf.title': 'Performance',
+  'perf.auto': 'Automatic',
+  'perf.full': 'All effects',
+  'perf.light': 'Light',
+  'perf.sub': 'Automatic measures how smooth your device is when the app starts and turns off blur and the moving background if it stutters.',
+  'perf.nowGood': 'Now: all effects.',
+  'perf.nowSlow': 'Now: light (no blur, no moving background).',
+  'perf.nowVerySlow': 'Now: very light (and less motion).',
   'bill.title': 'Receipt',
   'bill.check': 'Check',
   'bill.checkTip': 'Check items against the total',

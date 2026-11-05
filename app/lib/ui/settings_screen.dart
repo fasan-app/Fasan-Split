@@ -8,8 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../l10n.dart';
+import '../l10n/tr.dart';
 import '../l10n_collab.dart';
 import '../main.dart';
+import '../perf/perf_governor.dart';
 import '../collab/activity.dart';
 import '../collab/ws_connect.dart' show proxySupported, proxyReachable;
 import 'backup_ui.dart';
@@ -184,6 +186,7 @@ class SettingsScreen extends StatelessWidget {
           title: Text(t.de ? 'Alle Stile vergleichen' : 'Compare all styles'),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FasanGalleryPage())),
         ),
+        if (perfGovernor != null) _PerfTile(governor: perfGovernor!),
         ListTile(
           leading: const Icon(Icons.school_outlined),
           title: TitleHelp(t.setIntro, t.setIntroSub),
@@ -374,6 +377,51 @@ class _TorTileState extends State<_TorTile> {
         setState(() => _on = v);
         messenger.showSnackBar(SnackBar(content: Text(t.de ? 'Gilt nach dem nächsten Start der App.' : 'Takes effect after the next start.')));
       },
+    );
+  }
+}
+
+
+/// „Performance“: automatic (measured at the start), always full effects, always light. Shows what the measurement found.
+class _PerfTile extends StatefulWidget {
+  const _PerfTile({required this.governor});
+  final PerfGovernor governor;
+
+  @override
+  State<_PerfTile> createState() => _PerfTileState();
+}
+
+class _PerfTileState extends State<_PerfTile> {
+  @override
+  Widget build(BuildContext context) {
+    final g = widget.governor, tt = Theme.of(context).textTheme, l = FasanLook.of(context);
+    final state = switch (g.ui.tier) {
+      PerfTier.good => context.tr('perf.nowGood'),
+      PerfTier.slow => context.tr('perf.nowSlow'),
+      PerfTier.veryslow => context.tr('perf.nowVerySlow'),
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, FasanSpace.s),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(context.tr('perf.title'), style: tt.titleMedium),
+        const SizedBox(height: FasanSpace.xs),
+        SegmentedButton<PerfMode>(
+          key: const ValueKey('perf-mode'),
+          segments: [
+            ButtonSegment(value: PerfMode.auto, label: Text(context.tr('perf.auto'))),
+            ButtonSegment(value: PerfMode.full, label: Text(context.tr('perf.full'))),
+            ButtonSegment(value: PerfMode.light, label: Text(context.tr('perf.light'))),
+          ],
+          selected: {g.mode},
+          showSelectedIcon: false,
+          onSelectionChanged: (s) async {
+            await g.setMode(s.first);
+            if (mounted) setState(() {});
+          },
+        ),
+        const SizedBox(height: FasanSpace.xs),
+        Text('${context.tr('perf.sub')} $state', style: tt.bodySmall?.copyWith(color: l.textMuted)),
+      ]),
     );
   }
 }

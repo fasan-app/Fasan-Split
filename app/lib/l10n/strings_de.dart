@@ -1,6 +1,14 @@
 // Fasan Split – German texts (the first language). Keys are dotted, grouped by screen. {0}, {1}… are filled in by `tr`. MPL-2.0
 const Map<String, String> stringsDe = {
   // --- bill screen (one screen for total, people, who paid, assigning) ---
+  'perf.title': 'Leistung',
+  'perf.auto': 'Automatisch',
+  'perf.full': 'Alle Effekte',
+  'perf.light': 'Sparsam',
+  'perf.sub': 'Automatisch misst die App beim Start, wie flüssig dein Gerät ist, und schaltet bei Ruckeln Weichzeichner und bewegten Hintergrund ab.',
+  'perf.nowGood': 'Jetzt: alle Effekte.',
+  'perf.nowSlow': 'Jetzt: sparsam (ohne Weichzeichner und Bewegung im Hintergrund).',
+  'perf.nowVerySlow': 'Jetzt: sehr sparsam (zusätzlich weniger Bewegung).',
   'bill.title': 'Bon',
   'bill.check': 'Prüfen',
   'bill.checkTip': 'Posten und Summe prüfen',

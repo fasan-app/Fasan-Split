@@ -48,8 +48,16 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
     });
   }
 
+  /// How many long texts move at the same time (all of them: many masked layers per frame, slow in the browser and on old
+  /// phones, and too restless to look at). The others wait for their next turn.
+  static int _running = 0;
+  static const maxRunning = 2;
+
   Future<void> _play() async {
     if (_playing || !mounted || _overflow <= 0 || !FasanMotion.of(context).enabled) return;
+    // not on a page that is covered by another one, and not when the row is far outside the screen (TickerMode is off there)
+    if (!TickerMode.valuesOf(context).enabled || _running >= maxRunning) return _schedule(wait: const Duration(seconds: 3));
+    _running++;
     _playing = true;
     final over = _overflow;
     try {
@@ -61,6 +69,7 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
       // back with a spring: a little overshoot, then rest
       await _c.animateWith(SpringSimulation(const SpringDescription(mass: 1, stiffness: 140, damping: 11), _c.value, 0, 0));
     } finally {
+      _running--;
       _playing = false;
       if (mounted) _schedule(wait: const Duration(seconds: 10));
     }

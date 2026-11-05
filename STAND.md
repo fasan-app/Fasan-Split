@@ -333,6 +333,17 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (aufgeräumt 04.11. abends; die einzige Liste, die gepflegt wird)
 
+### Leistung im Browser und auf alten Geräten (05.11. nachts)
+Anlass: Nutzer 05.11.: Web-App extrem langsam. Messung (Chromium, Handy-Fenster, Software-Rendering = pessimistisch): Vollglas mit
+Weichzeichner und bewegtem Hintergrund **10 Bilder/s** (CPU 4× gedrosselt: 6), „Sparsam“ **60 Bilder/s**.
+Gebaut: `perf/perf_governor.dart` – misst beim Start `FrameTiming.totalSpan` (10 Bilder Aufwärmen, ab 20 Bildern p75), Stufen
+gut / langsam (Stufe „Sparen“ von fasan_ui: kein Blur, kein Korn, kein bewegter Hintergrund) / sehr langsam (zusätzlich „Weniger
+Bewegung“); wird nur schlechter in der Sitzung, 14 Tage gemerkt (danach neu messen), Einstellung „Leistung“ (Automatisch / Alle
+Effekte / Sparsam) in den Einstellungen; „Weniger Bewegung“ des Reglers wird nie als Nutzerwahl gespeichert. Laufschrift: höchstens
+2 Texte gleichzeitig, nur auf sichtbaren Seiten. Tests: `perf_governor_test`. Browser-Messung mit Automatik: 60 Bilder/s.
+Offen: Schwellen (24/45 ms) sind eigene Wahl, nicht auf echten alten Geräten geprüft; Messskript `/home/user/tools/perf/run.js` (nicht im Repo);
+echte Bon-Liste im Browser nicht gemessen (nur Start-/Einführungsbildschirm); Renderer `--wasm`/skwasm nicht ausprobiert.
+
 ### Einladung, Beitritt, Konto-Hinweis (05.11. nachts)
 Erledigt (Branch `mitarbeit/erkennung-und-ein-bildschirm`, nicht auf main): Link v2 mit Prüfsumme und nachsichtigem Parser, Landing-Seite
 `join/index.html` (prüft den Code, Einfügefeld), neuer Beitrittsbildschirm `ui/join_screen.dart` (wer lädt wohin ein, Schritte, Status

@@ -5,6 +5,7 @@ import 'package:app_links/app_links.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'perf/perf_governor.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,6 +22,8 @@ import 'state/store.dart';
 import 'ui/collab_ui.dart';
 import 'ui/demo.dart';
 import 'ui/home.dart';
+
+PerfGovernor? perfGovernor;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,8 +43,10 @@ Future<void> main() async {
     store.saveSettings(look.encode());
     store.hintDismiss('look-glass-v1');
   }
-  final ui = FasanController(settings: look, onChanged: (s) => store.saveSettings(s.encode()));
+  final ui = SplitController(settings: look, onChanged: (s) => store.saveSettings(s.encode()));
   ui.start();
+  // measures the first frames and reduces effects on slow devices (browser, old phones); perf/perf_governor.dart
+  perfGovernor = PerfGovernor(ui, await SharedPreferences.getInstance())..start();
   // Collaboration: keys in the Android Keystore; the service only connects to relays if there is a group (Beschluss 03.11.).
   final collab = CollabService(store: store, vault: browserStorageWorks ? const SecureVault() : MemoryVault(), prefs: await SharedPreferences.getInstance());
   // Tor via Orbot (Einstellungen → Datenschutz): every relay connection through Orbot's local tunnel
