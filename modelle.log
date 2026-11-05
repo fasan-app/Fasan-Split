@@ -1,0 +1,4 @@
+assets/models/det.onnx: OK
+assets/models/rec-latin.onnx: OK
+assets/models/dict-latin.txt: OK
+assets/models/uvdoc.onnx: OK

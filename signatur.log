@@ -1,0 +1,7 @@
+V2 Signer: certificate DN: CN=Fasan Split, O=Fasan
+V2 Signer: certificate SHA-256 digest: 7c2b13b42399fa7e507c34152f9abf7bff793cdb057fc1dd7990ac01b2bdfea8
+V2 Signer: certificate SHA-1 digest: f16d8cd06080352d7f04c58148d9c02c767b76fb
+V2 Signer: certificate MD5 digest: f9389d1397a6c765838a328add479c83
+package: name='app.fasan.split' versionCode='169' versionName='0.1.69' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'
+targetSdkVersion:'36'
+application-label:'Fasan Split'

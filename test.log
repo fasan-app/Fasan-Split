@@ -1,0 +1,396 @@
+
+::group::✅ Passing tests
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/proportional_test.dart: Anteilig: wer mehr hatte, zahlt mehr; Summe exakt; bleibt in JSON und im Abgleich
+::endgroup::
+::group::⏭️ Skipped tests
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/variants_test.dart: Stresstest: Varianten jedes Bons (Auflösung, Drehung, Helligkeit, Unschärfe, JPEG) (skipped)
+Skip: Testbons oder Modelle fehlen
+::endgroup::
+::group::✅ Passing tests
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/presence_test.dart: Online, gelesen, und aus heißt wirklich aus
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/friend_direct_test.dart: Freund einladen: verbunden ohne Gruppe, Chat in beide Richtungen, auch wenn der Einladende offline war
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/groups_test.dart: Saldo über mehrere Bons, Summe immer null
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/groups_test.dart: Erstattung dreht die Richtung im Saldo
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/groups_test.dart: Saldo je Mitglied: zwei Schreibweisen einer Person zählen zusammen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/groups_test.dart: Mein Stand: je Person über alle Bons
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/groups_test.dart: Offene Bons und Bons ohne Zahler zählen nicht
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/groups_test.dart: Ausgleich: wenige Überweisungen, gleicht alles aus
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/groups_test.dart: Gruppe ohne Bon: Mitglieder von Hand, dann aus Bons; löschen räumt auf
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/groups_test.dart: Gruppenseite zeigt Personen, Saldo und Ausgleich
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/widget_test.dart: Ablauf: ein Bildschirm (Personen, Zuordnen, Zahler) bis zur Übersicht und zum Ergebnis
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/widget_test.dart: Angefangen: Speichern und schließen behält die Rechnung, Fortsetzen im Bon-Bildschirm
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/widget_test.dart: Bon-Ansicht: Person wählen, Zeile antippen ordnet zu; Tipp daneben rastet ein; Mengenspalte im Kasten
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/pairing_test.dart: Link, Prüfcode, Übertragung: neues Gerät hat dasselbe Konto und die Gruppe
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/widget_test.dart: Erster Start: Einführung erscheint, Überspringen führt zur leeren Startseite und bleibt gemerkt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/widget_test.dart: Bon ohne Fotos (gelöscht oder aus 0.1) stürzt nicht ab, zeigt Digital
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/widget_test.dart: Schritt 1: Posten −198, Summe auf 198 getippt – Vorzeichen wird gedreht, keine 396-€-Differenz, Rückgängig geht
+::endgroup::
+::group::⏭️ Skipped tests
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/sroie_test.dart: SROIE Summe (skipped)
+Skip: SROIE-Daten oder Modelle fehlen
+::endgroup::
+::group::✅ Passing tests
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/core_admin_test.dart: Zweite Verwaltung: Gründer geht, Gruppe bleibt, Gründer wird wieder eingeladen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/core_admin_test.dart: Mitglied entfernen: alle anderen bekommen einen neuen Schlüssel, der Entfernte nicht
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/friend_invite_test.dart: Freund einladen: Link kommt im Direktchat an, Beitritt ohne Bestätigung, Rückgängig nach Beitritt entfernt wieder
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/core_admin_test.dart: Vertrauen: Änderung an meinem Anteil von Ben wartet, bis ich sie annehme
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 0 
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 1 
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 2 
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 3 test fails if msg is reduced modulo p or n
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 4 
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 5 public key not on the curve
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 6 has_even_y(R) is false
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 7 negated message
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 8 negated s value
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 9 sG - eP is infinite. Test fails in single verification if has_even_y(inf) is defined as true and x(inf) as 0
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 10 sG - eP is infinite. Test fails in single verification if has_even_y(inf) is defined as true and x(inf) as 1
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 11 sig[0:32] is not an X coordinate on the curve
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 12 sig[0:32] is equal to field size
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 13 sig[32:64] is equal to curve order
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 14 public key is not a valid X coordinate because it exceeds the field size
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 15 message of size 0 (added 2022-12)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 16 message of size 1 (added 2022-12)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 17 message of size 17 (added 2022-12)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: BIP-340 Vektor 18 message of size 100 (added 2022-12)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: NIP-44 v2 Gesprächsschlüssel
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: NIP-44 v2 Nachrichtenschlüssel
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: NIP-44 v2 Auffüllen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: NIP-44 v2 Verschlüsseln und Entschlüsseln
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: NIP-44 v2 Lange Nachricht (65 535 Zeichen)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: NIP-44 v2 Ungültige Eingaben werden abgelehnt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: Gruppen-AEAD Hin und zurück, Manipulation und falsche Bindung werden erkannt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: Gruppen-AEAD RFC 8439 ChaCha20-Poly1305: Testvektor aus Abschnitt 2.8.2
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_test.dart: Konstante Zeit: Vergleich
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: Esplanada (PT, Ort in eigener Zeile)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: Estrela do Bairro (Contribuinte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: Confeitaria Nacional (Consumidor final übersprungen)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: McDonald's (NIF mit Leerzeichen, Datum mit Schrägstrich)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: Aldi (zweistelliges Jahr)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: REWE (TSE-Zeit und Datum)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: Green Soul (Ust.ID Nr)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: QR-Datum und QR-NIF gewinnen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: Unmögliche Daten und Zukunft werden verworfen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: NIF-Prüfziffer (Modulo 11)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: Kopf aus dem besten Durchlauf, nicht aus dem Posten-Gewinner (Restaurante da Sé)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: Verlesener Kopf verliert gegen sauberen (Estrela do Bairro)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: ReceiptHeader.complete Name, gültige NIF und saubere Adresse genügen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: ReceiptHeader.complete verlesene NIF und verlesene Adresse: nicht vollständig (Estrela, schlechter Durchlauf)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: ReceiptHeader.complete ohne Namen nie vollständig
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: ReceiptHeader.complete Adresse ohne Steuernummer reicht nicht, mit USt-ID schon (Aldi/REWE: erst die ganze Adresse)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/place_test.dart: ReceiptHeader.complete USt-ID ohne Postleitzahl reicht nicht (REWE Heide 2024)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/split_math_test.dart: 3 Cola auf 2 Personen: 1,5 Stück je Person, 4,80 € je Person
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/split_math_test.dart: Rest-Cent wandert reihum
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/split_math_test.dart: Zufall: Summe stimmt immer, beide Verfahren stimmen überein (20 000 Fälle)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/split_math_test.dart: Zufall: ganze Rechnung, Σ Personen = zugeordnete Posten + Differenz, Prüfung leer (3 000 Rechnungen)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/split_math_test.dart: Geld ohne Kommazahlen: 0,1 + 0,2 Falle
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/rates_test.dart: EZB-Datei lesen, Kreuzkurs
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/rates_test.dart: Bon in Dollar zählt im Saldo in Euro
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_link_test.dart: Link ist eine https-Adresse unter /Fasan-Split/join/, Code nur nach „#“
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_link_test.dart: Alter Link fasansplit://join und nackter Code gehen weiter
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_link_test.dart: Nur Einladungen öffnen den Beitreten-Schirm
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_link_test.dart: Auf dem Handy gibt es keinen übergebenen Code
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/friend_invite_test.dart: Rückgängig vor dem Beitritt: Nachricht weg, Link wirkungslos, Eingeladene sind nicht in der Gruppe
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/link_person_test.dart: Einladung trägt die Person, alter Link ohne Person geht weiter
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/link_person_test.dart: Person aus dem Bon einladen: neues Mitglied ist mit ihr verknüpft, beide Telefone sehen es; lösen und neu verknüpfen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Ergebnis liegt vor, bevor die Warteschlange „fertig“ meldet (zwei Fotos, sofort)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Strom endet ohne Ergebnis: Bon gilt als fehlgeschlagen, nie für immer „liest“
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Strom wirft mittendrin: fehlgeschlagen, der nächste Bon wird trotzdem gelesen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Stresstest: 60 Fotos, Zufall, Fehler, Hinzufügen während des Lesens (Seed 1)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Stresstest: 60 Fotos, Zufall, Fehler, Hinzufügen während des Lesens (Seed 2)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Stresstest: 60 Fotos, Zufall, Fehler, Hinzufügen während des Lesens (Seed 3)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Stresstest: 60 Fotos, Zufall, Fehler, Hinzufügen während des Lesens (Seed 4)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Stresstest: 60 Fotos, Zufall, Fehler, Hinzufügen während des Lesens (Seed 5)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Löschen während des Lesens und im Wartebereich: kein Absturz, kein Geister-Bon, Rest wird gelesen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_queue_test.dart: Stresstest: 150 weitere Seeds, kürzere Läufe
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/update_test.dart: Nur Änderungen über dem eigenen Stand
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/update_test.dart: Ohne bekannten eigenen Stand alle Zeilen
+::endgroup::
+::group::✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/friend_invite_test.dart: Zurückgezogener Link: wer ihn trotzdem benutzt, kommt nicht in die Gruppe
+JOIN AFTER UNDO: error=null member=false
+::endgroup::
+::group::✅ Passing tests
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_robust_test.dart: Einladung übersteht Neustart der einladenden App; Person ist sofort drin und sieht die Bons
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/sync_robust_test.dart: Abgelehnte Sendungen kommen von selbst nach; Papierkorb wird geteilt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/group_test.dart: NIP-06: Testvektor aus nips/06.md
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/group_test.dart: Identität: erzeugen, speichern, wiederherstellen aus 12 Wörtern
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/group_test.dart: Einladung: Kodierung, Ablauf; Gruppenschlüssel nur im offenen Link
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/assign_test.dart: Alle: 1,5 Stück je Person und kein automatisches Weiterspringen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/assign_test.dart: Einstellung „Sofort“ springt weiter
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/assign_test.dart: Plus fügt eine Person hinzu und weist sie dem Posten zu
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/group_test.dart: Ganzer Ablauf: Einladen, Anfrage, Freigabe, Live-Bearbeitung beider Seiten, gleiche Endstände
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/assign_test.dart: Langdruck: „Nur diese Person“
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/assign_test.dart: Person entfernen schiebt Anteile und Zahler nach
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/group_test.dart: Anfrage mit abgelaufener oder fremder Einladung wird ignoriert
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/group_test.dart: Willkommen nur vom Admin der Einladung
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/name_repair_test.dart: Ferreiras: Steuerspalte und e weg, z = 2, verlesener Name von der Mehrheit
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/name_repair_test.dart: Normale Namen bleiben (keine Spalte, keine Mengenbuchstaben)
+::endgroup::
+::group::⏭️ Skipped tests
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/e2e_test.dart: e2e synthetische Bons (skipped)
+Skip: Testbons oder Modelle fehlen
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 0-einfuehrung (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 1-start (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 2-summe (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 4a-fokus (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 4b-liste (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 4c-bon (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 4d-karten (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 4e-bon-digital (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 4f-bon-original (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 5-bezahlt (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 6-ergebnis (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-hoch 7-einstellungen (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 0-einfuehrung (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 1-start (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 2-summe (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 4a-fokus (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 4b-liste (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 4c-bon (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 4d-karten (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 4e-bon-digital (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 4f-bon-original (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 5-bezahlt (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 6-ergebnis (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: hell-quer 7-einstellungen (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 0-einfuehrung (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 1-start (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 2-summe (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 4a-fokus (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 4b-liste (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 4c-bon (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 4d-karten (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 4e-bon-digital (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 4f-bon-original (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 5-bezahlt (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 6-ergebnis (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-hoch 7-einstellungen (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 0-einfuehrung (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 1-start (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 2-summe (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 4a-fokus (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 4b-liste (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 4c-bon (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 4d-karten (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 4e-bon-digital (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 4f-bon-original (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 5-bezahlt (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 6-ergebnis (skipped)
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/screens_test.dart: dunkel-quer 7-einstellungen (skipped)
+::endgroup::
+::group::✅ Passing tests
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/perf_governor_test.dart: classifyFrames: Schwellen und zu wenige Bilder
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/perf_governor_test.dart: Governor: Aufwärmen zählt nicht, langsam senkt Stufe, wird gemerkt, nie besser in der Sitzung
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/perf_governor_test.dart: Modus: „voll“ und „leicht“ erzwingen, Wechsel löscht das Gemerkte
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/perf_governor_test.dart: „Weniger Bewegung“ des Reglers wird nie als Wahl des Nutzers gespeichert
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/backup_test.dart: Sicherung: Bons und Konto kommen in eine leere Installation, doppelte Bons nicht
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/backup_test.dart: Sicherung mit geteilter Gruppe (Speicher mit Listen): Gruppe kommt nach Neustart zurück
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/backup_test.dart: Sicherung mit Passwort: richtiges Passwort öffnet, falsches nicht, ohne Passwort gesperrt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/refund_test.dart: Negative Summe löst die Frage aus, positive und einzelne negative Zeilen nicht
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/refund_test.dart: Es wurde bezahlt: alles positiv, Richtung normal
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/refund_test.dart: Geld kam zurück: alles positiv, Richtung umgekehrt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/refund_test.dart: Ohne Summe zählt die Postensumme; zweite Antwort ändert nichts
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/refund_test.dart: Richtung bleibt in JSON und im Gruppenabgleich erhalten
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/refund_test.dart: Erstattung: CSV nennt den Empfänger, Personen-Summe sinkt statt zu steigen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/name_test.dart: Name aus „Ich bin“, Umbenennen kommt überall an, fremdes Profil zählt nicht
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/refund_test.dart: Ergebnis zeigt die Erstattung
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/name_repair_digits_test.dart: Ziffern in Wörtern werden Buchstaben
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/name_repair_digits_test.dart: echte Ziffern bleiben
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/name_repair_digits_test.dart: Gin Tonico ist ein Cocktail, keine Limonade; Tonic Water bleibt Limonade
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/name_repair_digits_test.dart: Haarlinien-Boxen (8 px hoch neben 55 px) werden erkannt, kleine echte Zeilen nicht
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_web_test.dart: Poly1305 RFC 8439 2.5.2
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_web_test.dart: AEAD RFC 8439 2.8.2
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/crypto_web_test.dart: same output as pointycastle, tamper detected
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/settled_test.dart: Eingetragen bleibt offen und zählt; ausgeglichen geht ins Archiv und zählt nicht mehr
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/settled_test.dart: Ausgeglichen wird geteilt und kommt zurück
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_simple_test.dart: Ein Link aus der Gruppe: Person in der Gruppe, im Bon zugeordnet, Freund, Nachricht ohne zweiten Link
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_open_test.dart: Offener Link: zwei Leute treten bei, während der Admin aus ist, und bearbeiten gemeinsam
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/account_delete_test.dart: Konto löschen: überall „gelöscht“, Lösch-Bitte an die Relays, Chris kann ihn entfernen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_test.dart: Aufteilen verliert keinen Cent (größter Rest)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_test.dart: Je Person, Differenz zum Bon, Überweisungen an den Zahler
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_test.dart: Beträge lesen und schreiben
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_open_test.dart: Fälschungen zählen nicht: ohne Ticket, mit Admin-Flag, für fremden Schlüssel
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_test.dart: CSV mit Semikolon, Dezimalkomma und BOM
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_test.dart: Speichern und Laden
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_test.dart: Vorzeichen: Posten −198 und Summe 198 – Posten werden umgekehrt, sonst nichts
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_test.dart: Vorzeichen: mehrere negative Posten, negative Summe mit positiven Posten, und Fälle, die bleiben müssen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: lineQuad Neigung der Wörter dreht den Kasten entlang der Zeile
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: lineQuad ohne Neigung: Gerade durch die Wortmitten
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: lineQuad keine Wörter: kein Kasten
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: verifiedLines Summe stimmt: alle Posten und die Summenzeile
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: verifiedLines Summe stimmt nicht: nur sichere Posten, keine Summenzeile
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: verifiedQuads ein gedrehter Kasten je geprüfter Zeile, nicht mehr
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: straighteningWarp Gitter bildet auf das Foto ab, Kästen tragen beide Zustände
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: straighteningWarp nicht endliche Abbildung: kein Gitter
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: ScanScreen Begradigung mit Bewegung
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: ScanScreen Begradigung ohne Bewegung (Animationen entfernt)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/scan_preview_test.dart: Kasten-Winkel bleibt klein genug für Zeilen (Neigung ±0,6)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_format_test.dart: Länge: der Link ist nur noch etwa ein Drittel so lang wie vorher (534 Zeichen)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_format_test.dart: Rundreise: alle Kombinationen, Umlaute, Emoji, lange Namen, eigene Relays
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_format_test.dart: Alte Links (v1, JSON) öffnen weiter
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_format_test.dart: Abgeschnitten: an jeder Stelle erkannt, nie ein falscher Beitritt; meist „unvollständig“
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_format_test.dart: Verfälscht: ein geändertes Zeichen ergibt nie einen anderen gültigen Link
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_format_test.dart: Wie Leute Links weitergeben: umbrochen, in Text, in Klammern, mit Satzzeichen, als fasansplit://, mit %23
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_format_test.dart: Zufall und Müll: nie eine Ausnahme, nie ein Treffer
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_format_test.dart: Dieselbe Einladung, zwei Mal verschlüsselt: gleiche Länge, kein Muster der Schlüssel im Text
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/chat_test.dart: Antwort: Zitat zeigt auf die Nachricht
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/chat_test.dart: Bearbeiten: nur der Autor, Markierung „bearbeitet“, Zeit bleibt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/chat_test.dart: Löschen: Text weg, Marker bleibt, Zitate lösen weiter auf, nicht mehr bearbeitbar
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/chat_test.dart: Reaktion: eine je Person, gleiche nimmt zurück, andere ersetzt; Reaktionen sind keine Nachrichten
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/chat_test.dart: Zwei Geräte: Reaktionen und Bearbeiten laufen zusammen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/chat_test.dart: Erwähnung wird mit der Nachricht gespeichert, Anpinnen ist ein eigener Schlüssel und lässt sich lösen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/chat_test.dart: Zufall: drei Geräte, beliebige Aktionen und Abgleiche – am Ende überall derselbe Chat (200 Läufe)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/invite_open_test.dart: Links zurückziehen: neuer Gruppenschlüssel, alter Link führt ins Leere, Mitglieder bleiben
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/category_test.dart: Kategorie aus dem Geschäftsnamen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/category_test.dart: Sortieren und Filtern
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Englisch: onboarding ohne deutsche Reste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Englisch: home ohne deutsche Reste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Englisch: review ohne deutsche Reste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Englisch: assign-focus ohne deutsche Reste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Englisch: assign-list ohne deutsche Reste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Englisch: pay ohne deutsche Reste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Englisch: result ohne deutsche Reste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Englisch: settings ohne deutsche Reste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Umschalter: Einstellung wirkt sofort, auch gegen die Systemsprache
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Englisch: Chat, Notizen, Mitglieder, Konto ohne deutsche Reste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/language_test.dart: Gegenprobe: im deutschen Modus findet der Detektor deutschen Text (der Test ist nicht blind)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_sync_test.dart: Hin und zurück: gleiche Summen je Person
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_sync_test.dart: Zwei Telefone bearbeiten gleichzeitig, mischen, gleiche Endstände und Summen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_sync_test.dart: Person entfernen verschiebt Anteile nicht (Zuordnung über uid)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_sync_test.dart: CRDT-Eigenschaften: Reihenfolge egal, doppelt egal (500 Zufallsläufe)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit ziffer
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit summe falsch
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit usa
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit ohne summe
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit menge
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit rabatt+pfand
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit passt nicht
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit schweiz
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit pfand unten
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit pfand oben
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit menge oben
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit menge unten
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit menge daneben
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit mhd rabatt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit storno
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit leergut
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit tanken
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit hotel
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit mietwagen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit kaution posten
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit extras
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit menü
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit usa tip
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit rundung nl
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit dreizeilig
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit rabatt prozent
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit ohne summenwort
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit stueckzahl
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit rundung 5 sen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: einheit waehrung im wort
+::endgroup::
+::group::✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/reader_test.dart: (tearDownAll)
+GESAMT: 30/30 Fälle richtig
+::endgroup::
+::group::✅ Passing tests
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/pay_test.dart: IBAN-Prüfung, SEPA-QR-Text, PayPal.Me-Link
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/pay_test.dart: Bezahl-Angaben: nur in der Gruppe geteilt, beim anderen lesbar
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/pay_test.dart: Bitcoin/Monero-Link: Leerzeichen als %20 (nie +), Name kommt in der Wallet unverändert an
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/pay_test.dart: Bitcoin/Monero-Link: 2000 zufällige Namen bleiben beim Dekodieren gleich, keine Steuerzeichen im Link
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/pay_test.dart: SEPA-QR: Zeilenumbrüche und Steuerzeichen in Name und Text verschieben keine Felder
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/account_sync_test.dart: Neuinstallation: 12 Wörter holen Gruppe und Bons zurück; zweites Gerät bekommt neue Gruppen live
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/account_sync_test.dart: Sicherung mit Konto auf frischem Gerät, das schon ein leeres Konto hat: ersetzt es, ohne Neustart
+::endgroup::
+::group::⏭️ Skipped tests
+⏭️ /home/runner/work/Fasan-Split/Fasan-Split/app/test/e2e_web_admin_test.dart: Web-Einladung Ende zu Ende (Admin-Seite, Admin offline) (skipped)
+Skip: nur mit lokalem Relay (FASAN_E2E_RELAY)
+::endgroup::
+::group::✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_flaky_test.dart: Beitritt über unzuverlässige Relays: erster Link genügt, beide Seiten sehen dieselben Mitglieder (Seed 1)
+seed 1: admin sees friend=true, friend sees admin=true; refused A 1 B 1
+::endgroup::
+::group::✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_flaky_test.dart: Beitritt über unzuverlässige Relays: erster Link genügt, beide Seiten sehen dieselben Mitglieder (Seed 2)
+seed 2: admin sees friend=true, friend sees admin=true; refused A 2 B 1
+::endgroup::
+::group::✅ Passing tests
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Posten-Blatt: Name, Betrag und Menge ändern UND zuordnen im selben Blatt, sofort gespeichert
+::endgroup::
+::group::✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_flaky_test.dart: Beitritt über unzuverlässige Relays: erster Link genügt, beide Seiten sehen dieselben Mitglieder (Seed 3)
+seed 3: admin sees friend=true, friend sees admin=true; refused A 3 B 1
+::endgroup::
+::group::✅ Passing tests
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Posten löschen: Wischen oder Blatt, Rückgängig bringt ihn an dieselbe Stelle zurück
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Mehrere Zahler mit ungleichen Anteilen im Bon-Bildschirm; Lücke wird gemeldet und lässt sich gleich verteilen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Personenauswahl: wird beim Tippen gefiltert, ohne Akzente, „Neu:“ am Ende, Enter nimmt den ersten Treffer
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Aktive Person: Antippen der Posten schaltet sie um; langes Drücken öffnet das Blatt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_flaky_test.dart: Browser sofort geschlossen, Netz weg: beim erneuten Öffnen wird der Beitritt nachgesendet, ohne neue Einladung
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_flaky_test.dart: Zurück in der App (wake): ein wartender Beitritt geht sofort raus, ohne die Wartezeiten der Wiederholung
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht auswählen, gruppieren: Kopfzeile der Gruppe mit Anzahl
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Langdruck wählt aus; Auswahl auf einen Bon ziehen sortiert sie davor
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Langdruck hebt sofort an: ohne Loslassen auf „Papierkorb“ ziehen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht moveBefore: mehrere Bons vor ein Ziel, Reihenfolge bleibt, Gruppe des Ziels
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Auswahlmodus bleibt auch ohne Auswahl und endet mit dem X
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Gruppe: Mitglieder werden vorgeschlagen, „Alle aus der Gruppe“ übernimmt sie, Freund außerhalb → einladen → zurückziehen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Wischen nach rechts: eingetragener Bon wird ausgeglichen (Archiv), Rückgängig holt zurück
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Posten wischen: rechts = für alle / niemand (die Zeile federt zurück und bleibt), links = löschen mit Rückgängig
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Wischen ohne Personen: freundlicher Hinweis statt Fehler
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Wischen nach rechts: angefangener Bon kommt nicht ins Archiv, Hinweis
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Person lang drücken: hat bezahlt, alle offenen Posten, vom Bon entfernen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_screen_test.dart: Sehr langer Postenname: läuft als Laufschrift, Antippen öffnet das Blatt, Wischen nach rechts ordnet allen zu
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Wischen nach links: Papierkorb mit Rückgängig; der Bon bleibt gespeichert
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Reiter: Archiv und Papierkorb zeigen ihre Bons, Wiederherstellen und Leeren
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Untere Leiste: Gruppen und Freunde haben eigene Bildschirme
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Bon aus der Gruppe öffnen und schließen: man bleibt in der Gruppe (Nutzer 04.11.)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Übersicht Foto in der Warteschlange: wartet, wird gelesen, ohne Öffnen; fehlgeschlagen bietet „Nochmal lesen“
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Warteschlange mehrere Fotos werden nacheinander gelesen und füllen ihre Platzhalter
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Warteschlange Lesefehler: Bon bleibt, Status „fehlgeschlagen“, der nächste wird trotzdem gelesen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Warteschlange Erste Angaben (Ort, Datum, Preis) stehen in der Übersicht, bevor der Bon fertig gelesen ist
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Warteschlange während des Lesens gelöscht: kommt nicht zurück
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Papierkorb, Archiv, Gruppen, Freunde (Speicher) Frist 7 Tage, 30 Tage oder nur manuell
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Papierkorb, Archiv, Gruppen, Freunde (Speicher) Standard ist 30 Tage; Restzeit zählt herunter
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Papierkorb, Archiv, Gruppen, Freunde (Speicher) Archiv = ausgeglichen, Papierkorb ist getrennt; Wiederherstellen bringt zurück
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Papierkorb, Archiv, Gruppen, Freunde (Speicher) Gruppen ohne Bons, Gruppe löschen lässt die Bons bestehen, Freunde aus Bons und von Hand
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/home_test.dart: Beim Start: wartende oder unterbrochene Fotos gelten als fehlgeschlagen, Gruppe bleibt erhalten
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/notes_test.dart: Notiz: Text setzen, lesen, ändern
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/notes_test.dart: Zwei tippen an verschiedenen Stellen: beides bleibt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/notes_test.dart: Gleiche Zeile gleichzeitig: beide Fassungen bleiben, nichts verschwindet
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/notes_test.dart: Zufall: Text nach jeder Bearbeitung exakt wie eingegeben (300 Läufe)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/notes_test.dart: Chat sortiert nach Zeit
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/marquee_test.dart: passt der Text, bleibt es ein normaler Text ohne Überblendung
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/marquee_test.dart: langer Text: blendet am Rand aus, läuft einmal langsam zur Seite und federt zurück
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/marquee_test.dart: mit „Animationen entfernen“ läuft nichts von selbst, auch nicht beim Antippen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/marquee_test.dart: Gesten gehören der Zeile: Antippen und Wischen auf einem langen Namen erreichen den Eltern-Widget; Volltext in der Semantik
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/marquee_test.dart: Zeichenfolgen mit Extremen brechen nichts: leer, sehr lang, Emoji, rechts nach links
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/bill_notes_test.dart: Notiz im Bon: geteilt, angepinnt, Erwähnung kommt bei Angi als Neuigkeit an
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/service_test.dart: Zwei Telefone: Einladen, Freigeben, gemeinsam abrechnen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/chat_collab_test.dart: Chat: Erwähnung kommt an, Stumm schweigt außer bei Erwähnung, Anpinnen ist geteilt
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/collab_ui_test.dart: Konto zeigt ohne Schlüssel den Hinweis und speichert den Namen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/collab_ui_test.dart: Profil: Name tippen und Seite schließen – überall gespeichert (Nutzer 04.11.)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/collab_ui_test.dart: Einladung erzeugt einen Link mit QR-Code, nur für den Admin
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/collab_ui_test.dart: Notiz anlegen, schreiben, und sie steht in der Gruppe
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/collab_ui_test.dart: Chat: Nachricht senden erscheint in der Liste
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/collab_ui_test.dart: Chat: lang drücken – reagieren, antworten, bearbeiten, löschen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/collab_ui_test.dart: Chat: suchen, anpinnen, stumm schalten, jemanden erwähnen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung phone-small en (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_screen_test.dart: Gültiger Link: sagt wer wohin einlädt, erklärt die Schritte, Beitritt klappt, Status „verbunden“, Konto-Sicherung vorn
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_screen_test.dart: Abgeschnittener Link: erklärt was fehlt und wie es klappt, kein Beitreten-Knopf, Feld zum Einfügen da
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_screen_test.dart: Kein Link, Müll, abgelaufen: je eine verständliche Meldung, nie ein totes Ende
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung phone en (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_screen_test.dart: Alter Link (v1) und schon Mitglied
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/join_screen_test.dart: Deutsch: alle Texte des Bildschirms sind deutsch
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung phone-landscape en (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/full_flow_test.dart: Gesamtablauf: Gruppe, Einladung aus dem Bon, Verknüpfung, gleiche Salden, Änderungen, Entfernen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/payers_test.dart: Drei Leute, zwei haben unterschiedlich bezahlt: wenige, exakte Überweisungen
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/payers_test.dart: Mehrere Zahler bleiben beim Teilen und beim Entfernen einer Person richtig
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/payers_test.dart: Ferreiras: 7,90 sind 10 % der Posten → Zeile „Bedienung 10 %“, anteilig
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung tablet en (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung desktop en (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung desktop-wide en (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung phone-small de (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung phone de (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung phone-landscape de (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung tablet de (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung desktop de (3 Läufe à 90 Schritte)
+✅ /home/runner/work/Fasan-Split/Fasan-Split/app/test/monkey_test.dart: Zufallsbedienung desktop-wide de (3 Läufe à 90 Schritte)
+::endgroup::
+
+🎉 302 tests passed, 52 skipped.
