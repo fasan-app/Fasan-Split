@@ -1,6 +1,5 @@
 // Scan queue: invariants under load. Whenever the queue says „nothing open“, every bill is finished (ok or failed) – never
 // „queued“ or „reading“. Random delays, errors, streams that end without a result, photos added while reading. No network, no models.
-import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 

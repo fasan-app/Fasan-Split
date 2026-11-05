@@ -12,7 +12,7 @@ class NoteInfo {
 }
 
 class ChatMessage {
-  ChatMessage(this.id, this.from, this.text, this.at, {this.bill, this.reply, this.edited = false, this.deleted = false, this.reactions = const {}});
+  ChatMessage(this.id, this.from, this.text, this.at, {this.bill, this.reply, this.edited = false, this.deleted = false, this.reactions = const {}, this.mentions = const [], this.pinned = false});
   final String id, from, text;
 
   /// Id of the message this one answers (quote), or null.
@@ -20,6 +20,12 @@ class ChatMessage {
 
   /// Text was changed after sending / message was deleted (the entry stays so quotes still resolve; text is empty).
   final bool edited, deleted;
+
+  /// People (public keys) the author mentioned with @; they are told in their „Neuigkeiten“ (Nutzer 04.11.).
+  final List<String> mentions;
+
+  /// Pinned for the whole group (anyone can pin and unpin, like in other group chats); shown on top of the chat.
+  final bool pinned;
 
   /// Reactions: person (public key) → emoji. One per person and message; the same emoji again takes it back.
   final Map<String, String> reactions;
@@ -134,9 +140,11 @@ abstract final class Notes {
   static List<ChatMessage> messages(LwwDoc doc) {
     final out = <ChatMessage>[];
     final reactions = <String, Map<String, String>>{}; // message id → person → emoji (keys `c/<id>/e/<pub>`)
+    final pinned = <String>{};
     for (final k in doc.keys('c/')) {
       final parts = k.split('/');
       if (parts.length == 4 && parts[2] == 'e' && doc.get(k) is String) (reactions[parts[1]] ??= {})[parts[3]] = doc.get(k) as String;
+      if (parts.length == 3 && parts[2] == 'p' && doc.get(k) == true) pinned.add(parts[1]);
     }
     for (final k in doc.keys('c/')) {
       if (k.indexOf('/', 2) >= 0) continue; // only `c/<id>` entries are messages
@@ -144,7 +152,7 @@ abstract final class Notes {
       if (v is Map) {
         final id = k.substring(2);
         out.add(ChatMessage(id, v['f'] as String? ?? '', v['x'] as String? ?? '', DateTime.fromMillisecondsSinceEpoch((v['t'] as num?)?.toInt() ?? 0),
-            bill: v['b'] as String?, reply: v['r'] as String?, edited: v['ed'] == 1, deleted: v['d'] == 1, reactions: reactions[id] ?? const {}));
+            bill: v['b'] as String?, reply: v['r'] as String?, edited: v['ed'] == 1, deleted: v['d'] == 1, reactions: reactions[id] ?? const {}, mentions: [for (final m in (v['m'] as List?) ?? const []) '$m'], pinned: pinned.contains(id)));
       }
     }
     out.sort((a, b) => a.at != b.at ? a.at.compareTo(b.at) : a.id.compareTo(b.id));
@@ -161,8 +169,14 @@ abstract final class Notes {
     return _lastSentMs;
   }
 
-  static void send(LwwDoc doc, String from, String text, {String? bill, String? reply}) =>
-      doc.set('c/${newUid()}', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill, 'r': ?reply});
+  static void send(LwwDoc doc, String from, String text, {String? bill, String? reply, List<String> mentions = const []}) =>
+      doc.set('c/${newUid()}', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill, 'r': ?reply, if (mentions.isNotEmpty) 'm': mentions});
+
+  /// Pins or unpins a message for the whole group.
+  static void pinMessage(LwwDoc doc, String id, bool pin) {
+    if (_raw(doc, id) == null) return;
+    doc.set('c/$id/p', pin ? true : null);
+  }
 
   static Map<String, Object?>? _raw(LwwDoc doc, String id) {
     final v = doc.get('c/$id');

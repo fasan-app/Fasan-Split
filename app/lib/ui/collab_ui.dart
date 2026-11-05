@@ -23,7 +23,7 @@ import '../l10n_groups.dart';
 import '../main.dart';
 import '../state/scan_queue.dart';
 import 'bill_tile.dart';
-import 'common.dart' show TitleHelp;
+import 'common.dart' show TitleHelp, showNote;
 import '../model/bill.dart' show money;
 import 'groups.dart';
 import 'pairing_ui.dart';
@@ -868,10 +868,59 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Message I answer (quote above the input) or edit (the input holds its text); at most one of the two.
   ChatMessage? _replyTo, _editing;
 
+  /// People (public keys) picked with @ for the message being written.
+  final Set<String> _mentions = {};
+
+  /// Search in this chat: shown instead of the title while open.
+  bool _searching = false;
+  final TextEditingController _query = TextEditingController();
+
   @override
   void dispose() {
     _input.dispose();
+    _query.dispose();
     super.dispose();
+  }
+
+  /// Members of the group that can be mentioned (not me).
+  List<(String, String)> _members() {
+    final g = widget.group, me = CollabScope.read(context).identity?.pub;
+    return [for (final k in g.session.memberKeys) if (k != me) (k, g.session.nameOf(k))]..sort((a, b) => a.$2.toLowerCase().compareTo(b.$2.toLowerCase()));
+  }
+
+  Future<void> _mention() async {
+    final de = S.of(context).de, people = _members();
+    final who = await showModalBottomSheet<(String, String)>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: ListView(shrinkWrap: true, children: [
+          ListTile(title: Text(de ? 'Wen erwähnen?' : 'Mention whom?', style: Theme.of(ctx).textTheme.titleMedium)),
+          if (people.isEmpty) ListTile(title: Text(de ? 'Niemand sonst in der Gruppe.' : 'Nobody else in the group.')),
+          for (final p in people) ListTile(leading: FasanAvatar(name: p.$2, index: 0, size: 32), title: Text(p.$2), onTap: () => Navigator.pop(ctx, p)),
+        ]),
+      ),
+    );
+    if (who == null || !mounted) return;
+    _mentions.add(who.$1);
+    final t = _input.text;
+    _input.text = '${t.isEmpty || t.endsWith(' ') ? t : '$t '}@${who.$2} ';
+    _input.selection = TextSelection.collapsed(offset: _input.text.length);
+  }
+
+  /// The message text with @names of mentioned people in bold.
+  InlineSpan _rich(ChatMessage m, TextStyle? base, Color accent) {
+    final names = {for (final k in m.mentions) widget.group.session.nameOf(k)}..removeWhere((n) => n.trim().isEmpty);
+    if (names.isEmpty) return TextSpan(text: m.text, style: base);
+    final re = RegExp('@(${names.map(RegExp.escape).join('|')})');
+    final spans = <InlineSpan>[];
+    var i = 0;
+    for (final x in re.allMatches(m.text)) {
+      if (x.start > i) spans.add(TextSpan(text: m.text.substring(i, x.start)));
+      spans.add(TextSpan(text: x.group(0), style: TextStyle(fontWeight: FontWeight.w700, color: accent)));
+      i = x.end;
+    }
+    if (i < m.text.length) spans.add(TextSpan(text: m.text.substring(i)));
+    return TextSpan(style: base, children: spans);
   }
 
   void _send() {
@@ -882,8 +931,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (edit != null) {
       c.editMessage(widget.group, edit.id, text);
     } else {
-      c.sendMessage(widget.group, text, reply: _replyTo?.id);
+      c.sendMessage(widget.group, text, reply: _replyTo?.id, mentions: _mentions.toList());
     }
+    _mentions.clear();
     _input.clear();
     setState(() => _replyTo = _editing = null);
   }
@@ -896,8 +946,10 @@ class _ChatScreenState extends State<ChatScreen> {
     final de = S.of(context).de, c = CollabScope.read(context), me = c.identity?.pub;
     final choice = await showModalBottomSheet<String>(
       context: context,
+      isScrollControlled: true, // many entries on a small or landscape screen: the menu scrolls instead of being cut off
       builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
@@ -913,9 +965,11 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ListTile(leading: const Icon(Icons.reply_rounded), title: Text(de ? 'Antworten' : 'Reply'), onTap: () => Navigator.pop(ctx, 'reply')),
           if (m.text.isNotEmpty) ListTile(leading: const Icon(Icons.copy_rounded), title: Text(de ? 'Kopieren' : 'Copy'), onTap: () => Navigator.pop(ctx, 'copy')),
+          ListTile(leading: Icon(m.pinned ? Icons.push_pin : Icons.push_pin_outlined), title: Text(m.pinned ? (de ? 'Nicht mehr anpinnen' : 'Unpin') : (de ? 'Anpinnen' : 'Pin')), onTap: () => Navigator.pop(ctx, 'pin')),
           if (mine && m.bill == null) ListTile(leading: const Icon(Icons.edit_outlined), title: Text(de ? 'Bearbeiten' : 'Edit'), onTap: () => Navigator.pop(ctx, 'edit')),
           if (mine) ListTile(leading: const Icon(Icons.delete_outline_rounded), title: Text(de ? 'Für alle löschen' : 'Delete for everyone'), onTap: () => Navigator.pop(ctx, 'delete')),
-        ]),
+          ]),
+        ),
       ),
     );
     if (!mounted || choice == null) return;
@@ -926,6 +980,8 @@ class _ChatScreenState extends State<ChatScreen> {
         _replyTo = m;
         _editing = null;
       });
+    } else if (choice == 'pin') {
+      c.pinMessage(widget.group, m.id, !m.pinned);
     } else if (choice == 'copy') {
       await Clipboard.setData(ClipboardData(text: m.text));
     } else if (choice == 'edit') {
@@ -982,7 +1038,28 @@ class _ChatScreenState extends State<ChatScreen> {
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
-          title: GroupChangeBuilder(
+          actions: [
+            IconButton(
+              tooltip: t.de ? 'Im Chat suchen' : 'Search this chat',
+              icon: Icon(_searching ? Icons.search_off_rounded : Icons.search_rounded),
+              onPressed: () => setState(() {
+                _searching = !_searching;
+                _query.clear();
+              }),
+            ),
+            IconButton(
+              tooltip: CollabScope.of(context).isMuted(widget.group) ? (t.de ? 'Stumm aus' : 'Unmute') : (t.de ? 'Stumm schalten' : 'Mute'),
+              icon: Icon(CollabScope.of(context).isMuted(widget.group) ? Icons.notifications_off_rounded : Icons.notifications_none_rounded),
+              onPressed: () {
+                final c = CollabScope.read(context), now = !c.isMuted(widget.group);
+                c.setMuted(widget.group, now);
+                showNote(context, now ? (t.de ? 'Stumm: keine Meldungen aus diesem Chat, außer wenn dich jemand erwähnt.' : 'Muted: no notifications from this chat, except mentions.') : (t.de ? 'Meldungen wieder an.' : 'Notifications on again.'));
+              },
+            ),
+          ],
+          title: _searching
+              ? TextField(controller: _query, autofocus: true, decoration: InputDecoration(hintText: t.de ? 'Suchen' : 'Search', border: InputBorder.none), onChanged: (_) => setState(() {}))
+              : GroupChangeBuilder(
               group: widget.group,
               docId: GroupSession.members,
               builder: (context) {
@@ -1006,13 +1083,40 @@ class _ChatScreenState extends State<ChatScreen> {
             docId: GroupSession.chat,
             builder: (context) {
               final s = CollabScope.of(context), me = s.identity?.pub; // read marks of others rebuild too
-              final msgs = s.messages(widget.group);
+              final all = s.messages(widget.group);
+              final q = _searching ? _query.text.trim().toLowerCase() : '';
+              final msgs = q.isEmpty ? all : [for (final m in all) if (!m.deleted && m.text.toLowerCase().contains(q)) m];
+              final pinned = all.where((m) => m.pinned && !m.deleted).lastOrNull;
               // open chat = read (after this frame: marking notifies)
               WidgetsBinding.instance.addPostFrameCallback((_) => s.markRead(widget.group));
+              if (q.isNotEmpty && msgs.isEmpty) {
+                return Center(child: Text(t.de ? 'Nichts gefunden.' : 'Nothing found.', style: tt.bodyMedium));
+              }
               if (msgs.isEmpty) {
                 return Center(child: Padding(padding: const EdgeInsets.all(FasanSpace.l), child: Text(t.chatEmpty, style: tt.bodyMedium, textAlign: TextAlign.center)));
               }
-              return ListView.builder(
+              return Column(children: [
+                // the newest pinned message stays on top; the long-press menu unpins it
+                if (pinned != null)
+                  Material(
+                    color: l.surfaceAlt,
+                    child: InkWell(
+                      onLongPress: () => _actions(pinned, pinned.from == me),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: l.minTap),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s),
+                          child: Row(children: [
+                            Icon(Icons.push_pin, size: 16, color: l.accent),
+                            const SizedBox(width: FasanSpace.s),
+                            Expanded(child: Text('${pinned.from == me ? t.you : widget.group.session.nameOf(pinned.from)}: ${_preview(pinned, t.de)}', maxLines: 2, overflow: TextOverflow.ellipsis, style: tt.bodySmall)),
+                          ]),
+                        ),
+                      ),
+                    ),
+                  ),
+                Expanded(
+                    child: ListView.builder(
                 padding: const EdgeInsets.all(FasanSpace.m),
                 itemCount: msgs.length,
                 itemBuilder: (_, i) {
@@ -1025,7 +1129,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Container(
                       margin: const EdgeInsets.only(bottom: FasanSpace.s),
                       padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s),
-                      decoration: BoxDecoration(color: mine ? l.accent.withValues(alpha: 0.18) : l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
+                      decoration: BoxDecoration(color: mine ? l.accent.withValues(alpha: 0.18) : l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6), border: m.mentions.contains(me) ? Border.all(color: l.accent, width: 1.5) : null),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                         Text(mine ? t.you : widget.group.session.nameOf(m.from), style: tt.labelSmall),
                         // quote of the message this one answers
@@ -1057,7 +1161,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         if (m.deleted)
                           Text(t.de ? 'Nachricht gelöscht' : 'Message deleted', style: tt.bodySmall?.copyWith(fontStyle: FontStyle.italic, color: l.textMuted))
                         else if (m.text.isNotEmpty && m.bill == null)
-                          Text(m.text, style: tt.bodyMedium),
+                          Text.rich(_rich(m, tt.bodyMedium, l.accent)),
                         if (m.edited && !m.deleted) Text(t.de ? 'bearbeitet' : 'edited', style: tt.labelSmall),
                         // reactions: emoji with the number of people; changed through the long-press menu
                         if (m.reactions.isNotEmpty)
@@ -1086,7 +1190,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   );
                 },
-              );
+              )),
+              ]);
             },
           ),
         ),
@@ -1123,6 +1228,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               Row(children: [
               IconButton(tooltip: t.de ? 'Bon anhängen' : 'Attach a receipt', icon: const Icon(Icons.attach_file_rounded), onPressed: _attach),
+              if (!widget.group.secret.direct) IconButton(tooltip: t.de ? 'Jemanden erwähnen' : 'Mention someone', icon: const Icon(Icons.alternate_email_rounded), onPressed: _mention),
               Expanded(
                 child: TextField(
                   controller: _input,
@@ -1507,7 +1613,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     void open(Activity a) {
       final g = c.groups[a.group];
       if (g == null) return;
-      if (a.kind == ActivityKind.message || g.secret.direct) {
+      if (a.kind == ActivityKind.message || g.secret.direct || a.kind == ActivityKind.mention && c.messages(g).any((m) => m.id == a.ref)) {
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: g)));
       } else {
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupScreen(name: g.localName, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)))));

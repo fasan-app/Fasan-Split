@@ -929,12 +929,37 @@ class CollabService extends ChangeNotifier {
 
   List<ChatMessage> messages(CollabGroup g) => Notes.messages(g.session.doc(GroupSession.chat));
 
-  void sendMessage(CollabGroup g, String text, {String? bill, String? reply}) {
+  void sendMessage(CollabGroup g, String text, {String? bill, String? reply, List<String> mentions = const []}) {
     final me = identity;
     final t = text.trim();
     if (me == null || t.isEmpty && bill == null) return;
-    Notes.send(g.session.doc(GroupSession.chat), me.pub, t, bill: bill, reply: reply);
+    // a mention counts while its @name is still in the text, and only for members of the group
+    final ms = [for (final k in mentions.toSet()) if (k != me.pub && g.session.memberKeys.contains(k) && t.contains('@${g.session.nameOf(k)}')) k];
+    Notes.send(g.session.doc(GroupSession.chat), me.pub, t, bill: bill, reply: reply, mentions: ms);
     g.session.touch(GroupSession.chat);
+  }
+
+  void pinMessage(CollabGroup g, String id, bool pin) {
+    Notes.pinMessage(g.session.doc(GroupSession.chat), id, pin);
+    g.session.touch(GroupSession.chat);
+  }
+
+  // ---- mute per group (Nutzer 04.11.: stumm): no notifications from this chat, except when someone mentions me; unread numbers stay ----
+
+  static const _kMuted = 'collab.muted';
+  Set<String>? _mutedCache;
+  Set<String> get _muted => _mutedCache ??= {for (final t in ((jsonDecode(prefs?.getString(_kMuted) ?? '[]') as List))) '$t'};
+
+  bool isMuted(CollabGroup g) => _muted.contains(g.secret.tag);
+
+  void setMuted(CollabGroup g, bool muted) {
+    if (muted) {
+      _muted.add(g.secret.tag);
+    } else {
+      _muted.remove(g.secret.tag);
+    }
+    prefs?.setString(_kMuted, jsonEncode(_muted.toList()));
+    notifyListeners();
   }
 
   /// Own message: change its text (Nutzer 04.11.: edit and delete in the chat).
@@ -1194,9 +1219,16 @@ class CollabService extends ChangeNotifier {
       final msgs = messages(g);
       final known = _knownMessages[g.secret.tag];
       _knownMessages[g.secret.tag] = {for (final m in msgs) m.id};
-      if (known == null || _quiet(g)) return;
+      if (_quiet(g)) return;
       for (final m in msgs) {
-        if (!known.contains(m.id) && m.from != me) {
+        if (known != null && known.contains(m.id) || m.from == me || m.deleted) continue;
+        // first batch of this chat on this device: old messages are history (the unread number shows them), but a message sent
+        // just now is news – before, the very first message of a new group never made a notification
+        if (known == null && DateTime.now().difference(m.at) > const Duration(seconds: 30)) continue;
+        if (me != null && m.mentions.contains(me)) {
+          // mentions get through even when the chat is muted
+          _note(Activity(ActivityKind.mention, m.at, g.secret.tag, '${s.nameOf(m.from)} hat dich in „${_groupLabel(g)}“ erwähnt: ${m.text}', ref: m.id));
+        } else if (!isMuted(g)) {
           _note(Activity(ActivityKind.message, m.at, g.secret.tag, '${s.nameOf(m.from)} in „${_groupLabel(g)}“: ${m.text}', ref: m.id));
         }
       }

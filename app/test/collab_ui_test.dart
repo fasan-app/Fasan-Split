@@ -148,4 +148,52 @@ void main() {
     expect(find.text('Nachricht gelöscht'), findsWidgets);
     await tester.pump(const Duration(seconds: 1));
   });
+
+  testWidgets('Chat: suchen, anpinnen, stumm schalten, jemanden erwähnen', (tester) async {
+    final g = await svc.createGroup('Hütte');
+    svc.sendMessage(g, 'Pizza heute?');
+    svc.sendMessage(g, 'Nudeln morgen');
+    await tester.pumpWidget(host(ChatScreen(group: g)));
+    await tester.pump();
+
+    // search filters the list
+    await tester.tap(find.byIcon(Icons.search_rounded));
+    await tester.pumpAndSettle();
+    final searchField = find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == 'Suchen');
+    await tester.enterText(searchField, 'nudel');
+    await tester.pump();
+    expect(find.text('Nudeln morgen'), findsOneWidget);
+    expect(find.text('Pizza heute?'), findsNothing);
+    await tester.enterText(searchField, 'xyz');
+    await tester.pump();
+    expect(find.text('Nichts gefunden.'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.search_off_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Pizza heute?'), findsOneWidget);
+
+    // pin: banner on top, the menu offers to unpin
+    await tester.longPress(find.text('Pizza heute?'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Anpinnen'));
+    await tester.pumpAndSettle();
+    expect(svc.messages(g).where((m) => m.pinned).length, 1);
+    expect(find.byIcon(Icons.push_pin), findsOneWidget);
+    expect(find.textContaining('Du: Pizza heute?'), findsOneWidget);
+
+    // mute toggles per chat
+    expect(svc.isMuted(g), isFalse);
+    await tester.tap(find.byIcon(Icons.notifications_none_rounded));
+    await tester.pump();
+    expect(svc.isMuted(g), isTrue);
+    expect(find.byIcon(Icons.notifications_off_rounded), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+
+    // mention: nobody else in the group yet – the sheet says so, nothing breaks
+    await tester.tap(find.byIcon(Icons.alternate_email_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Niemand sonst in der Gruppe.'), findsOneWidget);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
+  });
 }
