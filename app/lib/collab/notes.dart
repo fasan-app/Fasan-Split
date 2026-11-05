@@ -169,8 +169,12 @@ abstract final class Notes {
     return _lastSentMs;
   }
 
-  static void send(LwwDoc doc, String from, String text, {String? bill, String? reply, List<String> mentions = const []}) =>
-      doc.set('c/${newUid()}', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill, 'r': ?reply, if (mentions.isNotEmpty) 'm': mentions});
+  /// Sends a message; returns its id (to delete or quote it later).
+  static String send(LwwDoc doc, String from, String text, {String? bill, String? reply, List<String> mentions = const []}) {
+    final id = newUid();
+    doc.set('c/$id', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill, 'r': ?reply, if (mentions.isNotEmpty) 'm': mentions});
+    return id;
+  }
 
   /// Pins or unpins a message for the whole group.
   static void pinMessage(LwwDoc doc, String id, bool pin) {

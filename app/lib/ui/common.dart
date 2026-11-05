@@ -29,10 +29,14 @@ class StepScaffold extends StatelessWidget {
     this.secondary,
     this.actions,
     this.bottomExtra,
+    this.showStep = true,
   });
 
   final String title;
-  final int step; // 1–4
+  final int step; // 1–4 (where a draft resumes)
+
+  /// Show „n / 4“ above the title. The bill screen is one screen (Nutzer 05.11.) and does not.
+  final bool showStep;
 
   /// The bill being edited: saved after every rebuild (= every change) and via „Speichern und schließen“.
   final Bill? bill;
@@ -67,11 +71,13 @@ class StepScaffold extends StatelessWidget {
     final scaffold = Scaffold(
       appBar: AppBar(
         leading: nested ? BackButton(onPressed: () => Navigator.of(context, rootNavigator: true).maybePop()) : null,
-        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          FasanLabel('$step / 4'),
-          Text(title),
-        ]),
-        toolbarHeight: 72,
+        title: showStep
+            ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                FasanLabel('$step / 4'),
+                Text(title),
+              ])
+            : Text(title),
+        toolbarHeight: showStep ? 72 : null,
         actions: [
           if (b != null && step != 3 && imageExists(b.imagePath))
             IconButton(

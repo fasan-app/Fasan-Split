@@ -267,6 +267,9 @@ class Recognizer {
     bool settled() {
       final b = best;
       if (!earlyStop || b == null || !b.r.check.ok || contradictions(b.r) > 0) return false;
+      // A first pass with items that have no name is not good enough to stop on, even when the sum adds up: the sum can be met
+      // by fragments (Confeitaria Nacional, 05.11.: three „Posten“ made 26,00 €). The other passes read it again.
+      if (b.r.items.any((p) => p.nameUncertain && !p.missing)) return false;
       final h = bestHeader([for (final p in all) [for (final l in p.lines.lines) l.text]], qrDate: qr?.date, qrNif: qr?.nif);
       if (!h.complete) return false;
       if (_stoppedAt == null) {
@@ -436,6 +439,7 @@ class Recognizer {
       for (final o in [r.items, ...others]) {
         cleanColumns(o);
         fixQuantityLetters(o);
+        fixDigitLetters(o);
       }
       voteNames(r.items, others);
     } catch (e) {
@@ -743,7 +747,14 @@ class Recognizer {
         (digit.hasMatch(x.text) || x.text.trim().length <= 2) &&
         !l3.hasMatch(x.text);
     _log('spalte', {'winkel': angle, 'zeilen': rows.length, 'gelesen': neu.length});
-    return [...words.where((x) => !inStrip(x)), ...neu];
+    // An original amount word that sticks out of the strip but overlaps a re-read word of the same row is the same text read twice
+    // („€ 2.50 13“ and the strip's „0 13 € 2.50“): the row would fall into two lines („Pedras 25 cl € 2.50 13“ / „0 13 € 2.50“).
+    // The re-read replaces it. Words with letters (names) always stay.
+    bool coveredByNew(Word x) =>
+        digit.hasMatch(x.text) &&
+        !l3.hasMatch(x.text) &&
+        neu.any((n) => n.box.x0 < x.box.x1 && n.box.x1 > x.box.x0 && math.min(n.box.y1, x.box.y1) - math.max(n.box.y0, x.box.y0) > 0.5 * math.min(n.box.h, x.box.h));
+    return [...words.where((x) => !inStrip(x) && !coveredByNew(x)), ...neu];
   }
 
   /// UVDoc grid → resampled flat sheet; output size from the grid line lengths, read width ≥ 1300 px [entfalten].

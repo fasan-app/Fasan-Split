@@ -41,6 +41,27 @@ void fixQuantityLetters(List<Item> items) {
   }
 }
 
+/// Digits the reading put into the middle or end of a word: „G1n Tonico Mart1“ is „Gin Tonico Marti“, „Soc1al“ is „Social“ (1 → i,
+/// 0 → o, 5 → s). Only in a word of at least three characters that has two letters or more and exactly one digit; real names with
+/// digits („7UP“, „H2O“, „B12“, „Coca 33“) have a digit that is not 0, 1 or 5, or stand alone, or have more than one.
+final _digitWord = RegExp(r'\b(?=[A-Za-zÀ-ÿ0-9]{3,}\b)(?=(?:[A-Za-zÀ-ÿ]*\d){1}[A-Za-zÀ-ÿ]*\b)[A-Za-zÀ-ÿ]*[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]*[015][A-Za-zÀ-ÿ]*[A-Za-zÀ-ÿ]*\b|\b[A-Za-zÀ-ÿ]{2,}[015]\b|\b[A-Za-zÀ-ÿ]+[015][A-Za-zÀ-ÿ]+\b');
+String fixDigitsInWord(String name) => name.replaceAllMapped(_digitWord, (m) {
+      final w = m[0]!;
+      final digits = RegExp(r'\d').allMatches(w).length;
+      final letters = RegExp(r'[A-Za-zÀ-ÿ]').allMatches(w).length;
+      if (digits != 1 || letters < 2 || w.length < 3) return w;
+      final lower = w == w.toLowerCase();
+      return w.replaceAllMapped(RegExp(r'[015]'), (d) => switch (d[0]) { '1' => lower ? 'i' : 'i', '0' => 'o', _ => 's' });
+    });
+
+/// [fixDigitsInWord] on every name of a reading.
+void fixDigitLetters(List<Item> items) {
+  for (final p in items) {
+    final n = fixDigitsInWord(p.name);
+    if (n != p.name) p.name = n;
+  }
+}
+
 String _norm(String s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9äöüßàáâãçéêíóôõú]'), '');
 
 /// The names other passes read for the same item (same position, same amount) vote; a winner name that fewer passes

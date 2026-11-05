@@ -133,7 +133,6 @@ void main() {
     '0-einfuehrung': (_) => const OnboardingScreen(),
     '1-start': (_) => const HomeScreen(),
     '2-summe': (b) => ReviewScreen(bill: b),
-    '3-personen': (b) => PeopleScreen(bill: b),
     '4a-fokus': (b) => AssignScreen(bill: b, initialMode: AssignMode.focus),
     '4b-liste': (b) => AssignScreen(bill: b, initialMode: AssignMode.list),
     '4c-bon': (b) => AssignScreen(bill: b, initialMode: AssignMode.receipt),

@@ -29,6 +29,16 @@ import 'pairing.dart';
 const String _relaysOverride = String.fromEnvironment('FASAN_RELAYS');
 final List<String> defaultRelays = _relaysOverride.isEmpty ? const ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'] : _relaysOverride.split(',');
 
+/// An invitation sent to a friend from a bill: kept for a moment so it can be taken back ([CollabService.undoFriendInvite]).
+class FriendInvite {
+  FriendInvite(this.group, this.direct, this.invite, this.messageId, this.friend, this.name);
+
+  final CollabGroup group, direct;
+  final Invite invite;
+  final String? messageId;
+  final String friend, name;
+}
+
 class CollabGroup {
   CollabGroup(this.secret, this.localName, this.session, this.invitations);
 
@@ -929,14 +939,40 @@ class CollabService extends ChangeNotifier {
 
   List<ChatMessage> messages(CollabGroup g) => Notes.messages(g.session.doc(GroupSession.chat));
 
-  void sendMessage(CollabGroup g, String text, {String? bill, String? reply, List<String> mentions = const []}) {
+  /// Sends a chat message; returns its id, or null when nothing was sent.
+  String? sendMessage(CollabGroup g, String text, {String? bill, String? reply, List<String> mentions = const []}) {
     final me = identity;
     final t = text.trim();
-    if (me == null || t.isEmpty && bill == null) return;
+    if (me == null || t.isEmpty && bill == null) return null;
     // a mention counts while its @name is still in the text, and only for members of the group
     final ms = [for (final k in mentions.toSet()) if (k != me.pub && g.session.memberKeys.contains(k) && t.contains('@${g.session.nameOf(k)}')) k];
-    Notes.send(g.session.doc(GroupSession.chat), me.pub, t, bill: bill, reply: reply, mentions: ms);
+    final id = Notes.send(g.session.doc(GroupSession.chat), me.pub, t, bill: bill, reply: reply, mentions: ms);
     g.session.touch(GroupSession.chat);
+    return id;
+  }
+
+  // ---- invite a friend to a group straight from a bill (Nutzer 05.11.) ----
+
+  /// Sends [friend] (a member key from [memberFriends]) an invitation to [g]: an open link (they join at once, nobody has to
+  /// confirm) in our direct chat. Null when this phone cannot invite to the group (only admins and people who came in over an
+  /// open link can). [message] is the text before the link, in the language of the app.
+  Future<FriendInvite?> inviteFriendToGroup(CollabGroup g, String friend, String name, {required String message}) async {
+    final inv = g.invitations;
+    if (inv == null || g.secret.direct || g.session.memberKeys.contains(friend)) return null;
+    final invite = inv.create(valid: const Duration(days: 7), person: name);
+    final d = await directWith(friend, name);
+    final id = sendMessage(d, '$message\n${invite.link}');
+    notifyListeners();
+    return FriendInvite(g, d, invite, id, friend, name);
+  }
+
+  /// Takes an invitation back: its link stops working, the message disappears for the friend, and if they already joined they are
+  /// removed again (the group gets a new key, so they read nothing new).
+  Future<void> undoFriendInvite(FriendInvite f) async {
+    revokeInvite(f.group, f.invite);
+    final id = f.messageId;
+    if (id != null) deleteMessage(f.direct, id);
+    if (f.group.session.memberKeys.contains(f.friend)) await removeMember(f.group, f.friend);
   }
 
   void pinMessage(CollabGroup g, String id, bool pin) {

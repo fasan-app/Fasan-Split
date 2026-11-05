@@ -185,15 +185,18 @@ Future<void> personMenu(BuildContext context, Bill bill, int i, Offset at, {Bill
 /// Person chips for one item; "Alle" toggles everyone, "+" adds a person right here, long press opens a menu.
 /// With quantity > 1 each person's share is shown in pieces (3 pieces for 2 people: 1,5 each) and can change in halves.
 class PeoplePicker extends StatelessWidget {
-  const PeoplePicker({super.key, required this.bill, required this.item, required this.onChanged, this.onAll});
+  const PeoplePicker({super.key, required this.bill, required this.item, required this.onChanged, this.onAll, this.addPerson});
 
   final Bill bill;
   final BillItem item;
   final VoidCallback onChanged;
   final VoidCallback? onAll;
 
+  /// How a person is added here (the bill screen uses the picker with friends and invitations); default: ask for a name.
+  final Future<int?> Function(BuildContext context)? addPerson;
+
   Future<void> _add(BuildContext context) async {
-    final idx = await addPersonDialog(context, bill);
+    final idx = await (addPerson?.call(context) ?? addPersonDialog(context, bill));
     if (idx == null || !context.mounted) return;
     item.shares[idx] = 1; // the new person has this item right away – that is why they were added here
     onChanged();

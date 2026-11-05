@@ -18,7 +18,10 @@ List<Word> withoutCrumbs(List<Word> words) {
   final w = words.where((x) => x.text.trim().isNotEmpty && x.conf > 15).toList();
   final mh = medianOf(w.map((x) => x.box.h));
   final nonAlnum = RegExp(r'[^A-Za-z0-9]');
-  return w.where((x) => !(x.conf < 60 && x.text.replaceAll(nonAlnum, '').length <= 3 && x.box.h < 0.6 * mh)).toList();
+  // Hairline boxes: the detector sometimes boxes a dotted rule or glare as „text“ 8 px high next to lines of 55 px („easo“, „ua“,
+  // „roozao“ on a Confeitaria Nacional photo, 05.11.). They are no text; left in, they were painted white over real amounts in the
+  // amount strip and split rows in two. A real line is never below a third of the median height.
+  return w.where((x) => !(x.conf < 60 && x.text.replaceAll(nonAlnum, '').length <= 3 && x.box.h < 0.6 * mh) && !(mh > 0 && x.box.h < 0.3 * mh)).toList();
 }
 
 /// Groups words into lines; tolerant to slanted lines using the local tilt of long boxes [zeilenAus].
@@ -1324,6 +1327,11 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
       p.sure = false;
       if (p.cands.length > 2) p.suggestions = p.cands.where((c) => c.why != 'weg' && c.v != p.amount).take(3).map((c) => c.v).toList();
     }
+  }
+  // an item whose name could not be read is not „sure“ (the screen shows a question mark and the receipt snippet): the sum may
+  // check out and the name still be missing (05.11.: three „Posten“ marked sure)
+  for (final p in items) {
+    if (p.nameUncertain && !p.missing) p.sure = false;
   }
   // reading certainty per item: share of readings that gave exactly this amount (sign ignored)
   for (final p in items) {

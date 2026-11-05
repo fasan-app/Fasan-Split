@@ -12,8 +12,9 @@ const String speisenList = r'''
 💧|Wasser|agua,water,wasser,eau,acqua,mineralwasser,agua mineral,eau minerale,acqua minerale,luso,vitalis,evian,volvic
 💧|Wasser mit Kohlensäure|agua com gas,agua con gas,sparkling water,sprudel,eau gazeuse,acqua frizzante,frizzante,pedras,pedras salgadas,san pellegrino,perrier,vimeiro,castello,gazeuse,spa rood
 💧|Stilles Wasser|agua sem gas,agua sin gas,still water,stilles wasser,eau plate,acqua naturale,naturale,spa blauw
+🍸|Cocktail|gin tonic,gin tonico,gin-tonic,gin tónico,gin tonica,gintonic,moscow mule,mojito,caipirinha,caipiroska,aperol spritz,aperol,campari spritz,negroni,margarita,cosmopolitan,pina colada,piña colada,sex on the beach,long island,sangria,spritz,cocktail,whisky sour,vodka tonic,rum cola,cuba libre
 🥤|Cola|cola,coca-cola,coca cola,coke,pepsi,cola zero,coca zero,coke zero,pepsi max
-🥤|Limonade oder Schorle|limonada,lemonade,limonade,fanta,sprite,7up,seven up,sumol,laranjada,gasosa,schweppes,ginger ale,tonica,tonic,fruchtschorle,schorle,apfelschorle,spezi,mezzo mix,bitter lemon,ice tea,iced tea,ice-tea,lipton,nestea,cha gelado
+🥤|Limonade oder Schorle|tonic water,indian tonic,agua tonica,tonica water,limonada,lemonade,limonade,fanta,sprite,7up,seven up,sumol,laranjada,gasosa,schweppes,ginger ale,tonica,tonic,fruchtschorle,schorle,apfelschorle,spezi,mezzo mix,bitter lemon,ice tea,iced tea,ice-tea,lipton,nestea,cha gelado
 🥤|Energydrink|energy,energydrink,energy drink,red bull,redbull,monster,rockstar,koffein,booster,mate,club-mate,clubmate
 🥤|Sportgetränk|iso,isotonic,isoton,isostar,powerade,gatorade,iso drink,elektrolyt
 🧃|Saft|lassi,smoothie,nektar,nectar,sumo,sumo natural,juice,saft,jus,succo,zumo,zumo natural,orangensaft,sumo de laranja,orange juice,apfelsaft,jus d orange,spremuta

@@ -2,15 +2,13 @@
 import 'package:flutter/material.dart';
 
 import '../model/bill.dart';
-import 'assign.dart';
 import 'flow.dart';
 
 /// Screen of the step a draft was left on.
 Widget resumeScreen(Bill b) => _stepScreen(b, b.step);
 
+/// Since 05.11. there are two screens: the bill (old steps 1–3) and the summary (step 4). Drafts saved on step 2 or 3 open the bill.
 Widget _stepScreen(Bill b, int s) => switch (s) {
-      2 => PeopleScreen(bill: b),
-      3 => AssignScreen(bill: b),
       4 => PayScreen(bill: b),
       _ => ReviewScreen(bill: b),
     };
@@ -48,7 +46,8 @@ class _ResumeFlowState extends State<ResumeFlow> {
       child: Navigator(
         key: _nav,
         onGenerateInitialRoutes: (_, _) => [
-          for (var s = 1; s <= step; s++) MaterialPageRoute<void>(builder: (_) => _stepScreen(b, s)),
+          // the summary sits on top of the bill, so „back“ from it leads to the bill
+          for (final s in step >= 4 ? const [1, 4] : const [1]) MaterialPageRoute<void>(builder: (_) => _stepScreen(b, s)),
         ],
         onGenerateRoute: (_) => null,
       ),

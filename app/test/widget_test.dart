@@ -2,7 +2,6 @@
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/model/bill.dart';
 import 'package:fasan_split/state/store.dart';
-import 'package:fasan_split/ui/assign.dart';
 import 'package:fasan_split/ui/flow.dart';
 import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_ui/fasan_ui.dart';
@@ -19,13 +18,21 @@ Bill demoBill() => Bill(id: 'demo', created: DateTime(2026, 11, 1), purpose: 'Ab
     ]);
 
 void main() {
-  testWidgets('Ablauf von Summe bis Ergebnis', (tester) async {
+  /// Adds a person through the picker sheet (type the name, take „New: name“).
+  Future<void> addViaPicker(WidgetTester tester, String name) async {
+    await tester.tap(find.byKey(const ValueKey('add-person')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == 'Type a name'), name);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New: $name'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('Ablauf: ein Bildschirm (Personen, Zuordnen, Zahler) bis zur Übersicht und zum Ergebnis', (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.75;
     addTearDown(tester.view.reset);
-    // this test walks through all four assign modes: focus and cards are switched on (off by default since 04.11.)
-    final store = BillStore.memory()..assignExtraModes = true;
-    AssignScreen.lastMode = AssignMode.focus;
+    final store = BillStore.memory();
     final b = demoBill();
     // Korn und Bildstandwackeln laufen bei voller Akku-Stufe dauerhaft (FasanFilm-Ticker, 24 Hz), dann wird
     // pumpAndSettle nie fertig. Dieser Test prüft die Bedienung, darum mit „Animationen entfernen“.
@@ -33,39 +40,47 @@ void main() {
     await tester.pumpWidget(SplitApp(store: store, ui: ui, home: ReviewScreen(bill: b)));
     await tester.pumpAndSettle();
     expect(find.text('Bacalhau à Brás'), findsOneWidget);
-    await tester.tap(find.byType(FasanButton).last); // Next
+    // too early: nothing assigned, nobody paid – the button (it says „3 open“) tells what is missing instead of moving on
+    await tester.tap(find.text('3 open'));
     await tester.pumpAndSettle();
-    expect(find.byType(PeopleScreen), findsOneWidget);
+    expect(find.byType(PayScreen), findsNothing);
+    expect(find.textContaining('Add at least two people'), findsOneWidget);
     for (final n in ['Anna', 'Jo', 'Mia']) {
-      await tester.enterText(find.byType(TextField), n);
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
+      await addViaPicker(tester, n);
     }
-    expect(b.ps.length, 3);
-    await tester.tap(find.byType(FasanButton).last);
+    expect(b.ps.map((p) => p.name), ['Anna', 'Jo', 'Mia']);
+    // tap a person, then the items they had
+    await tester.tap(find.byKey(const ValueKey('person-0')));
     await tester.pumpAndSettle();
-    expect(find.byType(AssignScreen), findsOneWidget);
-    // Fokus: first item for Anna, then "Everyone" for the rest
-    await tester.tap(find.widgetWithText(FasanPersonChip, 'Anna'));
+    await tester.tap(find.text('Bacalhau à Brás'));
     await tester.pumpAndSettle();
     expect(b.its[0].shares, {0: 1});
-    // other variants render
-    for (final label in ['List', 'Cards', 'Focus']) {
-      await tester.tap(find.text(label));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull, reason: label);
-    }
-    await tester.tap(find.byIcon(Icons.more_vert_rounded)); // menu „Mehr“ → split everything evenly
+    await tester.tap(find.text('Bacalhau à Brás'));
+    await tester.pumpAndSettle();
+    expect(b.its[0].shares, isEmpty, reason: 'a second tap takes it back');
+    await tester.tap(find.byKey(const ValueKey('person-0'))); // person no longer active
+    await tester.pumpAndSettle();
+    // the rest: split everything evenly from the menu
+    await tester.tap(find.byIcon(Icons.more_vert_rounded));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Split everything evenly'));
     await tester.pumpAndSettle();
     expect(b.unassigned, 0);
-    await tester.tap(find.byType(FasanButton).last);
+    // still no payer
+    await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
-    expect(find.byType(PayScreen), findsOneWidget);
+    expect(find.byType(PayScreen), findsNothing);
+    expect(find.text('Choose who paid.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('payer')));
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FasanPersonChip, 'Jo'));
     await tester.pumpAndSettle();
     expect(b.payer, 1);
+    await tester.tap(find.text('Done').last); // close the sheet
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PayScreen), findsOneWidget);
     expect(b.perPerson().values.reduce((a, c) => a + c), 4890);
     await tester.tap(find.byType(FasanButton).last);
     await tester.pumpAndSettle();
@@ -74,7 +89,7 @@ void main() {
     expect(store.bills.single.done, isTrue);
   });
 
-  testWidgets('Angefangen: Speichern und schließen behält die Rechnung, Fortsetzen am letzten Schritt', (tester) async {
+  testWidgets('Angefangen: Speichern und schließen behält die Rechnung, Fortsetzen im Bon-Bildschirm', (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.75;
     addTearDown(tester.view.reset);
@@ -83,25 +98,21 @@ void main() {
     final ui = FasanController(settings: const FasanSettings(reduceMotion: true));
     await tester.pumpWidget(SplitApp(store: store, ui: ui));
     await tester.pumpAndSettle();
-    Navigator.of(tester.element(find.byType(HomeScreen))).push(MaterialPageRoute(builder: (_) => PeopleScreen(bill: b)));
+    Navigator.of(tester.element(find.byType(HomeScreen))).push(MaterialPageRoute(builder: (_) => ReviewScreen(bill: b)));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Anna');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
+    await addViaPicker(tester, 'Anna');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(store.drafts.single.id, 'demo');
-    expect(store.drafts.single.step, 2);
+    expect(store.drafts.single.step, 1);
+    expect(store.drafts.single.ps.single.name, 'Anna');
     expect(find.text('No group'), findsOneWidget);
     await tester.tap(find.text('Abendessen'));
     await tester.pumpAndSettle();
-    expect(find.byType(PeopleScreen), findsOneWidget);
-    // back from a resumed step leads to the previous step, then home (Nutzer 02.11.)
-    await tester.tap(find.byType(BackButton).last);
-    await tester.pumpAndSettle();
     expect(find.byType(ReviewScreen), findsOneWidget);
-    expect(find.byType(PeopleScreen), findsNothing);
+    expect(find.text('Anna'), findsWidgets, reason: 'the person is still there');
+    // back from the resumed bill leads home
     await tester.tap(find.byType(BackButton).last);
     await tester.pumpAndSettle();
     expect(find.byType(ReviewScreen), findsNothing);

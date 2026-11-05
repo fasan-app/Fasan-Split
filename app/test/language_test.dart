@@ -52,7 +52,6 @@ void main() {
     'onboarding': (_) => const OnboardingScreen(),
     'home': (_) => const HomeScreen(),
     'review': (b) => ReviewScreen(bill: b),
-    'people': (b) => PeopleScreen(bill: b),
     'assign-focus': (b) => AssignScreen(bill: b, initialMode: AssignMode.focus),
     'assign-list': (b) => AssignScreen(bill: b, initialMode: AssignMode.list),
     'pay': (b) => PayScreen(bill: b),
