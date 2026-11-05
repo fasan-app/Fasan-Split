@@ -29,7 +29,7 @@ void main() {
     await tester.pumpWidget(_host(const MarqueeText(long)));
     expect(find.byType(ShaderMask), findsOneWidget, reason: 'fades out at the edge');
     expect(_dx(tester), 0);
-    await tester.pump(const Duration(milliseconds: 1500)); // waits, then starts
+    await tester.pump(const Duration(milliseconds: 3100)); // waits (1.4 s plus a small stagger), then starts
     await tester.pump(const Duration(milliseconds: 800));
     final mid = _dx(tester);
     expect(mid, greaterThan(5), reason: 'moving sideways');

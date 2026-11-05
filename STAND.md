@@ -341,6 +341,11 @@ gut / langsam (Stufe „Sparen“ von fasan_ui: kein Blur, kein Korn, kein beweg
 Bewegung“); wird nur schlechter in der Sitzung, 14 Tage gemerkt (danach neu messen), Einstellung „Leistung“ (Automatisch / Alle
 Effekte / Sparsam) in den Einstellungen; „Weniger Bewegung“ des Reglers wird nie als Nutzerwahl gespeichert. Laufschrift: höchstens
 2 Texte gleichzeitig, nur auf sichtbaren Seiten. Tests: `perf_governor_test`. Browser-Messung mit Automatik: 60 Bilder/s.
+Nachtrag: Mit Beispieldaten (10 Bons, einer mit 30 Posten) im Browser gemessen: Die Laufschrift hielt die Startseite dauerhaft in
+Bewegung (Idle 8 Bilder/s auch im Sparmodus). Jetzt: höchstens 1 Text gleichzeitig, Pause 30 s, im Sparmodus läuft nichts von selbst;
+Idle Startseite im Sparmodus 57–60 Bilder/s (CPU 4× gedrosselt: 60), Bon-Bildschirm 61. „Alle Effekte“ bleibt im Browser bei ca. 7 Bildern/s
+(Blur + bewegter Hintergrund, Software-Rendering) – deshalb schaltet die Automatik dort ab. Folge: im Browser sieht es dann ruhiger aus
+als in der Handy-App (kein Glas-Blur). Messskripte: /home/user/tools/perf/{seed,run2}.js (nicht im Repo).
 Offen: Schwellen (24/45 ms) sind eigene Wahl, nicht auf echten alten Geräten geprüft; Messskript `/home/user/tools/perf/run.js` (nicht im Repo);
 echte Bon-Liste im Browser nicht gemessen (nur Start-/Einführungsbildschirm); Renderer `--wasm`/skwasm nicht ausprobiert.
 
