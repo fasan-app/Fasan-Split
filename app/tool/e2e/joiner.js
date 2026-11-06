@@ -51,6 +51,10 @@ const mode = process.env.MODE || 'normal';
     for (let i = 0; i < 60 && !inGroup; i++) { await p.waitForTimeout(1000); inGroup = (await p.getByText('Chris').count()) > 0 && (await p.getByRole('textbox').count()) > 0; }
     if (inGroup) {
       await p.getByRole('textbox').last().click();
+      // Flutter Web creates the real input element only on focus: typing at once lost the first letter in 6 of 20 CI runs
+      // („allo aus dem Browser“, 06.11.). Wait until an input element has the focus, then type.
+      for (let i = 0; i < 20 && !(await p.evaluate(() => ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName))); i++) await p.waitForTimeout(150);
+      await p.waitForTimeout(300);
       await p.keyboard.type('Hallo aus dem Browser');
       await p.waitForTimeout(500);
       await p.getByRole('button', { name: 'Senden' }).last().click({ timeout: 10000 }).catch(() => p.keyboard.press('Enter'));
