@@ -112,8 +112,10 @@ E2E-Läufe und Commits macht die Sitzung selbst, Rückmeldung kommt vom Handy (S
    (`pip install androguard`, Logging mit `loguru` abschalten, sonst 100 KB Ausgabe).
 6. Commits als `Fasan <fasan@christopherziehm.de>` mit den Anhängen der Sitzung. `app/pubspec.lock` nach `pub get` zurücksetzen
    (`git checkout`). Nicht mit `dart format` über bestehende Dateien gehen: das Repo ist nicht damit formatiert, der Diff explodiert.
-7a. Fallstricke dieser Umgebung (06.11.): Der Stop-Hook meldet nach jedem Push fälschlich „no remote branch / unpushed commits“ –
-   mit `git ls-remote --heads origin <zweig>` gegen `git rev-parse HEAD` prüfen statt blind neu zu pushen. `pkill -f <muster>` trifft
+7a. Fallstricke dieser Umgebung (06.11.): Der Klon holt nur `main` (`remote.origin.fetch` nur für main), darum fehlt für Arbeitszweige
+   die Remote-Referenz und der Stop-Hook meldet nach jedem Push „no remote branch / unpushed commits“. **Einmal nach dem Klonen:**
+   `git config --add remote.origin.fetch '+refs/heads/mitarbeit/*:refs/remotes/origin/mitarbeit/*' && git fetch origin`, nach dem ersten
+   Push `git branch -u origin/<zweig>`. Prüfen mit `git status -sb` (zeigt `...origin/<zweig>`). `pkill -f <muster>` trifft
    die eigene Shell, wenn das Muster im Befehl steht (Exit 143) – Prozesse per PID beenden. Zwei Hintergrundläufe nie in denselben
    Ausgabeordner schreiben lassen. `rsync` und `ss` fehlen (cp bzw. curl nutzen). Das Ende-zu-Ende des Browsers (`tool/e2e/run.sh`)
    lokal: Web-Build mit `--dart-define=FASAN_RELAYS=ws://127.0.0.1:7777` plus `web_extra`, `python3 -m http.server 8765` im Ordner über
