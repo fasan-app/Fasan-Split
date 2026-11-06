@@ -14,6 +14,7 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
   const b = await chromium.launch();
   const ctx = await b.newContext({ locale: 'de-DE', viewport: { width: 393, height: 873 }, deviceScaleFactor: 2 });
   await ctx.addInitScript(() => localStorage.setItem('flutter.split.settings', JSON.stringify(JSON.stringify({ me: 'Angi' }))));
+  if (process.env.PERFMODE) await ctx.addInitScript(m => localStorage.setItem('flutter.perf.mode', JSON.stringify(m)), process.env.PERFMODE); // auto | full | light
   // never anything to foreign services (Beschluss 02.11.): only the local relay and the local server
   await ctx.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, r => r.abort());
   if (ctx.routeWebSocket) await ctx.routeWebSocket(/^wss?:\/\/(?!127\.0\.0\.1|localhost)/, ws => ws.close());
@@ -64,23 +65,24 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     // noted and the walk goes on, so one missing control does not hide the rest
     const steps = [];
     const step = async (name, fn) => { try { await fn(); await p.waitForTimeout(1200); await shot(name); steps.push(name); } catch (e) { steps.push('FEHLT ' + name + ': ' + String(e).slice(0, 100)); await shot('fehlt-' + name); } };
-    const back = async () => { await p.goBack().catch(() => {}); await p.waitForTimeout(800); };
+    const back = async () => { await p.getByRole('button', { name: /Zurück|Back/ }).first().click({ timeout: 8000 }).catch(() => {}); await p.waitForTimeout(800); };
     await step('b01-bon', async () => {});
     await step('b02-menue', async () => { await p.getByRole('button', { name: /Mehr|More/ }).first().click(); });
     await step('b03-menue-zu', async () => { await p.keyboard.press('Escape'); });
     await step('b04-posten-blatt', async () => { await p.getByText('Pizza').first().click({ button: 'left', delay: 700 }); });
-    await step('b05-posten-blatt-fest', async () => { await p.getByText(/Fester Betrag/).first().click(); });
+    await step('b05-posten-blatt-fest', async () => { await p.getByText('Chris').last().click(); await p.waitForTimeout(500); await p.getByText(/Fester Betrag/).first().click(); });
     await step('b06-posten-zu', async () => { await p.keyboard.press('Escape'); });
     await step('b07-pruefen', async () => { await p.getByRole('button', { name: /Posten und Summe prüfen/ }).first().click(); });
-    await step('b08-person-lang', async () => { await p.getByText('Angi').first().click({ delay: 700 }); });
+    await step('b08-person-lang', async () => { await p.getByText('Chris').first().click({ delay: 700 }); });
     await step('b09-person-zu', async () => { await p.keyboard.press('Escape'); });
     await step('b10-bon-ansicht', async () => { await p.getByRole('button', { name: 'Bon' }).first().click(); });
     await step('b11-bon-original', async () => { await p.getByRole('button', { name: 'Original' }).first().click(); });
     await step('b12-bon-digital', async () => { await p.getByRole('button', { name: 'Digital' }).first().click(); });
     await step('b13-zurueck', async () => { await back(); });
-    await step('b14-fertig', async () => { await p.getByRole('button', { name: /^Fertig$/ }).first().click(); });
+    await step('b14-fertig', async () => { await p.getByRole('button', { name: /Speichern|offen|Fertig/ }).first().click(); });
     await step('b15-weiter', async () => { await p.getByRole('button', { name: /Weiter|Fertig|Ergebnis/ }).first().click(); });
-    await step('b16-zurueck', async () => { await back(); await back(); });
+    await step('b16-zurueck', async () => { await back(); });
+    await step('z01-gruppe-nachher', async () => {});
     result.steps = steps;
   } catch (e) { console.log('FAIL', String(e).slice(0, 300)); await shot('fail'); }
   fs.writeFileSync(dir + '/photo-done.txt', JSON.stringify(result));

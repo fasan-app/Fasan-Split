@@ -18,6 +18,7 @@ import 'common.dart';
 import 'resume.dart';
 import '../state/images.dart';
 import 'marquee_text.dart';
+import 'open_container.dart';
 
 /// One bill on the overview: thumbnail, name, state (waiting / reading / failed / date and step) and sum.
 class BillTile extends StatelessWidget {
@@ -197,7 +198,7 @@ class BillTile extends StatelessWidget {
     if (waiting || failed || selecting || !openable) return body(null);
     // Container transform: the card grows into the bill (fasan_ui GESTALTUNG.md §7). Unfinished bills continue where
     // the user left (Karte 3.9: Schließen verwirft nie).
-    return FasanOpenContainer(
+    return BillOpenContainer(
       radius: r,
       openBuilder: (_) => bill.done ? ResultScreen(bill: bill) : ResumeFlow(bill: bill),
       closedBuilder: (context, open) => body(open),

@@ -94,7 +94,7 @@ Bill _walkBill(Directory dir) {
     img.fillRect(im, x1: 700, y1: y, x2: 840, y2: y + 40, color: img.ColorRgb8(20, 20, 20));
   }
   final f = File('${dir.path}/walk.jpg')..writeAsBytesSync(img.encodeJpg(im, quality: 85));
-  final b = Bill(id: 'walk', created: DateTime(2026, 11, 6), total: 2400, people: [Person('Chris', 0), Person('Angi', 1)], items: [
+  final b = Bill(id: 'walk', created: DateTime(2026, 11, 6), total: 2400, people: [Person('Chris', 0)], items: [
     BillItem(name: 'Pizza', amount: 1400, boxes: const [NBox(0.06, 0.075, 0.94, 0.1)]),
     BillItem(name: 'Wein', amount: 1000, boxes: const [NBox(0.06, 0.1375, 0.94, 0.1625)]),
   ])
@@ -125,6 +125,7 @@ Future<void> _fonts() async {
 
 /// Real receipt (FASAN_ECHT=Pfad zum JPG aus fasan-diagnose/tests/echt): the real recognition runs once, like on the phone.
 Bill? _real;
+Bill? _pushBill;
 Future<Bill> _realBill(String photo, Directory dir) async {
   if (_real != null) return _real!;
   final uv = File('assets/models/uvdoc.onnx');
@@ -172,6 +173,9 @@ void main() {
     'b02-menue': (b) => ReviewScreen(bill: b),
     'b04-posten-blatt': (b) => ReviewScreen(bill: b),
     'b05-posten-blatt-fest': (b) => ReviewScreen(bill: b),
+    'b01p-bon-gepusht': (b) => const SizedBox(),
+    'b07-pruefen': (b) => ReviewScreen(bill: b),
+    'b08-person-lang': (b) => ReviewScreen(bill: b),
     'b10-bon-ansicht': (b) => ReceiptScreen(bill: b),
     'b11-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
     'b12-bon-digital': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.digital),
@@ -183,6 +187,20 @@ void main() {
     'b02-menue': (t) async {
       await t.tap(find.byIcon(Icons.more_vert_rounded));
       await t.pump(const Duration(milliseconds: 400));
+    },
+    'b01p-bon-gepusht': (t) async {
+      final nav = t.state<NavigatorState>(find.byType(Navigator).first);
+      final bill = _pushBill!;
+      nav.push(MaterialPageRoute<void>(builder: (_) => ReviewScreen(bill: bill)));
+      await t.pump(const Duration(milliseconds: 800));
+    },
+    'b07-pruefen': (t) async {
+      await t.tap(find.byIcon(Icons.fact_check_outlined));
+      await t.pump(const Duration(milliseconds: 500));
+    },
+    'b08-person-lang': (t) async {
+      await t.longPress(find.text('Chris').first);
+      await t.pump(const Duration(milliseconds: 600));
     },
     'b04-posten-blatt': (t) async {
       await t.longPress(find.text('Pizza').first);
@@ -214,6 +232,7 @@ void main() {
           if (e.key.startsWith('b')) {
             if (dark || land) return;
             bill = _walkBill(dir);
+            _pushBill = bill;
             await tester.runAsync(() => fillSnippets(bill, File(bill.imagePath!).readAsBytesSync()));
           } else if (echt != null) {
             bill = (await tester.runAsync(() async => _realBill(echt, dir)))!;
@@ -226,7 +245,10 @@ void main() {
           }
           final store = BillStore.memory([_bill(path, bx)..payer = 1])..onboarded = true;
           // the walk screens show the look of the default (PerfMode.light: no blur, no grain, no moving background), like the browser
-          final ctl = SplitController(settings: FasanSettings(reduceMotion: true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light));
+          var look = FasanSettings(reduceMotion: e.key.startsWith('b01p') ? false : true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light);
+          // like main(): glass without grain is the standard look
+          if (e.key.startsWith('b')) look = look.copyWith(style: FasanStyle.fullGlass, effects: look.effects.copyWith(grain: 0));
+          final ctl = SplitController(settings: look);
           if (e.key.startsWith('b')) ctl.tier = PerfTier.slow;
           final key = GlobalKey();
           await tester.pumpWidget(RepaintBoundary(key: key, child: SplitApp(store: store, ui: ctl, home: e.value(bill))));

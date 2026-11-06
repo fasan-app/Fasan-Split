@@ -17,6 +17,7 @@ dependencies:
     git:
       url: https://github.com/fasan-app/fasan_ui.git
       ref: main
+  animations: ^3.0.0        # BSD-3 (Flutter team): container transform of the bill tile, same version as fasan_ui
   # ONNX Runtime über dart:ffi (MIT); Android-Teil lädt com.microsoft.onnxruntime:onnxruntime-android (MIT).
   onnxruntime_v2: 1.23.2+2
   ffi: ^2.1.5               # BSD-3, native Puffer für ONNX-Tensoren
