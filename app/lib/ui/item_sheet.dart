@@ -180,9 +180,9 @@ class _FixedAmountsState extends State<_FixedAmounts> {
       child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
         initiallyExpanded: it.fixed.isNotEmpty,
-        title: Text(context.tr('item.fixed')),
-        subtitle: Text(context.tr('item.fixedHint')),
+        title: Text(context.tr('item.fixed'), style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
         children: [
+          Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: Align(alignment: Alignment.centerLeft, child: Text(context.tr('item.fixedHint'), style: Theme.of(context).textTheme.bodySmall))),
           for (final i in people)
             Padding(
               padding: const EdgeInsets.only(bottom: FasanSpace.s),

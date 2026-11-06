@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_split/state/snippets.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/assign.dart';
 import 'package:fasan_split/ui/flow.dart';
@@ -81,6 +82,29 @@ Bill _bill(String path, List<NBox> bx, {bool assigned = true}) {
   return b;
 }
 
+/// The bill of the browser walk (tool/e2e/screens.js, phone side test/e2e_web_photo_test.dart without FASAN_FILE): same people,
+/// items, receipt picture. Key „b…“ screens are compared with the browser's screenshots of the same name.
+Bill _walkBill(Directory dir) {
+  final im = img.Image(width: 900, height: 1600);
+  img.fill(im, color: img.ColorRgb8(250, 250, 248));
+  for (var r = 0; r < 12; r++) {
+    final y = 120 + r * 100;
+    img.fillRect(im, x1: 60, y1: y, x2: 560, y2: y + 40, color: img.ColorRgb8(20, 20, 20));
+    img.fillRect(im, x1: 700, y1: y, x2: 840, y2: y + 40, color: img.ColorRgb8(20, 20, 20));
+  }
+  final f = File('${dir.path}/walk.jpg')..writeAsBytesSync(img.encodeJpg(im, quality: 85));
+  final b = Bill(id: 'walk', created: DateTime(2026, 11, 6), total: 2400, people: [Person('Chris', 0), Person('Angi', 1)], items: [
+    BillItem(name: 'Pizza', amount: 1400, boxes: const [NBox(0.06, 0.075, 0.94, 0.1)]),
+    BillItem(name: 'Wein', amount: 1000, boxes: const [NBox(0.06, 0.1375, 0.94, 0.1625)]),
+  ])
+    ..purpose = 'Foto-Test'
+    ..group = 'Lissabon'
+    ..imagePath = f.path
+    ..originalPath = f.path
+    ..imageAspect = 900 / 1600;
+  return b;
+}
+
 Future<void> _fonts() async {
   // Direkt aus den Dateien (fasan_ui neben diesem Repo, FASAN_UI überschreibt), damit kein Bundle-Fehler stumm bleibt.
   final ui = Platform.environment['FASAN_UI'] ?? '../../fasan_ui';
@@ -94,6 +118,7 @@ Future<void> _fonts() async {
 
   await load('packages/fasan_ui/FasanInter', [for (final w in [400, 500, 600, 700]) '$ui/fonts/Inter-$w.ttf']);
   await load('packages/fasan_ui/FasanGeistMono', ['$ui/fonts/GeistMono-Regular.ttf']);
+  await load('FasanEmoji', ['assets/fonts/FasanEmoji.ttf']);
   await load('MaterialIcons', ['${Platform.environment['FLUTTER_ROOT']}/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf']);
 }
 
@@ -142,6 +167,34 @@ void main() {
     '5-bezahlt': (b) => PayScreen(bill: b..payer = 1),
     '6-ergebnis': (b) => ResultScreen(bill: b..payer = 1),
     '7-einstellungen': (_) => const SettingsScreen(),
+    'b01-bon': (b) => ReviewScreen(bill: b),
+    'b02-menue': (b) => ReviewScreen(bill: b),
+    'b04-posten-blatt': (b) => ReviewScreen(bill: b),
+    'b05-posten-blatt-fest': (b) => ReviewScreen(bill: b),
+    'b10-bon-ansicht': (b) => ReceiptScreen(bill: b),
+    'b11-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
+    'b12-bon-digital': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.digital),
+    'b14-fertig': (b) => PayScreen(bill: b),
+    'b15-ergebnis': (b) => ResultScreen(bill: b..payer = 0),
+  };
+  // interaction before the picture (same steps as the browser walk)
+  final acts = <String, Future<void> Function(WidgetTester)>{
+    'b02-menue': (t) async {
+      await t.tap(find.byIcon(Icons.more_vert_rounded));
+      await t.pump(const Duration(milliseconds: 400));
+    },
+    'b04-posten-blatt': (t) async {
+      await t.longPress(find.text('Pizza').first);
+      await t.pump(const Duration(milliseconds: 600));
+    },
+    'b05-posten-blatt-fest': (t) async {
+      await t.longPress(find.text('Pizza').first);
+      await t.pump(const Duration(milliseconds: 600));
+      await t.tap(find.text('Chris').last);
+      await t.pump(const Duration(milliseconds: 300));
+      await t.tap(find.text('Fester Betrag'));
+      await t.pump(const Duration(milliseconds: 400));
+    },
   };
   for (final dark in [false, true]) {
     for (final land in [false, true]) {
@@ -157,7 +210,11 @@ void main() {
           final dir = Directory(out!)..createSync(recursive: true);
           final (path, bx) = await tester.runAsync(() async => _receipt(dir)) ?? ('', <NBox>[]);
           Bill bill;
-          if (echt != null) {
+          if (e.key.startsWith('b')) {
+            if (dark || land) return;
+            bill = _walkBill(dir);
+            await tester.runAsync(() => fillSnippets(bill, File(bill.imagePath!).readAsBytesSync()));
+          } else if (echt != null) {
             bill = (await tester.runAsync(() async => _realBill(echt, dir)))!;
             final n = bill.ps.length;
             for (final (k, it) in bill.its.indexed) {
@@ -180,10 +237,11 @@ void main() {
           for (var i = 0; i < 10; i++) {
             await tester.pump(const Duration(milliseconds: 100));
           }
+          if (acts[e.key] != null) await acts[e.key]!(tester);
           expect(tester.takeException(), isNull);
           await tester.runAsync(() async {
             final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-            final image = await boundary.toImage(pixelRatio: 1.25);
+            final image = await boundary.toImage(pixelRatio: e.key.startsWith('b') ? 2.0 : 1.25);
             final png = await image.toByteData(format: ui.ImageByteFormat.png);
             File('${dir.path}/$tag-${e.key}.png').writeAsBytesSync(png!.buffer.asUint8List());
           });

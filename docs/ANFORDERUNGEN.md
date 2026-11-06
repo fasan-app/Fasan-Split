@@ -71,3 +71,5 @@ am Code nachprüfen und hier berichtigen.** Stand: ✅ umgesetzt und nachgewiese
 Rückgängig/Wiederholen; Ausgaben ohne Bon; Aufteilen gleich/fest/Anteile/Posten; exakter Ausgleich + „bezahlt“; dazu alle vier Bereiche
 der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. wie dort.
 | 06.11. | Selbstständig weiterarbeiten, ohne dass der Nutzer jedes Mal bestätigen muss | Nutzer arbeitet vom Handy | ✔ gilt ab sofort (Zwischenberichte kurz, kein Warten auf „weiter“) | STAND.md |
+
+- 06.11. abends (Nutzer): Als Nächstes Vergleich Bildschirm für Bildschirm zwischen App und Browser; nach Kontextverlust nichts übergehen oder vergessen. Grund: „Web 1:1“ war behauptet, nicht verglichen. Stand: in Arbeit.

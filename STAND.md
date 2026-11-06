@@ -383,6 +383,12 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   anderen; zählt nur für Personen auf dem Posten), Sync `f/<posten>/<person>`, Blatt „Fester Betrag“ im Posten-Blatt, Prüfung deckt es ab.
   Tests `split_fixed_test`. Noch ohne Bildschirmfoto-Prüfung. Offen davon: Ausgleich/„bezahlt“, E2–E5.
 
+- **Nutzer 06.11. abends – Vorrang vor Ausgleich/E2–E5:** Als Nächstes kommt der **Vergleich Bildschirm für Bildschirm, App und Browser** (Fertig-Punkt 5,
+  Web = APK 1:1). Nach dem Kontextwechsel war dieser Schritt aus dem Blick geraten; er steht jetzt ganz oben. Vorgehen: Liste aller Bildschirme
+  (Start, Bon, Posten-Blatt inkl. Festbetrag, Bon-Ansicht Scan/Original/Digital, Zuordnen, Ergebnis/Ausgleich, Gruppen, Personen, Einstellungen,
+  Einladen/Beitreten, Papierkorb, Kamera/Scan) → je Bildschirm Handy-Bildschirmfoto der App-Ansicht (Flutter-Test mit echtem Bon) und des Browsers
+  (Playwright, 393×873) nebeneinander ansehen, Unterschiede und Prüflistenverstöße notieren und beheben. Ergebnis in `docs/WEB-GRENZEN.md`.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
