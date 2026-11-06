@@ -414,6 +414,12 @@ Beschluss Befragung 4: alle auffindbaren echten Rechnungen/Kassenzettel (Datens�
 Einzelfunde mit Wahrheit in `fasan-diagnose/tests/welt/` (privat), Quelle + Lizenz je Datei. Tor-Aufbau: Stufe A (echte Bons des Nutzers +
 synthetische) blockiert bei jedem Fehler; Stufe B (Korpus) blockiert bei Verschlechterung gegen gespeicherte Bestwerte.
 Vorhanden: CORD test+validation (200, Wahrheit je Posten, CC-BY-4.0) in `/home/user/tools/cord`, SROIE (~1000, Summen) in `/home/user/tools/sroie`.
+Stand 06.11. ~03:30: CORD test+validation umgewandelt (`app/tool/korpus/cord_truth.py`): **176 Bons mit stimmiger Wahrheit je Posten**
+(`/home/user/tools/korpus/cord`); CORD train (800) lädt (`/home/user/tools/cord_train.sh`). Tor Stufe B (`FASAN_KORPUS`, Bestwerte
+`FASAN_KORPUS_MIN`) gebaut. Geprüft und verworfen: D1st3f/Receipts (nur Text ohne Zeilen), 34data/nano-receipts (künstlich erzeugt),
+amaye15/receipts (nur Klasse Bon/kein Bon). Wikimedia-API: Proxy-IP gedrosselt (429, „x-envoy-ratelimited“) → Openverse (CC-Bilder aus
+Flickr/Wikimedia) als Suche, Sichtung per Kontaktbogen. Wichtig für „weltweit“: Beträge ohne Nachkommastellen (IDR, JPY, KRW, HUF) liest
+der Leser nicht (bekannt seit 29.10.) – CORD macht das messbar.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
