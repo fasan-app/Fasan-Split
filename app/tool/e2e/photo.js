@@ -18,6 +18,17 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
   await ctx.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, r => r.abort());
   if (ctx.routeWebSocket) await ctx.routeWebSocket(/^wss?:\/\/(?!127\.0\.0\.1|localhost)/, ws => ws.close());
   const p = await ctx.newPage();
+  const throttle = Number(process.env.THROTTLE || 1);
+  if (throttle > 1) await (await ctx.newCDPSession(p)).send('Emulation.setCPUThrottlingRate', { rate: throttle });
+  // frame times over a period (Prüfliste G2/G6): fps, median, 90th percentile, worst
+  const frames = async (ms, act) => {
+    await p.evaluate(ms => { window.__d = []; let last = performance.now(); const end = last + ms; (function f(t) { window.__d.push(t - last); last = t; if (t < end) requestAnimationFrame(f); else window.__done = true; })(last); window.__done = false; }, ms);
+    if (act) await act();
+    await p.waitForFunction(() => window.__done, null, { timeout: 60000 });
+    const d = await p.evaluate(() => window.__d), q = [...d].sort((a, b) => a - b);
+    const at = r => Math.round(q[Math.floor((q.length - 1) * r)]);
+    return { fps: Math.round(d.length / (ms / 1000)), p50: at(0.5), p90: at(0.9), max: at(1) };
+  };
   const errs = [];
   p.on('pageerror', e => { errs.push(String(e).slice(0, 200)); console.log('PAGEERROR', String(e)); });
   const t0 = Date.now();
@@ -55,6 +66,9 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     else await p.keyboard.press('Escape');
     await p.waitForTimeout(1000);
     await shot('4-ausschnitte');
+    result.throttle = throttle;
+    result.billIdle = await frames(3000);
+    result.billScroll = await frames(2500, async () => { await p.mouse.move(200, 600); await p.mouse.wheel(0, 700); });
     await click('Bon');
     await p.waitForTimeout(2000);
     result.layers = { scan: await p.getByRole('button', { name: 'Scan' }).count(), original: await p.getByRole('button', { name: 'Original' }).count(), digital: await p.getByRole('button', { name: 'Digital' }).count() };

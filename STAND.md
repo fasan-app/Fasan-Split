@@ -487,6 +487,12 @@ Drosselung endet) für Ziel ~100.
    **Emoji behoben (Commit 7c2735e):** eigene Schrift FasanEmoji (Teilmenge Noto Color Emoji, OFL, 107 KB), im Browser bestätigt.
    **Fotos im Browser bei Bedarf (Commit nach 7c2735e):** beim Start nur die Liste, Bytes beim Anzeigen, 16 im Speicher; Browser-Test
    mit Neuladen bestanden (Scan nach 22 s inkl. 12 s Start wieder da). Ladezeit gedrosselt noch nicht gemessen (Punkt 4).
+   **Leistung im echten Ablauf (06.11., Browser-Ende-zu-Ende `tool/e2e/photo.js`, THROTTLE=1|4; Chromium ohne GPU, also strenger als ein
+   Handy, aber nicht das S23):** Bon mit 7 Ausschnitten und Foto, Stillstand 61 fps (17 ms) in beiden Fällen. Scrollen: normal 46 fps,
+   p90 50 ms, schlechtestes Bild 67 ms; CPU 4× gedrosselt 38 fps, p50 17 ms, p90 17 ms, schlechtestes Bild 167 ms (ein Ausreißer).
+   Foto da nach 34 s (normal) bzw. 56 s (gedrosselt), jeweils inkl. 15 s App-Start. Nach Neuladen Scan wieder da nach 22 s bzw. 26 s.
+   Noch nicht gemessen: Scannen im Browser (Erkennung), Start mit vielen Bons, echtes S23. Budget für die CI fehlt noch
+   (Prüfliste G6: Vielfaches des Medians, fail-on-alert).
    Offen in Punkt 3: Bildschirm-für-Bildschirm-Vergleich App/Browser
    mit Fotos, Blossom (volle Auflösung) als zweiter Kanal, Fotos im Browser erst bei Bedarf laden (images_web lädt heute alle beim
    Start → Punkt 4), Stücke eines Fotos von jedem Mitglied neu senden können, wenn das scannende Gerät weg ist.
