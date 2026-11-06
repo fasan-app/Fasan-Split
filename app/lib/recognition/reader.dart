@@ -391,15 +391,23 @@ bool _fuzzyTotal(String n) {
 final _qtyFront = RegExp(r'^\s*(\d{1,3}(?:[.,]\d{1,3})?)\s*(?:x|×|\*|stk\.?|st\.?|pcs\.?|pc\.?|un\.?|uni|und\.?|pz\.?|kg|l)?\s*[x×*]?\s+', caseSensitive: false);
 
 /// Decimal separator of this receipt [dezimal].
+/// '0' = a receipt in a currency without minor units (Indonesia „60.000“, Korea „12,000“, Hungary, Japan with grouping): at least
+/// three grouped whole numbers and at most one amount with two decimals (CORD 06.11.). Amounts then count whole units ×100, so the
+/// app keeps one unit („hundredths“) and only the display drops the decimals.
 String decimalSep(List<Line> lines) {
-  var k = 0, p = 0;
+  var k = 0, p = 0, g = 0;
   final rk = RegExp(r'\d,\d{2}(?!\d)'), rp = RegExp(r'\d\.\d{2}(?!\d)');
   for (final z in lines) {
     k += countMatches(rk, z.text);
     p += countMatches(rp, z.text);
+    g += countMatches(_wholeRe, z.text);
   }
+  if (g >= 3 && k + p <= 1) return '0';
   return p > k ? '.' : ',';
 }
+
+// grouped whole number: 1.000, 60.000, 1.250.000, 12,000 (not followed by more digits or a decimal part)
+final _wholeRe = RegExp(r"(?<![\d.,])(-\s?)?(\d{1,3}(?:[.,]\d{3})+)(?![\d]|[.,]\d)");
 
 final _amountsRe = RegExp(r"(^|[^\d.,])(-\s?)?((?:\d{1,3}(?:[.,' ]\d{3})+|\d+)[.,] ?\d{2})(?!\d|[.,]\d)(\s?-(?![\d]))?");
 final _pctAfter = RegExp(r'^\s*%');
@@ -411,6 +419,16 @@ final _digit = RegExp(r'\d');
 /// Amounts of a line with their position; "1,00-" and "-1,00" are negative; "19,00 %" is no amount [betraege].
 List<Amount> amountsIn(String t, [String dec = ',']) {
   final out = <Amount>[];
+  if (dec == '0') {
+    for (final m in _wholeRe.allMatches(t)) {
+      final neg = m[1] != null && m[1]!.isNotEmpty;
+      final start = m.start + (m[1]?.length ?? 0), end = start + m[2]!.length;
+      if (_pctAfter.hasMatch(jsSlice(t, end))) continue;
+      final v = int.parse(m[2]!.replaceAll(_groupSep, '')) * 100;
+      out.add(Amount(neg ? -v : v, start, end, neg));
+    }
+    return out;
+  }
   for (final m in _amountsRe.allMatches(t)) {
     final g1 = m[1] ?? '', g2 = m[2], g3 = m[3]!, g4 = m[4];
     final start = m.start + g1.length + (g2 != null ? g2.length : 0), end = start + g3.length;
@@ -430,6 +448,8 @@ List<Amount> amountsIn(String t, [String dec = ',']) {
 List<Vote> alternatives(Line z, Amount b) {
   final out = <Vote>[];
   if (z.glyphs.isEmpty) return out;
+  // whole-unit amount („60.000“): the two-decimal arithmetic below does not apply
+  if (RegExp(r'[.,]\d{3}$').hasMatch(jsSlice(z.text, b.start, b.end))) return out;
   for (var i = b.start; i < b.end; i++) {
     if (i >= z.glyphs.length) break;
     final q = z.glyphs[i];
@@ -861,7 +881,7 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
     // quantity × unit price: "2 x 4,90", "3 X 0,79 2,37", "0,512 kg x 2,99 €/kg"
     num? menge;
     num? einzel;
-    final d = RegExp.escape(dec);
+    final d = dec == '0' ? r'[.,]' : RegExp.escape(dec);
     var mx = RegExp(
             '(\\d{1,3}(?:[.,]\\d{1,3})?)\\s*(?:stk\\.?|st\\.?|kg|pcs|un\\.?|uni|l|ltr|lt|liter|litros|lts|gal|n[aä]chte?|noites|nights|n\\.|tage|dias|days|pers\\.?|personen|pax)?\\s*[x×*]\\s*(\\d+$d ?\\d{2,3})(?!\\d)',
             caseSensitive: false)
@@ -884,7 +904,7 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
     final mx2 = mx == null ? RegExp('(\\d+$d ?\\d{2,3})\\s*(?:€|eur)?\\s*[x×*]\\s*(\\d{1,3})(?![.,]\\d)\\b', caseSensitive: false).firstMatch(z.text) : null;
     if (mx != null) {
       menge = jsParseFloat(mx[1]!.replaceFirst(',', '.'));
-      var e = jsParseFloat(mx[2]!.replaceFirst(' ', '').replaceFirst(dec, '.')) * 100;
+      var e = dec == '0' ? (int.tryParse(mx[2]!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0) * 100.0 : jsParseFloat(mx[2]!.replaceFirst(' ', '').replaceFirst(dec, '.')) * 100;
       if ((e - jsRound(e)).abs() < 1e-6) {
         einzel = jsRound(e);
       } else {
@@ -892,7 +912,7 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
       }
     } else if (mx2 != null) {
       menge = jsInt(mx2[2]!);
-      einzel = jsRound(jsParseFloat(mx2[1]!.replaceFirst(' ', '').replaceFirst(dec, '.')) * 100);
+      einzel = dec == '0' ? (int.tryParse(mx2[1]!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0) * 100 : jsRound(jsParseFloat(mx2[1]!.replaceFirst(' ', '').replaceFirst(dec, '.')) * 100);
     } else if (qtyFront != null && qtyFront != 0) {
       menge = qtyFront;
       if (bt.length >= 2) einzel = bt[bt.length - 2].v;

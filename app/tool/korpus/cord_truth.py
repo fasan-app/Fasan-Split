@@ -1,6 +1,6 @@
 # Converts CORD v2 (naver-clova-ix/cord-v2, CC-BY-4.0) receipts into truth files for test/gate_test.dart (stage B, Korpus).
 # Input: a folder with NNN.jpg + NNN.json (json has gt_parse). Output: next to each image a <name>.json with
-#   posten (amounts in the receipt's smallest unit, IDR has none: "60.000" = 60000), total, posten_detail [{name, menge, betrag}],
+#   posten (hundredths of the currency unit like the app: "60.000" Rp = 6000000), total, posten_detail [{name, menge, betrag}],
 #   waehrung "IDR", dezimalen 0, quelle. Only receipts whose items add up to the total (or to the subtotal) get a truth, so the gate
 #   never tests against a broken label. Usage: python3 -I cord_truth.py <in-folder> <out-folder>
 import json, os, re, shutil, sys
@@ -35,11 +35,16 @@ for f in sorted(os.listdir(src)):
         except ValueError:
             q = 1
         if not name or price is None: ok = False; break
-        items.append({'name': str(name).strip(), 'menge': max(q, 1), 'betrag': price})
-    total = num((g.get('total') or {}).get('total_price'))
+        # amounts like the app counts them: hundredths of the currency unit (IDR has none: 60.000 Rp = 6000000)
+        items.append({'name': str(name).strip(), 'menge': max(q, 1), 'betrag': price * 100})
+    def first(x):
+        return (x[0] if x else {}) if isinstance(x, list) else (x or {})
+    total = num(first(g.get('total')).get('total_price'))
+    total = total * 100 if total is not None else None
     if not ok or not items or total is None: skipped += 1; continue
     s = sum(i['betrag'] for i in items)
-    sub = num((g.get('sub_total') or {}).get('subtotal_price'))
+    sub = num(first(g.get('sub_total')).get('subtotal_price'))
+    sub = sub * 100 if sub is not None else None
     if s != total and s != sub: skipped += 1; continue
     base = 'cord-' + j['meta']['split'] + '-' + f[:-5]
     truth = {'posten': [i['betrag'] for i in items], 'total': total, 'posten_detail': items, 'waehrung': 'IDR', 'dezimalen': 0,
