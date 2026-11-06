@@ -9,7 +9,7 @@ void main() {
     const allowed = {
       'lib/main.dart', // join code from the address, deep links (APK only)
       'lib/recognition_service.dart', // recognition in the web worker
-      'lib/state/notify.dart', // notification permission API differs
+      'lib/app/notify.dart', // notification permission API differs
       'lib/ui/diagnose.dart', // device block of the protocol (no dart:io on the web)
       'lib/ui/home.dart', // update check (APK update vs „load again“), „Zum Home-Bildschirm“ hint
       'lib/ui/join_screen.dart', // „open the web app“ / home-screen hints
