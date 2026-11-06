@@ -156,13 +156,15 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final choice = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
+        // scrolls on a phone held sideways (the four entries are taller than the sheet there)
+        child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(leading: FasanAvatar(name: name, index: b.ps[i].color, size: 32), title: MarqueeText(name, style: Theme.of(ctx).textTheme.titleMedium)),
           ListTile(leading: const Icon(Icons.payments_outlined), title: Text(ctx.tr('person.setPayer')), onTap: () => Navigator.pop(ctx, 'payer')),
           ListTile(leading: const Icon(Icons.done_all_rounded), title: Text(ctx.tr('person.allOpen')), enabled: b.unassigned > 0, onTap: () => Navigator.pop(ctx, 'open')),
           ListTile(leading: const Icon(Icons.person_remove_outlined), title: Text(ctx.tr('person.remove')), onTap: () => Navigator.pop(ctx, 'remove')),
-        ]),
+        ])),
       ),
     );
     if (!mounted || choice == null) return;

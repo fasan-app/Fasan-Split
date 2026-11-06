@@ -159,6 +159,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
   }
 
   void _tapItem(int k) {
+    if (k < 0 || k >= b.its.length) return; // the list changed (undo, a change from the group) between drawing and tapping
     final it = b.its[k];
     final h = FasanHaptics.of(context);
     if (person != null && !widget.readOnly) {
