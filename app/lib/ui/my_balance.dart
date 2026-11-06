@@ -10,8 +10,8 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import 'scope.dart';
-import '../model/bill.dart';
-import '../model/settle.dart';
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_core/settle.dart';
 import 'backup_ui.dart';
 import 'collab_ui.dart';
 import 'common.dart';

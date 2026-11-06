@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'scope.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import '../recognition/service.dart';
 import '../state/store.dart';
 import 'assign.dart';

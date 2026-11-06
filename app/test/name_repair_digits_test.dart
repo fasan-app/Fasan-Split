@@ -1,8 +1,8 @@
 // Digits that reading put into words („G1n“ for „Gin“) – and names with real digits that must stay. MPL-2.0
-import 'package:fasan_split/recognition/name_repair.dart';
-import 'package:fasan_split/recognition/reader.dart' show isHairline;
-import 'package:fasan_split/recognition/model.dart';
-import 'package:fasan_split/recognition/speisen.dart';
+import 'package:fasan_reader/name_repair.dart';
+import 'package:fasan_reader/reader.dart' show isHairline;
+import 'package:fasan_reader/model.dart';
+import 'package:fasan_core/speisen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

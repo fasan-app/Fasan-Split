@@ -6,7 +6,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import '../flows/scan_bill.dart';
 import '../recognition/service.dart';
 import '../state/scan_live.dart';

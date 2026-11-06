@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import 'scope.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import '../state/rates.dart';
 import 'collab_ui.dart' show askText;
 import 'common.dart';

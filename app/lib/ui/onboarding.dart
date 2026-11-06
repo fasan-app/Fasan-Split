@@ -8,7 +8,7 @@ import 'package:image/image.dart' as img;
 
 import '../l10n.dart';
 import 'scope.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import '../state/store.dart';
 import 'assign.dart';
 import 'collab_ui.dart' show AccountScreen;

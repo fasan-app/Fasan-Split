@@ -12,7 +12,7 @@ import 'package:pointycastle/export.dart';
 import '../collab/crypto.dart' show aeadOpen, aeadSeal, randomBytes;
 
 import '../collab/service.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import '../state/images.dart';
 import '../state/store.dart';
 

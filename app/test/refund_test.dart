@@ -1,7 +1,7 @@
 // Direction of a bill: amounts stay positive, a negative total asks "paid or money back?". MPL-2.0
 import 'package:fasan_split/collab/bill_sync.dart';
 import 'package:fasan_split/collab/lww.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/flow.dart';

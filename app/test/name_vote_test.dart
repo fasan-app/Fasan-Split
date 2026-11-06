@@ -1,9 +1,9 @@
 // Name and quantity voting across read passes (06.11.): leftovers of neighbouring columns must never outvote the clean name,
 // gibberish from text shining through the paper gives way to a readable name, and the quantity votes too. Cases are the real
 // readings from the gate (Da Sé geknickt, Confeitaria, Estrela, Ferreiras, Aldi). MPL-2.0
-import 'package:fasan_split/recognition/model.dart';
-import 'package:fasan_split/recognition/name_repair.dart';
-import 'package:fasan_split/recognition/reader.dart' show nameFrom;
+import 'package:fasan_reader/model.dart';
+import 'package:fasan_reader/name_repair.dart';
+import 'package:fasan_reader/reader.dart' show nameFrom;
 import 'package:flutter_test/flutter_test.dart';
 
 List<Item> one(String name, int amount, {num qty = 1}) => [Item(name: name, amount: amount, qty: qty)];

@@ -22,7 +22,7 @@ import 'scope.dart';
 import '../flows/scan_queue.dart';
 import 'bill_tile.dart';
 import 'common.dart' show TitleHelp, showNote;
-import '../model/bill.dart' show money;
+import 'package:fasan_core/bill.dart' show money;
 import 'groups.dart';
 import 'pairing_ui.dart';
 import 'marquee_text.dart';

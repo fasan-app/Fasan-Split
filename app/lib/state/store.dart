@@ -7,8 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fasan_core/category_guess.dart';
-import '../model/settle.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/settle.dart';
+import 'package:fasan_core/bill.dart';
 import 'images.dart';
 
 class BillStore extends ChangeNotifier {

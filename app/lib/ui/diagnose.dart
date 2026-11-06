@@ -11,7 +11,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../l10n.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'common.dart';
 import '../state/images.dart';
 

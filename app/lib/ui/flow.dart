@@ -12,7 +12,7 @@ import '../l10n_bill.dart';
 import 'scope.dart';
 import '../flows/scan_queue.dart';
 import '../state/images.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'category_ui.dart';
 import 'currency_ui.dart';
 import 'collab_ui.dart';

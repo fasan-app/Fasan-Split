@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n/tr.dart';
-import '../model/bill.dart';
-import '../recognition/reader.dart' show nameAlternatives;
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_reader/reader.dart' show nameAlternatives;
 import 'assign.dart' show PeoplePicker;
 import 'common.dart';
 import 'person_picker.dart';

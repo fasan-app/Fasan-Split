@@ -1,7 +1,7 @@
 // Reader rules found with the world corpus (06.11., fasan-diagnose/tests/welt): each test fails without its rule. Lines are given
 // as the OCR delivers them (one text line per row). MPL-2.0
-import 'package:fasan_split/recognition/model.dart';
-import 'package:fasan_split/recognition/reader.dart';
+import 'package:fasan_reader/model.dart';
+import 'package:fasan_reader/reader.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Line _z(String t, int y) => Line(const [])

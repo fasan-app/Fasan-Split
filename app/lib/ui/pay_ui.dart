@@ -8,8 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n.dart';
 import 'scope.dart';
-import '../model/bill.dart' show money;
-import '../model/pay.dart';
+import 'package:fasan_core/bill.dart' show money;
+import 'package:fasan_core/pay.dart';
 import 'collab_ui.dart' show QrView;
 import 'common.dart';
 

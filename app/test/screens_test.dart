@@ -6,7 +6,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:fasan_split/main.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/perf/perf_governor.dart';
 import 'package:fasan_split/state/snippets.dart';
 import 'package:fasan_split/state/store.dart';

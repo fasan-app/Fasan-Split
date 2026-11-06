@@ -13,7 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import '../l10n.dart';
 import '../platform/web_platform.dart';
 import 'scope.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import '../flows/scan_queue.dart';
 import '../state/store.dart';
 import '../flows/update.dart';

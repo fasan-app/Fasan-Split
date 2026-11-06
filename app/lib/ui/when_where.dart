@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'common.dart';
 
 class WhenWhere extends StatelessWidget {

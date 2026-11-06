@@ -5,7 +5,7 @@
 // Local-only things stay local: photo files, scan data, recognition log. The photos travel separately (photo_sync.dart);
 // the document only names them (meta/photo, meta/orig) and carries each item's place on the receipt (bx), so every device
 // cuts the same line pictures from the shared scan (06.11.: in the browser there were no line pictures and no receipt).
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'lww.dart';
 
 abstract final class BillSync {

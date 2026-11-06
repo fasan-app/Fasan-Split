@@ -8,7 +8,7 @@ import 'dart:io';
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

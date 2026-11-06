@@ -1,7 +1,7 @@
 // Fasan Split – a line without items (VAT 0 % row, service) is shared like the other items, not evenly (Nutzer 04.11.).
 import 'package:fasan_split/collab/bill_sync.dart';
 import 'package:fasan_split/collab/lww.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

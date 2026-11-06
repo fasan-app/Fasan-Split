@@ -4,7 +4,7 @@
 // differ, so two people typing in different places of the same note both keep their words. If two people change the SAME line at
 // the same time, both versions stay (as two lines) – nothing a person typed silently disappears.
 import 'lww.dart';
-import '../model/bill.dart' show newUid;
+import 'package:fasan_core/bill.dart' show newUid;
 
 class NoteInfo {
   NoteInfo(this.id, this.title, this.text);

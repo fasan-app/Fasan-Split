@@ -1,5 +1,5 @@
 // Datum, Ort und Steuernummer aus Bonzeilen; Zeilen wie auf den echten Bons in fasan-diagnose/tests/echt.
-import 'package:fasan_split/recognition/place.dart';
+import 'package:fasan_reader/place.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

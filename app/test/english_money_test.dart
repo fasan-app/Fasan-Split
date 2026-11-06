@@ -1,7 +1,7 @@
 // English: the total field uses the same number format as the items (Bildschirmvergleich 06.11.: „24,00 €“ above „14.00 €“), and the
 // bill title is not cut to „Rec…“. MPL-2.0
 import 'package:fasan_split/main.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/bill_screen.dart';
 import 'package:fasan_ui/fasan_ui.dart';

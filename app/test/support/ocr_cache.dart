@@ -7,7 +7,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fasan_split/recognition/image.dart';
-import 'package:fasan_split/recognition/model.dart';
+import 'package:fasan_reader/model.dart';
 import 'package:fasan_split/recognition/onnx.dart';
 import 'package:fasan_split/recognition/paddle.dart';
 

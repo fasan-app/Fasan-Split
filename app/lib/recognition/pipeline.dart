@@ -14,15 +14,15 @@ import 'dart:typed_data';
 import 'package:zxing2/qrcode.dart';
 
 import 'image.dart';
-import 'model.dart';
-import 'name_repair.dart';
+import 'package:fasan_reader/model.dart';
+import 'package:fasan_reader/name_repair.dart';
 import 'paddle.dart';
-import 'place.dart';
-import 'reader.dart';
+import 'package:fasan_reader/place.dart';
+import 'package:fasan_reader/reader.dart';
 import 'receipt_image.dart';
 import 'scan.dart';
 import 'scan_preview.dart';
-import 'text_util.dart';
+import 'package:fasan_core/text_util.dart';
 
 /// Progress of the recognition: stage text, 0–1, optional preview (image with the verified lines found so far) or the
 /// straightening mesh for the end of the scan animation.

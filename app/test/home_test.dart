@@ -2,7 +2,7 @@
 import 'dart:async';
 
 import 'package:fasan_split/main.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/recognition/service.dart';
 import 'package:fasan_split/flows/scan_queue.dart';
 import 'package:fasan_split/state/store.dart';

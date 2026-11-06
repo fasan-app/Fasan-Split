@@ -3,7 +3,7 @@ import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/main.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/groups.dart';
 import 'package:flutter/material.dart';

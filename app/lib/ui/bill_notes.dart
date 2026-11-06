@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import 'scope.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 
 /// Pinned notes as a hint on top of the bill (result and flow steps).
 class PinnedNotes extends StatelessWidget {

@@ -1,7 +1,7 @@
 // A storno line torn in two by the OCR (de-discount 06.11.): the keyword line without amount and the amount line with a misread
 // name must still cancel the item above. MPL-2.0
-import 'package:fasan_split/recognition/model.dart';
-import 'package:fasan_split/recognition/reader.dart';
+import 'package:fasan_reader/model.dart';
+import 'package:fasan_reader/reader.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Line _z(String t, int y) => Line(const [])

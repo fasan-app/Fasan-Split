@@ -1,6 +1,6 @@
 // Bedienablauf ohne Erkennung: Summe → Personen → Zuordnen (alle vier Varianten) → Bezahlt → Ergebnis.
 import 'package:fasan_split/main.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/flow.dart';
 import 'package:fasan_split/ui/home.dart';

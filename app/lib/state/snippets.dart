@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 
 /// Fills [BillItem.snippet] for items that have boxes but no picture yet. Returns width/height of the scan (or null).
 Future<double?> fillSnippets(Bill b, Uint8List scan) async {

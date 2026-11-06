@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import 'scope.dart';
-import '../model/bill.dart';
-import '../model/split_math.dart';
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_core/split_math.dart';
 import 'common.dart';
 import 'receipt_view.dart';
 import 'flow.dart';

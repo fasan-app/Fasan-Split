@@ -1,8 +1,8 @@
 // Fixed amounts per person on an item (Aufteilen „fest“, Nutzer 06.11.). MPL-2.0
 import 'package:fasan_split/collab/bill_sync.dart';
 import 'package:fasan_split/collab/lww.dart';
-import 'package:fasan_split/model/bill.dart';
-import 'package:fasan_split/model/split_math.dart';
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_core/split_math.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

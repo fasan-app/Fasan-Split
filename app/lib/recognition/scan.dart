@@ -10,8 +10,8 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'image.dart';
-import 'model.dart';
-import 'text_util.dart';
+import 'package:fasan_reader/model.dart';
+import 'package:fasan_core/text_util.dart';
 
 class Paper {
   const Paper(this.left, this.right, this.top, this.bottom, this.feather);

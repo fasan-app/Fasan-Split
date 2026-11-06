@@ -4,7 +4,7 @@
 import 'dart:math';
 
 import 'package:fasan_split/main.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/flow.dart';
 import 'package:fasan_ui/fasan_ui.dart';

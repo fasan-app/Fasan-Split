@@ -12,9 +12,9 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'image.dart';
-import 'model.dart';
+import 'package:fasan_reader/model.dart';
 import 'onnx.dart' if (dart.library.js_interop) 'onnx_web.dart';
-import 'text_util.dart';
+import 'package:fasan_core/text_util.dart';
 
 class DetBox {
   DetBox(this.x0, this.y0, this.x1, this.y1, this.score, this.tilt);

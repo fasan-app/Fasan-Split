@@ -5,10 +5,10 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import '../model/bill.dart';
-import 'model.dart';
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_reader/model.dart';
 import 'pipeline.dart';
-import 'reader.dart' show suspiciousName;
+import 'package:fasan_reader/reader.dart' show suspiciousName;
 
 sealed class ScanEvent {}
 

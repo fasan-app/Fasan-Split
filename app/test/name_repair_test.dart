@@ -1,6 +1,6 @@
 // Fasan Split – item names after reading, with the readings from the S23 log of 04.11. (Ferreiras LX Factory). MPL-2.0
-import 'package:fasan_split/recognition/model.dart';
-import 'package:fasan_split/recognition/name_repair.dart';
+import 'package:fasan_reader/model.dart';
+import 'package:fasan_reader/name_repair.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 List<Item> pass(List<(String, int, num)> l) => [for (final (n, a, q) in l) Item(name: n, amount: a)..qtyRead = q];

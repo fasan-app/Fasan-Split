@@ -9,7 +9,7 @@ import 'dart:typed_data';
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/flows/scan_bill.dart';
 import 'package:fasan_split/recognition/pipeline.dart';
 import 'package:fasan_split/recognition/service.dart';

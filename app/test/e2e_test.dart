@@ -11,7 +11,7 @@ import 'dart:io';
 import 'package:fasan_split/recognition/onnx.dart';
 import 'package:fasan_split/recognition/paddle.dart';
 import 'package:fasan_split/recognition/pipeline.dart';
-import 'package:fasan_split/recognition/place.dart';
+import 'package:fasan_reader/place.dart';
 import 'package:fasan_split/recognition/service.dart';
 import 'package:flutter_test/flutter_test.dart';
 

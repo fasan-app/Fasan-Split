@@ -7,7 +7,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'scan_bill.dart';
 import '../recognition/service.dart';
 import '../state/scan_live.dart';

@@ -3,7 +3,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/recognition/scan_events.dart';
 import 'package:fasan_split/flows/scan_queue.dart';
 import 'package:fasan_split/state/store.dart';

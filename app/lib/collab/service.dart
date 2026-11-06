@@ -11,8 +11,8 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../model/bill.dart';
-import '../model/pay.dart';
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_core/pay.dart';
 import '../state/images.dart';
 import '../state/snippets.dart';
 import '../state/store.dart';

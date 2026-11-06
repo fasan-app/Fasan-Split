@@ -1,7 +1,7 @@
 // A bill opened from its tile keeps the soft ground like every other screen (Nutzer 06.11., Bildschirmvergleich App/Browser: the
 // bill was flat because the container transform painted an opaque colour). MPL-2.0
 import 'package:fasan_split/main.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_ui/fasan_ui.dart';

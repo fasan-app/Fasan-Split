@@ -1,7 +1,7 @@
 // Fasan Split – a draft opens on the step it was left on, with the earlier steps underneath. MPL-2.0
 import 'package:flutter/material.dart';
 
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'flow.dart';
 
 /// Screen of the step a draft was left on.

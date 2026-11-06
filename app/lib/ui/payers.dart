@@ -4,7 +4,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/tr.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'common.dart';
 
 /// Equal parts of the receipt for everyone in `paid` (exact cents, the first ones get the leftover cent).

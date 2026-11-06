@@ -4,7 +4,7 @@ import 'dart:math' as math;
 
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/recognition/image.dart';
-import 'package:fasan_split/recognition/model.dart';
+import 'package:fasan_reader/model.dart';
 import 'package:fasan_split/recognition/scan.dart';
 import 'package:fasan_split/recognition/scan_preview.dart';
 import 'package:fasan_split/recognition/service.dart';

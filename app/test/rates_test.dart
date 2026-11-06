@@ -1,6 +1,6 @@
 // Fasan Split – ECB rates: parsing the official file, cross rates, bills in another currency in the balances. MPL-2.0
-import 'package:fasan_split/model/bill.dart';
-import 'package:fasan_split/model/settle.dart';
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_core/settle.dart';
 import 'package:fasan_split/state/rates.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,7 +1,7 @@
 // Einheitstests des Lesers: dieselben 30 Fälle wie fasan-diagnose/tests/einheit.mjs (Web 3.19: 30/30).
 // Zeilen als Text (ohne Bild); unsicher: {Stelle: (p, alt, p2)}; Ausgabe im selben Format wie das JS-Testskript.
-import 'package:fasan_split/recognition/model.dart';
-import 'package:fasan_split/recognition/reader.dart';
+import 'package:fasan_reader/model.dart';
+import 'package:fasan_reader/reader.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Line _z(String t, int y, [Map<int, (double, String, double)> unsure = const {}, double x = 0]) {

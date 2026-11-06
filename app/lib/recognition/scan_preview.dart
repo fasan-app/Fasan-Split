@@ -8,7 +8,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'image.dart';
-import 'model.dart';
+import 'package:fasan_reader/model.dart';
 import 'scan.dart';
 
 /// Lines whose amounts the check confirmed: all item lines when the total adds up, else only the items read as sure.

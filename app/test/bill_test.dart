@@ -1,4 +1,4 @@
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

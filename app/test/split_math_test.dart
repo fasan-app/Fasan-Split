@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:fasan_split/model/bill.dart';
-import 'package:fasan_split/model/split_math.dart';
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_core/split_math.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Property tests: thousands of random cases. A calculation error stops the build (Beschluss 03.11.).

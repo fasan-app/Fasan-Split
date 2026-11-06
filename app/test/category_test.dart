@@ -1,5 +1,5 @@
 // Fasan Split – category guess from the receipt, sorting and filtering of the lists. MPL-2.0
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/ui/category.dart';
 import 'package:fasan_split/ui/category_ui.dart';
 import 'package:flutter_test/flutter_test.dart';

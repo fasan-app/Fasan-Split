@@ -10,9 +10,9 @@ import 'package:flutter/services.dart';
 
 import '../l10n.dart';
 import 'scope.dart';
-import '../model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import '../state/rates.dart';
-import '../recognition/reader.dart' show nameAlternatives;
+import 'package:fasan_reader/reader.dart' show nameAlternatives;
 import 'marquee_text.dart';
 import 'receipt_view.dart';
 import '../state/images.dart';

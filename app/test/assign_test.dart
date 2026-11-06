@@ -1,6 +1,6 @@
 // Zuordnen: Alle springt standardmäßig nicht weiter, Plus fügt am Posten hinzu, Stück je Person als Bruch.
 import 'package:fasan_split/main.dart';
-import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/assign.dart';
 import 'package:fasan_ui/fasan_ui.dart';

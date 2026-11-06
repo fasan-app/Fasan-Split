@@ -2,8 +2,8 @@
 // „ausgeglichen“ (settled, paid back) goes to the archive and no longer counts. MPL-2.0
 import 'package:fasan_split/collab/bill_sync.dart';
 import 'package:fasan_split/collab/lww.dart';
-import 'package:fasan_split/model/bill.dart';
-import 'package:fasan_split/model/settle.dart';
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_core/settle.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
