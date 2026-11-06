@@ -404,6 +404,28 @@ class BillStore extends ChangeNotifier {
 
   /// Settled = paid back: to the archive, out of the balances. Only entered bills ([Bill.done]) can be settled; returns
   /// the bills that changed (for „Rückgängig“).
+  /// Records a settlement payment (Kosten 2, Beschluss 06.11. „bezahlt eintragen“): [from] gave [to] [cents]. Booked as a small bill in
+  /// [group] that [from] paid and [to] had, so every balance moves by exactly this amount and the group sees it like any bill (and can
+  /// delete it again). [purpose]/[item] are the texts in the current language.
+  Bill recordPayment(String group, String from, String to, int cents, {required String purpose, required String item}) {
+    final b = Bill(
+      id: newUid(),
+      created: DateTime.now(),
+      purpose: purpose,
+      total: cents,
+      people: [Person(from, 0), Person(to, 1)],
+      payer: 0,
+      items: [BillItem(name: item, amount: cents, shares: {1: 1})],
+      group: group,
+      checked: true,
+      step: 4,
+      done: true,
+      category: 'transfer',
+    );
+    upsert(b);
+    return b;
+  }
+
   List<Bill> setSettled(Iterable<Bill> list, bool settled) {
     final changed = <Bill>[];
     for (final b in list) {

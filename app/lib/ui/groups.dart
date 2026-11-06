@@ -1,6 +1,6 @@
 // Fasan Split – Gruppen and Freunde, group page. A group is local until it is shared live (see collab_ui.dart); the
 // invitation and the live part of a group live in collab_ui.dart. MPL-2.0
-import '../l10n/tr.dart' show trLang;
+import '../l10n/tr.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -271,6 +271,12 @@ class GroupPeople extends StatelessWidget {
                       name: label(to), pub: to.startsWith('@') ? to.substring(1) : live?.session.memberOfPerson(to), cents: c, currency: StoreScope.read(context).homeCurrency, purpose: name),
                   child: Text(trLang(t.de ? 'de' : 'en', 'groups.pay')),
                 ),
+              // „bezahlt“ (Beschluss 06.11.): this one payment happened – booked as a settlement bill, the balances move by exactly this amount
+              IconButton(
+                tooltip: trLang(t.de ? 'de' : 'en', 'groups.markPaid'),
+                icon: const Icon(Icons.check_circle_outline_rounded),
+                onPressed: () => _markPaidIn(context, name, label(from), label(to), c),
+              ),
             ]),
           ),
         if (moves.isNotEmpty)
@@ -692,4 +698,25 @@ Future<void> friendActions(BuildContext context, String name) async {
         if (c != null) Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: c)));
       }
   }
+}
+
+/// Asks, then books „[from] gave [to] [cents]“ in the group [group] of the surrounding page (store.recordPayment), with undo.
+Future<void> _markPaidIn(BuildContext context, String group, String from, String to, int cents) async {
+  final t = S.of(context);
+  final lang = t.de ? 'de' : 'en';
+  final amount = '${money(cents, de: t.de)} ${signOf(context)}';
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      content: Text(trLang(lang, 'groups.markPaidAsk', [from, to, amount])),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.cancel)),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(trLang(lang, 'groups.markPaid'))),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  final store = StoreScope.read(context);
+  final b = store.recordPayment(group, from, to, cents, purpose: trLang(lang, 'groups.paymentPurpose', [from, to]), item: trLang(lang, 'groups.paymentItem'));
+  showNote(context, trLang(lang, 'groups.markPaidDone', [from, to, amount]), actionLabel: context.tr('bill.undo'), onAction: () => store.remove(b));
 }

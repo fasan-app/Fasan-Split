@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'settle.dart';
 import 'split_math.dart';
 
 import 'speisen.dart';
@@ -478,7 +479,7 @@ class Bill {
   }
 
   /// Transfers to the payer (to the others for a refund): (from, to, cents). Several payers: each person's balance is
-  /// what they paid minus what they had; the biggest debtor pays the biggest creditor, repeated (exact cents, at most
+  /// what they paid minus what they had; settled with the fewest transfers (settle.dart, exact cents, at most
   /// n−1 transfers, same on every phone).
   List<(int, int, int)> transfers() {
     if (multiPay) {
@@ -487,19 +488,9 @@ class Bill {
         for (var i = 0; i < ps.length; i++) i: (paid[i] ?? 0) - (pp[i] ?? 0),
       };
       if (refund) net.updateAll((_, v) => -v);
-      final cred = [for (final e in net.entries) if (e.value > 0) [e.key, e.value]]..sort((a, b) => b[1] != a[1] ? b[1].compareTo(a[1]) : a[0].compareTo(b[0]));
-      final debt = [for (final e in net.entries) if (e.value < 0) [e.key, -e.value]]..sort((a, b) => b[1] != a[1] ? b[1].compareTo(a[1]) : a[0].compareTo(b[0]));
-      final out = <(int, int, int)>[];
-      var i = 0, j = 0;
-      while (i < cred.length && j < debt.length) {
-        final x = cred[i][1] < debt[j][1] ? cred[i][1] : debt[j][1];
-        if (x > 0) out.add((debt[j][0], cred[i][0], x));
-        cred[i][1] -= x;
-        debt[j][1] -= x;
-        if (cred[i][1] == 0) i++;
-        if (debt[j][1] == 0) j++;
-      }
-      return out;
+      // fewest transfers, exactly (settle.dart); people as zero-padded indices so the order is the same on every phone
+      String k(int i) => i.toString().padLeft(4, '0');
+      return [for (final (f, t, c) in settle({for (final e in net.entries) k(e.key): e.value})) (int.parse(f), int.parse(t), c)];
     }
     final p = payer;
     if (p == null) return const [];

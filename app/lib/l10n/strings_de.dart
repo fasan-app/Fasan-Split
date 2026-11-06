@@ -786,4 +786,10 @@ const Map<String, String> stringsDe = {
   'backup_ui.backupPasswordHint': 'Mit Passwort darf die Datei auch per Mail an dich oder in einen Cloud-Ordner. Ein vergessenes Passwort lässt sich nicht wiederherstellen.',
   // --- moved from the code by tool/l10n_migrate.py (pairing_ui) ---
   'pairing_ui.newText': 'Öffne auf deinem anderen Gerät Fasan Split → Konto → „Gerät hinzufügen“ und scanne diesen Code. Oder scanne ihn mit der Kamera-App.',
+  // --- settlement payments (Kosten 2, 06.11.) ---
+  'groups.markPaid': 'Bezahlt',
+  'groups.markPaidAsk': 'Hat {0} an {1} {2} gezahlt? Das wird als Ausgleich in der Gruppe eingetragen.',
+  'groups.paymentPurpose': 'Ausgleich {0} → {1}',
+  'groups.paymentItem': 'Ausgleichszahlung',
+  'groups.markPaidDone': 'Eingetragen: {0} hat {1} {2} gezahlt.',
 };

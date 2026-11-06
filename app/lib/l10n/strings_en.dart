@@ -786,4 +786,10 @@ const Map<String, String> stringsEn = {
   'backup_ui.backupPasswordHint': 'With a password the file may go by mail to you or into a cloud folder. A lost password cannot be recovered.',
   // --- moved from the code by tool/l10n_migrate.py (pairing_ui) ---
   'pairing_ui.newText': 'On your other device open Fasan Split → Account → “Add device” and scan this code, or scan it with the camera app.',
+  // --- settlement payments (Kosten 2, 06.11.) ---
+  'groups.markPaid': 'Paid',
+  'groups.markPaidAsk': 'Did {0} pay {1} {2}? It is entered in the group as a settlement.',
+  'groups.paymentPurpose': 'Settlement {0} → {1}',
+  'groups.paymentItem': 'Settlement payment',
+  'groups.markPaidDone': 'Entered: {0} paid {1} {2}.',
 };
