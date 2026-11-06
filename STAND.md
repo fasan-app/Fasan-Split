@@ -437,6 +437,13 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   `friends_not_me_test` (scheitert ohne die Korrektur). Verglichen und gleich (App und Browser): Archiv, Papierkorb (leer), Gruppenliste, Freunde, Gruppe mit Personen-Bereich,
   Notizen, Chat (nur Browser-Bilder, die App-Seite braucht Zusammenarbeit im Test). Noch offen im Vergleich: Beitritt, Scan, Englisch.
 
+- **Frage des Nutzers 06.11. nachts: „Warum gab es Unterschiede? Arbeitest du am modularen Neuaufbau (Fundament, letzte Nacht beauftragt)? Plan?“**
+  **Ehrlich: der Neuaufbau ist noch nicht begonnen.** Reihenfolge laut Beschluss war: erst Tore (Erkennung, Parität), dann Neuschreiben; stattdessen wurden zuerst Fotos teilen, Leistung,
+  Gestaltung, Wiederholen/Festbetrag und der Bildschirmvergleich auf dem alten Aufbau gebaut (auch durch Kontingent-/Kontextwechsel aus dem Blick geraten). Heute: Schritt 1 (Bestandsaufnahme,
+  `docs/ARCHITEKTUR.md`) mit gemessenen Befunden: Modell kennt höhere Schichten, Zyklus state↔collab, 22 Bildschirme hängen an `main.dart`. Nächste Schritte: `core` herauslösen, `platform_api`, `store`/`sync` trennen,
+  `recognition`-, `l10n`-Pakete, Wächter-Tests; alles unter den Toren, eine Veröffentlichung am Ende.
+  Die gefundenen Unterschiede lagen nicht am Web: 3 der 4 Funde des Bildschirmvergleichs (Hintergrund, Rückgängig, Freunde) traten **in der APK ebenso** auf; die echten Web-Unterschiede waren Fotodaten und Schrift.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der

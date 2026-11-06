@@ -79,3 +79,5 @@ der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. 
 - 06.11. nachts (Nutzer, Frage): Wenn Flutter denselben Code nutzt, warum waren Web und App so verschieden und die Anpassung so kompliziert? Antwort gegeben (Daten nicht geteilt, Schrift, Speicher, Erkennung, kein früherer Vergleich); Stand: beantwortet.
 
 - 06.11. nachts (Nutzer, Frage): Muss die Web-Anpassung jedes Mal gemacht werden, greift der modulare Aufbau auch im Web (App-Änderung → Web)? Antwort + Regel in CLAUDE.md; Stand: beantwortet, modularer Neubau offen.
+
+- 06.11. nachts (Nutzer, Kritik/Frage): Warum gab es Unterschiede Web/App; arbeitest du am Neuaufbau vom Fundament (letzte Nacht beauftragt), was ist der Plan? Stand: Neuaufbau NICHT begonnen (ehrlich gemeldet); Schritt 1 Bestandsaufnahme + Plan in docs/ARCHITEKTUR.md; Umsetzung als Nächstes.

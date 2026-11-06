@@ -1,0 +1,65 @@
+# Architektur – Ist-Zustand und Plan zum Neuaufbau (Beschluss Nutzer 06.11.: „komplett neu schreiben“)
+
+Stand 06.11. nachts. **Der Neuaufbau ist noch nicht begonnen.** Dies ist Schritt 1: Bestandsaufnahme mit Zahlen (aus den Imports gemessen), danach der Plan.
+
+## Ist (99 Dateien, rund 24 600 Zeilen in `app/lib`)
+
+| Baustein | Dateien | Zeilen | hängt ab von |
+|---|---|---|---|
+| `ui/` | 32 | 10 419 | model, state, collab, recognition, l10n, **main.dart (22 Dateien!)**, web_platform |
+| `recognition/` | 18 | 6 279 | model (1) |
+| `collab/` | 14 | 3 853 | model, state |
+| `state/` | 10 | 1 324 | model, **collab (3)**, recognition_service |
+| `model/` | 6 | 1 098 | **recognition (2), recognition_service, state (1)** |
+| `l10n*` | 8 | ≈ 800 | – |
+| Adapter Web | `*_web.dart` ×6 + Stubs | ≈ 300 | – |
+
+## Befunde (jeder ist ein Konstruktionsfehler, kein Geschmack)
+
+1. **Das Modell kennt höhere Schichten** (`model` → `recognition`, `state`, `recognition_service`). Das Modell (Posten, Summen, Teilen) muss unten stehen und nichts kennen.
+2. **Zyklus `state` ↔ `collab`.** Speicher und Zusammenarbeit kennen sich gegenseitig.
+3. **Bildschirme hängen an `main.dart`** (22 von 32): `StoreScope`/`CollabScope` liegen im Einstiegspunkt. Bildschirme dürfen den Einstieg nicht importieren.
+4. **Texte liegen in Wurzeldateien** (`l10n_bill/collab/groups/web.dart`) neben dem Code statt in einem eigenen Paket.
+5. **Plattform-Adapter verstreut** (`web_platform*`, `recognition_browser*`, `l10n_web`, `images_web`, `ws_connect_web`, `onnx_web`) ohne gemeinsame Schnittstellenordnung.
+6. **Die Erkennung (6 279 Zeilen) ist stabil und gut getestet**, hängt aber an einem Modelltyp; sie gehört in ein eigenes Paket mit eigener, kleiner Schnittstelle.
+
+## Zielbild (Dart-Pakete im selben Repo, Abhängigkeit nur nach unten)
+
+```
+app (Einstieg, Verdrahtung)            ← kennt alles, nichts kennt ihn
+ ├─ ui            Bildschirme, Widgets  (kennt: core, sync, store, recognition_api, l10n, platform_api)
+ ├─ sync          Gruppen, Relays, Foto-Stücke, Verschlüsselung (kennt: core, platform_api)
+ ├─ store         Speicher, Verlauf (Rückgängig), Sicherung (kennt: core)
+ ├─ recognition   Leser, OCR-Pipeline (kennt: core; Modelle über platform_api)
+ ├─ l10n          Texte de/en
+ ├─ platform_api  Schnittstellen: Bildspeicher, Netz, Schrift, Erkennungs-Ausführung (reine Verträge)
+ │    ├─ platform_native   Android/iOS/Desktop-Fassung
+ │    └─ platform_web      Browser-Fassung (IndexedDB, Worker, WebSocket)
+ └─ core          Posten, Personen, Beträge, Teilen (SplitMath), Prüfung – **keine** Abhängigkeiten
+```
+
+Regeln, die der Test erzwingt (Paketgrenzen = `pubspec`, dazu ein Import-Wächter-Test wie `web_parity_test`):
+- `core` importiert nichts außer `dart:`-Bibliotheken.
+- `kIsWeb` und `dart:html/js_interop` nur in `platform_web`.
+- Kein Bildschirm importiert `main.dart`/`app`.
+- Jeder neue Bildschirm kommt in den Bildschirmdurchlauf (`tool/e2e/screens.js`, `test/screens_test.dart`).
+
+## Vorgehen (gesichert durch die Tore, nie auf Verdacht)
+
+Tore, die vor und nach jedem Schritt grün sein müssen: Erkennungs-Tor (alle echten Bons + Korpus, keine Verschlechterung), schnelle Suite (322 Tests), Foto-Ende-zu-Ende im Browser, Bildschirmdurchlauf (Bild für Bild App ↔ Browser).
+
+1. **Bestandsaufnahme** (dieses Dokument) – fertig.
+2. **`core` herauslösen**: `model/` + `split_math` ohne Fremdabhängigkeit; die zwei Verweise auf `recognition` umdrehen (Erkennung liefert Daten *an* das Modell, nicht umgekehrt).
+3. **`platform_api`** mit den vier Verträgen anlegen, bestehende `*_web.dart`/Stubs dahinter verschieben.
+4. **`store` und `sync` trennen** (Zyklus auflösen: `sync` kennt `store` nur über eine Schnittstelle).
+5. **`recognition` als eigenes Paket** mit schmaler Schnittstelle.
+6. **`l10n` als Paket**, Texte nach Bereich geordnet, Test auf fehlende/überzählige Schlüssel.
+7. **`ui` an die Verträge hängen**, `StoreScope`/`CollabScope` aus `main.dart` in ein eigenes Scope-Modul.
+8. **Wächter-Tests** für alle Regeln; Veröffentlichung erst, wenn alle Tore grün sind (eine Veröffentlichung, Beschluss 06.11.).
+
+Jeder Schritt: eigener Commit auf dem Arbeitszweig, Tore laufen, STAND.md aktualisiert. Verhalten ändert sich nicht (Neuaufbau = gleiche Funktion, gesichert durch die Tests); Fehler, die dabei sichtbar werden, werden getrennt behoben.
+
+## Offen / zu recherchieren (Regel: echte Quellen, Stand des Jahres, als neu kennzeichnen)
+- Dart-Pub-Workspaces (Dart ≥ 3.6) gegenüber Pfad-Abhängigkeiten für die Paketstruktur; Auswirkung auf die CI.
+- Bedingte Importe vs. Schnittstelle + Einbindung per Verdrahtung (Dokumentation dart.dev, flutter.dev „Packages“/„Federated plugins“ als Vorbild für `platform_api`/`_native`/`_web`).
+- Aufwand/Risiko: Schritt 2–4 betreffen fast alle 99 Dateien; jede Verschiebung bricht Imports → in kleinen Schritten mit grünen Toren dazwischen.
