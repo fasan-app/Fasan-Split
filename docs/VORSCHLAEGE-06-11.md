@@ -97,3 +97,55 @@ Befragung 2 (06.11.):
    noch fehlen“ → vollständige Lückenliste in § E (aus Fasan-Karte-Beschlüssen = Soll-Umfang, Soll-Liste, Roadmap, Nachrichten).
 4. **Reihenfolge: erst Tore, dann Umbau** – 0 Pflicht → 1 Erkennung + Tor → 2 Paritäts-Tor → 3 Neuschreiben → 4 Fotos teilen, Menüs →
    5 Leistung → 6 Gestaltung nach Prüfliste → 7 Grundfunktionen; alles in **einer** Veröffentlichung.
+
+## E. Was noch fehlt – vollständige Lückenliste (06.11.)
+
+Quellen: Soll-Umfang `../fasan-karte/docs/ENTSCHEIDUNGEN.md` (Bon 3.5–3.19, Kosten 2, 24.10.), `../fasan-karte/docs/PLAN-FLUTTER.md`,
+`STAND.md` (Soll-Liste, Noch offen), `docs/ROADMAP.md`, Nachrichten des Nutzers. **Stand nach Doku, im Code noch nicht einzeln geprüft**
+(das macht das Register in Punkt 0). ✅ = schon in dieser Runde (Befragung 2), sonst Vorschlag.
+
+### E1 Rechnen und Aufteilen (Kosten 2, Karte 24.10.)
+- ✅ Aufteilen gleich, feste Beträge, Anteile, nach Posten; ✅ exakter Ausgleich (wenigste Überweisungen); ✅ „bezahlt“ trägt Ausgleichsbuchung ein.
+- ✅ Ausgaben ohne Kassenzettel (Formular). ✅ Rückgängig/Wiederholen (Bon 3.17).
+- Summen müssen genau stimmen, sonst kein Eintragen – auch beim Teilen/Export und bei Entwürfen prüfen (offen seit 03.11.).
+- Löschen überall mit Rückgängig (Karte 24.10.) – je Bildschirm prüfen.
+
+### E2 Bon und Erkennung (Bon 3.8–3.19)
+- Lesesicherheit je Posten sichtbar, andere Lesungen mit Prozent wählbar, Korrektur lernt den Lesefehler (3.11) – fehlt.
+- Bon-Art erkennen (Restaurant, Café, Einkauf, Tanken …), füllt „Wofür?“ (3.9) – fehlt (Kategorie gibt es).
+- Zusatzzeilen (Pfand, Rabatt, Extras) in der App umhängen oder als eigenen Posten (3.13); Posten ausblenden, andere Zeilen als Posten
+  übernehmen (3.8) – fehlt.
+- Bon-Ansicht „Nebeneinander“ (Original | Digital, 3.14), digital als PDF und Volltext (3.15) – fehlt.
+- Ladeanzeige ist der Bon selbst (Lichtband, aufleuchtende Zeilen, 3.19) – teilweise (`scan_stage`), prüfen.
+- Eigene Kamera-Ansicht mit Live-Begradigung (Plan Flutter, Rechnung 1) – fehlt.
+- Leere Stelle im Bon antippen liest dort neu (3.10) – prüfen.
+- Schraffur je Person zusätzlich zur Farbe (3.9); Farben Okabe-Ito oder eigene Palette (3.8) – offen.
+- Währung aus dem Bon erkennen ($, £, USD); Betrag im Geschäftsnamen trennen („Uber −12,98 €“); Scan-Begradigung (QR-Bereich, Keil,
+  Papierkante); Wörterbücher je Sprache; `de-discount.png`; SROIE 008/020/034/041 – offen.
+- Weltweite Schriften – nach Latein (Beschluss 06.11.).
+
+### E3 Gruppe, Personen, Chat
+- Ein Begriff „Personen“ (Beschluss 06.11.); Gruppe „Bons zuerst“; Fotos/Ausschnitte teilen (Beschluss 06.11.).
+- Rechnungen nur für Beteiligte sichtbar (Karte/Soll) – fehlt.
+- Gruppe verlassen auf allen eigenen Geräten; verknüpfte Person umbenennen; Kontakte löschen (nur aus Vorschlägen); Avatar/Gruppenbild.
+- Chat: Umfragen, „schreibt gerade“, Fotos im Chat, Reaktionen antippbar, Privatnachricht in der Gruppe (Entwurf mit dir), Blockieren,
+  Freund per QR.
+- Konto: Passkey (Messprobe S23), soziale Wiederherstellung (2 von 3) als Entwurf.
+
+### E4 Übersicht und Saldo
+- Saldo-Plakette auch auf Unterseiten; Filter nach Gruppe/Person/„ich schulde“, Suche; Visualisierung (Stand/Kategorien als Diagramm).
+- „?“-Hilfen überall; Ziehen-Regel systemweit (Gruppen-, Freunde-Seite); Leerräume je Bildschirm.
+
+### E5 Plattform und Gestaltung
+- Browser = APK (Beschluss), Ton im Browser (Nutzer 05.11.), Haptik auf dem S23 nicht spürbar (Ursache offen).
+- Profile der Familie (Einfach 60 dp, Gut lesbar/Groß, Kinder, Gast) – in Split nicht vorhanden.
+- Tablet/Querformat zweispaltig (3.18), sehr große und kleine Bildschirme, Widgets (Saldo, schneller Scan).
+- Meldungen, Dialoge, Blätter im Stil (SnackBar noch schwarzer Kasten); Menüs und Einstellungen neu ordnen; Übergänge ohne Ruckeln;
+  Gestaltung §9 (Lebendig/Warten, Papier, Braun, Kino), echtes Glas (zurückgestellt).
+- APK-Größe (`uvdoc.onnx` 31,6 MB, fp16 prüfen), Safari mit 1 Thread, Versionsmarke auf jeder Seite (3.17).
+- Import aus Splitwise/Tricount, MCP-Schnittstelle (Roadmap).
+
+### E6 Ungeprüft Gebliebenes (muss in die Tore, nicht zum Nutzer)
+- SEPA-QR gegen das EPC-PDF; Wallet-Links (Nutzer 05.11.: „ob Wallets richtig lesen, musst du recherchieren“); EZB-Kurs im Browser (CORS);
+  Benachrichtigungen, Tor/Orbot, Koppeln per QR, Bon-Status – alle „nicht auf dem Gerät geprüft“.
+- Foto-Warteschlange „lief rot“ (Nutzer 05.11.) – Stand prüfen.
