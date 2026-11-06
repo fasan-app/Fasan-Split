@@ -12,7 +12,10 @@ Stand 01.11.2026.
    Lese-Geheimnis und stoppt jede Veröffentlichung bei Verschlechterung.
 3. **Veröffentlichen** auf main selbstständig, aber nur wenn alle Prüfungen grün sind (Erkennung, Tests, Browser-E2E, Leistung);
    jede Veröffentlichung steht hier.
+   **Ergänzt 06.11.:** keine Zwischenveröffentlichungen – eine Veröffentlichung, wenn Umbau und Korrekturen fertig sind und das Tor besteht.
 4. **Gruppe „Bons zuerst“:** eine Zeile Avatare + Chat + Notizen, eine Ausgleich-Zeile, dann die Bons; Personen im Blatt.
+   **Ergänzt 06.11.:** nur noch ein Begriff „Personen“ (Status „in der App“ / „ohne App“), kein eigener Mitglieder-Knopf.
+7. **Weltweit lesen:** erst Latein perfekt mit Tor, danach weitere Schriftmodelle direkt in die APK (offline ab Installation bleibt).
 5. **Bon-Ausschnitte unter den Posten sind Standard** (einzig krisensicherer Beleg, ob ein Posten stimmt); kompakt, abschaltbar.
    Ersetzt den Beschluss 05.11. „keine Dauer-Bildchen“ (Grund damals: zu groß/unruhig → jetzt kompakt statt weg).
 6. Grundeinstellung Leistung „Sparsam“ (05.11.) bleibt.

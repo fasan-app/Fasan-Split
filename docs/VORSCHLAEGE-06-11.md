@@ -57,4 +57,29 @@ Glas, Profile).
 
 ## D. Antworten des Nutzers
 
-(werden nach der Befragung am 06.11. hier eingetragen)
+Befragung 1 (06.11.):
+1. Fotos/Ausschnitte teilen: **offen** – Nutzer fragt zuerst: „Was ist ein Blossom-Server, Pro und Kontra?“ (Antwort und neue Frage unten).
+2. Personen: **ein Begriff „Personen“** mit Status „in der App“ / „ohne App“; Verwaltung/Rechte im Blatt der Person; eigener
+   Mitglieder-Knopf fällt weg.
+3. Weltweit lesen: **erst Latein perfekt (mit Tor), dann weitere Schriftmodelle direkt in die APK** (Beschluss 02.11. „offline ab
+   Installation“ bleibt).
+4. Zwischenstand: **keine Zwischenveröffentlichungen** – alles zusammen, wenn Umbau und Korrekturen fertig sind und das Tor besteht.
+
+### Was ist ein Blossom-Server? (recherchiert 06.11., Quellen unten)
+
+- **Was:** ein HTTP-Dateiserver für Nostr. Eine Datei liegt unter ihrem SHA-256-Fingerabdruck (`GET /<sha256>`, BUD-01). Hochladen mit
+  einem signierten Nostr-Ereignis (kind 24242) im `Authorization`-Header (BUD-02, BUD-11). Abruf ohne Anmeldung, Server müssen
+  `Access-Control-Allow-Origin: *` setzen (im Browser lesbar). Spiegeln auf mehrere Server (BUD-04), Serverliste je Nutzer (BUD-03).
+- **Pro:** große Dateien (nostr.build/blossom.band laut Anbieter: bis 20 MiB je Datei kostenlos, Zahl der Uploads unbegrenzt), volle
+  Auflösung möglich, Relays bleiben schlank (der Bon trägt nur Fingerabdruck und Schlüssel), mehrfach spiegelbar, später eigener Server
+  (Open Source) möglich.
+- **Contra:** zusätzlicher fremder Dienst. Verschlüsselung ist **nicht** Teil des Standards – Fasan müsste selbst verschlüsseln (geht:
+  Schlüssel liegt im verschlüsselten Bon). Der Server sieht IP-Adresse, Zeit, Dateigröße und den öffentlichen Schlüssel des Hochladenden
+  (steht im Token). Aufbewahrung nicht garantiert („Sunset“ ist nur ein Hinweis), Löschen hängt vom Server ab, Bedingungen und Kosten je
+  Server; wer den Fingerabdruck kennt, kann die (verschlüsselte, ohne Schlüssel nutzlose) Datei laden. Welche weiteren öffentlichen Server
+  es gibt und was sie kosten: nicht geprüft.
+- **Zum Vergleich die Relays der App** (NIP-11 abgerufen 06.11.): nos.lol nimmt höchstens 128 KB je Nachricht, relay.damus.io und
+  relay.primal.net 1 MB; Aufbewahrung ebenfalls ohne Zusage. Ein verkleinertes Original (200–400 KB) geht also nur in Stücken über alle drei.
+- **Tests:** nur gegen einen lokalen Blossom-Nachbau (Regel „nie in fremde Dienste schreiben“).
+
+Quellen: github.com/hzrd149/blossom (README, `buds/01.md`, `02.md`, `11.md`), b.nostr.build (Anbieterangaben), NIP-11-Antworten der drei Relays.
