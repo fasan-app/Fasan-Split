@@ -3,8 +3,9 @@
 // IndexedDB: developer.mozilla.org/docs/Web/API/IndexedDB_API. MPL-2.0
 import 'dart:async';
 import 'dart:js_interop';
-import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
@@ -35,23 +36,36 @@ Future<web.IDBDatabase?> _database() async {
 
 web.IDBObjectStore _tx(web.IDBDatabase db, String mode) => db.transaction(_store.toJS, mode).objectStore(_store);
 
-/// Loads all photos into memory once at start (receipts are small JPEGs).
+/// Names stored in IndexedDB; the bytes load only when a photo is shown (06.11.: all photos were read into memory at start –
+/// with the group's photos that slowed the start on weak phones, Nutzer: „selbst auf 10 Jahre alten Geräten“).
+final _known = <String>{};
+
+/// At start: only the list of stored photos (one IndexedDB request), no image bytes.
 Future<void> initImages() async {
   final db = await _database();
   if (db == null) return;
   try {
     final keys = await _req<JSArray<JSAny?>>(_tx(db, 'readonly').getAllKeys());
     for (final k in keys?.toDart ?? const <JSAny?>[]) {
-      final name = (k as JSString).toDart;
-      final v = await _req<JSUint8Array>(_tx(db, 'readonly').get(k));
-      if (v != null) _mem['$_prefix$name'] = v.toDart;
+      _known.add('$_prefix${(k as JSString).toDart}');
     }
   } catch (_) {}
 }
 
+/// Recently shown photos stay in memory (a few receipts), older ones are read again from IndexedDB when needed.
+const _keep = 16;
+void _remember(String path, Uint8List bytes) {
+  _mem.remove(path);
+  _mem[path] = bytes;
+  while (_mem.length > _keep) {
+    _mem.remove(_mem.keys.first);
+  }
+}
+
 Future<String?> saveImage(String name, Uint8List bytes) async {
   final path = '$_prefix$name';
-  _mem[path] = bytes;
+  _remember(path, bytes);
+  _known.add(path);
   final db = await _database();
   if (db != null) {
     try {
@@ -61,12 +75,27 @@ Future<String?> saveImage(String name, Uint8List bytes) async {
   return path;
 }
 
-bool imageExists(String? path) => path != null && _mem.containsKey(path);
+bool imageExists(String? path) => path != null && (_mem.containsKey(path) || _known.contains(path));
 
-Future<Uint8List?> readImage(String path) async => _mem[path];
+Future<Uint8List?> readImage(String path) async {
+  final m = _mem[path];
+  if (m != null) return m;
+  final db = await _database();
+  if (db == null || !path.startsWith(_prefix) || !_known.contains(path)) return null;
+  try {
+    final v = await _req<JSUint8Array>(_tx(db, 'readonly').get(path.substring(_prefix.length).toJS));
+    if (v == null) return null;
+    final bytes = v.toDart;
+    _remember(path, bytes);
+    return bytes;
+  } catch (_) {
+    return null;
+  }
+}
 
 void deleteImage(String path) {
   _mem.remove(path);
+  _known.remove(path);
   final db = _open;
   if (db == null || !path.startsWith(_prefix)) return;
   try {
@@ -74,4 +103,30 @@ void deleteImage(String path) {
   } catch (_) {}
 }
 
-ImageProvider imageProvider(String path) => MemoryImage(_mem[path] ?? Uint8List(0));
+ImageProvider imageProvider(String path) {
+  final m = _mem[path];
+  return m != null ? MemoryImage(m) : _IdbImage(path);
+}
+
+/// A photo that is not in memory yet: read from IndexedDB when the image is first painted.
+class _IdbImage extends ImageProvider<_IdbImage> {
+  const _IdbImage(this.path);
+  final String path;
+
+  @override
+  Future<_IdbImage> obtainKey(ImageConfiguration configuration) => SynchronousFuture<_IdbImage>(this);
+
+  @override
+  ImageStreamCompleter loadImage(_IdbImage key, ImageDecoderCallback decode) => OneFrameImageStreamCompleter(() async {
+        final bytes = await readImage(path);
+        if (bytes == null || bytes.isEmpty) throw StateError('photo not found: $path');
+        final codec = await decode(await ui.ImmutableBuffer.fromUint8List(bytes));
+        return ImageInfo(image: (await codec.getNextFrame()).image);
+      }());
+
+  @override
+  bool operator ==(Object other) => other is _IdbImage && other.path == path;
+
+  @override
+  int get hashCode => path.hashCode;
+}

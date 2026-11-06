@@ -62,9 +62,23 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     if (result.layers.original) { await click('Original'); await p.waitForTimeout(1500); await shot('6-original'); }
     if (result.layers.digital) { await click('Digital'); await p.waitForTimeout(1000); await shot('7-digital'); }
     result.ready = ready;
+    // reload: the photos now come from IndexedDB, loaded only when shown (images_web.dart, 06.11.)
+    const t1 = Date.now();
+    await p.reload();
+    await p.waitForTimeout(12000);
+    await p.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click());
+    await p.waitForTimeout(1500);
+    for (let i = 0; i < 30 && (await p.getByText('Foto-Test').count()) === 0; i++) await p.waitForTimeout(1000);
+    await p.getByText('Foto-Test').first().click({ timeout: 20000 });
+    await p.waitForTimeout(2500);
+    await shot('8-nach-neustart');
+    await click('Bon');
+    await p.waitForTimeout(2500);
+    result.afterReload = { scan: await p.getByRole('button', { name: 'Scan' }).count(), seconds: Math.round((Date.now() - t1) / 1000) };
+    await shot('9-scan-nach-neustart');
   } catch (e) { console.log('FAIL', String(e).slice(0, 300)); await shot('fail'); }
   fs.writeFileSync(dir + '/photo-done.txt', JSON.stringify(result));
-  const ok = result.ready && result.layers && result.layers.scan && result.layers.original && result.layers.digital && errs.length === 0;
+  const ok = result.ready && result.layers && result.layers.scan && result.layers.original && result.layers.digital && result.afterReload && result.afterReload.scan && errs.length === 0;
   console.log(`${ok ? 'OK' : 'FAIL'} ${JSON.stringify(result)} · Fehler: ${errs.join(' | ') || 'keine'}`);
   await b.close();
   process.exit(ok ? 0 : 1);
