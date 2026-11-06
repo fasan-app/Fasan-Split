@@ -87,3 +87,4 @@ der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. 
   jeden Beschluss sofort in Dateien. Stand: angenommen, belegt 06.11. 23:50 (Zweig `mitarbeit/B-erkennung`). Rohtext: nicht in `../fasan/nutzer/` (B nur lesend).
 
 - 06.11. 23:48 (Nutzer an B): Was Sitzung A zuletzt begonnen und wegen Kontingent nicht abgeschlossen hat, ist wichtiger als die Erkennung zu verbessern. Stand: angenommen; Erkennung pausiert (817d52f), B übernimmt A's Rest (ZUSAMMENARBEIT). Rohtext: nicht in `../fasan/nutzer/` (B nur lesend).
+- 06.11. 23:50 (Nutzer): Selbstständig erkennen, ob zuletzt angefangene Aufgaben (eigene oder von Sitzung A) offen sind; die zuerst abschließen, statt parallel neue Baustellen zu öffnen. Stand: Regel in CLAUDE.md und ZUSAMMENARBEIT; Reihenfolge B: Teilzahlung (A) → übriger A-Rest → eigene Erkennung 817d52f → erst dann Neues.

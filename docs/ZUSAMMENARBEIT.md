@@ -16,7 +16,8 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 5. **Fertig/frei:** Zeile von „Belegt“ nach „Erledigt“ mit Ergebnis und Nachweis (Tests, Bildschirmfotos, was nicht geprüft ist).
 6. **Fragen an die andere Sitzung** unter „Nachrichten“ mit Datum und Kürzel; Antwort darunter. Nutzer-Nachrichten weiter in
    `../fasan/nutzer/split-nachrichten.md` (privat) und sinngemäß in `docs/ANFORDERUNGEN.md`.
-7. Kontingent: Wer knapp wird, sichert sofort (Commit, Push, Eintrag hier „unterbrochen bei …“), damit die andere Sitzung übernehmen kann.
+7. **Angefangenes zuerst** (Nutzer 06.11. 23:50): Vor neuer Arbeit prüfen, was zuletzt begonnen und nicht fertig ist (eigen oder fremd) – das zuerst abschließen, keine parallelen neuen Baustellen.
+8. Kontingent: Wer knapp wird, sichert sofort (Commit, Push, Eintrag hier „unterbrochen bei …“), damit die andere Sitzung übernehmen kann.
 
 ## Gerechte Aufteilung (Vorschlag, jede Sitzung darf hier umbelegen)
 

@@ -7,6 +7,10 @@ Posten zuordnen, wer hat bezahlt, Export. Der Code zieht später in Fasan Karte.
 
 Diese Regeln stehen über allem anderen in dieser Datei. Wer sie nicht erfüllen kann, sagt das dem Nutzer, bevor er arbeitet.
 
+**Angefangenes zuerst (Nutzer 06.11. 23:50):** Vor jeder neuen Arbeit selbstständig prüfen, ob zuletzt angefangene Aufgaben offen sind – eigene oder die
+einer anderen Sitzung (Commits, `STAND.md`, `docs/ZUSAMMENARBEIT.md` „Belegt“/„pausiert“, „nicht angesehen“, „ungeprüft“). Diese werden **zuerst** nach
+„Fertig heißt“ abgeschlossen; keine neuen Baustellen parallel öffnen. Reihenfolge: das zuletzt Begonnene zuerst, dann das davor.
+
 **Mehrere Sitzungen arbeiten parallel (ab 06.11.):** vor jeder Arbeit `docs/ZUSAMMENARBEIT.md` lesen, Paket dort belegen, nur im eigenen Zweig arbeiten, Ende eintragen.
 
 **Schritt 0 – Repos und Pflichtlektüre, prüfbar:**
