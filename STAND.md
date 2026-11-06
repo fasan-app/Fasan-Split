@@ -423,6 +423,15 @@ Stand 06.11. ~03:30: CORD test+validation umgewandelt (`app/tool/korpus/cord_tru
 amaye15/receipts (nur Klasse Bon/kein Bon). Wikimedia-API: Proxy-IP gedrosselt (429, „x-envoy-ratelimited“) → Openverse (CC-Bilder aus
 Flickr/Wikimedia) als Suche, Sichtung per Kontaktbogen. Wichtig für „weltweit“: Beträge ohne Nachkommastellen (IDR, JPY, KRW, HUF) liest
 der Leser nicht (bekannt seit 29.10.) – CORD macht das messbar.
+Stand 06.11. ~06:15: Openverse/Flickr: 496 Fotos geladen (`/home/user/tools/korpus/openverse/img`), 257 gesichtet (Bögen `sheets1/2`),
+**44 Bons Posten für Posten vom Foto abgeschrieben** (Werkzeug `/home/user/tools/wl.py`, Summenprobe je Bon): 41 lateinisch nach
+`fasan-diagnose/tests/welt/` (AU, UK, US, CA, IN, SE, CH, CZ, ES, FR, AT, DE, KR-Lateinnamen), 3 mit Hangul-Namen nach `tests/welt-schrift/`
+(eigener Bestwert, damit Latein nicht verwässert). Quelle, Urheber, Lizenz je Bon in der JSON und in `welt/quellen.json`. Ausgelassen
+(`AUSGELASSEN.txt`): Handschrift ohne sichere Wahrheit, Summe nicht im Bild. Regeln der Wahrheit: Rundung als Posten „Rundung“ (Betrag =
+Summe − Zwischensumme, auch wenn das Vorzeichen verkehrt gedruckt ist wie bei Colonial), Steuer auf Netto als eigener Posten (Name wie
+gedruckt), Rabattzeile am Artikel darüber, Rabatt nach der Zwischensumme als eigener negativer Posten, nicht gedruckte Rundung (CZ, IN)
+als „Rundung“. Offen: restliche 240 Fotos sichten (Ziel ~100), Bons mit zwei Zetteln im Bild zuschneiden, Lauf `welt1.sh` auswerten,
+Bestwerte in `fasan-diagnose/tests/korpus-min.json`.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
