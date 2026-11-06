@@ -354,6 +354,18 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (aufgeräumt 04.11. abends; die einzige Liste, die gepflegt wird)
 
+### Kontingent (Nutzer 06.11. 01:55: „Denk hierdran“, Bildschirmfoto der Nutzung)
+
+Woche „alle Modelle“ 59 % verbraucht (Rücksetzung Mo 04:00), Sitzung 37 % (Rücksetzung 06:00), Kontext 62 % (617k von 1M).
+Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht. **Folgen für die Arbeit:**
+- Teure Schritte zuerst dort, wo sie wirken: Erkennung + Tor (Punkt 1) vor allem anderen.
+- Punkt 0 geteilt (Abweichung von der Reihenfolge, Grund: Kontingent): **0a jetzt** – Prüfliste aus Regelwerk + fasan_ui-Recherchen
+  (gelesen), Anforderungsregister, Erkennungs-Recherchen der Karte vor Punkt 1; **0b vor Punkt 6 (Gestaltung)** – übrige Bedien-Recherchen
+  (Karte: kassenzettel-UI, karten-ux, reisende-anforderungen; Camera: kamera-ux, zustaende, tests-robustheit, wuensche; Split: einstellungen,
+  konkurrenz, einladen, konto) vollständig. Keine Design-Arbeit vor 0b (Regel bleibt).
+- Bei diesem Umfang und „eine Veröffentlichung“ wird die Runde mehrere Wochen-Kontingente brauchen; das steht so auch in der Antwort.
+- Laufend sichern (Kontext wird gekürzt): nach jedem Teilschritt STAND/Prüfliste committen.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
