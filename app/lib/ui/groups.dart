@@ -408,6 +408,9 @@ class FriendsPage extends StatelessWidget {
         ..pub ??= e.key
         ..deleted = true;
     }
+    // not myself (Bildschirmvergleich 06.11.: the browser user saw themself in „Freunde“)
+    final myName = (collab.identity?.name ?? store.me).trim().toLowerCase();
+    if (myName.isNotEmpty) rows.remove(myName);
     final waiting = <CollabGroup>[];
     for (final g in collab.directs) {
       final n = collab.directName(g);
