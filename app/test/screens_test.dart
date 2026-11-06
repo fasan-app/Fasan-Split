@@ -180,7 +180,7 @@ void main() {
     'b11-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
     'b12-bon-digital': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.digital),
     'b14e-fertig': (b) => PayScreen(bill: b),
-    'b15b-ergebnis': (b) => ResultScreen(bill: b),
+    'b15b-ergebnis': (b) => ResultScreen(bill: b..done = true),
   };
   // interaction before the picture (same steps as the browser walk)
   final acts = <String, Future<void> Function(WidgetTester)>{
@@ -241,7 +241,7 @@ void main() {
           } else {
             bill = _bill(path, bx, assigned: !e.key.startsWith('4a'));
           }
-          final store = BillStore.memory([_bill(path, bx)..payer = 1])..onboarded = true;
+          final store = BillStore.memory([_bill(path, bx)..payer = 1])..onboarded = true..me = 'Angi';
           // the walk screens show the look of the default (PerfMode.light: no blur, no grain, no moving background), like the browser
           var look = FasanSettings(reduceMotion: e.key.startsWith('b01p') ? false : true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light);
           // like main(): glass without grain is the standard look
