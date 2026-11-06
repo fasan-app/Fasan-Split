@@ -424,6 +424,10 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   wurde früher nicht verglichen, „1:1“ war behauptet. Echte Flutter-/Browser-Grenzen sind nur (3)–(5) und die Screenreader-Schicht. Anpassung „kompliziert“, weil der Browser jede
   native Fähigkeit anders bietet; der UI-Teil selbst war nicht doppelt.
 
+- **Frage des Nutzers 06.11. nachts: „Muss die Anpassung jedes Mal gemacht werden? Greift der modulare Aufbau auch im Web, sodass App-Änderungen direkt im Web ankommen?“**
+  Antwort: Oberfläche und Logik ja, automatisch (eine Codebasis). Nur Änderungen an Plattform-Fähigkeiten brauchen einen Adapter; dafür jetzt Regel in CLAUDE.md. Ehrlich offen: der
+  geplante modulare Neubau (Aufgabe „Architektur“) ist noch nicht gemacht; heute bewacht nur `web_parity_test` + CI-Web-Build + Foto-Ende-zu-Ende + Bildschirmdurchlauf die Übereinstimmung.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der

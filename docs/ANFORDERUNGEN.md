@@ -77,3 +77,5 @@ der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. 
 - 06.11. nachts (Nutzer, Frage): Warum Code nicht direkt als Browser-Version, machen andere alles doppelt? Antwort gegeben (eine Codebasis, dünne Adapter, Grenzen des Browsers); Aussage zu anderen Diensten nicht geprüft. Stand: beantwortet.
 
 - 06.11. nachts (Nutzer, Frage): Wenn Flutter denselben Code nutzt, warum waren Web und App so verschieden und die Anpassung so kompliziert? Antwort gegeben (Daten nicht geteilt, Schrift, Speicher, Erkennung, kein früherer Vergleich); Stand: beantwortet.
+
+- 06.11. nachts (Nutzer, Frage): Muss die Web-Anpassung jedes Mal gemacht werden, greift der modulare Aufbau auch im Web (App-Änderung → Web)? Antwort + Regel in CLAUDE.md; Stand: beantwortet, modularer Neubau offen.
