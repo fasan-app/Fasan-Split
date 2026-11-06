@@ -51,6 +51,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) StoreScope.read(context).watchHistory(b);
+    });
     // a bill saved before the sign rule: turn the signs once when it is opened
     if (b.alignSigns()) {
       _total.text = b.total == null ? '' : money(b.total!);
@@ -68,6 +71,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   void _changed() => setState(() {});
+
+  /// Undo (−1) / redo (+1) through the history of this bill.
+  void _step(int dir) {
+    if (StoreScope.read(context).stepHistory(b, dir)) {
+      setState(() => _total.text = b.total == null ? '' : money(b.total!));
+    }
+  }
 
   // ---- signs ----
 
@@ -333,6 +343,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final store = StoreScope.read(context);
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     final de = context.langCode == 'de', sign = billSign(context, b);
     final open = b.unassigned;
@@ -349,6 +360,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
       showStep: false,
       bill: b,
       actions: [
+        IconButton(tooltip: context.tr('bill.undo'), icon: const Icon(Icons.undo_rounded), onPressed: store.canUndo(b) ? () => _step(-1) : null),
+        IconButton(tooltip: context.tr('bill.redo'), icon: const Icon(Icons.redo_rounded), onPressed: store.canRedo(b) ? () => _step(1) : null),
         IconButton(tooltip: context.tr('bill.checkTip'), icon: const Icon(Icons.fact_check_outlined), onPressed: _check),
         PopupMenuButton<String>(
           tooltip: t.more,

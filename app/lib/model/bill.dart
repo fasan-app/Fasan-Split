@@ -499,6 +499,28 @@ class Bill {
     ];
   }
 
+  /// Takes over everything the user can edit from [o] (undo/redo); photos, paths and sync references stay as they are.
+  void restoreEdits(Bill o) {
+    purpose = o.purpose;
+    total = o.total;
+    items = o.its;
+    people = o.ps;
+    payer = o.payer;
+    paid = o.paid;
+    refund = o.refund;
+    notes = o.notes;
+    checked = o.checked;
+    advance = o.advance;
+    settled = o.settled;
+    receiptDate = o.receiptDate;
+    placeAddress = o.placeAddress;
+    taxId = o.taxId;
+    category = o.category;
+    currency = o.currency;
+    rate = o.rate;
+    rateDate = o.rateDate;
+  }
+
   Map<String, Object?> toJson() => {
         'id': id,
         'created': created.toIso8601String(),

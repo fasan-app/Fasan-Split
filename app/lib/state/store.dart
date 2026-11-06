@@ -473,6 +473,51 @@ class BillStore extends ChangeNotifier {
     return math.max(0, (end.difference(now ?? DateTime.now()).inHours + 23) ~/ 24); // rounded up: 27½ days left = 28
   }
 
+  // ---- undo / redo (one history per bill, in memory; states are the bill's JSON without photo fields) ----
+  static const _histMax = 40;
+  static const _histSkip = {'updated', 'photoRef', 'origRef', 'photosRemoved', 'thumb', 'imagePath', 'originalPath', 'logPath', 'imageAspect', 'originalQuad', 'originalAspect', 'trashedAt', 'order', 'step', 'done', 'read'};
+  final Map<String, ({List<String> states, int at})> _hist = {};
+
+  String _state(Bill b) => jsonEncode({for (final e in b.toJson().entries) if (!_histSkip.contains(e.key)) e.key: e.value});
+
+  /// Starts the history of [b] with its current state (call when a screen starts editing it).
+  void watchHistory(Bill b) {
+    if (!_hist.containsKey(b.id)) _hist[b.id] = (states: [_state(b)], at: 0);
+  }
+
+  void _record(Bill b) {
+    final h = _hist[b.id];
+    final s = _state(b);
+    if (h == null) {
+      _hist[b.id] = (states: [s], at: 0);
+      return;
+    }
+    if (h.states[h.at] == s) return;
+    final st = h.states.sublist(0, h.at + 1)..add(s);
+    if (st.length > _histMax) st.removeAt(0);
+    _hist[b.id] = (states: st, at: st.length - 1);
+  }
+
+  bool canUndo(Bill b) => (_hist[b.id]?.at ?? 0) > 0;
+  bool canRedo(Bill b) {
+    final h = _hist[b.id];
+    return h != null && h.at < h.states.length - 1;
+  }
+
+  /// Steps [dir] (−1 undo, +1 redo) through the history of [b]; false if there is nothing there.
+  bool stepHistory(Bill b, int dir) {
+    final h = _hist[b.id];
+    if (h == null) return false;
+    final to = h.at + dir;
+    if (to < 0 || to >= h.states.length) return false;
+    b.restoreEdits(Bill.fromJson((jsonDecode(h.states[to]) as Map).cast<String, dynamic>()));
+    _hist[b.id] = (states: h.states, at: to);
+    b.updated = DateTime.now();
+    _changed();
+    _persist();
+    return true;
+  }
+
   void upsert(Bill b) {
     b.updated = DateTime.now();
     _changed();
@@ -482,6 +527,7 @@ class BillStore extends ChangeNotifier {
     } else {
       bills.add(b);
     }
+    _record(b);
     _persist();
   }
 

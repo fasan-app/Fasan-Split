@@ -36,6 +36,7 @@ const Map<String, String> stringsEn = {
   'bill.checkDiff': 'Items and total differ by {0}.',
   'bill.removed': '“{0}” deleted',
   'bill.undo': 'Undo',
+  'bill.redo': 'Redo',
 
   // --- person picker ---
   'picker.title': 'Add whom?',

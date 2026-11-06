@@ -36,6 +36,7 @@ const Map<String, String> stringsDe = {
   'bill.checkDiff': 'Posten und Summe weichen um {0} ab.',
   'bill.removed': '„{0}“ gelöscht',
   'bill.undo': 'Rückgängig',
+  'bill.redo': 'Wiederholen',
 
   // --- person picker ---
   'picker.title': 'Wen hinzufügen?',

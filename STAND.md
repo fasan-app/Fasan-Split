@@ -369,6 +369,16 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
 - Bei diesem Umfang und „eine Veröffentlichung“ wird die Runde mehrere Wochen-Kontingente brauchen; das steht so auch in der Antwort.
 - Laufend sichern (Kontext wird gekürzt): nach jedem Teilschritt STAND/Prüfliste committen.
 
+### Stand 06.11. abends: Browser-Foto-Ende-zu-Ende in der CI + Grundfunktionen-Prüfung
+
+- `web-zweig.yml` (Probe auf dem Arbeitszweig) Lauf 42228126931 **grün**: Foto-Ende-zu-Ende im Browser (Scan, Original, Ausschnitte, ⋮-Menü, Bildzeitbudget) läuft in der CI.
+- Prüfung der Grundfunktionen (Code gelesen): Rückgängig = Schnackbar je Aktion (`bill.undo`), **Wiederholen fehlt**; Ausgaben ohne Bon
+  = `home.dart _manual` vorhanden; Aufteilen = Gewichte + „gleich“, **„fest“ (Festbetrag) fehlt**; exakter Ausgleich/„bezahlt“ teils.
+  Reihenfolge jetzt: Wiederholen → Festbetrag → Ausgleich/„bezahlt“ → E2–E5.
+
+- **Wiederholen ERLEDIGT 06.11. (Code)**: Verlauf je Bon im Speicher (`BillStore.watchHistory/stepHistory`, 40 Zustände, Fotofelder ausgenommen,
+  neue Änderung verwirft den Wiederholen-Zweig), Pfeile in der Bon-Leiste, Test `undo_redo_test`. Noch ohne Bildschirmfoto-Prüfung.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
