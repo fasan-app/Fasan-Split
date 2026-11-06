@@ -480,7 +480,7 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   angesehen**; (2) Scan-Vergleich App/Browser fehlt (letzter Punkt des Bildschirmvergleichs); (3) CI-Wackler „Einladung Freund“ – Nachweis über mehrere Läufe offen;
   (4) danach A's Reihenfolge: E2–E5, Pfand/Rabatt strukturiert, Querformat-Leiste, Screenreader-Aktion am Personen-Chip, Blossom, Leistung große Fotos.
   **Reihenfolge nach Regel „Angefangenes zuerst“ (Nutzer 23:50):** (1) Teilzahlung fertig machen → (2) übriger A-Rest (Scan-Vergleich, CI-Wackler) → (3) B's eigene
-  Erkennung 817d52f durchs Tor bringen → erst dann Neues (E2–E5 usw.).
+  Erkennung 817d52f durchs Tor bringen → (4) vorläufiger Saldo (Nutzer 23:54, nach Antwort auf die Frage) → erst dann E2–E5 usw.
   Geprüft und erledigt: Schritt 6 Texte – im Code steht kein Text mehr als `de ? '…'` (einzige Fundstelle Datumsformat `currency_ui.dart`).
 
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
@@ -488,6 +488,12 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
 Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md`) beantwortet hat (Nutzer 06.11.).
 
+- **Vorläufiger Saldo (Nutzer 06.11. 23:54) – Vorschlag der Sitzung B, Entscheidung offen:** Je offenem Bon zählt „vorläufig“ (nie still mit „fest“
+  vermischt): mein Anteil = meine zugeordneten Posten (+ anteilige Zuschläge); nicht zugeordneter Rest als „noch nicht verteilt“. Zahler bekannt → wie heute
+  (wer an wen). Zahler unbekannt → mein Anteil als „schulde ich, Empfänger offen“; habe ich bezahlt (eigener Schalter „Ich habe bezahlt“, auch am halbfertigen
+  Bon) → die zugeordneten Anteile der anderen als „bekomme ich“. Anzeige: Profil-Plakette und Gruppe zeigen fest + vorläufig, vorläufiger Teil gestrichelt/blasser
+  mit „davon vorläufig … aus n offenen Bons“; Ausgleichsvorschläge („wer zahlt wem“) und „bezahlt eintragen“ nur aus festen Bons (sonst Geld an die falsche
+  Person). **Frage an den Nutzer:** Hauptzahl einschließlich vorläufig (Empfehlung) oder nur fest mit vorläufig darunter?
 - Foto oder Protokoll des Esplanada-Bons (13 Croissants) schicken, damit der ganze Bon ins Erkennungs-Tor kommt.
 - **Lese-Geheimnis `FASAN_DIAGNOSE_TOKEN` anlegen** (Anleitung mit vorausgefülltem Link: `docs/ERKENNUNGS-TOR.md`). Ohne es scheitert das
   Erkennungs-Tor und es wird nichts veröffentlicht (gewollt).
