@@ -363,6 +363,9 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   (gelesen), Anforderungsregister, Erkennungs-Recherchen der Karte vor Punkt 1; **0b vor Punkt 6 (Gestaltung)** – übrige Bedien-Recherchen
   (Karte: kassenzettel-UI, karten-ux, reisende-anforderungen; Camera: kamera-ux, zustaende, tests-robustheit, wuensche; Split: einstellungen,
   konkurrenz, einladen, konto) vollständig. Keine Design-Arbeit vor 0b (Regel bleibt).
+- **06.11. vormittags: Nutzungslimit erreicht**, Arbeit unterbrochen (letzter Stand: Emoji-Schrift in Arbeit), um ~11:20 fortgesetzt.
+  Lehre: alles Wesentliche war schon in STAND.md/Commits (Wiederaufnahme ohne Verlust). 0b ist inzwischen vollständig gelesen.
+  Weiter sparsam: große Läufe nur mit OCR-Zwischenspeicher, Lektüre nur wo Pflicht.
 - Bei diesem Umfang und „eine Veröffentlichung“ wird die Runde mehrere Wochen-Kontingente brauchen; das steht so auch in der Antwort.
 - Laufend sichern (Kontext wird gekürzt): nach jedem Teilschritt STAND/Prüfliste committen.
 
@@ -481,6 +484,9 @@ Drosselung endet) für Ziel ~100.
    Emoji-Schriften von fonts.gstatic.com nach (im Test gesperrt; beim Nutzer: Anfrage an Google bzw. offline Kästchen). Plan:
    Teilmenge von Noto Color Emoji (OFL) nur mit den genutzten Symbolen mitliefern, als Schrift-Rückfall – Browser = APK und keine
    Anfrage an Dritte.
+   **Emoji behoben (Commit 7c2735e):** eigene Schrift FasanEmoji (Teilmenge Noto Color Emoji, OFL, 107 KB), im Browser bestätigt.
+   **In Arbeit:** Fotos im Browser nur bei Bedarf laden (images_web.dart: beim Start nur die Liste, Bytes beim Anzeigen, 16 im
+   Speicher) – Browser-Test mit Neustart der Seite läuft.
    Offen in Punkt 3: Bildschirm-für-Bildschirm-Vergleich App/Browser
    mit Fotos, Blossom (volle Auflösung) als zweiter Kanal, Fotos im Browser erst bei Bedarf laden (images_web lädt heute alle beim
    Start → Punkt 4), Stücke eines Fotos von jedem Mitglied neu senden können, wenn das scannende Gerät weg ist.
