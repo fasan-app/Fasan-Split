@@ -72,7 +72,7 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('b02-menue', async () => { await p.getByRole('button', { name: /Mehr|More/ }).first().click(); });
     await step('b03-menue-zu', async () => { await p.keyboard.press('Escape'); });
     await step('b04-posten-blatt', async () => { await p.getByText('Pizza').first().click({ button: 'left', delay: 700 }); });
-    await step('b05-posten-blatt-fest', async () => { await p.getByText('Chris').last().click(); await p.waitForTimeout(500); await p.getByText(/Fester Betrag/).first().click(); });
+    await step('b05-posten-blatt-fest', async () => { await p.getByText(/Fester Betrag/).first().click(); });
     await step('b06-posten-zu', async () => { await p.keyboard.press('Escape'); });
     await step('b07-pruefen', async () => { await p.getByRole('button', { name: /Posten und Summe prüfen/ }).first().click(); });
     await p.keyboard.press('Escape'); await p.waitForTimeout(800);

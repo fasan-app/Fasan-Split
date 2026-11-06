@@ -209,8 +209,6 @@ void main() {
     'b05-posten-blatt-fest': (t) async {
       await t.longPress(find.text('Pizza').first);
       await t.pump(const Duration(milliseconds: 600));
-      await t.tap(find.text('Chris').last);
-      await t.pump(const Duration(milliseconds: 300));
       await t.tap(find.text('Fester Betrag'));
       await t.pump(const Duration(milliseconds: 400));
     },
