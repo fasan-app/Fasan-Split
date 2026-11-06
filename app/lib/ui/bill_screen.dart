@@ -365,12 +365,26 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssignScreen(bill: b, initialMode: AssignMode.receipt)));
             }
           },
-          itemBuilder: (_) => [
-            if (hasImage) PopupMenuItem(value: 'reread', child: ListTile(leading: const Icon(Icons.document_scanner_outlined), title: Text(context.tr('bill.reread')))),
-            if (b.ps.length >= 2 && b.its.isNotEmpty) PopupMenuItem(value: 'evenly', child: ListTile(leading: const Icon(Icons.groups_2_outlined), title: Text(context.tr('bill.splitEvenly')))),
-            if (b.its.any((i) => i.snippet != null)) CheckedPopupMenuItem(value: 'snippets', checked: _snippets, child: Text(context.tr('bill.snippets'))),
-            if (imageExists(b.imagePath)) PopupMenuItem(value: 'receipt', child: ListTile(leading: const Icon(Icons.receipt_long_outlined), title: Text(context.tr('bill.assignOnReceipt')))),
-          ],
+          // every entry is always there; what cannot work right now is shown disabled with the reason (Prüfliste G1: Apple
+          // „disable instead of hide“; Nutzer 06.11.: in the browser the menu showed one entry or none)
+          itemBuilder: (_) {
+            final noPhoto = context.tr(photoComing(context, b) ? 'bill.photoComing' : 'bill.photoHere');
+            final hasScan = imageExists(b.imagePath), canEven = b.ps.length >= 2 && b.its.isNotEmpty;
+            final hasSnippets = b.its.any((i) => i.snippet != null);
+            ListTile row(IconData icon, String title, String? why) =>
+                ListTile(leading: Icon(icon), title: Text(title), subtitle: why == null ? null : Text(why), enabled: why == null);
+            return [
+              PopupMenuItem(value: 'reread', enabled: hasImage, child: row(Icons.document_scanner_outlined, context.tr('bill.reread'), hasImage ? null : noPhoto)),
+              PopupMenuItem(value: 'evenly', enabled: canEven, child: row(Icons.groups_2_outlined, context.tr('bill.splitEvenly'), canEven ? null : context.tr('bill.needTwoPeople'))),
+              CheckedPopupMenuItem(
+                value: 'snippets',
+                checked: _snippets && hasSnippets,
+                enabled: hasSnippets,
+                child: hasSnippets ? Text(context.tr('bill.snippets')) : ListTile(title: Text(context.tr('bill.snippets')), subtitle: Text(noPhoto), enabled: false),
+              ),
+              PopupMenuItem(value: 'receipt', enabled: hasScan, child: row(Icons.receipt_long_outlined, context.tr('bill.assignOnReceipt'), hasScan ? null : noPhoto)),
+            ];
+          },
         ),
       ],
       action: open == 0 || b.its.isEmpty ? context.tr('bill.done') : context.trn('bill.open', open),

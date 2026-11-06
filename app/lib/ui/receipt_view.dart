@@ -15,6 +15,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../l10n/tr.dart';
 import '../main.dart';
 import '../model/bill.dart';
 import 'assign.dart' show PeoplePicker, addPersonDialog, personMenu;
@@ -186,6 +187,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
   Widget build(BuildContext context) {
     final t = S.of(context);
     final l = FasanLook.of(context);
+    context.dependOnInheritedWidgetOfExactType<CollabScope>(); // the shared photo may arrive while the view is open
     final hasOriginal = imageExists(b.originalPath);
     final hasScan = imageExists(b.imagePath);
     // fall back to what exists (bills from 0.1 have no original; „Bonfotos löschen“ removes both)
@@ -228,6 +230,19 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
           ),
         ]),
       ),
+      // without the photo only the digital receipt exists: say why scan and original are missing (Prüfliste G1/G3)
+      if (!hasScan && !hasOriginal)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.xs),
+          child: Row(children: [
+            Icon(photoComing(context, b) ? Icons.downloading_rounded : Icons.phone_android_rounded, size: 16, color: l.textMuted),
+            const SizedBox(width: FasanSpace.xs),
+            Expanded(
+              child: Text(context.tr(photoComing(context, b) ? 'bill.photoComing' : 'bill.photoHere'),
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(color: l.textMuted)),
+            ),
+          ]),
+        ),
       Expanded(
         child: LayoutBuilder(builder: (context, c) {
           final view = Size(c.maxWidth, c.maxHeight);

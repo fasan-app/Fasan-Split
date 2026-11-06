@@ -129,6 +129,7 @@ class BillStore extends ChangeNotifier {
       }
       b.imagePath = null;
       b.originalPath = null;
+      b.photosRemoved = true; // shared bills: do not fetch them again from the group
     }
     _persist();
     return n;

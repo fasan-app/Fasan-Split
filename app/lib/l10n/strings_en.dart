@@ -87,6 +87,9 @@ const Map<String, String> stringsEn = {
   'bill.splitEvenlyDone': 'All items split evenly between everyone.',
   'bill.snippets': 'Receipt snippets under the items',
   'bill.assignOnReceipt': 'Assign on the original',
+  'bill.photoHere': 'The photo is only on the device that scanned the receipt.',
+  'bill.photoComing': 'Photo is on its way from the group …',
+  'bill.needTwoPeople': 'Add two people and items first.',
   'bill.suggest': 'Suggestions',
   'bill.allFromGroup': 'Everyone in the group',
 

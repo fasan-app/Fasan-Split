@@ -231,6 +231,21 @@ String aeadOpen(String payload, Uint8List key, String aad) {
   return utf8.decode(chacha20Poly1305Open(key, nonce, Uint8List.fromList(data.sublist(13)), Uint8List.fromList(utf8.encode(aad))));
 }
 
+/// Like [aeadSeal] for raw bytes (receipt photo chunks, 06.11.): base64(0x02 || nonce(12) || ciphertext || tag(16)). Version
+/// byte 2 so a chunk can never be mistaken for a text document.
+String aeadSealBytes(Uint8List plain, Uint8List key, String aad) {
+  final nonce = randomBytes(12);
+  final sealed = chacha20Poly1305Seal(key, nonce, plain, Uint8List.fromList(utf8.encode(aad)));
+  return base64.encode(_concat([[2], nonce, sealed]));
+}
+
+Uint8List aeadOpenBytes(String payload, Uint8List key, String aad) {
+  final data = base64.decode(payload);
+  if (data.length < 1 + 12 + 16 || data[0] != 2) throw const FormatException('invalid payload');
+  final nonce = Uint8List.fromList(data.sublist(1, 13));
+  return chacha20Poly1305Open(key, nonce, Uint8List.fromList(data.sublist(13)), Uint8List.fromList(utf8.encode(aad)));
+}
+
 // ChaCha20-Poly1305 AEAD exactly as RFC 8439 §2.8, with Poly1305 (§2.5) in BigInt arithmetic. Own code because
 // pointycastle's Poly1305 throws in the browser („full width integer not supported on this platform“, 04.11.: the web
 // app could not send a join request or read any group document). Output identical to pointycastle (test

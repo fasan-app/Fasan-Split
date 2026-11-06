@@ -272,6 +272,13 @@ class Bill {
 
   /// The photo exactly as taken, untouched (Beschluss 02.11.: Original immer sichtbar). imagePath is the cleaned scan.
   String? originalPath;
+
+  /// Shared photos (Beschluss 06.11.): reference to the downscaled scan / original on the relays ({h, n, s}, see
+  /// collab/photo_sync.dart). Set by the phone that has the photo; the others fetch it and fill imagePath/originalPath.
+  Map<String, Object?>? photoRef, origRef;
+
+  /// The user removed the photos on this device („Bonfotos löschen“): never fetch them again from the group.
+  bool photosRemoved = false;
   DateTime updated;
 
   /// Date printed on the receipt (Beschluss 02.11.: aus dem Bon, nicht aus dem Erfassungszeitpunkt).
@@ -513,6 +520,9 @@ class Bill {
         'done': done,
         if (settled) 'settled': true,
         'originalPath': originalPath,
+        if (photoRef != null) 'photoRef': photoRef,
+        if (origRef != null) 'origRef': origRef,
+        if (photosRemoved) 'photosRemoved': true,
         'receiptDate': receiptDate?.toIso8601String(),
         'placeAddress': placeAddress,
         'taxId': taxId,
@@ -564,7 +574,11 @@ class Bill {
         rate: (j['rate'] as num?)?.toDouble(),
         rateDate: DateTime.tryParse(j['rateDate'] as String? ?? ''),
         updated: DateTime.tryParse(j['updated'] as String? ?? ''),
-      )..paid = {for (final e in ((j['paid'] as Map?) ?? const {}).entries) int.parse('${e.key}'): (e.value as num).toInt()};
+      )
+        ..paid = {for (final e in ((j['paid'] as Map?) ?? const {}).entries) int.parse('${e.key}'): (e.value as num).toInt()}
+        ..photoRef = (j['photoRef'] as Map?)?.cast<String, Object?>()
+        ..origRef = (j['origRef'] as Map?)?.cast<String, Object?>()
+        ..photosRemoved = j['photosRemoved'] == true;
 }
 
 /// "12,50" (German) or "12.50".

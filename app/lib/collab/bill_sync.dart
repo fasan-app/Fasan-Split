@@ -2,7 +2,9 @@
 //
 // Only inputs are stored (names, cents, shares, payer); sums per person are always recomputed on each device with SplitMath.
 // People and items are addressed by uid, not by list position, so a person added on one phone does not shift shares on another.
-// Local-only things stay local: photo, scan data, recognition log.
+// Local-only things stay local: photo files, scan data, recognition log. The photos travel separately (photo_sync.dart);
+// the document only names them (meta/photo, meta/orig) and carries each item's place on the receipt (bx), so every device
+// cuts the same line pictures from the shared scan (06.11.: in the browser there were no line pictures and no receipt).
 import '../model/bill.dart';
 import 'lww.dart';
 
@@ -34,6 +36,8 @@ abstract final class BillSync {
     set('meta/date', b.receiptDate?.millisecondsSinceEpoch);
     set('meta/place', b.placeAddress);
     set('meta/taxId', b.taxId);
+    set('meta/photo', b.photoRef);
+    set('meta/orig', b.origRef);
 
     final puids = {for (final p in b.ps) p.uid};
     for (var i = 0; i < b.ps.length; i++) {
@@ -56,7 +60,16 @@ abstract final class BillSync {
     final iuids = {for (final it in b.its) it.uid};
     for (var n = 0; n < b.its.length; n++) {
       final it = b.its[n];
-      set('i/${it.uid}', {'name': it.name, 'amount': it.amount, 'qty': it.qty, 'note': it.note, 'pos': n, if (it.proportional) 'prop': true});
+      set('i/${it.uid}', {
+        'name': it.name,
+        'amount': it.amount,
+        'qty': it.qty,
+        'note': it.note,
+        'pos': n,
+        if (it.proportional) 'prop': true,
+        // place on the receipt, rounded (4 decimals ≈ 0.1 px on a 1300 px scan)
+        if (it.boxes.isNotEmpty) 'bx': [for (final x in it.boxes) [for (final v in x.toJson()) (v * 10000).round() / 10000]],
+      });
       for (var i = 0; i < b.ps.length; i++) {
         final w = it.shares[i];
         set('s/${it.uid}/${b.ps[i].uid}', w != null && w > 0 ? w : null);
@@ -109,6 +122,7 @@ abstract final class BillSync {
         ..qty = (v['qty'] as num?)?.toInt() ?? 1
         ..note = v['note'] as String?
         ..proportional = v['prop'] == true;
+      if (v['bx'] case final List bx when it.boxes.isEmpty) it.boxes = bx.map(NBox.fromJson).whereType<NBox>().toList();
       final shares = <int, double>{};
       for (final sk in doc.keys('s/$uid/')) {
         final pi = index[sk.split('/').last];
@@ -147,6 +161,8 @@ abstract final class BillSync {
     b.receiptDate = date is num ? DateTime.fromMillisecondsSinceEpoch(date.toInt()) : null;
     b.placeAddress = doc.get('meta/place') as String?;
     b.taxId = doc.get('meta/taxId') as String?;
+    if (doc.get('meta/photo') case final Map m) b.photoRef = m.cast<String, Object?>();
+    if (doc.get('meta/orig') case final Map m) b.origRef = m.cast<String, Object?>();
     b.updated = DateTime.now();
     return b;
   }

@@ -69,6 +69,8 @@ class StepScaffold extends StatelessWidget {
     final t = S.of(context);
     // first step of a resumed draft sits at the bottom of a nested Navigator (ResumeFlow): back then closes the bill
     final nested = (ModalRoute.of(context)?.isFirst ?? false) && Navigator.of(context, rootNavigator: true).canPop();
+    // rebuild when a shared photo arrives (the receipt button and the menus depend on it)
+    context.dependOnInheritedWidgetOfExactType<CollabScope>();
     final scaffold = Scaffold(
       appBar: AppBar(
         leading: nested ? BackButton(onPressed: () => Navigator.of(context, rootNavigator: true).maybePop()) : null,
@@ -80,7 +82,9 @@ class StepScaffold extends StatelessWidget {
             : Text(title),
         toolbarHeight: showStep ? 72 : null,
         actions: [
-          if (b != null && step != 3 && imageExists(b.imagePath))
+          // the receipt view always has the digital receipt; scan and original come with the photo (Nutzer 06.11.: in the
+          // browser this button was missing for bills from the group)
+          if (b != null && step != 3 && (imageExists(b.imagePath) || b.its.isNotEmpty))
             IconButton(
               tooltip: t.showReceipt,
               icon: const Icon(Icons.receipt_long_outlined),
@@ -293,13 +297,13 @@ Future<bool> editItem(BuildContext context, BillItem it, {VoidCallback? onDelete
             ]),
           ),
         const SizedBox(height: FasanSpace.l),
-        Row(children: [
+        // side by side when they fit, else stacked (monkey test 06.11.: German on a small phone overflowed by 40 px)
+        OverflowBar(alignment: MainAxisAlignment.spaceBetween, overflowAlignment: OverflowBarAlignment.end, spacing: FasanSpace.s, overflowSpacing: FasanSpace.s, children: [
           if (onDelete != null)
             FasanButton(label: t.delete, kind: FasanButtonKind.quiet, icon: Icons.delete_outline, onPressed: () {
               onDelete();
               Navigator.pop(context, true);
             }),
-          const Spacer(),
           FasanButton(label: t.save, onPressed: () => Navigator.pop(context, true)),
         ]),
       ]),
@@ -392,6 +396,9 @@ Route<dynamic>? billOrigin;
 void markBillOrigin(BuildContext context) => billOrigin = ModalRoute.of(context);
 
 /// True for the route a closed bill returns to.
+/// The photo of a shared bill is on its way from the group (collab/photo_sync.dart); false without a group or CollabScope.
+bool photoComing(BuildContext context, Bill b) => context.getInheritedWidgetOfExactType<CollabScope>()?.notifier?.photoComing(b) ?? false;
+
 bool isBillOrigin(Route<dynamic> r) => r.isFirst || (billOrigin != null && identical(r, billOrigin) && billOrigin!.isActive);
 
 /// Leaves the bill flow (all its steps, a nested ResumeFlow too) back to where it was opened.

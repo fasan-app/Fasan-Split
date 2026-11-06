@@ -87,6 +87,9 @@ const Map<String, String> stringsDe = {
   'bill.splitEvenlyDone': 'Alle Posten gleichmäßig auf alle verteilt.',
   'bill.snippets': 'Bon-Ausschnitte unter den Posten',
   'bill.assignOnReceipt': 'Am Original zuordnen',
+  'bill.photoHere': 'Foto liegt nur auf dem Gerät, das den Bon gescannt hat.',
+  'bill.photoComing': 'Foto kommt aus der Gruppe …',
+  'bill.needTwoPeople': 'Erst zwei Personen und Posten eintragen.',
   'bill.suggest': 'Vorschläge',
   'bill.allFromGroup': 'Alle aus der Gruppe',
 

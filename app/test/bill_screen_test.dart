@@ -329,5 +329,30 @@ void main() {
     await tester.pump(const Duration(seconds: 12)); // the marquee plays and rests without errors
     expect(tester.takeException(), isNull);
   });
-}
 
+  testWidgets('Ohne Foto (Bon aus der Gruppe, Browser): ⋮-Menü zeigt alle Einträge, nicht Mögliches mit Grund; Bon-Knopf da', (tester) async {
+    // Nutzer 06.11.: im Browser zeigte das ⋮-Menü nur einen Eintrag oder gar keinen, der Knopf für Scan/Original/Digital fehlte
+    final b = _bill(people: ['Anna']);
+    await _pump(tester, b);
+    expect(find.byTooltip('Receipt'), findsOneWidget, reason: 'digitaler Bon geht immer');
+    await tester.tap(find.byIcon(Icons.more_vert_rounded));
+    await tester.pumpAndSettle();
+    for (final t in ['Read receipt again', 'Split everything evenly', 'Receipt snippets under the items', 'Assign on the original']) {
+      expect(find.text(t), findsOneWidget, reason: t);
+    }
+    expect(find.text('The photo is only on the device that scanned the receipt.'), findsNWidgets(3));
+    expect(find.text('Add two people and items first.'), findsOneWidget);
+    // disabled entries do nothing (the menu stays; close it by tapping outside)
+    await tester.tap(find.text('Read receipt again'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(find.byType(ReviewScreen), findsOneWidget);
+    Navigator.of(tester.element(find.text('Read receipt again'))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Read receipt again'), findsNothing);
+    // the receipt button opens the digital receipt and says why scan and original are missing
+    await tester.tap(find.byTooltip('Receipt'));
+    await tester.pumpAndSettle();
+    expect(find.text('The photo is only on the device that scanned the receipt.'), findsOneWidget);
+    expect(find.text('Digital'), findsOneWidget);
+  });
+}

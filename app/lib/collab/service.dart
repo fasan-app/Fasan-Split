@@ -5,6 +5,7 @@
 // this service, only for groups the user created or joined, never by tests (they use MemoryRelay).
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
@@ -13,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../model/bill.dart';
 import '../model/pay.dart';
 import '../state/images.dart';
+import '../state/snippets.dart';
 import '../state/store.dart';
 import 'activity.dart';
 import 'bill_sync.dart';
@@ -23,6 +25,7 @@ import 'keys.dart';
 import 'nostr.dart';
 import 'notes.dart';
 import 'pairing.dart';
+import 'photo_sync.dart';
 
 export 'nostr.dart' show defaultRelays; // defined next to the relays (the invitation format needs it too)
 
@@ -1181,7 +1184,9 @@ class CollabService extends ChangeNotifier {
   void _pushAll() {
     for (final b in store.bills) {
       if (b.thumb == null && b.imagePath != null && b.group != null && groupByLocalName(b.group!) != null) unawaited(_makeThumb(b));
+      if (b.group != null && groupByLocalName(b.group!) != null) _preparePhotos(b);
     }
+    _sendPhotos();
     for (final g in groups.values) {
       for (final b in store.bills) {
         // trashed bills go out too: the others move them to their trash (04.11.: they stayed there)
@@ -1189,6 +1194,148 @@ class CollabService extends ChangeNotifier {
         final id = GroupSession.bill(b.id);
         if (BillSync.write(g.session.doc(id), b)) g.session.touch(id);
       }
+    }
+  }
+
+  // ---- receipt photos for the group (Beschluss 06.11., photo_sync.dart) ----
+  //
+  // The phone with the photo makes a downscaled JPEG of the scan and of the original, names them in the bill document
+  // (meta/photo, meta/orig) and sends the encrypted pieces once per group. Everyone else fetches them one after another,
+  // stores them like their own photos and cuts the line pictures from the scan (state/snippets.dart). Without this the
+  // browser and the other phones had no receipt, no line pictures, no Original/Digital switch (Nutzer 06.11.).
+
+  static const _kPhotoSent = 'collab.photoSent', _kPhotoFiles = 'collab.photoFiles';
+  final Set<String> _photoPreparing = {}, _photoSending = {};
+  final List<(String tag, String billId, bool orig)> _photoQueue = [];
+  final Map<String, DateTime> _photoFailed = {}; // hash → last failed fetch (retry after a minute)
+  bool _photoRunning = false;
+
+  /// Local files of shared photos, by hash (to send them again, e.g. to a member who joins later).
+  Map<String, String> get _photoFiles => {for (final e in (jsonDecode(prefs?.getString(_kPhotoFiles) ?? '{}') as Map).entries) '${e.key}': '${e.value}'};
+  void _rememberPhoto(String hash, String path) => prefs?.setString(_kPhotoFiles, jsonEncode({..._photoFiles, hash: path}));
+
+  /// Downscaled JPEG: longest side ≤ [side], [quality]; smaller again if it would not fit the relay limit.
+  static Uint8List? _shrink(Uint8List bytes, int side, int quality) {
+    final src = img.decodeImage(bytes);
+    if (src == null) return null;
+    var out = src;
+    for (var s = side, q = quality; ; s = (s * 0.8).round(), q = math.max(40, q - 10)) {
+      if (src.width > s || src.height > s) out = src.width >= src.height ? img.copyResize(src, width: s) : img.copyResize(src, height: s);
+      final jpg = Uint8List.fromList(img.encodeJpg(out, quality: q));
+      if (PhotoSync.refOf(jpg).pieces <= PhotoSync.maxPieces ~/ 2 || s < 400) return jpg;
+    }
+  }
+
+  void _preparePhotos(Bill b) {
+    for (final orig in const [false, true]) {
+      final path = orig ? b.originalPath : b.imagePath;
+      if ((orig ? b.origRef : b.photoRef) != null || path == null || !imageExists(path)) continue;
+      final key = '${b.id}:$orig';
+      if (!_photoPreparing.add(key)) continue;
+      unawaited(() async {
+        try {
+          final bytes = await readImage(path);
+          if (bytes == null) return;
+          // scan: 1000 px is sharp enough for the line pictures and the receipt view; original: 1200 px (Blossom will carry the
+          // full resolution); about 100–250 KB each, 4–9 pieces
+          final small = _shrink(bytes, orig ? 1200 : 1000, orig ? 60 : 70);
+          if (small == null) return;
+          final ref = PhotoSync.refOf(small);
+          final file = await saveImage('ph_${ref.hash}.jpg', small);
+          if (file != null) _rememberPhoto(ref.hash, file);
+          if (orig) {
+            b.origRef = ref.toJson();
+          } else {
+            b.photoRef = ref.toJson();
+          }
+          store.upsert(b); // goes out with the bill; the pieces follow in _sendPhotos
+        } catch (_) {
+          // no shared photo for this bill; the others keep the digital receipt
+        } finally {
+          _photoPreparing.remove(key);
+        }
+      }());
+    }
+  }
+
+  /// Sends the pieces of every shared photo that this group has not had from this phone yet.
+  void _sendPhotos() {
+    final sent = {...?prefs?.getStringList(_kPhotoSent)};
+    final files = _photoFiles;
+    for (final g in groups.values) {
+      for (final b in store.bills) {
+        if (b.group != g.localName || b.read != BillRead.ok) continue;
+        for (final r in [b.photoRef, b.origRef]) {
+          final ref = PhotoRef.fromJson(r);
+          final file = ref == null ? null : files[ref.hash];
+          final key = '${g.secret.tag}:${ref?.hash}';
+          if (ref == null || file == null || sent.contains(key) || !_photoSending.add(key)) continue;
+          unawaited(() async {
+            try {
+              final bytes = await readImage(file);
+              if (bytes == null || PhotoSync.hashOf(bytes) != ref.hash) return;
+              if (await PhotoSync.send(g.session.relay, g.session.me, g.secret, bytes)) {
+                prefs?.setStringList(_kPhotoSent, [...{...?prefs?.getStringList(_kPhotoSent), key}]);
+              }
+            } catch (_) {
+              // tried again with the next change or start
+            } finally {
+              _photoSending.remove(key);
+            }
+          }());
+        }
+      }
+    }
+  }
+
+  /// A shared bill names photos this device does not have: fetch them (one after another, scan first).
+  void _wantPhotos(CollabGroup g, Bill b) {
+    if (b.photosRemoved) return;
+    for (final orig in const [false, true]) {
+      final ref = PhotoRef.fromJson(orig ? b.origRef : b.photoRef);
+      if (ref == null || imageExists(orig ? b.originalPath : b.imagePath)) continue;
+      final failed = _photoFailed[ref.hash];
+      if (failed != null && DateTime.now().difference(failed) < const Duration(minutes: 1)) continue;
+      final job = (g.secret.tag, b.id, orig);
+      if (!_photoQueue.contains(job)) orig ? _photoQueue.add(job) : _photoQueue.insert(0, job);
+    }
+    unawaited(_runPhotoQueue());
+  }
+
+  /// Photo of [b] is on its way from the group (the receipt view shows „kommt …“ instead of nothing).
+  bool photoComing(Bill b) => !b.photosRemoved && b.photoRef != null && !imageExists(b.imagePath) && b.group != null && groupByLocalName(b.group!) != null;
+
+  Future<void> _runPhotoQueue() async {
+    if (_photoRunning) return;
+    _photoRunning = true;
+    try {
+      while (_photoQueue.isNotEmpty && !_disposed) {
+        final (tag, billId, orig) = _photoQueue.removeAt(0);
+        final g = groups[tag];
+        final b = store.bills.where((x) => x.id == billId).firstOrNull;
+        final ref = PhotoRef.fromJson(orig ? b?.origRef : b?.photoRef);
+        if (g == null || b == null || ref == null || imageExists(orig ? b.originalPath : b.imagePath)) continue;
+        final bytes = await PhotoSync.fetch(g.session.relay, g.secret, ref, authors: g.session.memberKeys);
+        if (bytes == null) {
+          _photoFailed[ref.hash] = DateTime.now();
+          continue;
+        }
+        final path = await saveImage('ph_${ref.hash}.jpg', bytes);
+        if (path == null) continue;
+        _rememberPhoto(ref.hash, path);
+        if (orig) {
+          b.originalPath = path;
+        } else {
+          b.imagePath = path;
+          try {
+            b.imageAspect = await fillSnippets(b, bytes) ?? b.imageAspect;
+          } catch (_) {}
+        }
+        store.upsert(b);
+        notifyListeners();
+      }
+    } finally {
+      _photoRunning = false;
     }
   }
 
@@ -1346,6 +1493,7 @@ class CollabService extends ChangeNotifier {
     final bill = BillSync.read(doc, id: billId, into: existing);
     bill.group = g.localName;
     store.upsert(bill); // notifies; the write back finds nothing to change
+    _wantPhotos(g, bill);
   }
 
   // ---- persistence ----
