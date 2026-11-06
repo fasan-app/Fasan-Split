@@ -346,6 +346,22 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ## Noch offen – Reihenfolge (aufgeräumt 04.11. abends; die einzige Liste, die gepflegt wird)
 
+### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
+
+- Darf der Rohtext der Nutzer-Nachrichten (Quelle für `docs/ANFORDERUNGEN.md`) ins private Repo `Fasan`? Bis zur Antwort nur sinngemäß.
+- Foto oder Protokoll des Esplanada-Bons (13 Croissants) schicken, damit der ganze Bon ins Erkennungs-Tor kommt.
+- Lese-Geheimnis für `fasan-diagnose` in der CI anlegen (Schritte schreibt die Sitzung auf, sobald der Workflow steht).
+
+### Lehren aus 05./06.11. (nicht wiederholen)
+
+- `test/e2e_test.dart` prüft je Bon nur Beträge und Summe – Mengen und Namen nicht. Deshalb blieb „13 Croissants“ (Steuersatz „13%“
+  als „13x“ gelesen) unbemerkt. Goldens müssen Name, Menge, Einzelpreis und Betrag je Posten prüfen.
+- `readLines` nimmt den allgemeinen Leser, sobald die Summe aufgeht – eine falsche Menge bei richtigem Zeilenbetrag fällt dort nie auf.
+- Neue Sitzungen sehen nur `main`: Regeln und Pläne, die nur auf einem Zweig liegen, existieren für sie nicht.
+- Die Pflicht-Recherchen (Fasan-Karte, Fasan-Camera) waren in dieser Sitzung nie angehängt; der Umbau „ein Bildschirm“ und die Gruppe
+  entstanden ohne sie. Vor der nächsten Design-Arbeit gegen die Prüfliste nachprüfen, was davon bleibt.
+- Älterer Verlauf (vor 04.11. 23:36) ist in der Sitzung nicht verfügbar; Anweisungen von dort nur über die Doku erreichbar.
+
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
 0. **Pflicht aus CLAUDE.md, Schritt 0:** Fasan-Karte und Fasan-Camera anhängen (bis 06.11. nie geschehen), alle Recherchen ganz lesen,

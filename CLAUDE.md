@@ -44,6 +44,14 @@ Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete ste
   hieß kompakt machen, nicht entfernen).
 - **Bei Kritik des Nutzers nicht sofort losprogrammieren:** erst zeigen, dass die Kritik verstanden ist, und den Plan nennen.
 - **Nichts dem Nutzer zum Prüfen überlassen, was die Sitzung selbst prüfen kann.** Was sie nicht kann (z. B. echtes iPhone), vorher sagen.
+- **Was die Zukunft betrifft, sofort festschreiben – ohne Aufforderung (Nutzer 06.11.: „Dass ich dich daran erinnern muss …“).**
+  Jede Zusage („ab jetzt …“), jede Lehre aus einem Fehler, jeder Beschluss, jede offene Frage an den Nutzer und jeder Kniff der
+  Umgebung kommt im selben Arbeitsschritt in die passende Datei: Regeln → diese Datei, Beschlüsse/Plan/offene Fragen → `STAND.md`,
+  Familie → `../fasan/ENTSCHEIDUNGEN.md`. **Vor jeder Antwort prüfen:** Steht etwas, das ich gerade sage, nur im Chat? Dann erst
+  schreiben, dann antworten. Regeln müssen auf **main** liegen (neue Sitzungen starten dort); reine Doku mit `[skip ci]` im Commit
+  auf main schieben, das löst keine Veröffentlichung aus (06.11. geprüft: kein CI-Lauf).
+- **Öffentliches Repo:** Fasan-Split ist öffentlich. Keine Rohtexte von Nutzer-Nachrichten, keine Fotos, keine privaten Daten hier
+  ablegen (06.11. hat das Werkzeug genau das zu Recht blockiert). Private Ablage: `fasan-diagnose` (Bons), `Fasan` (privat).
 
 **Fehler, die passiert sind und nicht wieder passieren dürfen (05./06.11.):** grüne Tests als Beweis ausgegeben, obwohl sie das
 Entscheidende nicht prüften; Bildschirme veröffentlicht, ohne sie mit echtem Bon angesehen zu haben; Web 1:1 behauptet statt Bildschirm
@@ -104,5 +112,11 @@ E2E-Läufe und Commits macht die Sitzung selbst, Rückmeldung kommt vom Handy (S
    (`pip install androguard`, Logging mit `loguru` abschalten, sonst 100 KB Ausgabe).
 6. Commits als `Fasan <fasan@christopherziehm.de>` mit den Anhängen der Sitzung. `app/pubspec.lock` nach `pub get` zurücksetzen
    (`git checkout`). Nicht mit `dart format` über bestehende Dateien gehen: das Repo ist nicht damit formatiert, der Diff explodiert.
+7a. Fallstricke dieser Umgebung (06.11.): Der Stop-Hook meldet nach jedem Push fälschlich „no remote branch / unpushed commits“ –
+   mit `git ls-remote --heads origin <zweig>` gegen `git rev-parse HEAD` prüfen statt blind neu zu pushen. `pkill -f <muster>` trifft
+   die eigene Shell, wenn das Muster im Befehl steht (Exit 143) – Prozesse per PID beenden. Zwei Hintergrundläufe nie in denselben
+   Ausgabeordner schreiben lassen. `rsync` und `ss` fehlen (cp bzw. curl nutzen). Das Ende-zu-Ende des Browsers (`tool/e2e/run.sh`)
+   lokal: Web-Build mit `--dart-define=FASAN_RELAYS=ws://127.0.0.1:7777` plus `web_extra`, `python3 -m http.server 8765` im Ordner über
+   `Fasan-Split/`, `tool/e2e/relay.py 7777` (pip `websockets==13.1`), dann `run.sh` als Hintergrundskript mit Log.
 7. Push und CI: Der Push stößt die CI an, bei grünen Tests wird die APK als `neueste` veröffentlicht und kommt per In-App-Update
    aufs Handy. Das ist Teil der Arbeit (eigenes Repo, keine fremden Dienste); vor dem Push `git fetch origin` und Tests grün.
