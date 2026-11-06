@@ -48,12 +48,18 @@ int lev(String a, String b) {
   return d[a.length][b.length];
 }
 
-/// The printed name is good enough when it is the truth up to a few OCR slips (≤ 25 % of the letters, at least 2).
+/// The name is good enough when it is the printed name up to small OCR slips: edit distance ≤ 15 % of the letters (at least 1).
+/// Leftovers like „Cafe Duplo nm“, „TULIPA 238“, „í Cesta de pao“ count as wrong – the user sees them (Nutzer 06.11.).
 bool nameOk(String truth, String read) {
   final t = norm(truth), r = norm(read);
   if (t.isEmpty) return true;
-  if (r.contains(t) || (r.length >= 4 && t.contains(r))) return true;
-  return lev(t, r) <= math.max(2, (t.length * 0.25).round());
+  // a short foreign word at the start or end (≤ 3 characters, not part of the printed name) is OCR debris, not a slip
+  final tw = truth.split(RegExp(r'\s+')).map(norm).where((w) => w.isNotEmpty).toSet();
+  final rw = read.split(RegExp(r'\s+')).map(norm).where((w) => w.isNotEmpty).toList();
+  for (final w in [if (rw.isNotEmpty) rw.first, if (rw.length > 1) rw.last]) {
+    if (w.length <= 3 && !tw.contains(w)) return false;
+  }
+  return lev(t, r) <= math.max(1, (t.length * 0.15).round());
 }
 
 void main() {
@@ -85,9 +91,12 @@ void main() {
         final problems = <String>[];
         if (d.total != truth['total']) problems.add('Summe ${d.total} statt ${truth['total']}');
         final ist = [for (final i in d.items) i.amount]..sort();
-        final soll = (truth['posten'] as List).cast<int>().toList()..sort();
+        // with a per-item truth, its amounts are what the user sees (deposit and discounts on the article, Karte 3.13); else the
+        // printed lines (`posten`)
+        final detail = truth['posten_detail'] as List?;
+        final soll = (detail != null ? [for (final p in detail) (p as Map)['betrag'] as int] : (truth['posten'] as List).cast<int>().toList())..sort();
         if (ist.join(',') != soll.join(',')) problems.add('Beträge $ist statt $soll');
-        for (final p in (truth['posten_detail'] as List? ?? const [])) {
+        for (final p in (detail ?? const [])) {
           final q = p as Map<String, dynamic>;
           final match = d.items.where((i) => i.amount == q['betrag'] && i.qty == (q['menge'] ?? 1) && nameOk(q['name'] as String, i.name));
           if (match.isEmpty) {

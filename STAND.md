@@ -385,6 +385,18 @@ Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md
   entstanden ohne sie. Vor der nächsten Design-Arbeit gegen die Prüfliste nachprüfen, was davon bleibt.
 - Älterer Verlauf (vor 04.11. 23:36) ist in der Sitzung nicht verfügbar; Anweisungen von dort nur über die Doku erreichbar.
 
+### Punkt 1 Erkennung – Stand 06.11. nachts (läuft)
+
+- Vergleich alter Stand `aa233db` gegen Zweig über alle 13 echten Bons (`test/snapshot_test.dart`, `docs/ERKENNUNGS-TOR.md`):
+  **„13 Croissants“ war schon im alten Stand** (keine Verschlechterung, aber nie entdeckt: alter Test prüfte nur Beträge). Im Zweig
+  behoben (Esplanada jetzt 2 × 4,00). Sonst gleich oder besser (Confeitaria „Gin Tonico Marti“, Da Sé geknickt „CANECA“ statt „2× Posten“).
+- Wahrheit je Posten (Name, Menge, Betrag, Einzelpreis) für alle 13 + Belém voll, nach Fotos geprüft, in `fasan-diagnose` (0393f23).
+- **Tor `test/gate_test.dart` (scheitert wirklich):** 14 Bons, **9 OK, 5 Fehler** – Aldi (Artikelnummern vorn, Werbedruck der Rückseite
+  im Namen, „Takis“ unlesbar), Confeitaria („Cafe Duplo nm“), Da Sé geknickt („TULIPA 238“, „Jn AZEITONAS“, „PAD“, „…P P13“), Estrela
+  („í Cesta“, „t Vinho“), Ferreiras (**Menge 1 statt 2** bei „2 Coca cola 6.00“). Fehlerklassen: Reste aus Nachbarspalten im Namen
+  (Uni-Spalte vorn, IVA/€-Spalte hinten), Artikelnummern, Durchschein-Text, führende Menge nicht übernommen.
+- Workflow `erkennung.yml` vor APK und Web (Zweig, nicht main); braucht `FASAN_DIAGNOSE_TOKEN` (offene Frage oben).
+
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
 0. **Pflicht aus CLAUDE.md, Schritt 0:** Fasan-Karte und Fasan-Camera anhängen (bis 06.11. nie geschehen), alle Recherchen ganz lesen,
