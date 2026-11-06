@@ -42,9 +42,12 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
   const click = async (name) => { await p.getByRole('button', { name }).first().click({ timeout: 20000 }); await p.waitForTimeout(1500); };
   const result = {};
   try {
-    await click(/^(Beitreten|Verbinden|Beitritt anfragen)$/);
-    await click('Verstanden, teilen');
-    await click('Zur Gruppe');
+    await shot('j01-beitritt');
+    await click(/^(Beitreten|Verbinden|Beitritt anfragen|Join|Connect|Ask to join)$/);
+    await shot('j02-teilen-hinweis');
+    await click(/^(Verstanden, teilen|Understood, share)$/);
+    await shot('j03-beigetreten');
+    await click(/^(Zur Gruppe|Go to the group)$/);
     for (let i = 0; i < 60 && (await p.getByText('Foto-Test').count()) === 0; i++) await p.waitForTimeout(1000);
     await shot('1-gruppe');
     await p.getByText('Foto-Test').first().click({ timeout: 20000 });
@@ -55,11 +58,16 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     for (let i = 0; i < 90 && !ready; i++) {
       await p.getByRole('button', { name: /Mehr|More/ }).first().click({ timeout: 10000 }).catch(() => {});
       await p.waitForTimeout(800);
-      const item = p.getByRole('menuitem', { name: /Am Original zuordnen/ }).first();
+      const item = p.getByRole('menuitem', { name: /Am Original zuordnen|Assign on the original/ }).first();
       ready = (await item.count()) > 0 && !(await item.isDisabled().catch(() => true));
       if (!ready) { await p.keyboard.press('Escape'); await p.waitForTimeout(1500); }
     }
     result.ready = ready;
+    if (process.env.LANG_TAG && process.env.LANG_TAG.startsWith('en')) {
+      await shot('e01-menue'); await p.keyboard.press('Escape'); await p.waitForTimeout(800); await shot('e02-bon');
+      await p.getByRole('button', { name: /^Receipt$/ }).first().click().catch(() => {}); await p.waitForTimeout(2000); await shot('e03-bon-ansicht');
+      fs.writeFileSync(dir + '/photo-done.txt', JSON.stringify(result)); await b.close(); process.exit(0);
+    }
     await p.keyboard.press('Escape').catch(() => {});
     await p.waitForTimeout(800);
     // every screen of the main flow, one screenshot each (compared with test/screens_test.dart, same bill); a step that fails is

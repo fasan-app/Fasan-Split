@@ -13,6 +13,7 @@ import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/assign.dart';
 import 'package:fasan_split/ui/flow.dart';
 import 'package:fasan_split/ui/home.dart';
+import 'package:fasan_split/ui/join_screen.dart';
 import 'package:fasan_split/ui/onboarding.dart';
 import 'package:fasan_split/ui/settings_screen.dart';
 import 'package:fasan_ui/fasan_ui.dart';
@@ -175,6 +176,8 @@ void main() {
     'b05-posten-blatt-fest': (b) => ReviewScreen(bill: b),
     'b01p-bon-gepusht': (b) => const SizedBox(),
     'b07-pruefen': (b) => ReviewScreen(bill: b),
+    // the invitation of a browser walk (FASAN_WALK_LINK = link.txt of tool/e2e/screens.js); no link: skipped
+    if (Platform.environment['FASAN_WALK_LINK'] != null) 'j01-beitritt': (_) => JoinScreen(prefill: Platform.environment['FASAN_WALK_LINK']),
     'h04-archiv': (_) => const HomeScreen(),
     'h05-papierkorb': (_) => const HomeScreen(),
     'h06-gruppen': (_) => const HomeScreen(),
@@ -242,12 +245,12 @@ void main() {
           tester.view.physicalSize = land ? const Size(2400, 1080) : const Size(1080, 2400);
           tester.view.devicePixelRatio = 2.75;
           addTearDown(tester.view.reset);
-          tester.platformDispatcher.localesTestValue = const [Locale('de', 'DE')];
+          tester.platformDispatcher.localesTestValue = [Platform.environment['FASAN_LANG'] == 'en' ? const Locale('en', 'US') : const Locale('de', 'DE')];
           addTearDown(tester.platformDispatcher.clearLocalesTestValue);
           final dir = Directory(out!)..createSync(recursive: true);
           final (path, bx) = await tester.runAsync(() async => _receipt(dir)) ?? ('', <NBox>[]);
           Bill bill;
-          if (e.key.startsWith('b') || e.key.startsWith('h')) {
+          if (e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j')) {
             // variants only for the screens that are also walked in the browser with DARK=1 / LAND=1
             if ((dark || land) && !(const ['b01-bon', 'b10-bon-ansicht', 'b15b-ergebnis'].contains(e.key) || (dark && e.key == 'b04-posten-blatt'))) return;
             bill = _walkBill(dir);
@@ -266,9 +269,9 @@ void main() {
           // the walk screens show the look of the default (PerfMode.light: no blur, no grain, no moving background), like the browser
           var look = FasanSettings(reduceMotion: e.key.startsWith('b01p') ? false : true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light);
           // like main(): glass without grain is the standard look
-          if ((e.key.startsWith('b') || e.key.startsWith('h'))) look = look.copyWith(style: FasanStyle.fullGlass, effects: look.effects.copyWith(grain: 0));
+          if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j'))) look = look.copyWith(style: FasanStyle.fullGlass, effects: look.effects.copyWith(grain: 0));
           final ctl = SplitController(settings: look);
-          if ((e.key.startsWith('b') || e.key.startsWith('h'))) ctl.tier = PerfTier.slow;
+          if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j'))) ctl.tier = PerfTier.slow;
           final key = GlobalKey();
           await tester.pumpWidget(RepaintBoundary(key: key, child: SplitApp(store: store, ui: ctl, home: e.value(bill))));
           // Bon-Foto und Shader laden echt asynchron; danach ein paar Bilder ohne Dauer-Animation.
@@ -284,7 +287,7 @@ void main() {
           expect(tester.takeException(), isNull);
           await tester.runAsync(() async {
             final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-            final image = await boundary.toImage(pixelRatio: (e.key.startsWith('b') || e.key.startsWith('h')) ? 2.0 : 1.25);
+            final image = await boundary.toImage(pixelRatio: (e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j')) ? 2.0 : 1.25);
             final png = await image.toByteData(format: ui.ImageByteFormat.png);
             File('${dir.path}/$tag-${e.key}.png').writeAsBytesSync(png!.buffer.asUint8List());
           });
