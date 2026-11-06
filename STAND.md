@@ -372,8 +372,6 @@ Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-na
 Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md`) beantwortet hat (Nutzer 06.11.).
 
 - Foto oder Protokoll des Esplanada-Bons (13 Croissants) schicken, damit der ganze Bon ins Erkennungs-Tor kommt.
-- **Fotos teilen bestätigen** mit den richtigen Fakten (Korrektur in `docs/VORSCHLAEGE-06-11.md`, Ende): Relays nur in Stücken ≤ 40 KB,
-  Blossom nur cdn.hzrd149.com und nostr.download für verschlüsselte Dateien.
 - **Lese-Geheimnis `FASAN_DIAGNOSE_TOKEN` anlegen** (Anleitung mit vorausgefülltem Link: `docs/ERKENNUNGS-TOR.md`). Ohne es scheitert das
   Erkennungs-Tor und es wird nichts veröffentlicht (gewollt).
 
@@ -402,10 +400,38 @@ Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md
   („í Cesta“, „t Vinho“), Ferreiras (**Menge 1 statt 2** bei „2 Coca cola 6.00“). Fehlerklassen: Reste aus Nachbarspalten im Namen
   (Uni-Spalte vorn, IVA/€-Spalte hinten), Artikelnummern, Durchschein-Text, führende Menge nicht übernommen.
 - Workflow `erkennung.yml` vor APK und Web (Zweig, nicht main); braucht `FASAN_DIAGNOSE_TOKEN` (offene Frage oben).
+- 06.11. ~03:40: **Tor grün: 55 Bons (14 echte + 41 synthetische), 0 Fehler, 1 bekannt (Aldi).** Dazu de-discount behoben (zerrissene
+  Storno-Zeile). Neu: Modus „ohne Nachkommastellen“ (`decimalSep` → '0', Beträge = Einheiten ×100) für IDR/KRW/HUF/JPY-Bons; danach
+  Tor erneut nötig. CORD: 874 Bons mit Wahrheit (176 test/validation + 698 train).
 - Behoben (06.11. nachts, Tests `name_vote_test`, Tor): Namensabstimmung gruppiert nach Kern (Spaltenreste überstimmen nicht mehr),
   Menge stimmt mit (Ferreiras 2 × Coca cola), Artikelnummern vorn weg, Steuersatz-Rest „238“/„P13“ am Ende weg, Fleck „nm“ weg.
   Tor echte Bons: **13/14 OK, Aldi bekannt** (Durchschein-Druck der Rückseite, Abhilfe offen: helle Schrift vor dem Lesen der
   Namensspalte unterdrücken). Voller Lauf mit synthetischen Bons und SROIE-Vergleich: läuft / steht aus.
+
+### Nachtlauf 06.11.: Weckung 06:10 (Berlin) geplant (`trig_01JPM4pxpuJzYvP43bJRTGAP`), falls ein Limit die Arbeit stoppt.
+
+### Testkorpus weltweit (Nutzer 05.11. und erneut 06.11.: „13 Bons sind keine Grundlage“) – jetzt Vorrang in Punkt 1
+
+Beschluss Befragung 4: alle auffindbaren echten Rechnungen/Kassenzettel (Datensätze jeder Lizenz nur zum Testen, Einzelfunde), dazu
+**~100 selbst nach Foto beschriebene Bons** aus vielen Ländern/Formaten. Ablage: Datensätze lädt die CI selbst (nie in Repos);
+Einzelfunde mit Wahrheit in `fasan-diagnose/tests/welt/` (privat), Quelle + Lizenz je Datei. Tor-Aufbau: Stufe A (echte Bons des Nutzers +
+synthetische) blockiert bei jedem Fehler; Stufe B (Korpus) blockiert bei Verschlechterung gegen gespeicherte Bestwerte.
+Vorhanden: CORD test+validation (200, Wahrheit je Posten, CC-BY-4.0) in `/home/user/tools/cord`, SROIE (~1000, Summen) in `/home/user/tools/sroie`.
+Stand 06.11. ~03:30: CORD test+validation umgewandelt (`app/tool/korpus/cord_truth.py`): **176 Bons mit stimmiger Wahrheit je Posten**
+(`/home/user/tools/korpus/cord`); CORD train (800) lädt (`/home/user/tools/cord_train.sh`). Tor Stufe B (`FASAN_KORPUS`, Bestwerte
+`FASAN_KORPUS_MIN`) gebaut. Geprüft und verworfen: D1st3f/Receipts (nur Text ohne Zeilen), 34data/nano-receipts (künstlich erzeugt),
+amaye15/receipts (nur Klasse Bon/kein Bon). Wikimedia-API: Proxy-IP gedrosselt (429, „x-envoy-ratelimited“) → Openverse (CC-Bilder aus
+Flickr/Wikimedia) als Suche, Sichtung per Kontaktbogen. Wichtig für „weltweit“: Beträge ohne Nachkommastellen (IDR, JPY, KRW, HUF) liest
+der Leser nicht (bekannt seit 29.10.) – CORD macht das messbar.
+Stand 06.11. ~06:15: Openverse/Flickr: 496 Fotos geladen (`/home/user/tools/korpus/openverse/img`), 257 gesichtet (Bögen `sheets1/2`),
+**44 Bons Posten für Posten vom Foto abgeschrieben** (Werkzeug `/home/user/tools/wl.py`, Summenprobe je Bon): 41 lateinisch nach
+`fasan-diagnose/tests/welt/` (AU, UK, US, CA, IN, SE, CH, CZ, ES, FR, AT, DE, KR-Lateinnamen), 3 mit Hangul-Namen nach `tests/welt-schrift/`
+(eigener Bestwert, damit Latein nicht verwässert). Quelle, Urheber, Lizenz je Bon in der JSON und in `welt/quellen.json`. Ausgelassen
+(`AUSGELASSEN.txt`): Handschrift ohne sichere Wahrheit, Summe nicht im Bild. Regeln der Wahrheit: Rundung als Posten „Rundung“ (Betrag =
+Summe − Zwischensumme, auch wenn das Vorzeichen verkehrt gedruckt ist wie bei Colonial), Steuer auf Netto als eigener Posten (Name wie
+gedruckt), Rabattzeile am Artikel darüber, Rabatt nach der Zwischensumme als eigener negativer Posten, nicht gedruckte Rundung (CZ, IN)
+als „Rundung“. Offen: restliche 240 Fotos sichten (Ziel ~100), Bons mit zwei Zetteln im Bild zuschneiden, Lauf `welt1.sh` auswerten,
+Bestwerte in `fasan-diagnose/tests/korpus-min.json`.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 

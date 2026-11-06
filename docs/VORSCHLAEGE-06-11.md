@@ -167,3 +167,10 @@ dadurch teils falsch:
 - Die damalige Empfehlung lautete „Fotos gehören nie in Relays“ (wegen der Größe). Der Beschluss des Nutzers vom 06.11. (beides als Standard)
   bleibt umsetzbar: Relays in Stücken ≤ 40 KB, Blossom über die zwei Server, die verschlüsselte Dateien annehmen.
 - **Dem Nutzer vorzulegen:** ob er den Beschluss mit diesen Fakten bestätigt.
+
+Befragung 4 (06.11. nachts):
+1. Fotos: **bestätigt mit den richtigen Fakten** – Relays (Stücke ≤ 40 KB) + Blossom (cdn.hzrd149.com, nostr.download, gespiegelt), beides Standard.
+2. Testdaten: **„Alle echten Rechnungen und Kassenzettel, die du findest, auch vereinzelte“** – alle frei zugänglichen Datensätze (auch
+   Forschungslizenz) und Einzelfunde, nur zum Testen, nie in App oder öffentlichem Repo; Quelle/Lizenz je Satz dokumentiert.
+3. **Etwa 100 selbst beschriebene Bons** (Wahrheit je Posten nach dem Foto) zusätzlich zu den Datensätzen mit Wahrheit.
+Kritik dazu: „Du arbeitest wieder nur mit 13 Bons, das ist keine Grundlage“ – schon am 05.11. gefordert, nicht erledigt.

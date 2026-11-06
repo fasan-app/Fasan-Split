@@ -43,3 +43,12 @@ for k in sorted(set(a) | set(b)):
     print(k, 'VERSCHIEDEN', x['total'], '→', y['total'], x['checked'], '→', y['checked'])
     for i in range(max(len(xi), len(yi))): print('  ', xi[i] if i < len(xi) else '—', '|', yi[i] if i < len(yi) else '—')
 ```
+
+## Stufe B: Korpus (06.11.)
+
+`FASAN_KORPUS=<ordner>[:<ordner>…]` misst je Ordner, wie viele Bons ganz richtig sind; `FASAN_KORPUS_MIN=<json>` mit `{ordnername: bestwert}`
+lässt das Tor scheitern, wenn ein Ordner schlechter wird. Quellen (nur zum Testen, nie in App oder öffentlichem Repo; Beschluss Nutzer 06.11.):
+- CORD v2 (Clova AI, Indonesien, CC-BY-4.0): Hugging Face `naver-clova-ix/cord-v2`, Umwandlung `app/tool/korpus/cord_truth.py` (nur Bons,
+  deren Posten zur Summe passen; Beträge in Rupiah ohne Nachkommastellen).
+- SROIE 2019 (Malaysia, Forschungsdatensatz): `github.com/zzzDavid/ICDAR-2019-SROIE`, nur Summen (`test/sroie_test.dart`).
+- Einzelfunde mit freier Lizenz (Openverse/Wikimedia/Flickr): Wahrheit je Posten von Hand nach Foto, privat in `fasan-diagnose/tests/welt/`.
