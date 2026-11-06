@@ -54,5 +54,8 @@ jobs:
           export LD_LIBRARY_PATH="$RUNNER_TEMP/onnxruntime-linux-x64-1.22.0/lib"
           export FASAN_BONORDNER="$GITHUB_WORKSPACE/diag/tests/echt:$GITHUB_WORKSPACE/diag/tests/bons"
           export FASAN_THREADS=4
+          # Stufe B (06.11.): Weltkorpus (Einzelfunde mit Wahrheit je Posten) darf nicht schlechter werden als der Bestwert
+          export FASAN_KORPUS="$GITHUB_WORKSPACE/diag/tests/welt:$GITHUB_WORKSPACE/diag/tests/welt-schrift"
+          export FASAN_KORPUS_MIN="$GITHUB_WORKSPACE/diag/tests/korpus-min.json"
           flutter test test/gate_test.dart --reporter expanded 2>&1 | tee "$RUNNER_TEMP/tor.log"
-          grep -E '^(OK|FEHLER|BEKANNT|TOR)' "$RUNNER_TEMP/tor.log" >> "$GITHUB_STEP_SUMMARY" || true
+          grep -E '^(OK|FEHLER|BEKANNT|KORPUS|TOR)' "$RUNNER_TEMP/tor.log" >> "$GITHUB_STEP_SUMMARY" || true

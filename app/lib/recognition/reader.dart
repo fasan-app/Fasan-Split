@@ -239,7 +239,34 @@ List<Lines>? linesByColumns(List<Word> words) {
     if (!per.containsKey(k) || a.cost < per[k]!.cost) per[k] = a;
   }
   final sorted = stableSorted<_Alignment>(per.values, (a, b) => numAsc(a.cost, b.cost));
-  return sorted.take(4).map(build).toList();
+  final out = sorted.take(4).map(build).toList();
+  // A curved, folded or crumpled receipt shifts the amount column part of the way down: top in line, from a fold on one line off
+  // (Woolworths/Coles, Weltkorpus 06.11.). One more candidate with two offsets and a break between two name rows: forward costs
+  // of the prefix at one offset plus backward costs of the rest at the other, minimised over the break (Needleman–Wunsch
+  // prefix/suffix split, as in Hirschberg's algorithm).
+  final grid = [for (var o = -20; o <= 20; o++) o / 10];
+  final fw = [for (final o in grid) _alignTable(L, R, o * pitch, pitch, false)];
+  final bw = [for (final o in grid) _alignTable(L, R, o * pitch, pitch, true)];
+  ({double cost, int a, int b, int i})? split;
+  for (var a = 0; a < grid.length; a++) {
+    for (var b = 0; b < grid.length; b++) {
+      if ((grid[a] - grid[b]).abs() < 0.45) continue;
+      final F = fw[a], B = bw[b];
+      for (var i = 1; i < L.length; i++) {
+        for (var j = 0; j <= R.length; j++) {
+          final c = F[i][j] + B[i][j];
+          if (split == null || c < split.cost) split = (cost: c, a: a, b: b, i: i);
+        }
+      }
+    }
+  }
+  if (split != null && sorted.isNotEmpty && split.cost < sorted.first.cost - 0.3) {
+    final s0 = split;
+    final offs = [for (var i = 0; i < L.length; i++) (i < s0.i ? grid[s0.a] : grid[s0.b]) * pitch];
+    final x = _alignRows(L, R, 0, pitch, offs: offs);
+    out.add(build(_Alignment(x.cost, x.pairs, (grid[s0.a].abs() > grid[s0.b].abs() ? grid[s0.a] : grid[s0.b]) * pitch)));
+  }
+  return out;
 }
 
 class _Alignment {
@@ -252,8 +279,49 @@ class _Alignment {
 
 final _latinLetter = RegExp(r'[A-Za-zÀ-ÿ]');
 
+/// Cost table of [_alignRows] at one offset: forward (prefixes) or backward (suffixes); [i][j] = cost of the first/remaining i, j rows.
+List<List<double>> _alignTable(List<Line> L, List<Line> R, double off, double pitch, bool backward) {
+  final n = L.length, m = R.length;
+  double cy(Line z) => (z.box.y0 + z.box.y1) / 2;
+  const gapL = 0.45, gapR = 0.6;
+  final noName = [for (final z in L) countMatches(_latinLetter, z.text) < 2 ? 0.5 : (isHeaderLine(z.text) ? 2.0 : 0.0)];
+  final ry = R.map(cy).toList(), lyy = L.map(cy).toList();
+  double pair(int i, int j) {
+    final d = (ry[j] - lyy[i] - off).abs() / pitch;
+    return d < 0.6 ? d * d * 2 + noName[i] : double.infinity;
+  }
+
+  final D = List.generate(n + 1, (_) => List<double>.filled(m + 1, 0));
+  if (!backward) {
+    for (var i = 1; i <= n; i++) {
+      D[i][0] = i * gapL;
+    }
+    for (var j = 1; j <= m; j++) {
+      D[0][j] = j * gapR;
+    }
+    for (var i = 1; i <= n; i++) {
+      for (var j = 1; j <= m; j++) {
+        D[i][j] = math.min(D[i - 1][j - 1] + pair(i - 1, j - 1), math.min(D[i - 1][j] + gapL, D[i][j - 1] + gapR));
+      }
+    }
+  } else {
+    for (var i = n - 1; i >= 0; i--) {
+      D[i][m] = (n - i) * gapL;
+    }
+    for (var j = m - 1; j >= 0; j--) {
+      D[n][j] = (m - j) * gapR;
+    }
+    for (var i = n - 1; i >= 0; i--) {
+      for (var j = m - 1; j >= 0; j--) {
+        D[i][j] = math.min(D[i + 1][j + 1] + pair(i, j), math.min(D[i + 1][j] + gapL, D[i][j + 1] + gapR));
+      }
+    }
+  }
+  return D;
+}
+
 /// Sequence alignment (Needleman–Wunsch) of name rows and amount rows with a fixed offset [reihenAbgleich].
-_Alignment _alignRows(List<Line> L, List<Line> R, double off, double pitch) {
+_Alignment _alignRows(List<Line> L, List<Line> R, double off, double pitch, {List<double>? offs}) {
   final n = L.length, m = R.length;
   double cy(Line z) => (z.box.y0 + z.box.y1) / 2;
   const gapL = 0.45, gapR = 0.6;
@@ -271,7 +339,7 @@ _Alignment _alignRows(List<Line> L, List<Line> R, double off, double pitch) {
   final ry = R.map(cy).toList(), lyy = L.map(cy).toList();
   for (var i = 1; i <= n; i++) {
     for (var j = 1; j <= m; j++) {
-      final d = (ry[j - 1] - lyy[i - 1] - off).abs() / pitch;
+      final d = (ry[j - 1] - lyy[i - 1] - (offs != null ? offs[i - 1] : off)).abs() / pitch;
       final pair = d < 0.6 ? D[i - 1][j - 1] + d * d * 2 + noName[i - 1] : double.infinity;
       final a = D[i - 1][j] + gapL, b = D[i][j - 1] + gapR;
       if (pair <= a && pair <= b) {
@@ -327,7 +395,7 @@ int _letters(String t) => countMatches(_letterAZ, t.replaceAll(_unitsLetters, ''
 /// Keyword families in many languages [W].
 abstract final class Kw {
   static final summe = RegExp(r'\b(total|totaal|totale|totalt|gesamt|gesamtbetrag|gesamtsumme|summe|endsumme|endbetrag|zu zahlen|zahlbetrag|importe|a pagar|montant|net a payer|te betalen|suma|razem|celkem|osszesen|yhteensa|att betala|i alt|ukupno|toplam|kokku|amount due|balance due)\b');
-  static final zwischen = RegExp(r'\b(sub-?total|subtotale|subtotaal|sous-?total|zwischensumme|zw\.? ?summe)\b');
+  static final zwischen = RegExp(r'\b(sub[- ]?total|subtotale|subtotaal|sous-?total|zwischensumme|zw\.? ?summe)\b');
   static const steuerSrc = r'\b(mwst|mw\.?st|ust|vat|gst|sst|hst|pst|tax|taxes|sales tax|iva|tva|btw|moms|mva|alv|dph|pdv|kdv|steuer|netto|brutto|incid|incidencia|incidencias|imponible|imponibile|imposta|taxa iva|base|tributavel|ht|sem iva|net)\b';
   static final steuer = RegExp(steuerSrc);
   static final service = RegExp(r'\b(service|serv|svc|bedienung|trinkgeld|tip|tips|gratuity|servizio|pourboire|fooi|propina)\b');
@@ -388,7 +456,11 @@ bool _fuzzyTotal(String n) {
       !Kw.zahlung.hasMatch(n);
 }
 
-final _qtyFront = RegExp(r'^\s*(\d{1,3}(?:[.,]\d{1,3})?)\s*(?:x|×|\*|stk\.?|st\.?|pcs\.?|pc\.?|un\.?|uni|und\.?|pz\.?|kg|l)?\s*[x×*]?\s+', caseSensitive: false);
+// „1.000ea @ $ 4.99/ea“ (Colonial, Australien; Weltkorpus 06.11.): „ea/each/pce/kpl“ are units like „kg“, else „1.000ea“ became the name
+final _qtyWordStart = RegExp(r'^\W*(?:qty|quantity|anz|menge|qtd|cant)\b', caseSensitive: false);
+final _qtyBeforePrice = RegExp(r'\s(\d{1,2})\s+(?:[$€£]\s?)?$');
+final _totalForItems = RegExp(r'\btotal\s+(?:for|of)\s+\d{1,3}\s+items?\b');
+final _qtyFront = RegExp(r'^\s*(\d{1,3}(?:[.,]\d{1,3})?)\s*(?:x|×|\*|stk\.?|st\.?|pcs\.?|pc\.?|pce|un\.?|uni|und\.?|pz\.?|kg|l|ea|each|kpl|items?|item\(s\))?\s*[x×*]?\s+', caseSensitive: false);
 
 /// Decimal separator of this receipt [dezimal].
 /// '0' = a receipt in a currency without minor units (Indonesia „60.000“, Korea „12,000“, Hungary, Japan with grouping): at least
@@ -409,7 +481,8 @@ String decimalSep(List<Line> lines) {
 // grouped whole number: 1.000, 60.000, 1.250.000, 12,000 (not followed by more digits or a decimal part)
 final _wholeRe = RegExp(r"(?<![\d.,])(-\s?)?(\d{1,3}(?:[.,]\d{3})+)(?![\d]|[.,]\d)");
 
-final _amountsRe = RegExp(r"(^|[^\d.,])(-\s?)?((?:\d{1,3}(?:[.,' ]\d{3})+|\d+)[.,] ?\d{2})(?!\d|[.,]\d)(\s?-(?![\d]))?");
+// („-$1.00“ / „-£0.85“: the minus can stand before the currency sign, Coles/Tesco 06.11.)
+final _amountsRe = RegExp(r"(^|[^\d.,])(-\s?(?:[$€£]\s?)?)?((?:\d{1,3}(?:[.,' ]\d{3})+|\d+)[.,] ?\d{2})(?!\d|[.,]\d)(\s?-(?![\d]))?");
 final _pctAfter = RegExp(r'^\s*%');
 final _sepSpace = RegExp(r'([.,]) (\d{2})$');
 final _groupSep = RegExp(r"[.,' ]");
@@ -464,7 +537,7 @@ List<Vote> alternatives(Line z, Amount b) {
   return out;
 }
 
-final _unitsWord = RegExp(r'\b(x|kg|eur|euro|usd|chf|gbp|un|uni|stk|st|pcs|l|cl|ml|g)\b');
+final _unitsWord = RegExp(r'\b(x|kg|eur|euro|usd|chf|gbp|un|uni|stk|st|pcs|l|cl|ml|g|items?|qty|ea|each)\b');
 final _az = RegExp(r'[a-z]');
 int lettersIn(String t) => countMatches(_az, foldLower(t).replaceAll(_unitsWord, '')); // [buchst]
 
@@ -529,7 +602,21 @@ final _articleNo = RegExp(r'^\s*\d{5,8}\s+(?=[A-Za-zÀ-ÿ])');
 // Portuguese „c/ Nata“, „s/ Gelo“ (com/sem): part of the name, not a tax code (else „Croissant c/ N“ became „Croissant c“)
 final _withWithout = RegExp(r'\s([cCsS])/\s*([A-Za-zÀ-ÿ]{1,14})\.?\s*$');
 
+// A weight or count detail line without a name: „0.482 kg NET @ $4.50/kg“ (Woolworths), „0.375kg @ $ 5.99/kg“, „1.000Ea @$ 4.99/Ea“
+// (Colonial), „2 @ $0.25 EACH“ (Coles). The article name is on the line above (Weltkorpus 06.11.: „NET“ became the name).
+final _weightDetail = RegExp(
+    r'^\W*\d{1,3}(?:[.,]\d{1,3})?\s*(?:kg|g|gr|lb|lbs|oz|ea|each|pcs?|stk|st)?\.?\s*(?:net|netto|nt|nett)?\s*[@©à]\s*(?:[$€£]|eur|aud|usd)?\s*(?:\d{1,4}[.,]\d{2}\s*(?:/\s*(?:kg|g|100\s?g|lb|ea|each|stk|st|pc|un)\.?|each|ea|per\s+kg)?)?\W*$',
+    caseSensitive: false);
+
+// „Korean Chicken Wings 1 item(s)“ (Australien, Weltkorpus 06.11.): the count after the name is no part of it
+final _itemsTail = RegExp(r'\s+\d{1,3}\s*items?(?:\(s\))?(?=\W*$)', caseSensitive: false);
+
+// „Qty 2 @ $0.25 each“ (Woolworths): only the quantity word is left before the price
+final _qtyWordOnly = RegExp(r'^\W*(?:qty|quantity|anz|menge|qtd|cant)\W*$', caseSensitive: false);
+
 String nameFrom(String t) {
+  if (_weightDetail.hasMatch(t) || _qtyWordOnly.hasMatch(t)) return '';
+  t = t.replaceFirst(_itemsTail, ' ');
   final ww = _withWithout.firstMatch(t.replaceAll(_n3, '').replaceFirst(_n3x, '').trimRight());
   if (ww != null) {
     final head = nameFrom(t.replaceAll(_n3, '').replaceFirst(_n3x, '').trimRight().substring(0, ww.start));
@@ -637,7 +724,10 @@ final _leadNonWord = RegExp(r'^\W+');
 /// Weighs each extra line between the item above and below (≤ 2 lines away) [zusaetzeZuordnen].
 void _attachExtras(List<Item> items, List<_Info> info) {
   bool isPfand(Item p) => p.amount > 0 && p.amount <= 1500 && _pfandRe.hasMatch(foldLower(p.name)) && p.kind2 == null;
-  bool isDiscount(Item p) => p.amount < 0 && (p.kind2 == null || p.kind2 == 'rabatt') && !_billDiscount.hasMatch(foldLower(info[p.line].line.text));
+  // a negative rounding/tax line after the subtotal is never a discount on the last article (Woolworths 06.11.: „Rounding -$0.01“
+  // became a discount on the paper bag, 25 → 24)
+  bool isDiscount(Item p) =>
+      p.amount < 0 && p.surcharge == null && (p.kind2 == null || p.kind2 == 'rabatt') && !_billDiscount.hasMatch(foldLower(info[p.line].line.text));
   bool article(Item? p) => p != null && p.surcharge == null && p.kind2 == null && !isPfand(p) && p.amount > 0;
   bool isExtra(Item p) => p.amount > 0 && p.kind2 == null && _extraStart.hasMatch(info[p.line].line.text);
   final extras = items.where((p) => isPfand(p) || isDiscount(p) || isExtra(p)).toList();
@@ -772,6 +862,13 @@ class _QtyRef {
   final int line;
 }
 
+/// The printed sign of a rounding line says nothing reliable: Colonial (Australien) prints „Rounding 0.02“ for −2 Cent and „−0.01“
+/// for +1 Cent, Coles „-$0.02“ for −2 Cent (Weltkorpus 06.11.). Both signs are offered; the total decides.
+/// Only for amounts below one unit: a shifted amount column can put the subtotal into the rounding row („Rounding $49.05“,
+/// Woolworths 06.11.), and its flipped sign then made a wrong total „check out“.
+List<Cand> _roundingSign(_Info r) =>
+    r.kind == 'rundung' && r.last != null && r.last!.v != 0 && r.last!.v.abs() < 100 ? [Cand(-r.last!.v, 0.1, 'Vorzeichen')] : const [];
+
 class _Surcharge {
   _Surcharge(this.name, this.kind, this.line, this.cands);
 
@@ -835,6 +932,9 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
     var art = 'sonst';
     if ((bt.isEmpty && (kopfCount >= 2 || _currencyOnly.hasMatch(n))) || kopfCount >= 3) {
       art = 'kopf';
+    } else if (_totalForItems.hasMatch(n)) {
+      // Coles (Australien): „Total for 19 items: $57.10“ is the total, not an item count (Weltkorpus 06.11.)
+      art = 'summe';
     } else if (Kw.anzahl.hasMatch(n)) {
       art = 'nein';
     } else if (Kw.zwischen.hasMatch(n)) {
@@ -864,7 +964,8 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
       art = 'sonst'; // city tax is an item, not VAT
     } else if (Kw.service.hasMatch(n)) {
       art = 'service';
-    } else if (Kw.steuer.hasMatch(n) || _pctStart.hasMatch(n)) {
+    } else if ((Kw.steuer.hasMatch(n) || _pctStart.hasMatch(n)) && !_weightDetail.hasMatch(jsSlice(z.text, 0, bt.isNotEmpty ? bt.last.start : z.text.length))) {
+      // („0.482 kg NET @ $4.50/kg 2.17“ is a weighed article, „NET“ there is no net-of-tax line)
       art = 'steuer';
     } else if (Kw.rabatt.hasMatch(n)) {
       art = 'rabatt';
@@ -883,7 +984,7 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
     num? einzel;
     final d = dec == '0' ? r'[.,]' : RegExp.escape(dec);
     var mx = RegExp(
-            '(\\d{1,3}(?:[.,]\\d{1,3})?)\\s*(?:stk\\.?|st\\.?|kg|pcs|un\\.?|uni|l|ltr|lt|liter|litros|lts|gal|n[aä]chte?|noites|nights|n\\.|tage|dias|days|pers\\.?|personen|pax)?\\s*[x×*]\\s*(\\d+$d ?\\d{2,3})(?!\\d)',
+            '(\\d{1,3}(?:[.,]\\d{1,3})?)\\s*(?:stk\\.?|st\\.?|kg|pcs|un\\.?|uni|l|ltr|lt|liter|litros|lts|gal|n[aä]chte?|noites|nights|n\\.|tage|dias|days|pers\\.?|personen|pax|ea|each)?\\s*[x×*@]\\s*(?:[\$€£]\\s?)?(\\d+$d ?\\d{2,3})(?!\\d)',
             caseSensitive: false)
         .firstMatch(z.text);
     // A mid-line „13x 8,00“ after a name is often the tax rate with a misread „%“ (Esplanada, Lisboa 06.11.: „2Uni Croissant
@@ -924,6 +1025,20 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
           menge = q;
           einzel = e0.v;
           break;
+        }
+      }
+      // quantity column before the unit price: „EDE MICRO 3 KESKIKO 2 3,50 7,00“ (Finnland, Määrä/A-hinta/Summa; Weltkorpus
+      // 06.11.). Only when quantity × unit price gives the line total exactly.
+      if (menge == null) {
+        final qb = _qtyBeforePrice.firstMatch(jsSlice(z.text, 0, e0.start));
+        final q = qb != null ? jsInt(qb[1]!) : 0;
+        if (q >= 2 && e0.v > 0 && (e0.v * q - r.last!.v).abs() <= 1) {
+          menge = q;
+          einzel = e0.v;
+        } else if (_qtyWordStart.hasMatch(z.text) && e0.v > 0 && r.last!.v % e0.v == 0 && r.last!.v ~/ e0.v >= 2 && r.last!.v ~/ e0.v <= 50) {
+          // „Qty 2@ $2.00 each 4.00“ with „@“ read as „0“ („Qty 20 $2.00“, Woolworths 06.11.): total ÷ unit price is the quantity
+          menge = r.last!.v ~/ e0.v;
+          einzel = e0.v;
         }
       }
     } else {
@@ -1064,7 +1179,7 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
         r.kind == 'service' ? (r.name.isNotEmpty ? r.name : 'Service') : (r.kind == 'rundung' ? 'Rundung' : (r.name.isNotEmpty ? r.name : 'Steuer')),
         r.kind,
         i,
-        [Cand(r.last!.v, 0), for (final a in alternatives(r.line, r.last!)) Cand(a.v, a.k, a.why)],
+        [Cand(r.last!.v, 0), for (final a in alternatives(r.line, r.last!)) Cand(a.v, a.k, a.why), ..._roundingSign(r)],
       ));
       continue;
     }
@@ -1190,7 +1305,7 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
   for (var i = end; i < info.length; i++) {
     final r = info[i];
     if (r.last != null && (r.kind == 'service' || r.kind == 'rundung')) {
-      surcharges.add(_Surcharge(r.kind == 'rundung' ? 'Rundung' : (r.name.isNotEmpty ? r.name : 'Trinkgeld'), r.kind == 'rundung' ? 'rundung' : 'trinkgeld', i, [Cand(r.last!.v, 0)]));
+      surcharges.add(_Surcharge(r.kind == 'rundung' ? 'Rundung' : (r.name.isNotEmpty ? r.name : 'Trinkgeld'), r.kind == 'rundung' ? 'rundung' : 'trinkgeld', i, [Cand(r.last!.v, 0), ..._roundingSign(r)]));
       r.type = 'zuschlag';
       continue;
     }
@@ -1310,6 +1425,10 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
     }
     total = solution.target.v;
     ok = true;
+    // The total word is printed but its amount could not be read („Total Que 51.“, faint print 06.11.): another source (cash
+    // given, a large amount) cannot vouch for the items then – it matched a cash line „0.20“ and reported 0.20 as checked.
+    final unreadTotal = info.any((r) => r.kind == 'summe' && r.last == null && !(r.i + 1 < info.length && info[r.i + 1].last != null) && !Kw.inklSteuer.hasMatch(r.n));
+    if (unreadTotal && solution.target.source != 'summe' && solution.target.source != 'qr') ok = false;
     // tax/rounding after a (net) total: the larger read total is the grand total if net + these lines give it
     final extra = <int>[];
     for (var i = end; i < info.length && extra.length < 6; i++) {

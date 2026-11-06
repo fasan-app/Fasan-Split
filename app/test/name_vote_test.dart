@@ -55,6 +55,15 @@ void main() {
     expect(nameFrom('Uni TULIPA 238 '), 'TULIPA');
     expect(nameFrom('Un1 TABUA QUEIJOS P P13 '), allOf(startsWith('TABUA QUEIJOS'), isNot(contains('13'))));
     expect(nameFrom('814998 Bio Spaghetti '), 'Bio Spaghetti');
+    // weight/count detail lines carry no name (Weltkorpus 06.11.: „NET“ and „1.000ea“ became names)
+    expect(nameFrom('0.482 kg NET @ \$'), '');
+    expect(nameFrom('1.000Ea @\$ '), '');
+    expect(nameFrom('0.375kg @ \$ 5.99/kg \$ '), '');
+    expect(nameFrom('2 @ \$0.25 EACH'), '');
+    expect(nameFrom('Mango Calypso '), 'Mango Calypso');
+    expect(nameFrom('2 Galao '), 'Galao');
+    expect(nameFrom('Korean Chicken Wings 1 item(s) \$'), 'Korean Chicken Wings');
+    expect(nameFrom('1 item(s) \$'), '');
     expect(nameFrom('2Uni Croisssant c/ N 13x '), 'Croissant c/ N');
     expect(nameFrom('1.00 Pedras 25 cl '), contains('Pedras 25 cl'));
     expect(nameFrom('1 Uni Agua 50cl '), 'Agua 50cl');

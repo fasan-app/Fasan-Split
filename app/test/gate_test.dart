@@ -15,11 +15,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:fasan_split/recognition/onnx.dart';
-import 'package:fasan_split/recognition/paddle.dart';
 import 'package:fasan_split/recognition/pipeline.dart';
 import 'package:fasan_split/recognition_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/ocr_cache.dart';
 
 String norm(String s) => s
     .toLowerCase()
@@ -71,19 +71,12 @@ void main() {
   dirs.addAll(korpus.where((d) => !dirs.contains(d)));
   final ready = dirs.isNotEmpty && File('assets/models/det.onnx').existsSync();
   test('Erkennungs-Tor', () async {
-    const m = 'assets/models';
-    final uv = File('$m/uvdoc.onnx');
     final threads = int.tryParse(Platform.environment['FASAN_THREADS'] ?? '') ?? 2;
-    final ocr = PaddleOcr(
-      OnnxModel.fromBytes(File('$m/det.onnx').readAsBytesSync(), threads: threads),
-      OnnxModel.fromBytes(File('$m/rec-latin.onnx').readAsBytesSync(), threads: threads),
-      File('$m/dict-latin.txt').readAsStringSync(),
-      uvdoc: uv.existsSync() ? OnnxModel.fromBytes(uv.readAsBytesSync(), threads: threads) : null,
-    );
+    final ocr = testOcr('assets/models', threads);
     final rec = Recognizer(ocr);
     final pick = RegExp(Platform.environment['FASAN_BONS'] ?? r'\.(png|jpg|jpeg)$', caseSensitive: false);
     final failures = <String>[], known = <String>[];
-    final okPer = <String, int>{}, nPer = <String, int>{};
+    final okPer = <String, int>{}, nPer = <String, int>{}, falsePer = <String, int>{};
     var checkedBons = 0;
     for (final dir in dirs) {
       final files = Directory(dir).listSync().whereType<File>().map((f) => f.path).where((p) => pick.hasMatch(p)).toList()..sort();
@@ -91,6 +84,7 @@ void main() {
         final tf = File(f.replaceFirst(RegExp(r'(-mild|-hart|-extrem|-kopf|-quer)?\.(png|jpg|jpeg)$', caseSensitive: false), '.json'));
         if (!tf.existsSync()) continue;
         final truth = jsonDecode(tf.readAsStringSync()) as Map<String, dynamic>;
+        cacheFor(ocr, f);
         final x = await rec.recognize(File(f).readAsBytesSync());
         final d = RecognitionService.fromRecognition(x);
         checkedBons++;
@@ -131,8 +125,11 @@ void main() {
         nPer[dir] = (nPer[dir] ?? 0) + 1;
         if (problems.isEmpty) okPer[dir] = (okPer[dir] ?? 0) + 1;
         if (korpus.contains(dir)) {
+          // wrong amounts reported as checked are counted per folder: the worst outcome, it may never grow (06.11.)
+          final wrongChecked = d.checked && amountsWrong;
+          if (wrongChecked) falsePer[dir] = (falsePer[dir] ?? 0) + 1;
           // ignore: avoid_print
-          print('${problems.isEmpty ? 'K-OK' : 'K-FEHLER'} $name${problems.isEmpty ? '' : ': ${problems.join('; ')}'}');
+          print('${problems.isEmpty ? 'K-OK' : 'K-FEHLER'} $name${wrongChecked ? ' [FALSCH ALS GEPRÜFT]' : ''}${problems.isEmpty ? '' : ': ${problems.join('; ')}'}');
           continue;
         }
         if (problems.isEmpty) {
@@ -153,13 +150,18 @@ void main() {
         }
       }
     }
+    cacheDone(ocr);
     final minFile = Platform.environment['FASAN_KORPUS_MIN'];
     final min = minFile != null && File(minFile).existsSync() ? jsonDecode(File(minFile).readAsStringSync()) as Map<String, dynamic> : const {};
     for (final d in korpus) {
       final key = d.split('/').where((x) => x.isNotEmpty).last;
       // ignore: avoid_print
-      print('KORPUS $key: ${okPer[d] ?? 0}/${nPer[d] ?? 0} ganz richtig (Bestwert ${min[key] ?? '–'})');
+      print('KORPUS $key: ${okPer[d] ?? 0}/${nPer[d] ?? 0} ganz richtig (Bestwert ${min[key] ?? '–'}), '
+          '${falsePer[d] ?? 0} falsch als geprüft (höchstens ${min['$key/falsch'] ?? '–'})');
       if (min[key] is int && (okPer[d] ?? 0) < (min[key] as int)) failures.add('Korpus $key schlechter: ${okPer[d] ?? 0} < ${min[key]}');
+      if (min['$key/falsch'] is int && (falsePer[d] ?? 0) > (min['$key/falsch'] as int)) {
+        failures.add('Korpus $key: ${falsePer[d]} falsch als geprüft > ${min['$key/falsch']}');
+      }
     }
     // ignore: avoid_print
     print('TOR: $checkedBons Bons, ${failures.length} Fehler, ${known.length} bekannt');

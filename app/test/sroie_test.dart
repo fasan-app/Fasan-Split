@@ -8,10 +8,10 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fasan_split/recognition/onnx.dart';
-import 'package:fasan_split/recognition/paddle.dart';
 import 'package:fasan_split/recognition/pipeline.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/ocr_cache.dart';
 
 void main() {
   final env = Platform.environment;
@@ -19,13 +19,7 @@ void main() {
   final ready = Directory('$root/data/img').existsSync() && File('assets/models/det.onnx').existsSync();
   test('SROIE Summe', () async {
     final threads = int.tryParse(env['FASAN_THREADS'] ?? '') ?? 2;
-    final uv = File('assets/models/uvdoc.onnx');
-    final ocr = PaddleOcr(
-      OnnxModel.fromBytes(File('assets/models/det.onnx').readAsBytesSync(), threads: threads),
-      OnnxModel.fromBytes(File('assets/models/rec-latin.onnx').readAsBytesSync(), threads: threads),
-      File('assets/models/dict-latin.txt').readAsStringSync(),
-      uvdoc: uv.existsSync() && env['FASAN_UVDOC'] != '0' ? OnnxModel.fromBytes(uv.readAsBytesSync(), threads: threads) : null,
-    );
+    final ocr = testOcr('assets/models', threads);
     final rec = Recognizer(ocr, earlyStop: env['FASAN_EARLYSTOP'] != '0');
     final from = int.tryParse(env['FASAN_VON'] ?? '') ?? 0, to = int.tryParse(env['FASAN_BIS'] ?? '') ?? 60;
     var ok = 0, n = 0, checked = 0, checkedWrong = 0;
@@ -42,7 +36,9 @@ void main() {
       int? got;
       var sure = false, items = 0, source = '';
       try {
+        cacheFor(ocr, img.path);
         final x = await rec.recognize(img.readAsBytesSync());
+        cacheDone(ocr);
         got = x.result.total;
         sure = x.result.check.ok;
         items = x.result.items.length;
