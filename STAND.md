@@ -462,7 +462,7 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   Ausgleichszahlung** in der Gruppe (Häkchen an „Angi zahlt Chris …“ → Rückfrage → Ausgleichsbuchung als kleiner Bon, Rückgängig; `store.recordPayment`, `record_payment_test`).
   **Im Browser angesehen (06.11. nachts):** Zeile „Angi zahlt Chris 10,00 €“ mit „Bezahlen“ und „Als bezahlt eintragen“ (beschriftet, unter dem Satz), Rückfrage, Buchung,
   Hinweis mit Rückgängig, Saldo danach ausgeglichen. Dabei gefunden und behoben: die Buchung zählte als Ausgabe („2 Bons · 34,00 €“) → `Bill.isTransfer`, aus Summen,
-  Bon-Zahlen und Ausgaben je Person ausgenommen. Offen: Teilzahlung (anderer Betrag) wählbar; Personen-Bereich klappt nach dem Eintragen wieder zu.
+  Bon-Zahlen und Ausgaben je Person ausgenommen. Teilzahlung und offener Personen-Bereich: **ERLEDIGT 07.11. (B)** – siehe ZUSAMMENARBEIT-Protokoll (App und Browser h07–h08f gleich, parseMoney mit Tausendertrennung).
 
 - **Übergabe 06.11. nachts (Kontingent der Sitzung A erschöpft):** ab jetzt arbeiten mehrere Sitzungen parallel; Abstimmung **nur** über `docs/ZUSAMMENARBEIT.md`.
   Letzter Code-Stand: Zweig `mitarbeit/erkennung-und-ein-bildschirm` (Commit 6b65cc3), CI dort grün; `main` hat nur Doku seit der letzten Veröffentlichung.

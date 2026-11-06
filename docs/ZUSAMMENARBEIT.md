@@ -33,7 +33,7 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 
 | Kürzel | Paket | Zweig | Dateien/Bereiche | seit |
 |---|---|---|---|---|
-| B | **A's offenen Rest abschließen** (Nutzer 06.11. 23:48: „wichtiger als die Erkennung“): Teilzahlung/Ausgleich nach „Fertig heißt“ (App + Browser ansehen), Scan-Vergleich App/Browser, CI-Wackler-Nachweis, danach weiter nach A's Reihenfolge | `mitarbeit/B-a-rest` (von `mitarbeit/erkennung-und-ein-bildschirm`) | `app/lib/ui/groups.dart`, `test/record_payment_test.dart`, `test/screens_test.dart`, `tool/e2e/screens.js` (A pausiert; vor Rückkehr hier melden) | 06.11. 23:55 |
+| B (Teilbetrag erledigt 00:40) | **A's offenen Rest abschließen** (Nutzer 06.11. 23:48: „wichtiger als die Erkennung“): Teilzahlung/Ausgleich nach „Fertig heißt“ (App + Browser ansehen), Scan-Vergleich App/Browser, CI-Wackler-Nachweis, danach weiter nach A's Reihenfolge | `mitarbeit/B-a-rest` (von `mitarbeit/erkennung-und-ein-bildschirm`) | `app/lib/ui/groups.dart`, `test/record_payment_test.dart`, `test/screens_test.dart`, `tool/e2e/screens.js` (A pausiert; vor Rückkehr hier melden) | 06.11. 23:55 |
 | B (pausiert) | Erkennung: 8 Welt-Bons „falsch als geprüft“, Hangul, Aldi (Durchschein), SROIE/CORD-Gegenprobe, Pfand/Rabatt-Hinweise strukturiert statt Text | `mitarbeit/B-erkennung` (von `mitarbeit/erkennung-und-ein-bildschirm` 6b65cc3/86b95b8) | `app/packages/fasan_reader/**`, `app/lib/recognition/**`, `app/test/{gate,e2e,reader,name_vote,snapshot,world_reader,sroie,ocr_dump}*_test.dart`, `app/test/support/ocr_cache.dart`, `app/tool/korpus/**`; für die Pfand/Rabatt-Hinweise kurz auch `fasan_core` (`BillItem`, nur neues Feld) und die eine Anzeigestelle – vorher hier melden | 06.11. 23:50 |
 
 ## Erledigt (neueste oben)
@@ -43,6 +43,11 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
   Web-Build, Foto-Ende-zu-Ende, Erkennung 132 Bons/0 Fehler, Korpus gleich). Einzelheiten: `STAND.md`, `docs/ARCHITEKTUR.md`.
 
 ## Protokoll (laufend, neueste oben; je Eintrag: Zeit, Kürzel, getan, als Nächstes)
+
+- 07.11. 00:40, B: Teilbetrag **zusammengeführt** in `mitarbeit/erkennung-und-ein-bildschirm` (a39f196) nach schnellem Tor: analyze ohne Befund, 355 Tests grün
+  (137 übersprungen), `e2e_test` mit ONNX PNG 11/11, JPG 30/30, Posten 247/247; Varianten-Stresstest (bis 4 h) nicht gelaufen (gehört nicht ins schnelle Tor, Erkennung
+  unberührt). Erkennung 10a037a (neu aufgesetzt auf a39f196) → **CI-Tor läuft** (Tor-Zweig 42313737557). **Als Nächstes:** Ergebnis auswerten, Fehlerklassen
+  bis grün; danach Rangfolge 1. Web = App komplett, 2. Leistung.
 
 - 07.11. 00:05, B: **Teilbetrag (A's 6b65cc3) fertig gemacht** auf `mitarbeit/B-a-rest` (fe55421, 7d…): Dialog eigener Baustein (Eingabefeld wird freigegeben), Frage ohne festen
   Betrag, `parseMoney` liest „1.234,56“ (Test scheitert ohne), App- und Browser-Durchlauf h07–h08f, Seite an Seite angesehen: gleich (Unterschiede nur Testdaten).
