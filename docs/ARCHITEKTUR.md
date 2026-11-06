@@ -59,6 +59,14 @@ Tore, die vor und nach jedem Schritt grün sein müssen: Erkennungs-Tor (alle ec
 
 Jeder Schritt: eigener Commit auf dem Arbeitszweig, Tore laufen, STAND.md aktualisiert. Verhalten ändert sich nicht (Neuaufbau = gleiche Funktion, gesichert durch die Tests); Fehler, die dabei sichtbar werden, werden getrennt behoben.
 
+## Geprüft (06.11. nachts, eigener Versuch – dart.dev ist aus der Sitzung nicht erreichbar, Netzregel)
+
+- **Pub-Workspaces funktionieren mit Flutter 3.47.7 / Dart 3.13.5**: Wurzel-`pubspec.yaml` mit `workspace: [packages/core]`, Mitglied mit `resolution: workspace`;
+  **die App selbst kann die Wurzel bleiben** (`app/pubspec.yaml`), dadurch ändern sich CI-Pfade nicht. Eine gemeinsame `pubspec.lock` in der Wurzel.
+- `flutter test` in der App findet `package:core`; im reinen Dart-Paket läuft `dart test` (braucht `test` als dev-Abhängigkeit, pub.dev ist erreichbar).
+- Folgerung: Schritt 2 als Paket `app/packages/fasan_core` (reines Dart, kein Flutter). Übergang ohne Bruch: an den alten Stellen (`lib/model/bill.dart` …) bleiben
+  kurze `export`-Dateien, bis alle Imports umgestellt sind; dann fallen sie weg.
+
 ## Offen / zu recherchieren (Regel: echte Quellen, Stand des Jahres, als neu kennzeichnen)
 - Dart-Pub-Workspaces (Dart ≥ 3.6) gegenüber Pfad-Abhängigkeiten für die Paketstruktur; Auswirkung auf die CI.
 - Bedingte Importe vs. Schnittstelle + Einbindung per Verdrahtung (Dokumentation dart.dev, flutter.dev „Packages“/„Federated plugins“ als Vorbild für `platform_api`/`_native`/`_web`).
