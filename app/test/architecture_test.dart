@@ -29,4 +29,32 @@ void main() {
       expect(code.every((l) => l.startsWith('export ')), isTrue, reason: f);
     }
   });
+
+  // layers of the app (docs/ARCHITEKTUR.md): a folder may only use the folders below it
+  const allowed = {
+    'model': <String>{},
+    'recognition': {'model'},
+    'state': {'model', 'recognition'},
+    'collab': {'model', 'state'},
+    'app': {'model', 'recognition', 'state', 'collab', 'ui'},
+  };
+  for (final e in allowed.entries) {
+    test('lib/${e.key} nutzt nur ${e.value.isEmpty ? 'fasan_core' : e.value.join(', ')}', () {
+      final bad = <String>[];
+      for (final (file, imp) in _imports('lib/${e.key}')) {
+        String? target;
+        if (imp.startsWith('package:fasan_split/')) {
+          target = imp.substring('package:fasan_split/'.length);
+        } else if (!imp.contains(':')) {
+          final rel = File(file).parent.uri.resolve(imp).toFilePath();
+          final i = rel.indexOf('lib/');
+          target = i < 0 ? null : rel.substring(i + 4);
+        }
+        if (target == null || !target.contains('/')) continue; // files at the top of lib/ (texts, adapters): checked when they move
+        final folder = target.split('/').first;
+        if (folder != e.key && !e.value.contains(folder)) bad.add('$file → $imp');
+      }
+      expect(bad, isEmpty);
+    });
+  }
 }

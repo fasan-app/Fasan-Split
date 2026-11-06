@@ -11,7 +11,7 @@ import '../l10n_bill.dart';
 import '../l10n/tr.dart';
 import '../main.dart';
 import '../model/bill.dart';
-import '../model/scan_bill.dart' show remainderName;
+import '../app/scan_bill.dart' show remainderName;
 import '../recognition_service.dart';
 import '../state/images.dart';
 import 'assign.dart';

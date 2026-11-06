@@ -5,8 +5,8 @@ import 'dart:typed_data';
 import '../recognition/place.dart';
 import '../recognition_service.dart';
 import '../state/store.dart';
-import 'bill.dart';
-import 'category.dart';
+import '../model/bill.dart';
+import '../ui/category.dart';
 
 /// Saves the scan image, the log and (unless [saveOriginal] is false) the photo as taken, and builds the bill from the result.
 /// The header comes from the best read pass (bestHeader); the lines of the winner are only the fallback.

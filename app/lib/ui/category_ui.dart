@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../main.dart';
 import '../model/bill.dart';
-import '../model/category.dart';
+import 'category.dart';
 import '../state/store.dart';
 import 'collab_ui.dart' show askText;
 

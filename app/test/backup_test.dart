@@ -3,7 +3,7 @@ import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/model/bill.dart';
-import 'package:fasan_split/state/backup.dart';
+import 'package:fasan_split/app/backup.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

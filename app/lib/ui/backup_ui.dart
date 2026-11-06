@@ -9,7 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../l10n.dart';
 import '../main.dart';
-import '../state/backup.dart';
+import '../app/backup.dart';
 import 'collab_ui.dart' show askText;
 import 'common.dart';
 

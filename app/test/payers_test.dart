@@ -3,7 +3,7 @@
 import 'package:fasan_split/collab/bill_sync.dart';
 import 'package:fasan_split/collab/lww.dart';
 import 'package:fasan_split/model/bill.dart';
-import 'package:fasan_split/model/scan_bill.dart';
+import 'package:fasan_split/app/scan_bill.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

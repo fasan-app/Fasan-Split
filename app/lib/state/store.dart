@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../model/category.dart';
+import 'package:fasan_core/category_guess.dart';
 import '../model/settle.dart';
 import '../model/bill.dart';
 import 'images.dart';

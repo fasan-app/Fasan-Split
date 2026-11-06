@@ -10,7 +10,7 @@ import '../l10n.dart';
 import '../l10n/tr.dart';
 import '../l10n_bill.dart';
 import '../main.dart';
-import '../state/scan_queue.dart';
+import '../app/scan_queue.dart';
 import '../state/images.dart';
 import '../model/bill.dart';
 import 'category_ui.dart';

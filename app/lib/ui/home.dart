@@ -13,7 +13,7 @@ import '../l10n.dart';
 import '../web_platform.dart';
 import '../main.dart';
 import '../model/bill.dart';
-import '../state/scan_queue.dart';
+import '../app/scan_queue.dart';
 import '../state/store.dart';
 import '../update.dart';
 import 'bill_tile.dart';

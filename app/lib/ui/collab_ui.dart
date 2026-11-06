@@ -18,7 +18,7 @@ import '../l10n_collab.dart';
 import '../web_platform.dart';
 import '../l10n_groups.dart';
 import '../main.dart';
-import '../state/scan_queue.dart';
+import '../app/scan_queue.dart';
 import 'bill_tile.dart';
 import 'common.dart' show TitleHelp, showNote;
 import '../model/bill.dart' show money;

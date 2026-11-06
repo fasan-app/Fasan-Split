@@ -8,10 +8,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../model/bill.dart';
-import '../model/scan_bill.dart';
+import 'scan_bill.dart';
 import '../recognition_service.dart';
-import 'scan_live.dart';
-import 'store.dart';
+import '../state/scan_live.dart';
+import '../state/store.dart';
 
 class ScanQueue extends ChangeNotifier {
   ScanQueue(this.store, {Stream<ScanEvent> Function(Uint8List photo)? recognize}) : _recognize = recognize ?? RecognitionService.instance.recognize;

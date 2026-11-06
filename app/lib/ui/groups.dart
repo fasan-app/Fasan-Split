@@ -12,7 +12,7 @@ import '../l10n_groups.dart';
 import '../model/settle.dart';
 import '../main.dart';
 import '../model/bill.dart';
-import '../state/scan_queue.dart';
+import '../app/scan_queue.dart';
 import 'bill_tile.dart';
 import 'collab_ui.dart';
 import 'common.dart';

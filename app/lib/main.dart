@@ -17,7 +17,7 @@ import 'ui/pairing_ui.dart';
 import 'web_platform.dart';
 import 'collab/activity.dart' show activityGerman;
 import 'collab/service.dart';
-import 'state/notify.dart';
+import 'app/notify.dart';
 import 'state/store.dart';
 import 'ui/collab_ui.dart';
 import 'ui/demo.dart';
