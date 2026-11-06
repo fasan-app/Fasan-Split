@@ -499,7 +499,12 @@ Besitzer. Nutzer neu anlegen lassen, danach Probelauf wiederholen (`git commit -
    Handy, aber nicht das S23):** Bon mit 7 Ausschnitten und Foto, Stillstand 61 fps (17 ms) in beiden Fällen. Scrollen: normal 46 fps,
    p90 50 ms, schlechtestes Bild 67 ms; CPU 4× gedrosselt 38 fps, p50 17 ms, p90 17 ms, schlechtestes Bild 167 ms (ein Ausreißer).
    Foto da nach 34 s (normal) bzw. 56 s (gedrosselt), jeweils inkl. 15 s App-Start. Nach Neuladen Scan wieder da nach 22 s bzw. 26 s.
-   Noch nicht gemessen: Scannen im Browser (Erkennung), Start mit vielen Bons, echtes S23. Budget für die CI fehlt noch
+   **Scannen im Browser (`tool/e2e/scan.js`, echter Bon Esplanada, Web-Worker + ONNX Runtime Web, Ergebnis richtig: 7 Posten, 39,60 €):**
+   Start 15 s; Foto wählen bis Ergebnis 25 s (CPU normal) bzw. 34 s (4× gedrosselt); Bildtakt während des Scannens p50/p90 17 ms,
+   je ein Ausreißer (383 ms normal, 867 ms gedrosselt – beim Übergang zum Ergebnis). Die Erkennung läuft im Worker und blockiert die
+   Oberfläche nicht. Anmerkung: der Test ist mit einem kleinen Foto (Nutzerfoto, verkleinert hochgeladen), große Handyfotos dauern länger.
+   **Bon-Ausschnitte unter den Posten jetzt Standard** (Commit unten), im Browser mit dem echten Bon angesehen.
+   Noch nicht gemessen: Start mit vielen Bons, großes Handyfoto (4000 px), echtes S23. Budget für die CI fehlt noch
    (Prüfliste G6: Vielfaches des Medians, fail-on-alert).
    Offen in Punkt 3: Bildschirm-für-Bildschirm-Vergleich App/Browser
    mit Fotos, Blossom (volle Auflösung) als zweiter Kanal, Fotos im Browser erst bei Bedarf laden (images_web lädt heute alle beim

@@ -46,7 +46,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   int? _active;
 
   /// Receipt snippets under every item (otherwise only under items that are not sure).
-  bool _snippets = false;
+  bool _snippets = true; // default on (Nutzer 06.11.: the receipt snippet is the only crisis-proof sign that an item is right); compact, switch in ⋮
 
   @override
   void initState() {
