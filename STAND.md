@@ -405,11 +405,13 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
 - **Nutzer 06.11. abends:** bietet Schreibrechte auf `fasan_ui` an („fände ich sinnvoll“). Angenommen: Ursachen, die im Designpaket liegen (z. B. `FasanOpenContainer`
   mit deckender `openColor`), werden dort behoben statt in Split umgangen. Sitzung hängt `fasan_ui` mit `add_repo` (push) an; CLAUDE.md „Schritt 0“ von „lesen“ auf „push“ ändern.
 
-- **Bildschirmvergleich, Stand 06.11. spätabends:** gleich in App und Browser (Seite an Seite angesehen): Bon-Bildschirm, ⋮-Menü, Posten-Blatt (mit „Fester Betrag“),
-  Bon-Ansicht Scan/Original/Digital, Home, Einstellungen, Person-Blatt (ohne Screenreader-Schicht). **Echter Unterschied:** mit Screenreader-Schicht wird
-  langes Drücken im Browser zum Antippen (steht in `docs/WEB-GRENZEN.md`; Folgearbeit: benannte Aktion am Personen-Chip für Screenreader, auch in der APK
-  nützlich). Noch nicht verglichen: Zahlen-/Ergebnis-Bildschirm mit zwei Personen, Beitritt, Gruppe/Personen-Bereich, Scan, Papierkorb/Archiv,
-  Chat/Notizen, Dunkelmodus und Querformat im Browser.
+- **Bildschirmvergleich, Stand 06.11. nachts (Handygröße 393×873, derselbe Bon „Foto-Test“ mit Chris/Angi, Seite an Seite angesehen):** gleich in App und
+  Browser: Bon-Bildschirm (zugeordnet, Zahler), ⋮-Menü, Posten-Blatt mit „Fester Betrag“, Prüfen-Blatt, Bon-Ansicht Scan/Original/Digital, Person-Blatt (ohne
+  Screenreader-Schicht), Übersicht (Fertig → Eintragen), Ergebnis mit „Alles bezahlt – ausgleichen“, Home, Einstellungen. Unterschiede, die nur an den Daten lagen
+  (Browser-Nutzer ist Angi, „Bezahlen“; erledigt-Zustand), sind im Test angeglichen. **Gefunden und behoben:** Rückgängig sofort aktiv (Fremdänderungen zählten),
+  Bon aus Kachel ohne Hintergrund (fasan_ui), Person-Blatt-Überlauf im Querformat, Indexfehler beim Zuordnen am Bon. **Echte Web-Grenze:** langes Drücken mit
+  Screenreader-Schicht (siehe WEB-GRENZEN). Werkzeuge: `tool/e2e/screens.js` (Browser), `test/screens_test.dart` Bildschirme `b…` (App), `tool/e2e/photo.js` bleibt das
+  Foto-Ende-zu-Ende. **Noch nicht verglichen:** Beitritt, Gruppe/Personen-Bereich, Scan, Archiv/Papierkorb, Chat/Notizen, Dunkelmodus und Querformat im Browser, Englisch.
 
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
