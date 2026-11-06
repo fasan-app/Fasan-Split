@@ -126,6 +126,7 @@ class _ItemSheetState extends State<_ItemSheet> {
               setState(() {});
             },
           ),
+          if (widget.bill.ps.any((p) => (it.shares[widget.bill.ps.indexOf(p)] ?? 0) > 0)) _FixedAmounts(bill: widget.bill, item: it, changed: widget.changed),
           const SizedBox(height: FasanSpace.l),
           Row(children: [
             FasanButton(
@@ -141,6 +142,73 @@ class _ItemSheetState extends State<_ItemSheet> {
             FasanButton(label: context.tr('item.done'), onPressed: () => Navigator.pop(context)),
           ]),
         ]),
+      ),
+    );
+  }
+}
+
+/// „Fester Betrag“ (split kind „fest“, Nutzer 06.11.): people on the item can pay an exact amount; the rest of the item follows
+/// the shares of the others (SplitMath.splitFixed). Folded away until needed.
+class _FixedAmounts extends StatefulWidget {
+  const _FixedAmounts({required this.bill, required this.item, required this.changed});
+
+  final Bill bill;
+  final BillItem item;
+  final VoidCallback changed;
+
+  @override
+  State<_FixedAmounts> createState() => _FixedAmountsState();
+}
+
+class _FixedAmountsState extends State<_FixedAmounts> {
+  final _c = <int, TextEditingController>{};
+
+  @override
+  void dispose() {
+    for (final c in _c.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final b = widget.bill, it = widget.item, de = context.langCode == 'de';
+    final people = [for (var i = 0; i < b.ps.length; i++) if ((it.shares[i] ?? 0) > 0) i];
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        initiallyExpanded: it.fixed.isNotEmpty,
+        title: Text(context.tr('item.fixed')),
+        subtitle: Text(context.tr('item.fixedHint')),
+        children: [
+          for (final i in people)
+            Padding(
+              padding: const EdgeInsets.only(bottom: FasanSpace.s),
+              child: Row(children: [
+                Expanded(child: Text(b.ps[i].name)),
+                SizedBox(
+                  width: 120,
+                  child: TextField(
+                    controller: _c.putIfAbsent(i, () => TextEditingController(text: it.fixed[i] == null ? '' : money(it.fixed[i]!, de: de))),
+                    decoration: InputDecoration(hintText: context.tr('item.fixedNone')),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+                    onChanged: (v) {
+                      final a = parseMoney(v);
+                      if (a == null) {
+                        it.fixed.remove(i);
+                      } else {
+                        it.fixed[i] = a;
+                      }
+                      widget.changed();
+                    },
+                  ),
+                ),
+              ]),
+            ),
+        ],
       ),
     );
   }

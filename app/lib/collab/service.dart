@@ -795,7 +795,7 @@ class CollabService extends ChangeNotifier {
         if (doc.get(k) case final Map p when names.contains('${p['name']}'.trim().toLowerCase())) k.substring(2),
     };
     if (mine.isEmpty) return true;
-    final concerns = e.key == 'meta/payer' || mine.any((u) => e.key == 'p/$u' || (e.key.startsWith('s/') && e.key.endsWith('/$u')));
+    final concerns = e.key == 'meta/payer' || mine.any((u) => e.key == 'p/$u' || ((e.key.startsWith('s/') || e.key.startsWith('f/')) && e.key.endsWith('/$u')));
     if (!concerns) return true;
     if (!held.any((h) => h.docId == docId && h.entry.key == e.key && h.entry.ts == e.ts && h.entry.author == e.author)) {
       held.add(HeldChange(g, docId, e));

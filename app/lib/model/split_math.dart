@@ -22,6 +22,29 @@ class SplitMath {
     return _splitInts(amount, w, rotate: rotate);
   }
 
+  /// Fixed amounts first (a person who pays exactly [fixed] cents), the rest of [amount] by [shares] among the others. Nobody
+  /// left to take the rest: it is spread over the fixed amounts in proportion (so the parts always add up to [amount]).
+  /// A fixed amount counts only for people who are on the item (share > 0), so taking someone off the item drops it too.
+  static Map<int, int> splitFixed(int amount, Map<int, double> shares, Map<int, int> allFixed, {int rotate = 0}) {
+    final fixed = {for (final e in allFixed.entries) if ((shares[e.key] ?? 0) > 0) e.key: e.value};
+    if (fixed.isEmpty) return split(amount, shares, rotate: rotate);
+    final rest = amount - fixed.values.fold<int>(0, (x, y) => x + y);
+    final others = {for (final e in shares.entries) if (!fixed.containsKey(e.key)) e.key: e.value};
+    final out = Map<int, int>.of(fixed);
+    if (_weights(others).isNotEmpty) {
+      for (final e in split(rest, others, rotate: rotate).entries) {
+        out[e.key] = e.value;
+      }
+    } else if (rest != 0) {
+      final w = {for (final e in fixed.entries) if (e.value != 0) e.key: e.value.abs()};
+      if (w.isEmpty) return out;
+      for (final e in _splitInts(rest, w, rotate: rotate).entries) {
+        out[e.key] = out[e.key]! + e.value;
+      }
+    }
+    return out;
+  }
+
   /// Method B – cumulative rounding (a different algorithm on purpose, used only as a cross-check).
   /// Person k gets round(a·W_k / S) − round(a·W_{k−1} / S); the parts always add up to the amount.
   static Map<int, int> splitCumulative(int amount, Map<int, double> shares) {

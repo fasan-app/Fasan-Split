@@ -72,9 +72,11 @@ class BillItem {
     this.snippet,
     this.note,
     Map<int, double>? shares,
+    Map<int, int>? fixed,
     String? uid,
     this.proportional = false,
   })  : shares = shares ?? {},
+        fixed = fixed ?? {},
         uid = uid ?? newUid();
 
   /// Stable id for merging shared bills.
@@ -97,6 +99,9 @@ class BillItem {
 
   /// person index → weight
   Map<int, double> shares;
+
+  /// Fixed cents per person index (Aufteilen „fest“, Nutzer 06.11.): these people pay exactly this, the rest follows [shares].
+  Map<int, int> fixed;
 
   /// Shared like the other items, not by own weights: whoever had more pays more of it (VAT/service without an item
   /// line, Nutzer 04.11.: „jemand der weniger hatte muss auch weniger Steuern zahlen“). [shares] is ignored then.
@@ -158,6 +163,7 @@ class BillItem {
         'snippet': snippet == null ? null : base64Encode(snippet!),
         'note': note,
         'shares': {for (final e in shares.entries) '${e.key}': e.value},
+        if (fixed.isNotEmpty) 'fixed': {for (final e in fixed.entries) '${e.key}': e.value},
         if (proportional) 'prop': true,
       };
 
@@ -174,6 +180,7 @@ class BillItem {
         snippet: j['snippet'] == null ? null : base64Decode(j['snippet'] as String),
         note: j['note'] as String?,
         shares: {for (final e in ((j['shares'] as Map?) ?? const {}).entries) int.parse(e.key as String): (e.value as num).toDouble()},
+        fixed: {for (final e in ((j['fixed'] as Map?) ?? const {}).entries) int.parse(e.key as String): (e.value as num).toInt()},
         proportional: j['prop'] == true,
       );
 }
@@ -373,13 +380,13 @@ class Bill {
   int get unassigned => its.where((p) => !p.assigned).length;
 
   /// Cents per person for one item. Exact integer arithmetic, leftover cents rotate with [rotate] (the item index).
-  static Map<int, int> split(int amount, Map<int, double> shares, {int rotate = 0}) => SplitMath.split(amount, shares, rotate: rotate);
+  static Map<int, int> split(int amount, Map<int, double> shares, {int rotate = 0, Map<int, int> fixed = const {}}) => SplitMath.splitFixed(amount, shares, fixed, rotate: rotate);
 
   /// What each person consumed (cents). Unassigned items are not counted (shown separately).
   /// What each person pays of item [n]. Proportional items follow the other items (largest remainders, exact cents).
   Map<int, int> partsOf(int n) {
     final it = its[n];
-    if (!it.proportional) return split(it.amount, it.shares, rotate: n);
+    if (!it.proportional) return split(it.amount, it.shares, rotate: n, fixed: it.fixed);
     final base = _baseSums();
     if (!base.values.any((v) => v > 0)) return const {};
     return SplitMath.spread(it.amount, base, rotate: n);
@@ -390,7 +397,7 @@ class Bill {
     for (var n = 0; n < its.length; n++) {
       final it = its[n];
       if (it.proportional) continue;
-      for (final e in split(it.amount, it.shares, rotate: n).entries) {
+      for (final e in split(it.amount, it.shares, rotate: n, fixed: it.fixed).entries) {
         if (e.key < ps.length) out[e.key] = out[e.key]! + e.value;
       }
     }
@@ -424,6 +431,10 @@ class Bill {
         for (final e in it.shares.entries)
           if (e.key != idx) (e.key > idx ? e.key - 1 : e.key): e.value
       };
+      it.fixed = {
+        for (final e in it.fixed.entries)
+          if (e.key != idx) (e.key > idx ? e.key - 1 : e.key): e.value
+      };
     }
     if (payer == idx) {
       payer = null;
@@ -446,8 +457,8 @@ class Bill {
     final issues = <AuditIssue>[];
     for (var n = 0; n < its.length; n++) {
       final it = its[n];
-      final a = SplitMath.split(it.amount, it.shares, rotate: n);
-      final b = SplitMath.splitCumulative(it.amount, it.shares);
+      final a = SplitMath.splitFixed(it.amount, it.shares, it.fixed, rotate: n);
+      final b = it.fixed.isEmpty ? SplitMath.splitCumulative(it.amount, it.shares) : a; // fixed amounts have no second method: the sum check below covers them
       final sa = a.values.fold<int>(0, (x, y) => x + y);
       if (a.isNotEmpty && sa != it.amount) issues.add(AuditIssue('sum', '${it.name}: $sa ≠ ${it.amount}'));
       if (a.isNotEmpty && !SplitMath.agree(a, b)) issues.add(AuditIssue('method', '${it.name}: $a ≠ $b'));

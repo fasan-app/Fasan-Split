@@ -379,6 +379,10 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
 - **Wiederholen ERLEDIGT 06.11. (Code)**: Verlauf je Bon im Speicher (`BillStore.watchHistory/stepHistory`, 40 Zustände, Fotofelder ausgenommen,
   neue Änderung verwirft den Wiederholen-Zweig), Pfeile in der Bon-Leiste, Test `undo_redo_test`. Noch ohne Bildschirmfoto-Prüfung.
 
+- **Aufteilen „fest“ ERLEDIGT 06.11. (Code)**: `BillItem.fixed` (Cent je Person), `SplitMath.splitFixed` (Festbeträge zuerst, Rest nach Anteilen der
+  anderen; zählt nur für Personen auf dem Posten), Sync `f/<posten>/<person>`, Blatt „Fester Betrag“ im Posten-Blatt, Prüfung deckt es ab.
+  Tests `split_fixed_test`. Noch ohne Bildschirmfoto-Prüfung. Offen davon: Ausgleich/„bezahlt“, E2–E5.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
