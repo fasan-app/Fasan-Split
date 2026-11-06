@@ -73,3 +73,5 @@ der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. 
 | 06.11. | Selbstständig weiterarbeiten, ohne dass der Nutzer jedes Mal bestätigen muss | Nutzer arbeitet vom Handy | ✔ gilt ab sofort (Zwischenberichte kurz, kein Warten auf „weiter“) | STAND.md |
 
 - 06.11. abends (Nutzer): Als Nächstes Vergleich Bildschirm für Bildschirm zwischen App und Browser; nach Kontextverlust nichts übergehen oder vergessen. Grund: „Web 1:1“ war behauptet, nicht verglichen. Stand: in Arbeit.
+
+- 06.11. nachts (Nutzer, Frage): Warum Code nicht direkt als Browser-Version, machen andere alles doppelt? Antwort gegeben (eine Codebasis, dünne Adapter, Grenzen des Browsers); Aussage zu anderen Diensten nicht geprüft. Stand: beantwortet.

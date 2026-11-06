@@ -413,6 +413,10 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   Screenreader-Schicht (siehe WEB-GRENZEN). Werkzeuge: `tool/e2e/screens.js` (Browser), `test/screens_test.dart` Bildschirme `b…` (App), `tool/e2e/photo.js` bleibt das
   Foto-Ende-zu-Ende. **Noch nicht verglichen:** Beitritt, Gruppe/Personen-Bereich, Scan, Archiv/Papierkorb, Chat/Notizen, Dunkelmodus und Querformat im Browser, Englisch.
 
+- **Frage des Nutzers 06.11. nachts: „Warum können wir den Code der App nicht direkt als Browser-Version nutzen? Programmieren andere alles doppelt?“** Antwort: Wir nutzen ihn
+  direkt (Flutter, eine Codebasis, Bildschirme und Logik identisch, nur 6 `_web.dart`-Adapter + wenige `kIsWeb`-Stellen, vom Test bewacht). Unterschiede sind Grenzen
+  des Browsers (`docs/WEB-GRENZEN.md`), keine Doppelarbeit. Aussage zu anderen Diensten aus dem Gedächtnis, **nicht geprüft** (Recherche bei Bedarf, Quellen nötig).
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
