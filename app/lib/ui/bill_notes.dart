@@ -4,7 +4,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
-import '../main.dart';
+import 'scope.dart';
 import '../model/bill.dart';
 
 /// Pinned notes as a hint on top of the bill (result and flow steps).

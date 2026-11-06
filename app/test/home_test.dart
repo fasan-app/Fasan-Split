@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/model/bill.dart';
 import 'package:fasan_split/recognition_service.dart';
-import 'package:fasan_split/app/scan_queue.dart';
+import 'package:fasan_split/flows/scan_queue.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_ui/fasan_ui.dart';

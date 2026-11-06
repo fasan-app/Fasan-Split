@@ -10,7 +10,7 @@ import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/model/bill.dart';
-import 'package:fasan_split/app/scan_bill.dart';
+import 'package:fasan_split/flows/scan_bill.dart';
 import 'package:fasan_split/recognition/pipeline.dart';
 import 'package:fasan_split/recognition_service.dart';
 import 'package:fasan_split/state/store.dart';

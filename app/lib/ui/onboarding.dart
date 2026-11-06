@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
 import '../l10n.dart';
-import '../main.dart';
+import 'scope.dart';
 import '../model/bill.dart';
 import '../state/store.dart';
 import 'assign.dart';

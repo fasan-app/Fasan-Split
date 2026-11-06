@@ -51,8 +51,11 @@ Tore, die vor und nach jedem Schritt grün sein müssen: Erkennungs-Tor (alle ec
 1. **Bestandsaufnahme** (dieses Dokument) – fertig.
    **Fortschritt 06.11. nachts:** Schritt 2 **erledigt** (`app/packages/fasan_core`: bill, split_math, settle, pay, speisen, text_util, accents, category_guess; reines Dart;
    alte Pfade leiten nur weiter; 327 Tests grün; Wächter `test/architecture_test.dart`). Schritt 3a **erledigt**: Zyklus state↔collab aufgelöst – Sicherung, Benachrichtigung,
-   Scan-Ablauf und Scan-Warteschlange nach `lib/app/` (Schicht über state/collab), Kategorie-Darstellung nach `lib/ui/category.dart`, Kategorie-Raten in den Kern.
-   Wächter erzwingt jetzt: model → nichts, recognition → model, state → model/recognition, collab → model/state, app → alles außer Einstieg.
+   Scan-Ablauf und Scan-Warteschlange nach `lib/flows/` (Schicht über state/collab), Kategorie-Darstellung nach `lib/ui/category.dart`, Kategorie-Raten in den Kern.
+   Schritt 3b **erledigt**: `StoreScope`, `CollabScope` und die app-weiten Griffe (navigatorKey, deviceNotifier, perfGovernor, startedWithInvite) in `lib/ui/scope.dart`;
+   **kein Bildschirm importiert mehr `main.dart`** (vorher 22 von 32). `main.dart` exportiert `scope.dart` nur noch für die Tests.
+   Wächter erzwingt jetzt: model → nichts, recognition → model, state → model/recognition, collab → model/state, flows → model/recognition/state/collab,
+   ui → alles außer Einstieg, perf → nichts; niemand außer dem Einstieg importiert `main.dart`.
 2. **`core` herauslösen**: `model/` + `split_math` ohne Fremdabhängigkeit; die zwei Verweise auf `recognition` umdrehen (Erkennung liefert Daten *an* das Modell, nicht umgekehrt).
 3. **`platform_api`** mit den vier Verträgen anlegen, bestehende `*_web.dart`/Stubs dahinter verschieben.
 4. **`store` und `sync` trennen** (Zyklus auflösen: `sync` kennt `store` nur über eine Schnittstelle).

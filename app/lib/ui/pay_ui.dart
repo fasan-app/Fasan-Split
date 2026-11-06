@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n.dart';
-import '../main.dart';
+import 'scope.dart';
 import '../model/bill.dart' show money;
 import '../model/pay.dart';
 import 'collab_ui.dart' show QrView;

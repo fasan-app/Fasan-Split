@@ -5,7 +5,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../main.dart';
+import 'scope.dart';
 import '../model/bill.dart';
 import '../recognition_service.dart';
 import '../state/store.dart';

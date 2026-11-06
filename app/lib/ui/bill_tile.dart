@@ -5,10 +5,10 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
-import '../main.dart';
+import 'scope.dart';
 import '../l10n_bill.dart';
 import '../model/bill.dart';
-import '../app/scan_queue.dart';
+import '../flows/scan_queue.dart';
 import 'category.dart';
 import '../model/settle.dart';
 import 'my_balance.dart';

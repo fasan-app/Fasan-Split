@@ -12,7 +12,7 @@ import 'package:zxing2/qrcode.dart';
 
 import '../collab/pairing.dart';
 import '../l10n.dart';
-import '../main.dart';
+import 'scope.dart';
 import 'collab_ui.dart' show ensureConsent, QrView;
 import 'common.dart';
 import '../web_platform.dart';

@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../l10n.dart';
-import '../main.dart';
-import '../app/backup.dart';
+import 'scope.dart';
+import '../flows/backup.dart';
 import 'collab_ui.dart' show askText;
 import 'common.dart';
 

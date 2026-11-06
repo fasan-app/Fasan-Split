@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
-import '../main.dart';
+import 'scope.dart';
 import '../model/bill.dart';
 import '../state/rates.dart';
 import 'collab_ui.dart' show askText;

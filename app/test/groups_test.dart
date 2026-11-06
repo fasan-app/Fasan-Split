@@ -2,7 +2,7 @@
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/model/bill.dart';
 import 'package:fasan_split/model/settle.dart';
-import 'package:fasan_split/app/scan_queue.dart';
+import 'package:fasan_split/flows/scan_queue.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/groups.dart';
 import 'package:fasan_ui/fasan_ui.dart';

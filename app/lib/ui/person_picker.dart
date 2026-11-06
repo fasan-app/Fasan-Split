@@ -5,7 +5,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/tr.dart';
-import '../main.dart';
+import 'scope.dart';
 import '../model/bill.dart';
 import 'common.dart';
 import 'flow.dart' show addPersonTo;

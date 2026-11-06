@@ -17,13 +17,14 @@ import 'ui/pairing_ui.dart';
 import 'web_platform.dart';
 import 'collab/activity.dart' show activityGerman;
 import 'collab/service.dart';
-import 'app/notify.dart';
+import 'collab/notify.dart';
 import 'state/store.dart';
 import 'ui/collab_ui.dart';
 import 'ui/demo.dart';
 import 'ui/home.dart';
+import 'ui/scope.dart';
 
-PerfGovernor? perfGovernor;
+export 'ui/scope.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,11 +61,6 @@ Future<void> main() async {
   unawaited(collab.init());
 }
 
-final navigatorKey = GlobalKey<NavigatorState>();
-
-/// Device notifications (null in tests).
-DeviceNotifier? deviceNotifier;
-
 /// Tells the collaboration when the app is in front (online status, CollabService.setForeground).
 class _Foreground with WidgetsBindingObserver {
   _Foreground(this.c) {
@@ -74,9 +70,6 @@ class _Foreground with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) => c.setForeground(state == AppLifecycleState.resumed);
 }
-
-/// True when this start came from an invitation link (browser: handed over by join/index.html).
-bool startedWithInvite = false;
 
 /// Invitation links: the old scheme fasansplit://join and the https address of the web app (App Link).
 bool isInviteLink(Uri u) =>
@@ -213,24 +206,6 @@ class _SplitAppState extends State<SplitApp> {
       ),
     );
   }
-}
-
-/// The collaboration service for all screens.
-class CollabScope extends InheritedNotifier<CollabService> {
-  const CollabScope({super.key, required CollabService service, required super.child}) : super(notifier: service);
-
-  static CollabService of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<CollabScope>()!.notifier!;
-  static CollabService read(BuildContext context) => context.getInheritedWidgetOfExactType<CollabScope>()!.notifier!;
-}
-
-class StoreScope extends InheritedNotifier<BillStore> {
-  const StoreScope({super.key, required BillStore store, required super.child}) : super(notifier: store);
-
-  static BillStore of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<StoreScope>()!.notifier!;
-
-  /// Without registering a dependency: for saving from build-triggered callbacks (otherwise save → notify → rebuild →
-  /// save loops forever).
-  static BillStore read(BuildContext context) => context.getInheritedWidgetOfExactType<StoreScope>()!.notifier!;
 }
 
 /// Every text falls back to the app's own emoji font (assets/fonts/FasanEmoji.ttf) before the system's: the symbols look the

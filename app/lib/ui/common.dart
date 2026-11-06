@@ -8,7 +8,7 @@ import 'bill_notes.dart' show PinnedNotes;
 import 'package:flutter/services.dart';
 
 import '../l10n.dart';
-import '../main.dart';
+import 'scope.dart';
 import '../model/bill.dart';
 import '../state/rates.dart';
 import '../recognition/reader.dart' show nameAlternatives;

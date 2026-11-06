@@ -6,7 +6,7 @@ import '../recognition/place.dart';
 import '../recognition_service.dart';
 import '../state/store.dart';
 import '../model/bill.dart';
-import '../ui/category.dart';
+import 'package:fasan_core/category_guess.dart';
 
 /// Saves the scan image, the log and (unless [saveOriginal] is false) the photo as taken, and builds the bill from the result.
 /// The header comes from the best read pass (bestHeader); the lines of the winner are only the fallback.

@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import '../l10n/tr.dart';
-import '../main.dart';
+import 'scope.dart';
 import '../model/bill.dart';
 import 'assign.dart' show PeoplePicker, addPersonDialog, personMenu;
 import 'common.dart';

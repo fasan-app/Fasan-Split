@@ -10,7 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../l10n.dart';
 import '../l10n/tr.dart';
 import '../l10n_collab.dart';
-import '../main.dart';
+import 'scope.dart';
 import '../perf/perf_governor.dart';
 import '../collab/activity.dart';
 import '../collab/ws_connect.dart' show proxySupported, proxyReachable;

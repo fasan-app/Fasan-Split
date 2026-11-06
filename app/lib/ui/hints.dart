@@ -6,7 +6,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
-import '../main.dart';
+import 'scope.dart';
 
 /// Inline hint card with an icon, up to two sentences and „Verstanden“. Shows only while [id] is not dismissed.
 class HintCard extends StatelessWidget {
