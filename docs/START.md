@@ -3,11 +3,13 @@
 Als erste Nachricht einfügen (Sitzung mit dem Repo `fasan-app/Fasan-Split` starten):
 
 ```
-Lies nur CLAUDE.md und in STAND.md die Abschnitte „Noch offen – Reihenfolge“ und den letzten Sitzungsabschnitt.
-Große Dateien nur per grep. Antworte kurz, Deutsch, Du-Form. Ich arbeite vom Handy.
-Mein Punkt: <Nummer und Titel>. Branch: <name/thema>, nicht main.
-Vor dem Push: git fetch origin, flutter analyze, flutter test grün. Mergen nach main nur nach grüner CI und meiner Freigabe.
-fasan_ui nur anbinden, wenn der Punkt Design betrifft.
+Führe zuerst CLAUDE.md, Abschnitt „PFLICHT vor jeder Arbeit“, vollständig aus, Schritt 0 bis 4, ohne Ausnahme:
+Repos Fasan, fasan_ui, fasan-diagnose, Fasan-Karte und Fasan-Camera anhängen (ausdrücklich von mir freigegeben, lesen) und klonen,
+die Prüfschleife aus Schritt 0.2 laufen lassen und mir ihr Ergebnis zeigen. Fehlt etwas: stoppen und melden.
+Vor Design-/Bedienarbeit alle Recherchen vollständig lesen (nicht per grep) und docs/PRUEFLISTE-OBERFLAECHE.md anwenden.
+Danach STAND.md: „Beschlüsse“ oben und „Noch offen – Reihenfolge“; arbeite nach „Arbeitsplan ab 06.11.“ dort, Paket für Paket,
+und melde ein Paket erst als fertig, wenn alle Punkte von „Fertig heißt“ erfüllt sind – mit Nachweis.
+Antworte Deutsch, Du-Form, kurze Sätze. Ich arbeite vom Handy. Branch: mitarbeit/<thema>. main nur über das Tor in CLAUDE.md.
 ```
 
 ## Setup-Skript der Cloud-Umgebung (Umgebung bearbeiten, „Setup script“)
