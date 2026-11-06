@@ -4,7 +4,7 @@ name: Tor-Zweig
 on:
   push:
     branches: ['mitarbeit/**']
-    paths: ['.github/workflows/erkennung.yml', '.github/workflows/tor-zweig.yml', 'app/lib/recognition/**', 'app/test/gate_test.dart', 'app/test/support/**']
+    paths: ['STAND.md', '.github/workflows/erkennung.yml', '.github/workflows/tor-zweig.yml', 'app/lib/recognition/**', 'app/test/gate_test.dart', 'app/test/support/**']
 permissions:
   contents: read
 jobs:
