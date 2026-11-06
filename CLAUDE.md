@@ -42,6 +42,10 @@ Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete ste
   Jede Änderung wird in beiden geprüft.
 - **Veröffentlichen (main)** nur, wenn Erkennungs-Tor (alle echten Bons, keine Verschlechterung), alle Tests, Browser-Ende-zu-Ende und
   Leistungsmessung grün sind. Jede Veröffentlichung steht in `STAND.md`.
+- **Web folgt der App automatisch, solange eine Änderung nur Oberfläche und Logik betrifft (Nutzer 06.11.).** Berührt eine Änderung eine Fähigkeit der Plattform (Speicher,
+  Dateien, Schrift/Symbole, Kamera, Benachrichtigung, Netz, Erkennung), geht sie über einen Adapter mit Web- und nativer Fassung (`*_web.dart`, bedingter Import; `kIsWeb` nie
+  in Bildschirmen, `test/web_parity_test.dart` prüft das) und bekommt einen Eintrag in `docs/WEB-GRENZEN.md`. Jeder neue Bildschirm kommt in den Bildschirmvergleich
+  (`tool/e2e/screens.js` und `test/screens_test.dart`, Schritte `b…`/`h…`); ungeprüft gilt „Web = App“ nicht.
 - **Frühere Beschlüsse nie still umdrehen.** Widerspruch zwischen Anweisungen benennen und klären (Beispiel: „Bon-Ausschnitte zu groß“
   hieß kompakt machen, nicht entfernen).
 - **Vor jeder Frage oder Empfehlung an den Nutzer** die vorhandenen Recherchen zum Thema lesen (`docs/recherche/`, Karte, Camera, fasan_ui);
