@@ -905,6 +905,8 @@ final _priceWord = RegExp(r'pre[cç]o|preis|price|prix|precio', caseSensitive: f
 final _leadDash = RegExp(r'^[-–•*>\s]+');
 final _totalish = RegExp(r'\b(total|summe|gesamt)');
 final _roundish = RegExp(r'\b(round|rundung|arrondi|afronding)');
+// the tax word that names a tax item found between a net and a grand total (Kw.steuer without net/base words)
+final _taxName = RegExp(r'\b(mwst|ust|vat|gst|sst|hst|iva|tva|btw|moms|mva|alv|dph|pdv|kdv|tax|steuer|imposta)\b');
 
 /// Reader for receipts of all countries (Latin script) [liesAllgemein].
 ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
@@ -1097,7 +1099,10 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
   }
   if (end < 0) end = info.length;
   // no total word: the first line whose amount equals the sum of all amounts above (≥ 2 items) is the total
-  if (end == info.length && !(qr != null && qr.total != 0)) {
+  // Only on receipts without any total word: when „TOTAL DUE“ is printed but its amount sits on another line (Cutler & Co, Weltkorpus
+  // b3-143: business card text merged into the rows), the first coincidence „4.00 + 5.00 = 9.00“ became the total and 2 of 7 items
+  // were reported as checked. A printed total word outranks arithmetic coincidence (06.11., Sitzung B).
+  if (end == info.length && !(qr != null && qr.total != 0) && !info.any((r) => r.kind == 'summe')) {
     var sum = 0, n = 0;
     for (var i = 0; i < info.length; i++) {
       final r = info[i];
@@ -1474,6 +1479,16 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
           round = c[0] - sum;
         }
       }
+      // Rounding to whole units that is not printed (India „Grand Total 3128.00“ after net 2620.00 + taxes 508.47, Czechia; Weltkorpus
+      // b2-001 06.11.): only towards a printed total line, only with at least one tax line used, only to a whole unit and by less than
+      // half a unit – the tax lines must already explain the rest exactly.
+      if (target2 == null && m != 0) {
+        final c = stableSorted<int>(others.where((x) => x % 100 == 0 && x != sum && (x - sum).abs() <= 50), (a, b) => (a - sum).abs() - (b - sum).abs());
+        if (c.isNotEmpty) {
+          target2 = c[0];
+          round = c[0] - sum;
+        }
+      }
       if (target2 == null) continue;
       final w = (sum: target2, part: part, round: round);
       int cnt(({int sum, List<int> part, int round}) x) => x.part.length + (x.round != 0 ? 1 : 0);
@@ -1493,11 +1508,41 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
         r2.type = 'zuschlag';
       }
       if (pickE.round != 0) {
-        items.add(Item(name: 'Rundung', amount: pickE.round, line: roundLine, conf: 100)
+        // unprinted rounding: anchored to the printed total it leads to (a line index is needed for the snippet)
+        final sumAt = info.indexWhere((r) => r.i > zl0 && r.kind == 'summe' && r.last?.v == pickE!.sum);
+        items.add(Item(name: 'Rundung', amount: pickE.round, line: roundLine >= 0 ? roundLine : math.max(sumAt, zl0), conf: 100)
           ..surcharge = 'rundung'
           ..sure = true);
       }
       total = pickE.sum;
+    } else {
+      // A larger printed total further down that the tax lines do not explain: the matched total was a net or sub total („T. Importe
+      // 9.81 … Total 10.50“, Weltkorpus b1-092 06.11.; b2-001 before the rounding rule). The items cannot vouch for what is to be paid.
+      // If the exact difference is printed in the tax block between both totals (IVA 0.69 in the tax table), it is the tax item;
+      // otherwise the larger total is shown and the receipt is not checked. At most 40 % above (tax/service), so a total printed again
+      // in another currency is never taken.
+      final t1 = total;
+      final grand = info.indexWhere((r) => r.i > zl0 && r.kind == 'summe' && r.last != null && r.last!.v > t1 && r.last!.v * 10 <= t1 * 14);
+      if (grand >= 0) {
+        final d = info[grand].last!.v - t1;
+        final taxAt = [for (var i = zl0 + 1; i < grand; i++) if (info[i].kind == 'steuer') i];
+        var bridge = -1;
+        if (taxAt.isNotEmpty) {
+          for (var i = zl0 + 1; i < grand && bridge < 0; i++) {
+            if (info[i].kind != 'summe' && info[i].amounts.any((a) => a.v == d)) bridge = i;
+          }
+        }
+        if (bridge >= 0) {
+          final word = taxAt.map((i) => _taxName.firstMatch(info[i].n)?[0]).whereType<String>().firstOrNull;
+          items.add(Item(name: word == null ? 'Steuer' : (word.length <= 4 ? word.toUpperCase() : word), amount: d, line: bridge, conf: 100)
+            ..surcharge = 'steuer'
+            ..sure = true);
+          info[bridge].type = 'zuschlag';
+        } else {
+          ok = false;
+        }
+        total = info[grand].last!.v;
+      }
     }
   } else {
     // A „total“ of zero or less next to items that add up to a positive amount is a misread (a rounding line „-0.02“ or „0.00“

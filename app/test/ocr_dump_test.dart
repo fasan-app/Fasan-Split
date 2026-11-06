@@ -36,5 +36,8 @@ void main() {
     }
     // ignore: avoid_print
     print('TOTAL ${d.total} geprüft ${d.checked}');
+    // which target vouched for the items (summe, betrag, gegeben, qr …) and on which line – the first question for „wrong as checked“
+    // ignore: avoid_print
+    print('CHECK ok ${x.result.check.ok} quelle ${x.result.check.source} zeile ${x.result.totalLine} ziele ${x.result.check.targets}');
   }, timeout: const Timeout(Duration(minutes: 5)));
 }
