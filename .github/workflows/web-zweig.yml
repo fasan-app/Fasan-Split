@@ -4,7 +4,7 @@ name: Web-Zweig
 on:
   push:
     branches: ['mitarbeit/**']
-    paths: ['app/lib/**', 'app/test/e2e_web_*', 'app/tool/e2e/**', '.github/workflows/web-zweig.yml']
+    paths: ['app/lib/**', 'app/packages/**', 'app/test/e2e_web_*', 'app/tool/e2e/**', '.github/workflows/web-zweig.yml']
 permissions:
   contents: read
 jobs:
