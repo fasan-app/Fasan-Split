@@ -25,6 +25,33 @@ weiter** und werden hier nicht wiederholt; hier stehen (a) neue Regeln aus den 0
   bessere-bilder, musik-erkennen, ki-werkzeuge, beta-ohne-github, video-haptik-belege (Haptik-Teil in HA). **Kopf noch nicht geprüft**
   – das geschieht in 0b, vorher gilt die Einstufung als vorläufig.
 
+### Fortschritt 0b (06.11. vormittags)
+Ganz gelesen: Split einstellungen, konkurrenz-bedienung-saldo, einladen-benachrichtigen-messenger, einladung-situationen,
+konto-wiederherstellung, gruppe-nostr, updates-delta, anbindungen-zahlung-netz, zusammenarbeit-verschluesselung.
+Daraus für Punkt 3 (Browser = APK): Fotos verschlüsselt auf Blossom (eigener Schlüssel je Foto, `{h,k,u,n}` in der Rechnung,
+Upload an 2 Server, lokale Kopie bleibt, „Foto nicht mehr online“ als Zustand), Relay-Ereignis ≤ 48 KB, Snippets/kleines Original
+in Chunks über Relays; Web-Speicher: Safari löscht nach 7 Tagen ohne Besuch (Home-Bildschirm ausgenommen) → Sicherung anbieten.
+Danach ganz gelesen (06.11. vormittags): Karte kassenzettel, karten-ux, reisende-anforderungen, belegarten-und-sonderfaelle,
+dokument-restaurierung, protokoll-und-fehlerursachen, echte-bons-testlauf, bon-erkennung, bon-erkennung-weltweit,
+fehleranalyse-restaurante-da-se; Camera kamera-ux, zustaende-ein-ausgaben, tests-robustheit, wuensche-roadmap-updates, gesamtueberblick.
+**0b ist damit vollständig.** Neue Regeln daraus (G-Block unten).
+
+### G. Aus 0b (06.11.)
+- **G1** Nicht verfügbare Funktion **deaktiviert zeigen mit Grund**, nie weglassen (Apple WWDC25 Capture Controls: „deaktivieren statt
+  weglassen, sonst fragt man sich, was passiert ist“; camera kamera-ux [6]). Trifft V2 (Menü zeigte je nach Foto nur 1 Eintrag).
+- **G2** Rückmeldung beim Tippen im selben Frame (≤ 33 ms Bild, Haptik ≤ 20 ms), Fortschritt nach 0,1 s, Text nach 1 s, über 10 s
+  Fortschritt mit Zahl (Nielsen 0,1/1/10 s; Kaaresoja 2014; camera kamera-ux §1). Gilt für Laden des Bonfotos im Browser.
+- **G3** Fehlermeldung: genau sagen, was geschah, ein Weg weiter, nah an der Ursache, nie nur Farbe (NN/g Error-Message Guidelines 2023;
+  camera kamera-ux §3.2). Beispiel Foto fehlt im Browser: „Das Foto liegt nur auf dem Handy von Anna. Es kommt, sobald ihre App online ist.“
+- **G4** Zusatz-Zeilen (Pfand, Rabatt) am Artikel als Gruppe umrandet, „inkl. 0,25 € Pfand“, umhängbar („gehört zu: …“) (Karte
+  belegarten §8).
+- **G5** „Geprüft“ nur bei bestandener Summenprüfung, sonst jeder Betrag mit Bildausschnitt daneben (Karte da-se Grenzen; protokoll 3.17).
+  Stützt „Bon-Ausschnitte unter den Posten standardmäßig an“.
+- **G6** Leistung in der CI nur grob (UI-Thread, Vielfaches des Medians, `github-action-benchmark` mit `fail-on-alert: true`); echte
+  Zahlen am Gerät (camera tests-robustheit §3). Für Punkt 4 (Leistung): Messung im echten Ablauf mit Bon, Schwellen mit Abstand.
+- **G7** Ältere Nutzer: Text an Knöpfen statt nur Symbol, Ziele ≥ 14 mm für Hauptaktionen, keine Geste als einziger Weg, X sichtbar,
+  Zurück schließt nur die oberste Ebene (Karte karten-ux Regeln 3–6).
+
 ## Neue Regeln
 
 ### A. Aufmerksamkeit und Bewegung
