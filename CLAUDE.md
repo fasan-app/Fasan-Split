@@ -11,6 +11,11 @@ Diese Regeln stehen über allem anderen in dieser Datei. Wer sie nicht erfüllen
 einer anderen Sitzung (Commits, `STAND.md`, `docs/ZUSAMMENARBEIT.md` „Belegt“/„pausiert“, „nicht angesehen“, „ungeprüft“). Diese werden **zuerst** nach
 „Fertig heißt“ abgeschlossen; keine neuen Baustellen parallel öffnen. Reihenfolge: das zuletzt Begonnene zuerst, dann das davor.
 
+**Laufend mitschreiben (Nutzer 06.11. 23:59):** Regelmäßig – nach jedem Teilschritt, nicht erst am Paketende – in `docs/ZUSAMMENARBEIT.md` („Protokoll“)
+festhalten, was gerade gemacht wird und was noch fehlt; Schutz bei leerem Kontingent und für die andere Sitzung.
+**Gründlich vor schnell (Nutzer 07.11. 00:00/00:02):** Rechen- und Wartezeit sind unwichtig; wichtig sind Gründlichkeit, sauberer und schneller Code,
+Genauigkeit und Fehlerfreiheit. Dabei token-sparsam arbeiten (grep statt ganze Dateien, Bilder zusammengelegt ansehen, keine Wiederholungen).
+
 **Mehrere Sitzungen arbeiten parallel (ab 06.11.):** vor jeder Arbeit `docs/ZUSAMMENARBEIT.md` lesen, Paket dort belegen, nur im eigenen Zweig arbeiten, Ende eintragen.
 
 **Schritt 0 – Repos und Pflichtlektüre, prüfbar:**

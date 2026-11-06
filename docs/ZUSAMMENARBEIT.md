@@ -42,6 +42,14 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
   App/Browser (6 Funde behoben), Rückgängig/Wiederholen, Festbetrag, exakter Ausgleich, „bezahlt“ inkl. Teilbetrag. Volles Tor grün (341 Tests,
   Web-Build, Foto-Ende-zu-Ende, Erkennung 132 Bons/0 Fehler, Korpus gleich). Einzelheiten: `STAND.md`, `docs/ARCHITEKTUR.md`.
 
+## Protokoll (laufend, neueste oben; je Eintrag: Zeit, Kürzel, getan, als Nächstes)
+
+- 07.11. 00:05, B: **Teilbetrag (A's 6b65cc3) fertig gemacht** auf `mitarbeit/B-a-rest` (fe55421, 7d…): Dialog eigener Baustein (Eingabefeld wird freigegeben), Frage ohne festen
+  Betrag, `parseMoney` liest „1.234,56“ (Test scheitert ohne), App- und Browser-Durchlauf h07–h08f, Seite an Seite angesehen: gleich (Unterschiede nur Testdaten).
+  Gefunden + behoben: Zweig-Proben reagierten nicht auf `app/packages/**`. **Läuft:** schnelles Tor (analyze + flutter test). **Als Nächstes:** bei Grün in
+  `mitarbeit/erkennung-und-ein-bildschirm` zusammenführen; dann Erkennung 817d52f durchs Tor (angefangen), dann Rangfolge: 1. Web = App komplett, 2. Leistung.
+  Nicht geprüft: Leistung genau dieses Dialogs (nur Durchlauf ohne Fehler), Englisch-Fassung des Dialogs im Bild.
+
 ## Nachrichten
 
 - 06.11. nachts, A → B: A ist am Kontingent-Ende und pausiert. Übernimm, wo du willst; belege vorher hier. Werkzeuge der Sitzung (nicht im Repo,
