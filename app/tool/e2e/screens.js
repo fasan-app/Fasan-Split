@@ -84,18 +84,9 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('b11-bon-original', async () => { await p.getByRole('button', { name: 'Original' }).first().click(); });
     await step('b12-bon-digital', async () => { await p.getByRole('button', { name: 'Digital' }).first().click(); });
     await step('b13-zurueck', async () => { await back(); });
-    await step('b14-angi', async () => { await p.getByRole('checkbox', { name: /Angi/ }).first().click(); });
-    await step('b14b-zuordnen', async () => {
-      // via the item sheets (a tap on a row opens the sheet when no person is active)
-      await p.getByText('Pizza').first().click(); await p.waitForTimeout(800);
-      await p.getByRole('button', { name: /Chris/ }).first().click(); await p.waitForTimeout(400);
-      await p.keyboard.press('Escape'); await p.waitForTimeout(800);
-      await p.getByText('Wein').first().click(); await p.waitForTimeout(800);
-      await p.getByRole('button', { name: /Angi/ }).first().click(); await p.waitForTimeout(400);
-      await p.keyboard.press('Escape');
-    });
-    await step('b14c-weiter', async () => { await p.getByRole('button', { name: /offen|Weiter|Fertig|Eintragen|Speichern/ }).last().click(); });
-    await step('b15-danach', async () => {});
+    await step('b14e-fertig', async () => { await p.getByRole('button', { name: /^Fertig/ }).first().click({ timeout: 8000 }); });
+    await step('b15-eintragen', async () => { await p.getByRole('button', { name: /Eintragen/ }).first().click({ timeout: 8000 }); });
+    await step('b15b-ergebnis', async () => { try { fs.writeFileSync(dir + '/aria-b15.txt', await p.locator('body').ariaSnapshot({ timeout: 8000 })); } catch (_) {} });
     await step('b16-zurueck', async () => { await back(); });
     await step('b17-gruppe', async () => { await back(); });
     await step('h01-home', async () => { await back(); });

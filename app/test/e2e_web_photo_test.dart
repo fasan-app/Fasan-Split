@@ -67,9 +67,9 @@ void main() {
     final g = await a.createGroup('Lissabon', relays: [relayUrl!]);
     final b = r != null
         ? await billFromScan(r, photo, id: 'e2e-photo', group: 'Lissabon')
-        : (Bill(id: 'e2e-photo', created: DateTime(2026, 11, 6), total: 2400, people: [Person('Chris', 0)], items: [
-            BillItem(name: 'Pizza', amount: 1400, boxes: const [NBox(0.06, 0.075, 0.94, 0.1)]),
-            BillItem(name: 'Wein', amount: 1000, boxes: const [NBox(0.06, 0.1375, 0.94, 0.1625)]),
+        : (Bill(id: 'e2e-photo', created: DateTime(2026, 11, 6), total: 2400, people: [Person('Chris', 0), Person('Angi', 1)], payer: 0, items: [
+            BillItem(name: 'Pizza', amount: 1400, shares: {0: 1}, boxes: const [NBox(0.06, 0.075, 0.94, 0.1)]),
+            BillItem(name: 'Wein', amount: 1000, shares: {1: 1}, boxes: const [NBox(0.06, 0.1375, 0.94, 0.1625)]),
           ])
           ..group = 'Lissabon'
           ..imagePath = await BillStore.saveFile('e2e-scan.jpg', photo)

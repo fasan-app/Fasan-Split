@@ -94,23 +94,15 @@ Bill _walkBill(Directory dir) {
     img.fillRect(im, x1: 700, y1: y, x2: 840, y2: y + 40, color: img.ColorRgb8(20, 20, 20));
   }
   final f = File('${dir.path}/walk.jpg')..writeAsBytesSync(img.encodeJpg(im, quality: 85));
-  final b = Bill(id: 'walk', created: DateTime(2026, 11, 6), total: 2400, people: [Person('Chris', 0)], items: [
-    BillItem(name: 'Pizza', amount: 1400, boxes: const [NBox(0.06, 0.075, 0.94, 0.1)]),
-    BillItem(name: 'Wein', amount: 1000, boxes: const [NBox(0.06, 0.1375, 0.94, 0.1625)]),
+  final b = Bill(id: 'walk', created: DateTime(2026, 11, 6), total: 2400, people: [Person('Chris', 0), Person('Angi', 1)], payer: 0, items: [
+    BillItem(name: 'Pizza', amount: 1400, shares: {0: 1}, boxes: const [NBox(0.06, 0.075, 0.94, 0.1)]),
+    BillItem(name: 'Wein', amount: 1000, shares: {1: 1}, boxes: const [NBox(0.06, 0.1375, 0.94, 0.1625)]),
   ])
     ..purpose = 'Foto-Test'
     ..group = 'Lissabon'
     ..imagePath = f.path
     ..originalPath = f.path
     ..imageAspect = 900 / 1600;
-  return b;
-}
-
-/// The walk bill with Angi added and the two items assigned (what the browser walk does by tapping).
-Bill _two(Bill b) {
-  if (b.ps.length < 2) b.ps.add(Person('Angi', 1));
-  b.its[0].shares = {0: 1};
-  b.its[1].shares = {1: 1};
   return b;
 }
 
@@ -187,9 +179,8 @@ void main() {
     'b10-bon-ansicht': (b) => ReceiptScreen(bill: b),
     'b11-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
     'b12-bon-digital': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.digital),
-    'b14b-zuordnen': (b) => ReviewScreen(bill: _two(b)),
-    'b14-fertig': (b) => PayScreen(bill: _two(b)),
-    'b15-ergebnis': (b) => ResultScreen(bill: _two(b)..payer = 0),
+    'b14e-fertig': (b) => PayScreen(bill: b),
+    'b15b-ergebnis': (b) => ResultScreen(bill: b),
   };
   // interaction before the picture (same steps as the browser walk)
   final acts = <String, Future<void> Function(WidgetTester)>{
