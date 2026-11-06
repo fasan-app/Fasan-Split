@@ -47,7 +47,7 @@ void main() {
     ));
     await tester.pump();
     expect(find.textContaining('Angi zahlt Chris'), findsOneWidget);
-    await tester.tap(find.byTooltip('Bezahlt'));
+    await tester.tap(find.text('Als bezahlt eintragen'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Hat Angi an Chris 10,00'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Bezahlt'));

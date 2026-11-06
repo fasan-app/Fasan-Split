@@ -262,21 +262,24 @@ class GroupPeople extends StatelessWidget {
         for (final (from, to, c) in moves)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(children: [
-              Expanded(child: Text(t.owes(label(from), label(to), '${money(c, de: t.de)} ${signOf(context)}'), style: tt.bodyMedium)),
-              // my debt in this group: pay with one tap (pay_ui.dart)
-              if (myNames(context)(label(from)) || from == '@${CollabScope.read(context).identity?.pub}')
-                TextButton(
-                  onPressed: () => payFlow(context,
-                      name: label(to), pub: to.startsWith('@') ? to.substring(1) : live?.session.memberOfPerson(to), cents: c, currency: StoreScope.read(context).homeCurrency, purpose: name),
-                  child: Text(trLang(t.de ? 'de' : 'en', 'groups.pay')),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(t.owes(label(from), label(to), '${money(c, de: t.de)} ${signOf(context)}'), style: tt.bodyMedium),
+              // the actions under the sentence, each with a label (Prüfliste: no bare icons): my debt → pay with one tap (pay_ui.dart);
+              // anyone → „bezahlt“ books this one payment (Beschluss 06.11.)
+              Wrap(spacing: FasanSpace.s, children: [
+                if (myNames(context)(label(from)) || from == '@${CollabScope.read(context).identity?.pub}')
+                  TextButton.icon(
+                    icon: const Icon(Icons.payments_outlined),
+                    onPressed: () => payFlow(context,
+                        name: label(to), pub: to.startsWith('@') ? to.substring(1) : live?.session.memberOfPerson(to), cents: c, currency: StoreScope.read(context).homeCurrency, purpose: name),
+                    label: Text(trLang(t.de ? 'de' : 'en', 'groups.pay')),
+                  ),
+                TextButton.icon(
+                  icon: const Icon(Icons.check_circle_outline_rounded),
+                  onPressed: () => _markPaidIn(context, name, label(from), label(to), c),
+                  label: Text(trLang(t.de ? 'de' : 'en', 'groups.markPaidLong')),
                 ),
-              // „bezahlt“ (Beschluss 06.11.): this one payment happened – booked as a settlement bill, the balances move by exactly this amount
-              IconButton(
-                tooltip: trLang(t.de ? 'de' : 'en', 'groups.markPaid'),
-                icon: const Icon(Icons.check_circle_outline_rounded),
-                onPressed: () => _markPaidIn(context, name, label(from), label(to), c),
-              ),
+              ]),
             ]),
           ),
         if (moves.isNotEmpty)

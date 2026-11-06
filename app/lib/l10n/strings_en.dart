@@ -805,4 +805,5 @@ const Map<String, String> stringsEn = {
   'settings_screen.freeMplOfflineNo': 'Free (MPL-2.0), offline, no account, no telemetry. Text recognition: PaddleOCR (Apache-2.0), UVDoc (MIT), ONNX Runtime (MIT).',
   'settings_screen.whileTheAppRuns': 'While the app runs or is in the background, your device shows news as notifications. When the app is fully closed you see them in the bell next time – Fasan uses no Google push service.',
   'settings_screen.allRelayConnectionsGo': 'All relay connections go through Tor, so relays do not see your IP address. Needs the Orbot app (Guardian Project) installed and running. Connections get slower. Takes effect after the next start of Fasan Split.',
+  'groups.markPaidLong': 'Mark as paid',
 };
