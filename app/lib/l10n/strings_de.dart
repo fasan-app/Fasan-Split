@@ -806,4 +806,6 @@ const Map<String, String> stringsDe = {
   'settings_screen.whileTheAppRuns': 'Solange die App läuft oder im Hintergrund ist, zeigt dein Gerät Neuigkeiten als Benachrichtigung. Ist die App ganz geschlossen, siehst du sie beim nächsten Öffnen in der Glocke – Fasan nutzt keinen Push-Dienst von Google.',
   'settings_screen.allRelayConnectionsGo': 'Alle Verbindungen zu den Relays laufen über Tor. Dann sehen die Relays deine IP-Adresse nicht. Dafür muss die App Orbot (Guardian Project) installiert sein und laufen. Verbindungen werden langsamer. Gilt nach dem nächsten Start von Fasan Split.',
   'groups.markPaidLong': 'Als bezahlt eintragen',
+  'groups.markPaidAmount': 'Betrag',
+  'groups.markPaidTooMuch': 'Zwischen 0 und {0}',
 };

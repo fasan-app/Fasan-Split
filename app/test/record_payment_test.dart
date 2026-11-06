@@ -54,6 +54,21 @@ void main() {
     await tester.tap(find.text('Als bezahlt eintragen'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Hat Angi an Chris 10,00'), findsOneWidget);
+    // a part only: 4,00 now
+    await tester.enterText(find.byType(TextField), '4,00');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Bezahlt'));
+    await tester.pumpAndSettle();
+    expect(store.groupBalance('Lissabon'), {'Chris': 600, 'Angi': -600});
+    expect(find.textContaining('Angi zahlt Chris 6,00'), findsOneWidget, reason: 'Rest bleibt offen, Bereich bleibt offen');
+    // the rest, more than open is refused
+    await tester.tap(find.text('Als bezahlt eintragen'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '7,00');
+    await tester.pump();
+    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Bezahlt')).onPressed, isNull);
+    await tester.enterText(find.byType(TextField), '6,00');
+    await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Bezahlt'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Angi zahlt Chris'), findsNothing);

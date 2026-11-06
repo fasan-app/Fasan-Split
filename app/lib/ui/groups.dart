@@ -154,7 +154,8 @@ class GroupScreen extends StatelessWidget {
         for (final b in bills)
           Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {})),
         const SizedBox(height: FasanSpace.m),
-        _PeopleSection(name: name),
+        // keyed: a new receipt above (e.g. a settlement booking) must not fold the section the user just opened
+        _PeopleSection(key: ValueKey('people-$name'), name: name),
       ]),
     );
   }
@@ -162,7 +163,7 @@ class GroupScreen extends StatelessWidget {
 
 /// „Personen“ – the one place for everyone in the group (in the app or not), folded by default; balances and settling inside.
 class _PeopleSection extends StatelessWidget {
-  const _PeopleSection({required this.name});
+  const _PeopleSection({super.key, required this.name});
 
   final String name;
 
@@ -708,18 +709,35 @@ Future<void> _markPaidIn(BuildContext context, String group, String from, String
   final t = S.of(context);
   final lang = t.de ? 'de' : 'en';
   final amount = '${money(cents, de: t.de)} ${signOf(context)}';
-  final ok = await showDialog<bool>(
+  // the amount can be changed: a part paid now, the rest later (only between 0 and the open amount)
+  final field = TextEditingController(text: money(cents, de: t.de));
+  final paid = await showDialog<int>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      content: Text(trLang(lang, 'groups.markPaidAsk', [from, to, amount])),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.cancel)),
-        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(trLang(lang, 'groups.markPaid'))),
-      ],
-    ),
+    builder: (ctx) => StatefulBuilder(builder: (ctx, setState) {
+      final v = parseMoney(field.text);
+      final valid = v != null && v > 0 && v <= cents;
+      return AlertDialog(
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(trLang(lang, 'groups.markPaidAsk', [from, to, amount])),
+          const SizedBox(height: FasanSpace.m),
+          TextField(
+            controller: field,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(labelText: trLang(lang, 'groups.markPaidAmount'), suffixText: signOf(context), errorText: field.text.isEmpty || valid ? null : trLang(lang, 'groups.markPaidTooMuch', [amount])),
+            onChanged: (_) => setState(() {}),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
+          FilledButton(onPressed: valid ? () => Navigator.pop(ctx, v) : null, child: Text(trLang(lang, 'groups.markPaid'))),
+        ],
+      );
+    }),
   );
-  if (ok != true || !context.mounted) return;
+  // not disposed here: the dialog still builds while it fades out (disposing at once threw); it goes with the garbage collector
+  if (paid == null || !context.mounted) return;
   final store = StoreScope.read(context);
-  final b = store.recordPayment(group, from, to, cents, purpose: trLang(lang, 'groups.paymentPurpose', [from, to]), item: trLang(lang, 'groups.paymentItem'));
-  showNote(context, trLang(lang, 'groups.markPaidDone', [from, to, amount]), actionLabel: context.tr('bill.undo'), onAction: () => store.remove(b));
+  final shown = '${money(paid, de: t.de)} ${signOf(context)}';
+  final b = store.recordPayment(group, from, to, paid, purpose: trLang(lang, 'groups.paymentPurpose', [from, to]), item: trLang(lang, 'groups.paymentItem'));
+  showNote(context, trLang(lang, 'groups.markPaidDone', [from, to, shown]), actionLabel: context.tr('bill.undo'), onAction: () => store.remove(b));
 }
