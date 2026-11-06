@@ -8,6 +8,12 @@ Was gleich ist (gleicher Dart-Code, gleiche Widgets): Kachel-Liste mit Bon-Kache
 Ergebnis, Export, Sprachen. Unterschiede gibt es nur dort, wo `kIsWeb` im Code steht: Beitritts-Hinweis, Anfrage für
 dauerhaften Speicher, Update-Hinweis, Deep Links, Benachrichtigungen.
 
+**Stand 06.11. (Parität geprüft):** `kIsWeb` steht nur noch in `main.dart` (Beitrittscode aus der Adresse, Deep Links), `recognition_service.dart`
+(Erkennung im Web-Worker), `state/notify.dart`, `ui/diagnose.dart` (Geräteblock), `ui/home.dart` (Update-Prüfung, Home-Bildschirm-Hinweis),
+`ui/join_screen.dart` (Web-App-Hinweis). `test/web_parity_test.dart` lässt neue Stellen scheitern. Bonfotos gehen seit 06.11. verschlüsselt über die
+Relays an alle Mitglieder (`collab/photo_sync.dart`); im Browser liegen sie in IndexedDB und werden erst beim Anzeigen gelesen.
+Sichtbar gleich in Browser und APK (Bildschirmfotos 06.11.): Gruppe, Bon mit Ausschnitten, ⋮-Menü, Scan/Original/Digital, Symbole (eigene Schrift).
+
 ## Echte Grenzen
 
 | Thema | Android-App | Browser | Folge für uns |
