@@ -474,6 +474,13 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   Offen (Reihenfolge): Ausgleich/„bezahlt“ fertig bis auf Bildschirmfoto der Teilzahlung; E2–E5-Lücken; Pfand/Rabatt-Hinweise strukturiert; Querformat-Leiste;
   Screenreader-Aktion am Personen-Chip; Blossom; Leistung mit großen Fotos; Scan-Vergleich App/Browser; eine Veröffentlichung am Ende nach vollem Tor.
 
+- **Sitzung B, 06.11. 23:55 – Umplanung (Nutzer 23:48: A's offener Rest vor Erkennung):** Erkennung pausiert bei 817d52f (`mitarbeit/B-erkennung`: Summenwort schlägt
+  Rechen-Zufall [b3-143], Netto-/Zwischensumme mit größerer Summe darunter nie „geprüft“ + IVA aus dem Steuerblock [b1-092], ungedruckte Rundung auf ganze Einheit [b2-001];
+  an diesen 3 Bons mit `ocr_dump` geprüft, **Tor nicht gelaufen**). A's offener Rest, am Code geprüft: (1) Teilzahlung (6b65cc3) – Code + Test da, **nicht in App und Browser
+  angesehen**; (2) Scan-Vergleich App/Browser fehlt (letzter Punkt des Bildschirmvergleichs); (3) CI-Wackler „Einladung Freund“ – Nachweis über mehrere Läufe offen;
+  (4) danach A's Reihenfolge: E2–E5, Pfand/Rabatt strukturiert, Querformat-Leiste, Screenreader-Aktion am Personen-Chip, Blossom, Leistung große Fotos.
+  Geprüft und erledigt: Schritt 6 Texte – im Code steht kein Text mehr als `de ? '…'` (einzige Fundstelle Datumsformat `currency_ui.dart`).
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der

@@ -32,7 +32,8 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 
 | Kürzel | Paket | Zweig | Dateien/Bereiche | seit |
 |---|---|---|---|---|
-| B | Erkennung: 8 Welt-Bons „falsch als geprüft“, Hangul, Aldi (Durchschein), SROIE/CORD-Gegenprobe, Pfand/Rabatt-Hinweise strukturiert statt Text | `mitarbeit/B-erkennung` (von `mitarbeit/erkennung-und-ein-bildschirm` 6b65cc3/86b95b8) | `app/packages/fasan_reader/**`, `app/lib/recognition/**`, `app/test/{gate,e2e,reader,name_vote,snapshot,world_reader,sroie,ocr_dump}*_test.dart`, `app/test/support/ocr_cache.dart`, `app/tool/korpus/**`; für die Pfand/Rabatt-Hinweise kurz auch `fasan_core` (`BillItem`, nur neues Feld) und die eine Anzeigestelle – vorher hier melden | 06.11. 23:50 |
+| B | **A's offenen Rest abschließen** (Nutzer 06.11. 23:48: „wichtiger als die Erkennung“): Teilzahlung/Ausgleich nach „Fertig heißt“ (App + Browser ansehen), Scan-Vergleich App/Browser, CI-Wackler-Nachweis, danach weiter nach A's Reihenfolge | `mitarbeit/B-a-rest` (von `mitarbeit/erkennung-und-ein-bildschirm`) | `app/lib/ui/groups.dart`, `test/record_payment_test.dart`, `test/screens_test.dart`, `tool/e2e/screens.js` (A pausiert; vor Rückkehr hier melden) | 06.11. 23:55 |
+| B (pausiert) | Erkennung: 8 Welt-Bons „falsch als geprüft“, Hangul, Aldi (Durchschein), SROIE/CORD-Gegenprobe, Pfand/Rabatt-Hinweise strukturiert statt Text | `mitarbeit/B-erkennung` (von `mitarbeit/erkennung-und-ein-bildschirm` 6b65cc3/86b95b8) | `app/packages/fasan_reader/**`, `app/lib/recognition/**`, `app/test/{gate,e2e,reader,name_vote,snapshot,world_reader,sroie,ocr_dump}*_test.dart`, `app/test/support/ocr_cache.dart`, `app/tool/korpus/**`; für die Pfand/Rabatt-Hinweise kurz auch `fasan_core` (`BillItem`, nur neues Feld) und die eine Anzeigestelle – vorher hier melden | 06.11. 23:50 |
 
 ## Erledigt (neueste oben)
 
@@ -44,6 +45,8 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 
 - 06.11. nachts, A → B: A ist am Kontingent-Ende und pausiert. Übernimm, wo du willst; belege vorher hier. Werkzeuge der Sitzung (nicht im Repo,
   neu anlegen): siehe `STAND.md` „Übergabe“.
+- 06.11. 23:55, B → A: Erkennung pausiert bei Commit 817d52f (`mitarbeit/B-erkennung`, Tor **nicht** gelaufen; Grundlauf mit OCR-Zwischenspeicher bei 23 Bons abgebrochen).
+  B schließt zuerst deinen offenen Rest ab (Zeile oben). Bitte vor deiner Rückkehr hier melden, damit wir `groups.dart` nicht doppelt anfassen.
 - 06.11. 23:50, B → A: B übernimmt „Erkennung“ (Zeile unter „Belegt“). B hat `fasan-app/Fasan` nur **lesend** angebunden (Vorgabe des Nutzers) und kann darum
   Nutzer-Nachrichten **nicht** in `../fasan/nutzer/split-nachrichten.md` anhängen. B trägt sie sinngemäß in `docs/ANFORDERUNGEN.md` ein und sammelt den Rohtext
   hier als Hinweis „Rohtext fehlt“ – A (oder der Nutzer) bitte nachtragen, oder der Nutzer gibt B Schreibrecht auf Fasan.
