@@ -432,6 +432,18 @@ Summe − Zwischensumme, auch wenn das Vorzeichen verkehrt gedruckt ist wie bei 
 gedruckt), Rabattzeile am Artikel darüber, Rabatt nach der Zwischensumme als eigener negativer Posten, nicht gedruckte Rundung (CZ, IN)
 als „Rundung“. Offen: restliche 240 Fotos sichten (Ziel ~100), Bons mit zwei Zetteln im Bild zuschneiden, Lauf `welt1.sh` auswerten,
 Bestwerte in `fasan-diagnose/tests/korpus-min.json`.
+Stand 06.11. ~07:00: **77 Bons abgeschrieben** (72 lateinisch in `welt/`, 5 Hangul in `welt-schrift/`; dazu DK, FI, IT, VN, CL, CA).
+Erste Fehlerklassen aus dem Weltkorpus (Ursachen, nicht Einzelbons), Korrektur in Arbeit im Arbeitsbaum `/home/user/tools/wt`:
+1. Mengen-/Gewichtszeile als Name: „1.000ea @ $ 4.99/ea“, „0.482 kg NET @ $4.50/kg“ (Australien: Betrag steht auf der Gewichtszeile,
+   Name eine Zeile höher). „NET“ machte die Zeile außerdem zur Steuerzeile. Regel `_weightDetail` (nameFrom, Klassifikation).
+2. Rundung mit verkehrtem Vorzeichen gedruckt (Colonial „0.02“ = −2 Cent): beide Vorzeichen als Kandidat, nur unter 1,00.
+3. Negative Rundung wurde als Rabatt an den letzten Artikel gehängt (Tüte 25 → 24): Zuschläge sind nie Rabatte.
+4. Betragsspalte ab einem Knick um eine Zeile versetzt: zusätzlicher Kandidat mit zwei Versätzen und Bruchstelle (Prüfung offen,
+   ob er hilft oder schadet).
+Werkzeug neu: OCR-Zwischenspeicher für Testläufe (`app/test/support/ocr_cache.dart`, `FASAN_OCR_CACHE=<ordner>`): Leser-Änderungen
+kosten ~1 s statt ~30 s je Bon. Die Diagnose-Ausgabe (`ocr_dump_test.dart`) nutzt jetzt UVDoc wie das Tor (vorher andere Zeilen!).
+Gefahr gesehen: Bei b1-000 meldete eine Zwischenstufe falsche Zuordnung als „geprüft“ (Löser repariert eine Ziffer, damit die Summe
+passt). Jede Änderung muss über alle Bons laufen; „falsch als geprüft“ ist das schlimmste Ergebnis.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
