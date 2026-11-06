@@ -348,7 +348,9 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
 
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
-- Darf der Rohtext der Nutzer-Nachrichten (Quelle für `docs/ANFORDERUNGEN.md`) ins private Repo `Fasan`? Bis zur Antwort nur sinngemäß.
+Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
+Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md`) beantwortet hat (Nutzer 06.11.).
+
 - Foto oder Protokoll des Esplanada-Bons (13 Croissants) schicken, damit der ganze Bon ins Erkennungs-Tor kommt.
 - Lese-Geheimnis für `fasan-diagnose` in der CI anlegen (Schritte schreibt die Sitzung auf, sobald der Workflow steht).
 
