@@ -155,3 +155,15 @@ kommen zusätzlich in diese eine Veröffentlichung.** Liste nach Nutzer vorerst 
 für die App mache, müssen diese direkt aufgeschrieben und festgehalten werden.“
 Folge (von der Sitzung benannt): Mit diesem Umfang und „keine Zwischenveröffentlichung“ kommt lange kein Update aufs Handy – auch die
 Korrektur der 13 Croissants nicht. Der Nutzer kann das jederzeit ändern; bis dahin gilt sein Beschluss.
+
+### Korrektur der Sitzung (06.11. nachts) zu Befragung 2, Frage 1 – Fehler: vorhandene Recherche nicht gelesen
+
+`docs/recherche/2026-11-02-gruppe-nostr.md` (§ 2, § 3) hat Relays und Blossom am 02.11. **gemessen**. Die Angaben in der Befragung waren
+dadurch teils falsch:
+- Relays: nos.lol lehnt Ereignisse **ab 64 KB** ab (NIP-11 nennt 131072, stimmt also nicht); relay.primal.net bis 200 KB ok, 500 KB nicht.
+  Faustregel dort: **≤ 48 KB je Ereignis**. Ein verkleinertes Original (200–400 KB) braucht also 5–10 Stücke je Bon.
+- Blossom: **nostr.build/blossom.band und blossom.primal.net nehmen keine verschlüsselten Dateien** (415, nur echte Bilder). Angenommen haben
+  verschlüsselte Blobs nur **cdn.hzrd149.com** und **nostr.download**. Aufbewahrung nirgends zugesagt.
+- Die damalige Empfehlung lautete „Fotos gehören nie in Relays“ (wegen der Größe). Der Beschluss des Nutzers vom 06.11. (beides als Standard)
+  bleibt umsetzbar: Relays in Stücken ≤ 40 KB, Blossom über die zwei Server, die verschlüsselte Dateien annehmen.
+- **Dem Nutzer vorzulegen:** ob er den Beschluss mit diesen Fakten bestätigt.

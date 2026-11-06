@@ -372,10 +372,16 @@ Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-na
 Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md`) beantwortet hat (Nutzer 06.11.).
 
 - Foto oder Protokoll des Esplanada-Bons (13 Croissants) schicken, damit der ganze Bon ins Erkennungs-Tor kommt.
+- **Fotos teilen bestätigen** mit den richtigen Fakten (Korrektur in `docs/VORSCHLAEGE-06-11.md`, Ende): Relays nur in Stücken ≤ 40 KB,
+  Blossom nur cdn.hzrd149.com und nostr.download für verschlüsselte Dateien.
 - **Lese-Geheimnis `FASAN_DIAGNOSE_TOKEN` anlegen** (Anleitung mit vorausgefülltem Link: `docs/ERKENNUNGS-TOR.md`). Ohne es scheitert das
   Erkennungs-Tor und es wird nichts veröffentlicht (gewollt).
 
 ### Lehren aus 05./06.11. (nicht wiederholen)
+
+- 06.11. nachts: In der Befragung zu Fotos/Blossom aus dem Gedächtnis und Fremdseiten geantwortet, ohne die eigene Recherche
+  `docs/recherche/2026-11-02-gruppe-nostr.md` zu lesen, die genau das gemessen hatte (nos.lol ab 64 KB, nostr.build nimmt keine
+  verschlüsselten Dateien). **Vor jeder Frage an den Nutzer erst die vorhandenen Recherchen zum Thema lesen.**
 
 - `test/e2e_test.dart` prüft je Bon nur Beträge und Summe – Mengen und Namen nicht. Deshalb blieb „13 Croissants“ (Steuersatz „13%“
   als „13x“ gelesen) unbemerkt. Goldens müssen Name, Menge, Einzelpreis und Betrag je Posten prüfen.
