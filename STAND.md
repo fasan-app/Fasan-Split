@@ -457,6 +457,11 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   Browser“), weil der Test sofort nach dem Antippen tippte (Flutter Web legt das Eingabefeld erst beim Fokus an). Test wartet jetzt auf den Fokus; als mögliche Web-Grenze in WEB-GRENZEN
   (bei Menschen nicht geprüft). Nachweis über mehrere CI-Läufe steht noch aus.
 
+- **Grundfunktionen (06.11. nachts):** **Ausgleich exakt** mit den wenigsten Überweisungen (`fasan_core/settle.dart`, Teilmengen-Verfahren bis 16 Personen, sonst gierig; auch
+  mehrere Zahler auf einem Bon). Beispiel, bei dem der alte Weg 4 statt 3 brauchte, plus 400 Zufallsfälle gegen eine Brute-Force-Lösung (`settle_exact_test`). **„Bezahlt“ je
+  Ausgleichszahlung** in der Gruppe (Häkchen an „Angi zahlt Chris …“ → Rückfrage → Ausgleichsbuchung als kleiner Bon, Rückgängig; `store.recordPayment`, `record_payment_test`).
+  Noch ohne Bildschirmfoto-Prüfung im Browser; Teilzahlung (anderer Betrag) noch nicht wählbar.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
