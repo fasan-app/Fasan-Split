@@ -448,6 +448,14 @@ Messung 06.11. ~07:00 (Arbeitsbaum, alle Korrekturen bis „Sub Total“): Tor S
 Weltkorpus 23/72 ganz richtig (alter Code auf denselben ersten 46: 4 → neu 12, keiner schlechter), Hangul 1/5. 11 Welt-Bons „falsch als
 geprüft“ (meist Menge oder fehlender Steuer-/Rundungsposten) – Vergleich mit altem Code läuft (`/home/user/tools/wg-old.log`).
 CORD-Basis alter Code: 56/176 ganz richtig (`/home/user/tools/n1-cord.log`). SROIE alter Code: 55/60 Summen, 1 falsch geprüft.
+**Ergebnis 06.11. ~08:00 (Commit b0e1a30 auf dem Arbeitszweig):** gleiche Zählung alt gegen neu über 72 Welt-Bons: **25 statt 10 ganz
+richtig, 8 statt 20 „falsch als geprüft“**; Stufe A unverändert 0 Fehler. Zwei Bons sind jetzt „falsch geprüft“, die vorher nur falsch
+waren (b2-031 Coles: Summe jetzt richtig, Namen/Menge um eine Zeile verschoben; b3-013 Target: Pfand-Zeilen nicht an den Artikel gehängt) –
+Geldbeträge stimmen dort, offen als nächste Klassen. Bestwerte in `fasan-diagnose/tests/korpus-min.json`; CI misst den Weltkorpus mit.
+Noch offen in Punkt 1: SROIE-Gegenprobe (läuft), CORD mit neuem Leser, Pfand mehrerer Zeilen an einen Artikel (Target), Spaltenversatz
+Coles (Namen eine Zeile verschoben), „Qty 20“ (@ als 0 gelesen) in Stufe B prüfen, Weltbons ohne Rundungszeile (CZ/IN: Rundung nicht
+gedruckt). Zur Wahl der Bons: 240 weitere Openverse-Fotos gesichtet, 33 brauchbar übernommen; weitere Quellen (Wikimedia, wenn die
+Drosselung endet) für Ziel ~100.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 

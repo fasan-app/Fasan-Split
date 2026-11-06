@@ -46,8 +46,11 @@ for k in sorted(set(a) | set(b)):
 
 ## Stufe B: Korpus (06.11.)
 
-`FASAN_KORPUS=<ordner>[:<ordner>…]` misst je Ordner, wie viele Bons ganz richtig sind; `FASAN_KORPUS_MIN=<json>` mit `{ordnername: bestwert}`
-lässt das Tor scheitern, wenn ein Ordner schlechter wird. Quellen (nur zum Testen, nie in App oder öffentlichem Repo; Beschluss Nutzer 06.11.):
+`FASAN_KORPUS=<ordner>[:<ordner>…]` misst je Ordner, wie viele Bons ganz richtig sind und wie viele „falsch als geprüft“ gemeldet werden;
+`FASAN_KORPUS_MIN=<json>` mit `{ordnername: bestwert, "ordnername/falsch": höchstens}` lässt das Tor scheitern, wenn ein Ordner schlechter
+wird. In der CI: `fasan-diagnose/tests/welt` und `welt-schrift` mit `tests/korpus-min.json` (Stand 06.11.: welt 25/72, höchstens 8 falsch;
+welt-schrift 1/5, 0 falsch). Wird ein Ordner besser, den Bestwert in `korpus-min.json` nachziehen (sonst schützt er nicht).
+Entwicklerlauf schnell: `FASAN_OCR_CACHE=<ordner>` (Modell-Ausgaben je Bon gespeichert, Leser-Änderung ~1 s statt ~30 s je Bon). Quellen (nur zum Testen, nie in App oder öffentlichem Repo; Beschluss Nutzer 06.11.):
 - CORD v2 (Clova AI, Indonesien, CC-BY-4.0): Hugging Face `naver-clova-ix/cord-v2`, Umwandlung `app/tool/korpus/cord_truth.py` (nur Bons,
   deren Posten zur Summe passen; Beträge in Rupiah ohne Nachkommastellen).
 - SROIE 2019 (Malaysia, Forschungsdatensatz): `github.com/zzzDavid/ICDAR-2019-SROIE`, nur Summen (`test/sroie_test.dart`).
