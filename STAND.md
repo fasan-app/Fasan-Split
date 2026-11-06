@@ -464,6 +464,16 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   Hinweis mit Rückgängig, Saldo danach ausgeglichen. Dabei gefunden und behoben: die Buchung zählte als Ausgabe („2 Bons · 34,00 €“) → `Bill.isTransfer`, aus Summen,
   Bon-Zahlen und Ausgaben je Person ausgenommen. Offen: Teilzahlung (anderer Betrag) wählbar; Personen-Bereich klappt nach dem Eintragen wieder zu.
 
+- **Übergabe 06.11. nachts (Kontingent der Sitzung A erschöpft):** ab jetzt arbeiten mehrere Sitzungen parallel; Abstimmung **nur** über `docs/ZUSAMMENARBEIT.md`.
+  Letzter Code-Stand: Zweig `mitarbeit/erkennung-und-ein-bildschirm` (Commit 6b65cc3), CI dort grün; `main` hat nur Doku seit der letzten Veröffentlichung.
+  **Übergabe – Werkzeuge der Sitzung (liegen nicht im Repo, in einer neuen Sitzung neu anlegen):** Flutter 3.47.7 + ONNX Runtime 1.22 laut CLAUDE.md;
+  schnelles Tor = `flutter analyze` + `flutter test` (ohne variants/e2e/gate/sroie/world_reader/ocr_dump/screens/e2e_web) + Web-Build (`tool/e2e/run.sh`-Anleitung in CLAUDE.md 7a)
+  + `FASAN_E2E_RELAY=… flutter test test/e2e_web_photo_test.dart` mit `node tool/e2e/photo.js`; Erkennungs-Tor = `FASAN_BONORDNER="$D/echt:$D/bons" FASAN_KORPUS="$D/welt:$D/welt-schrift"
+  FASAN_KORPUS_MIN="$D/korpus-min.json" flutter test test/gate_test.dart` (D = fasan-diagnose/tests, OCR-Zwischenspeicher `FASAN_OCR_CACHE` spart Stunden);
+  Bildschirmvergleich = `tool/e2e/screens.js` (Browser) + `FASAN_SCREENS=<ordner> flutter test test/screens_test.dart --plain-name "hell-hoch b"` (App).
+  Offen (Reihenfolge): Ausgleich/„bezahlt“ fertig bis auf Bildschirmfoto der Teilzahlung; E2–E5-Lücken; Pfand/Rabatt-Hinweise strukturiert; Querformat-Leiste;
+  Screenreader-Aktion am Personen-Chip; Blossom; Leistung mit großen Fotos; Scan-Vergleich App/Browser; eine Veröffentlichung am Ende nach vollem Tor.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
