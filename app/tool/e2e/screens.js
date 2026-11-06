@@ -12,7 +12,8 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
   if (!link) { console.log('FAIL kein Link'); process.exit(1); }
   const url = link.replace('https://fasan-app.github.io', base);
   const b = await chromium.launch();
-  const ctx = await b.newContext({ locale: 'de-DE', viewport: { width: 393, height: 873 }, deviceScaleFactor: 2 });
+  // variants for the comparison with test/screens_test.dart: DARK=1, LAND=1 (sideways), LANG=en
+  const ctx = await b.newContext({ locale: process.env.LANG_TAG || 'de-DE', colorScheme: process.env.DARK ? 'dark' : 'light', viewport: process.env.LAND ? { width: 873, height: 393 } : { width: 393, height: 873 }, deviceScaleFactor: 2 });
   await ctx.addInitScript(() => localStorage.setItem('flutter.split.settings', JSON.stringify(JSON.stringify({ me: 'Angi' }))));
   if (process.env.PERFMODE) await ctx.addInitScript(m => localStorage.setItem('flutter.perf.mode', JSON.stringify(m)), process.env.PERFMODE); // auto | full | light
   // never anything to foreign services (Beschluss 02.11.): only the local relay and the local server

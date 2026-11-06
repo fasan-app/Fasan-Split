@@ -228,7 +228,8 @@ void main() {
           final (path, bx) = await tester.runAsync(() async => _receipt(dir)) ?? ('', <NBox>[]);
           Bill bill;
           if (e.key.startsWith('b')) {
-            if (dark || land) return;
+            // variants only for the screens that are also walked in the browser with DARK=1 / LAND=1
+            if ((dark || land) && !const ['b01-bon', 'b10-bon-ansicht', 'b15b-ergebnis', 'b04-posten-blatt'].contains(e.key)) return;
             bill = _walkBill(dir);
             _pushBill = bill;
             await tester.runAsync(() => fillSnippets(bill, File(bill.imagePath!).readAsBytesSync()));
