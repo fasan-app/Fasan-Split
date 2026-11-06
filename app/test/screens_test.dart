@@ -175,6 +175,10 @@ void main() {
     'b05-posten-blatt-fest': (b) => ReviewScreen(bill: b),
     'b01p-bon-gepusht': (b) => const SizedBox(),
     'b07-pruefen': (b) => ReviewScreen(bill: b),
+    'h04-archiv': (_) => const HomeScreen(),
+    'h05-papierkorb': (_) => const HomeScreen(),
+    'h06-gruppen': (_) => const HomeScreen(),
+    'h13-freunde': (_) => const HomeScreen(),
     'b08-person-lang': (b) => ReviewScreen(bill: b),
     'b10-bon-ansicht': (b) => ReceiptScreen(bill: b),
     'b11-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
@@ -193,6 +197,22 @@ void main() {
       final bill = _pushBill!;
       nav.push(MaterialPageRoute<void>(builder: (_) => ReviewScreen(bill: bill)));
       await t.pump(const Duration(milliseconds: 800));
+    },
+    'h04-archiv': (t) async {
+      await t.tap(find.text('Archiv'));
+      await t.pump(const Duration(milliseconds: 500));
+    },
+    'h05-papierkorb': (t) async {
+      await t.tap(find.text('Papierkorb'));
+      await t.pump(const Duration(milliseconds: 500));
+    },
+    'h06-gruppen': (t) async {
+      await t.tap(find.text('Gruppen'));
+      await t.pump(const Duration(milliseconds: 500));
+    },
+    'h13-freunde': (t) async {
+      await t.tap(find.text('Freunde'));
+      await t.pump(const Duration(milliseconds: 500));
     },
     'b07-pruefen': (t) async {
       await t.tap(find.byIcon(Icons.fact_check_outlined));
@@ -227,7 +247,7 @@ void main() {
           final dir = Directory(out!)..createSync(recursive: true);
           final (path, bx) = await tester.runAsync(() async => _receipt(dir)) ?? ('', <NBox>[]);
           Bill bill;
-          if (e.key.startsWith('b')) {
+          if (e.key.startsWith('b') || e.key.startsWith('h')) {
             // variants only for the screens that are also walked in the browser with DARK=1 / LAND=1
             if ((dark || land) && !(const ['b01-bon', 'b10-bon-ansicht', 'b15b-ergebnis'].contains(e.key) || (dark && e.key == 'b04-posten-blatt'))) return;
             bill = _walkBill(dir);
@@ -246,9 +266,9 @@ void main() {
           // the walk screens show the look of the default (PerfMode.light: no blur, no grain, no moving background), like the browser
           var look = FasanSettings(reduceMotion: e.key.startsWith('b01p') ? false : true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light);
           // like main(): glass without grain is the standard look
-          if (e.key.startsWith('b')) look = look.copyWith(style: FasanStyle.fullGlass, effects: look.effects.copyWith(grain: 0));
+          if ((e.key.startsWith('b') || e.key.startsWith('h'))) look = look.copyWith(style: FasanStyle.fullGlass, effects: look.effects.copyWith(grain: 0));
           final ctl = SplitController(settings: look);
-          if (e.key.startsWith('b')) ctl.tier = PerfTier.slow;
+          if ((e.key.startsWith('b') || e.key.startsWith('h'))) ctl.tier = PerfTier.slow;
           final key = GlobalKey();
           await tester.pumpWidget(RepaintBoundary(key: key, child: SplitApp(store: store, ui: ctl, home: e.value(bill))));
           // Bon-Foto und Shader laden echt asynchron; danach ein paar Bilder ohne Dauer-Animation.
@@ -264,7 +284,7 @@ void main() {
           expect(tester.takeException(), isNull);
           await tester.runAsync(() async {
             final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-            final image = await boundary.toImage(pixelRatio: e.key.startsWith('b') ? 2.0 : 1.25);
+            final image = await boundary.toImage(pixelRatio: (e.key.startsWith('b') || e.key.startsWith('h')) ? 2.0 : 1.25);
             final png = await image.toByteData(format: ui.ImageByteFormat.png);
             File('${dir.path}/$tag-${e.key}.png').writeAsBytesSync(png!.buffer.asUint8List());
           });

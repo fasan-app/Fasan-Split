@@ -93,6 +93,17 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('h01-home', async () => { await back(); });
     await step('h02-einstellungen', async () => { await p.getByRole('button', { name: /Einstellungen|Settings/ }).first().click(); });
     await step('h03-zurueck', async () => { await back(); });
+    const tap = async (re, ms = 800) => { const l = p.getByRole('tab', { name: re }).or(p.getByRole('button', { name: re })).or(p.getByRole('checkbox', { name: re })).or(p.getByText(re)).first(); await l.click({ timeout: 8000 }); await p.waitForTimeout(ms); };
+    await step('h04-archiv', async () => { await tap(/^Archiv/); });
+    await step('h05-papierkorb', async () => { await tap(/^Papierkorb/); });
+    await step('h06-gruppen', async () => { await tap(/^Gruppen/); });
+    await step('h07-gruppe-offen', async () => { await tap(/Lissabon/); });
+    await step('h08-personen', async () => { await tap(/Personen/); });
+    await step('h09-notizen', async () => { await tap(/^Notizen/); });
+    await step('h10-notizen-zu', async () => { await back(); });
+    await step('h11-chat', async () => { await tap(/^Chat/); });
+    await step('h12-chat-zu', async () => { await back(); await back(); });
+    await step('h13-freunde', async () => { await tap(/^Freunde/); });
     result.steps = steps;
   } catch (e) { console.log('FAIL', String(e).slice(0, 300)); await shot('fail'); }
   fs.writeFileSync(dir + '/photo-done.txt', JSON.stringify(result));
