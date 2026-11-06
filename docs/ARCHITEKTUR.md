@@ -60,6 +60,8 @@ Tore, die vor und nach jedem Schritt grün sein müssen: Erkennungs-Tor (alle ec
    `lib/platform/web_platform*.dart`, Update-Prüfung nach `lib/flows/update.dart`. In der Wurzel von `lib/` liegen nur noch `main.dart` und die Texte (Schritt 6).
    Adapter-Regel: ein Adapter liegt in der Schicht, die ihn nutzt (`state/images_*`, `collab/ws_connect_*`, `recognition/onnx_*`, `recognition/browser_*`);
    nur Fähigkeiten ohne eigene Schicht stehen in `lib/platform/`.
+   Schritt 5 **erledigt**: Paket `app/packages/fasan_reader` (reader, model, name_repair, place – das Lesen aus Textzeilen, reines Dart, nur `fasan_core`); Bild- und OCR-Motor
+   (ONNX, Bildverarbeitung, QR, Pipeline) bleibt als Adapter in `lib/recognition/`. Volles Tor danach grün (338 Tests, Web, Foto-Ende-zu-Ende, Erkennung 132 Bons/0 Fehler, Korpus gleich).
    Schritt 6 **großteils erledigt**: 602 Texte, die im Code standen (`de ? '…' : '…'`), stehen jetzt in `lib/l10n/strings_de.dart`/`strings_en.dart` (342 aus `l10n*.dart` mit
    `tool/l10n_migrate.py`, 260 aus den Bildschirmen mit `tool/l10n_inline.py`; beide Werkzeuge ändern nur eindeutige Fälle und listen den Rest). Nachweis: alle 699 Texte von `S`
    in beiden Sprachen vorher = nachher (`test/l10n_dump_test.dart`, L10N_DUMP), 336 Tests grün, Bildschirme Pixel-Vergleich vorher/nachher. **Offen:** 7 verschachtelte Stellen

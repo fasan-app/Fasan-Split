@@ -450,8 +450,12 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   „Pfand 0,25“/„Rabatt …“ werden beim Scannen als fertiger deutscher Text im Posten gespeichert (`recognition/scan_events.dart`) – braucht strukturierte Zusätze statt Text.
   **Beitritt:** gleich bis auf die zwei Web-Knöpfe „In der App öffnen“/„Android-App laden“ (gewollt, steht in WEB-GRENZEN). Vergleich damit bis auf Scan abgeschlossen.
 
-- **Neuaufbau begonnen (06.11. nachts):** Schritt 2 (`fasan_core`), 3a (Zyklus state↔collab aufgelöst, `lib/flows/`) 3b (Bildschirme ohne `main.dart`, `ui/scope.dart`) 4 (Adapter geordnet, `lib/platform`, Erkennung in `recognition/service.dart`) und 6 (602 Texte aus dem Code in die Sprachtabellen, Wächter „keine Texte im Code“, Nachweis vorher=nachher) erledigt. Erkennungs-Tor nach dem Umbau grün (132 Bons, 0 Fehler, 1 bekannt; Korpus nicht schlechter), Wächter-Test `architecture_test`. Stand und nächste
+- **Neuaufbau begonnen (06.11. nachts):** Schritt 2 (`fasan_core`), 3a (Zyklus state↔collab aufgelöst, `lib/flows/`) 3b (Bildschirme ohne `main.dart`, `ui/scope.dart`) 4 (Adapter geordnet, `lib/platform`, Erkennung in `recognition/service.dart`) 5 (`fasan_reader`) und 6 (602 Texte aus dem Code in die Sprachtabellen, Wächter „keine Texte im Code“, Nachweis vorher=nachher) erledigt. Erkennungs-Tor nach dem Umbau grün (132 Bons, 0 Fehler, 1 bekannt; Korpus nicht schlechter), Wächter-Test `architecture_test`. Stand und nächste
   Schritte in `docs/ARCHITEKTUR.md`. Nächstes: Plattform-Adapter in `platform_api` ordnen, `ui` von `main.dart` lösen (Scopes eigenes Modul), `recognition` und `l10n` als Pakete.
+
+- **CI-Wackler gefunden und behoben (06.11. nachts):** Einladungs-Ende-zu-Ende Modus „Freund“ scheiterte in 6 von 20 Läufen: der erste Buchstabe der Nachricht fehlte („allo aus dem
+  Browser“), weil der Test sofort nach dem Antippen tippte (Flutter Web legt das Eingabefeld erst beim Fokus an). Test wartet jetzt auf den Fokus; als mögliche Web-Grenze in WEB-GRENZEN
+  (bei Menschen nicht geprüft). Nachweis über mehrere CI-Läufe steht noch aus.
 
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
