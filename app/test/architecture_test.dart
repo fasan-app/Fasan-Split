@@ -23,8 +23,16 @@ void main() {
     expect(bad, isEmpty);
   });
 
+  test('fasan_reader kennt nur sich selbst, fasan_core und dart: (kein Flutter, kein Bild, keine OCR)', () {
+    final bad = [
+      for (final (file, imp) in _imports('packages/fasan_reader/lib'))
+        if ((!imp.startsWith('dart:') && imp.contains(':') && !imp.startsWith('package:fasan_reader/') && !imp.startsWith('package:fasan_core/')) || (!imp.contains(':') && imp.contains('..'))) '$file → $imp',
+    ];
+    expect(bad, isEmpty);
+  });
+
   test('Übergangsdateien in lib/ leiten nur weiter (kein Code, der neben dem Kern wächst)', () {
-    for (final f in ['model/bill.dart', 'model/split_math.dart', 'model/settle.dart', 'model/pay.dart', 'recognition/speisen.dart', 'recognition/text_util.dart']) {
+    for (final f in ['model/bill.dart', 'model/split_math.dart', 'model/settle.dart', 'model/pay.dart', 'recognition/speisen.dart', 'recognition/text_util.dart', 'recognition/model.dart', 'recognition/name_repair.dart', 'recognition/place.dart', 'recognition/reader.dart']) {
       final code = File('lib/$f').readAsLinesSync().where((l) => l.trim().isNotEmpty && !l.trim().startsWith('//'));
       expect(code.every((l) => l.startsWith('export ')), isTrue, reason: f);
     }

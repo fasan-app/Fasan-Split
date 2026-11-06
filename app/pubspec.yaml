@@ -10,11 +10,13 @@ environment:
 # Pub workspace (docs/ARCHITEKTUR.md): the app is the root, the building blocks are packages beside it.
 workspace:
   - packages/fasan_core
+  - packages/fasan_reader
 
 dependencies:
   flutter:
     sdk: flutter
   fasan_core: ^0.1.0          # own package: model, splitting, names (packages/fasan_core)
+  fasan_reader: ^0.1.0        # own package: reading a receipt from text lines (packages/fasan_reader)
   flutter_localizations:
     sdk: flutter
   # Designpaket der Familie (MPL-2.0). Lokal über pubspec_overrides.yaml als Pfad ../../fasan_ui.
