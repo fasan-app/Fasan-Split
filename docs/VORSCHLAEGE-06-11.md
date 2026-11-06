@@ -57,4 +57,95 @@ Glas, Profile).
 
 ## D. Antworten des Nutzers
 
-(werden nach der Befragung am 06.11. hier eingetragen)
+Befragung 1 (06.11.):
+1. Fotos/Ausschnitte teilen: **offen** – Nutzer fragt zuerst: „Was ist ein Blossom-Server, Pro und Kontra?“ (Antwort und neue Frage unten).
+2. Personen: **ein Begriff „Personen“** mit Status „in der App“ / „ohne App“; Verwaltung/Rechte im Blatt der Person; eigener
+   Mitglieder-Knopf fällt weg.
+3. Weltweit lesen: **erst Latein perfekt (mit Tor), dann weitere Schriftmodelle direkt in die APK** (Beschluss 02.11. „offline ab
+   Installation“ bleibt).
+4. Zwischenstand: **keine Zwischenveröffentlichungen** – alles zusammen, wenn Umbau und Korrekturen fertig sind und das Tor besteht.
+
+### Was ist ein Blossom-Server? (recherchiert 06.11., Quellen unten)
+
+- **Was:** ein HTTP-Dateiserver für Nostr. Eine Datei liegt unter ihrem SHA-256-Fingerabdruck (`GET /<sha256>`, BUD-01). Hochladen mit
+  einem signierten Nostr-Ereignis (kind 24242) im `Authorization`-Header (BUD-02, BUD-11). Abruf ohne Anmeldung, Server müssen
+  `Access-Control-Allow-Origin: *` setzen (im Browser lesbar). Spiegeln auf mehrere Server (BUD-04), Serverliste je Nutzer (BUD-03).
+- **Pro:** große Dateien (nostr.build/blossom.band laut Anbieter: bis 20 MiB je Datei kostenlos, Zahl der Uploads unbegrenzt), volle
+  Auflösung möglich, Relays bleiben schlank (der Bon trägt nur Fingerabdruck und Schlüssel), mehrfach spiegelbar, später eigener Server
+  (Open Source) möglich.
+- **Contra:** zusätzlicher fremder Dienst. Verschlüsselung ist **nicht** Teil des Standards – Fasan müsste selbst verschlüsseln (geht:
+  Schlüssel liegt im verschlüsselten Bon). Der Server sieht IP-Adresse, Zeit, Dateigröße und den öffentlichen Schlüssel des Hochladenden
+  (steht im Token). Aufbewahrung nicht garantiert („Sunset“ ist nur ein Hinweis), Löschen hängt vom Server ab, Bedingungen und Kosten je
+  Server; wer den Fingerabdruck kennt, kann die (verschlüsselte, ohne Schlüssel nutzlose) Datei laden. Welche weiteren öffentlichen Server
+  es gibt und was sie kosten: nicht geprüft.
+- **Zum Vergleich die Relays der App** (NIP-11 abgerufen 06.11.): nos.lol nimmt höchstens 128 KB je Nachricht, relay.damus.io und
+  relay.primal.net 1 MB; Aufbewahrung ebenfalls ohne Zusage. Ein verkleinertes Original (200–400 KB) geht also nur in Stücken über alle drei.
+- **Tests:** nur gegen einen lokalen Blossom-Nachbau (Regel „nie in fremde Dienste schreiben“).
+
+Quellen: github.com/hzrd149/blossom (README, `buds/01.md`, `02.md`, `11.md`), b.nostr.build (Anbieterangaben), NIP-11-Antworten der drei Relays.
+
+Befragung 2 (06.11.):
+1. **Fotos teilen: Relays UND Blossom, beides als Standard** – doppelte Sicherung in niedriger (Relays: Ausschnitte + verkleinertes
+   Original, verschlüsselt, in Stücken) und hoher Qualität (Blossom: volle Auflösung, verschlüsselt). **Bedingung des Nutzers:** darf
+   Sicherheit und Leistung nicht beeinträchtigen. Umsetzung dafür (Vorschlag der Sitzung): eigener Schlüssel je Datei, Hochladen mit einem
+   **Einmal-Schlüssel** (nicht dem Konto-Schlüssel), damit der Server kein Konto zuordnen kann; Server sieht dann nur IP-Adresse (wie die
+   Relays auch), Zeit und Größe einer verschlüsselten Datei; Hochladen und Verkleinern im Hintergrund, nie im Bild-Takt; ohne Netz oder
+   bei Fehler bleibt alles lokal und wird später wiederholt. Tests nur gegen lokalen Blossom-Nachbau. Welche Server: offen (Recherche).
+2. **Architektur: komplett neu schreiben** (statt Kerne umziehen). Alte Teile nur als Vorlage; Schutz durch die Tore aus Schritt 1–2.
+3. **Grundfunktionen in diese Runde:** Rückgängig/Wiederholen, Ausgaben ohne Bon, Aufteilen-Arten (gleich, fest, Anteile, nach Posten),
+   exakter Ausgleich + „bezahlt“ eintragen. **Dazu:** „Prüfe, was zusätzlich noch offen ist – mir fallen sehr viele Dinge ein, die immer
+   noch fehlen“ → vollständige Lückenliste in § E (aus Fasan-Karte-Beschlüssen = Soll-Umfang, Soll-Liste, Roadmap, Nachrichten).
+4. **Reihenfolge: erst Tore, dann Umbau** – 0 Pflicht → 1 Erkennung + Tor → 2 Paritäts-Tor → 3 Neuschreiben → 4 Fotos teilen, Menüs →
+   5 Leistung → 6 Gestaltung nach Prüfliste → 7 Grundfunktionen; alles in **einer** Veröffentlichung.
+
+## E. Was noch fehlt – vollständige Lückenliste (06.11.)
+
+Quellen: Soll-Umfang `../fasan-karte/docs/ENTSCHEIDUNGEN.md` (Bon 3.5–3.19, Kosten 2, 24.10.), `../fasan-karte/docs/PLAN-FLUTTER.md`,
+`STAND.md` (Soll-Liste, Noch offen), `docs/ROADMAP.md`, Nachrichten des Nutzers. **Stand nach Doku, im Code noch nicht einzeln geprüft**
+(das macht das Register in Punkt 0). ✅ = schon in dieser Runde (Befragung 2), sonst Vorschlag.
+
+### E1 Rechnen und Aufteilen (Kosten 2, Karte 24.10.)
+- ✅ Aufteilen gleich, feste Beträge, Anteile, nach Posten; ✅ exakter Ausgleich (wenigste Überweisungen); ✅ „bezahlt“ trägt Ausgleichsbuchung ein.
+- ✅ Ausgaben ohne Kassenzettel (Formular). ✅ Rückgängig/Wiederholen (Bon 3.17).
+- Summen müssen genau stimmen, sonst kein Eintragen – auch beim Teilen/Export und bei Entwürfen prüfen (offen seit 03.11.).
+- Löschen überall mit Rückgängig (Karte 24.10.) – je Bildschirm prüfen.
+
+### E2 Bon und Erkennung (Bon 3.8–3.19)
+- Lesesicherheit je Posten sichtbar, andere Lesungen mit Prozent wählbar, Korrektur lernt den Lesefehler (3.11) – fehlt.
+- Bon-Art erkennen (Restaurant, Café, Einkauf, Tanken …), füllt „Wofür?“ (3.9) – fehlt (Kategorie gibt es).
+- Zusatzzeilen (Pfand, Rabatt, Extras) in der App umhängen oder als eigenen Posten (3.13); Posten ausblenden, andere Zeilen als Posten
+  übernehmen (3.8) – fehlt.
+- Bon-Ansicht „Nebeneinander“ (Original | Digital, 3.14), digital als PDF und Volltext (3.15) – fehlt.
+- Ladeanzeige ist der Bon selbst (Lichtband, aufleuchtende Zeilen, 3.19) – teilweise (`scan_stage`), prüfen.
+- Eigene Kamera-Ansicht mit Live-Begradigung (Plan Flutter, Rechnung 1) – fehlt.
+- Leere Stelle im Bon antippen liest dort neu (3.10) – prüfen.
+- Schraffur je Person zusätzlich zur Farbe (3.9); Farben Okabe-Ito oder eigene Palette (3.8) – offen.
+- Währung aus dem Bon erkennen ($, £, USD); Betrag im Geschäftsnamen trennen („Uber −12,98 €“); Scan-Begradigung (QR-Bereich, Keil,
+  Papierkante); Wörterbücher je Sprache; `de-discount.png`; SROIE 008/020/034/041 – offen.
+- Weltweite Schriften – nach Latein (Beschluss 06.11.).
+
+### E3 Gruppe, Personen, Chat
+- Ein Begriff „Personen“ (Beschluss 06.11.); Gruppe „Bons zuerst“; Fotos/Ausschnitte teilen (Beschluss 06.11.).
+- Rechnungen nur für Beteiligte sichtbar (Karte/Soll) – fehlt.
+- Gruppe verlassen auf allen eigenen Geräten; verknüpfte Person umbenennen; Kontakte löschen (nur aus Vorschlägen); Avatar/Gruppenbild.
+- Chat: Umfragen, „schreibt gerade“, Fotos im Chat, Reaktionen antippbar, Privatnachricht in der Gruppe (Entwurf mit dir), Blockieren,
+  Freund per QR.
+- Konto: Passkey (Messprobe S23), soziale Wiederherstellung (2 von 3) als Entwurf.
+
+### E4 Übersicht und Saldo
+- Saldo-Plakette auch auf Unterseiten; Filter nach Gruppe/Person/„ich schulde“, Suche; Visualisierung (Stand/Kategorien als Diagramm).
+- „?“-Hilfen überall; Ziehen-Regel systemweit (Gruppen-, Freunde-Seite); Leerräume je Bildschirm.
+
+### E5 Plattform und Gestaltung
+- Browser = APK (Beschluss), Ton im Browser (Nutzer 05.11.), Haptik auf dem S23 nicht spürbar (Ursache offen).
+- Profile der Familie (Einfach 60 dp, Gut lesbar/Groß, Kinder, Gast) – in Split nicht vorhanden.
+- Tablet/Querformat zweispaltig (3.18), sehr große und kleine Bildschirme, Widgets (Saldo, schneller Scan).
+- Meldungen, Dialoge, Blätter im Stil (SnackBar noch schwarzer Kasten); Menüs und Einstellungen neu ordnen; Übergänge ohne Ruckeln;
+  Gestaltung §9 (Lebendig/Warten, Papier, Braun, Kino), echtes Glas (zurückgestellt).
+- APK-Größe (`uvdoc.onnx` 31,6 MB, fp16 prüfen), Safari mit 1 Thread, Versionsmarke auf jeder Seite (3.17).
+- Import aus Splitwise/Tricount, MCP-Schnittstelle (Roadmap).
+
+### E6 Ungeprüft Gebliebenes (muss in die Tore, nicht zum Nutzer)
+- SEPA-QR gegen das EPC-PDF; Wallet-Links (Nutzer 05.11.: „ob Wallets richtig lesen, musst du recherchieren“); EZB-Kurs im Browser (CORS);
+  Benachrichtigungen, Tor/Orbot, Koppeln per QR, Bon-Status – alle „nicht auf dem Gerät geprüft“.
+- Foto-Warteschlange „lief rot“ (Nutzer 05.11.) – Stand prüfen.
