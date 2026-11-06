@@ -710,34 +710,60 @@ Future<void> _markPaidIn(BuildContext context, String group, String from, String
   final lang = t.de ? 'de' : 'en';
   final amount = '${money(cents, de: t.de)} ${signOf(context)}';
   // the amount can be changed: a part paid now, the rest later (only between 0 and the open amount)
-  final field = TextEditingController(text: money(cents, de: t.de));
-  final paid = await showDialog<int>(
-    context: context,
-    builder: (ctx) => StatefulBuilder(builder: (ctx, setState) {
-      final v = parseMoney(field.text);
-      final valid = v != null && v > 0 && v <= cents;
-      return AlertDialog(
-        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(trLang(lang, 'groups.markPaidAsk', [from, to, amount])),
-          const SizedBox(height: FasanSpace.m),
-          TextField(
-            controller: field,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(labelText: trLang(lang, 'groups.markPaidAmount'), suffixText: signOf(context), errorText: field.text.isEmpty || valid ? null : trLang(lang, 'groups.markPaidTooMuch', [amount])),
-            onChanged: (_) => setState(() {}),
-          ),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
-          FilledButton(onPressed: valid ? () => Navigator.pop(ctx, v) : null, child: Text(trLang(lang, 'groups.markPaid'))),
-        ],
-      );
-    }),
-  );
-  // not disposed here: the dialog still builds while it fades out (disposing at once threw); it goes with the garbage collector
+  final paid = await showDialog<int>(context: context, builder: (_) => _PaidDialog(lang: lang, de: t.de, cents: cents, ask: trLang(lang, 'groups.markPaidAsk', [from, to, amount]), amount: amount));
   if (paid == null || !context.mounted) return;
   final store = StoreScope.read(context);
   final shown = '${money(paid, de: t.de)} ${signOf(context)}';
   final b = store.recordPayment(group, from, to, paid, purpose: trLang(lang, 'groups.paymentPurpose', [from, to]), item: trLang(lang, 'groups.paymentItem'));
   showNote(context, trLang(lang, 'groups.markPaidDone', [from, to, shown]), actionLabel: context.tr('bill.undo'), onAction: () => store.remove(b));
+}
+
+/// Amount for „paid“: the open amount, editable down to a part. Owns its text controller and frees it with the dialog (06.11.: before,
+/// a controller made outside the dialog could only be left to the garbage collector, because the dialog still builds while it fades out).
+class _PaidDialog extends StatefulWidget {
+  const _PaidDialog({required this.lang, required this.de, required this.cents, required this.ask, required this.amount});
+
+  final String lang, ask, amount;
+  final bool de;
+  final int cents;
+
+  @override
+  State<_PaidDialog> createState() => _PaidDialogState();
+}
+
+class _PaidDialogState extends State<_PaidDialog> {
+  late final _field = TextEditingController(text: money(widget.cents, de: widget.de));
+
+  @override
+  void dispose() {
+    _field.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context);
+    final v = parseMoney(_field.text);
+    final valid = v != null && v > 0 && v <= widget.cents;
+    return AlertDialog(
+      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(widget.ask),
+        const SizedBox(height: FasanSpace.m),
+        TextField(
+          controller: _field,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: trLang(widget.lang, 'groups.markPaidAmount'),
+            suffixText: signOf(context),
+            errorText: _field.text.isEmpty || valid ? null : trLang(widget.lang, 'groups.markPaidTooMuch', [widget.amount]),
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(t.cancel)),
+        FilledButton(onPressed: valid ? () => Navigator.pop(context, v) : null, child: Text(trLang(widget.lang, 'groups.markPaid'))),
+      ],
+    );
+  }
 }

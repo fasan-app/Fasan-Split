@@ -108,6 +108,10 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('h07-gruppe-offen', async () => { await tap(/Lissabon/); });
     await step('h08-personen', async () => { await tap(/Personen/); });
     await step('h08b-bezahlt-frage', async () => { await tap(/Als bezahlt eintragen/); });
+    // a part first (06.11.: Teilbetrag), same names as the app walk (test/screens_test.dart h08d/h08e), then the rest
+    await step('h08d-teilbetrag', async () => { const f = p.getByRole('textbox').last(); await f.click({ timeout: 8000 }); await p.waitForTimeout(400); await f.fill('4,00'); });
+    await step('h08e-rest-offen', async () => { await p.getByRole('button', { name: /^Bezahlt$/ }).last().click({ timeout: 8000 }); await p.waitForTimeout(1500); });
+    await step('h08f-rest-frage', async () => { await tap(/Als bezahlt eintragen/); });
     await step('h08c-bezahlt-eingetragen', async () => { await p.getByRole('button', { name: /^Bezahlt$/ }).last().click({ timeout: 8000 }); await p.waitForTimeout(1500); });
     await step('h09-notizen', async () => { await tap(/^Notizen/); });
     await step('h10-notizen-zu', async () => { await back(); });

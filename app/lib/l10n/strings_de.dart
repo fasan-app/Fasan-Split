@@ -788,7 +788,7 @@ const Map<String, String> stringsDe = {
   'pairing_ui.newText': 'Öffne auf deinem anderen Gerät Fasan Split → Konto → „Gerät hinzufügen“ und scanne diesen Code. Oder scanne ihn mit der Kamera-App.',
   // --- settlement payments (Kosten 2, 06.11.) ---
   'groups.markPaid': 'Bezahlt',
-  'groups.markPaidAsk': 'Hat {0} an {1} {2} gezahlt? Das wird als Ausgleich in der Gruppe eingetragen.',
+  'groups.markPaidAsk': 'Wie viel hat {0} an {1} gezahlt? Offen sind {2}. Das wird als Ausgleich in der Gruppe eingetragen.',
   'groups.paymentPurpose': 'Ausgleich {0} → {1}',
   'groups.paymentItem': 'Ausgleichszahlung',
   'groups.markPaidDone': 'Eingetragen: {0} hat {1} {2} gezahlt.',

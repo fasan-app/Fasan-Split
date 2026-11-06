@@ -53,7 +53,7 @@ void main() {
     expect(find.textContaining('Angi zahlt Chris'), findsOneWidget);
     await tester.tap(find.text('Als bezahlt eintragen'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Hat Angi an Chris 10,00'), findsOneWidget);
+    expect(find.textContaining('Wie viel hat Angi an Chris gezahlt? Offen sind 10,00'), findsOneWidget);
     // a part only: 4,00 now
     await tester.enterText(find.byType(TextField), '4,00');
     await tester.pump();

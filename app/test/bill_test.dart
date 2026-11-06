@@ -29,6 +29,15 @@ void main() {
     expect(parseMoney('-0,39'), -39);
     expect(parseMoney('−3.20 €'), -320);
     expect(parseMoney('abc'), isNull);
+    // grouped as typed (06.11.: „1.234,56“ was refused, settlements over 1 000 € could not be entered)
+    expect(parseMoney('1.234,56'), 123456);
+    expect(parseMoney('1,234.56'), 123456);
+    expect(parseMoney('12.345.678,9'), 1234567890);
+    expect(parseMoney('1 234,56 €'), 123456);
+    expect(parseMoney('-1.000,00'), -100000);
+    expect(parseMoney('1.234'), isNull, reason: 'one separator with three digits is ambiguous – not guessed');
+    expect(parseMoney('1.23.4,5'), isNull);
+    expect(parseMoney('1,234,56'), isNull);
     expect(money(123456), '1234,56');
     expect(money(-39), '−0,39');
   });

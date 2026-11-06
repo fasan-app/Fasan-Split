@@ -618,7 +618,12 @@ String money(int cents, {bool de = true, bool sign = false}) {
 
 /// Parses "12,5", "12.50", "-3,2" to cents; null if not a number.
 int? parseMoney(String s) {
-  final t = s.trim().replaceAll(' ', '').replaceAll('€', '').replaceAll('−', '-');
+  var t = s.trim().replaceAll(' ', '').replaceAll('\u00a0', '').replaceAll('€', '').replaceAll('−', '-');
+  // grouped input as people type it, „1.234,56“ or „1,234.56“ (06.11.: refused before, so a settlement over 1 000 € could not be
+  // entered): with both separators the last one is the decimal mark and the others group thousands in threes. A single separator
+  // stays a decimal mark (with up to two digits), so „1.234“ remains invalid instead of guessing.
+  final g = RegExp(r'^(-?)(\d{1,3}(?:([.,])\d{3})+)([.,])(\d{0,2})$').firstMatch(t);
+  if (g != null && g[3] != g[4]) t = '${g[1]}${g[2]!.replaceAll(g[3]!, '')}.${g[5]}';
   final m = RegExp(r'^(-?)(\d+)(?:[.,](\d{0,2}))?$').firstMatch(t);
   if (m == null) return null;
   final cents = int.parse(m[2]!) * 100 + int.parse((m[3] ?? '').padRight(2, '0'));

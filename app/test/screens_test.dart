@@ -6,6 +6,8 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:fasan_split/main.dart';
+import 'package:fasan_split/flows/scan_queue.dart';
+import 'package:fasan_split/ui/groups.dart';
 import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/perf/perf_governor.dart';
 import 'package:fasan_split/state/snippets.dart';
@@ -182,6 +184,9 @@ void main() {
     'h05-papierkorb': (_) => const HomeScreen(),
     'h06-gruppen': (_) => const HomeScreen(),
     'h13-freunde': (_) => const HomeScreen(),
+    // group page with the walk receipt (Lissabon, Chris paid, Angi owes 10,00): Personen, settle as paid – whole and a part (06.11.)
+    for (final k in ['h07-gruppe-offen', 'h08-personen', 'h08b-bezahlt-frage', 'h08d-teilbetrag', 'h08e-rest-offen'])
+      k: (_) => Builder(builder: (c) => GroupScreen(name: 'Lissabon', queue: ScanQueue.current ?? ScanQueue(StoreScope.read(c)))),
     'b08-person-lang': (b) => ReviewScreen(bill: b),
     'b10-bon-ansicht': (b) => ReceiptScreen(bill: b),
     'b11-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
@@ -216,6 +221,28 @@ void main() {
     'h13-freunde': (t) async {
       await t.tap(find.text('Freunde'));
       await t.pump(const Duration(milliseconds: 500));
+    },
+    'h08-personen': (t) => _openPeople(t),
+    'h08b-bezahlt-frage': (t) async {
+      await _openPeople(t);
+      await t.tap(find.text('Als bezahlt eintragen'));
+      await _frames(t);
+    },
+    'h08d-teilbetrag': (t) async {
+      await _openPeople(t);
+      await t.tap(find.text('Als bezahlt eintragen'));
+      await _frames(t);
+      await t.enterText(find.byType(TextField), '4,00');
+      await _frames(t, 4);
+    },
+    'h08e-rest-offen': (t) async {
+      await _openPeople(t);
+      await t.tap(find.text('Als bezahlt eintragen'));
+      await _frames(t);
+      await t.enterText(find.byType(TextField), '4,00');
+      await _frames(t, 4);
+      await t.tap(find.widgetWithText(FilledButton, 'Bezahlt'));
+      await _frames(t, 14);
     },
     'b07-pruefen': (t) async {
       await t.tap(find.byIcon(Icons.fact_check_outlined));
@@ -265,7 +292,10 @@ void main() {
           } else {
             bill = _bill(path, bx, assigned: !e.key.startsWith('4a'));
           }
-          final store = BillStore.memory([_bill(path, bx)..payer = 1])..onboarded = true..me = 'Angi';
+          // group screens need the walk receipt in the store (done, so it counts in the balance)
+          final store = BillStore.memory([_bill(path, bx)..payer = 1, if (e.key.startsWith('h07') || e.key.startsWith('h08')) bill..done = true])
+            ..onboarded = true
+            ..me = 'Angi';
           // the walk screens show the look of the default (PerfMode.light: no blur, no grain, no moving background), like the browser
           var look = FasanSettings(reduceMotion: e.key.startsWith('b01p') ? false : true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light);
           // like main(): glass without grain is the standard look
@@ -294,6 +324,19 @@ void main() {
         }, skip: out == null);
       }
     }
+  }
+}
+
+/// Opens the folded „Personen“ section of the group page (same step as the browser walk).
+Future<void> _openPeople(WidgetTester t) async {
+  await t.tap(find.textContaining('Personen').first);
+  await _frames(t);
+}
+
+/// Several frames instead of one jump: section folds and dialogs animate over many frames.
+Future<void> _frames(WidgetTester t, [int n = 10]) async {
+  for (var i = 0; i < n; i++) {
+    await t.pump(const Duration(milliseconds: 80));
   }
 }
 

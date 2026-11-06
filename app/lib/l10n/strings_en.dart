@@ -788,7 +788,7 @@ const Map<String, String> stringsEn = {
   'pairing_ui.newText': 'On your other device open Fasan Split → Account → “Add device” and scan this code, or scan it with the camera app.',
   // --- settlement payments (Kosten 2, 06.11.) ---
   'groups.markPaid': 'Paid',
-  'groups.markPaidAsk': 'Did {0} pay {1} {2}? It is entered in the group as a settlement.',
+  'groups.markPaidAsk': 'How much did {0} pay {1}? {2} is open. It is entered in the group as a settlement.',
   'groups.paymentPurpose': 'Settlement {0} → {1}',
   'groups.paymentItem': 'Settlement payment',
   'groups.markPaidDone': 'Entered: {0} paid {1} {2}.',
