@@ -56,8 +56,10 @@ bool nameOk(String truth, String read) {
   // a short foreign word at the start or end (≤ 3 characters, not part of the printed name) is OCR debris, not a slip
   final tw = truth.split(RegExp(r'\s+')).map(norm).where((w) => w.isNotEmpty).toSet();
   final rw = read.split(RegExp(r'\s+')).map(norm).where((w) => w.isNotEmpty).toList();
-  for (final w in [if (rw.isNotEmpty) rw.first, if (rw.length > 1) rw.last]) {
-    if (w.length <= 3 && !tw.contains(w)) return false;
+  if (rw.length > tw.length) {
+    for (final w in [rw.first, rw.last]) {
+      if (w.length <= 3 && !tw.contains(w)) return false;
+    }
   }
   return lev(t, r) <= math.max(1, (t.length * 0.15).round());
 }
@@ -89,17 +91,26 @@ void main() {
         final d = RecognitionService.fromRecognition(x);
         checkedBons++;
         final problems = <String>[];
-        if (d.total != truth['total']) problems.add('Summe ${d.total} statt ${truth['total']}');
+        var amountsWrong = false;
+        if (d.total != truth['total']) {
+          problems.add('Summe ${d.total} statt ${truth['total']}');
+          amountsWrong = true;
+        }
         final ist = [for (final i in d.items) i.amount]..sort();
         // with a per-item truth, its amounts are what the user sees (deposit and discounts on the article, Karte 3.13); else the
         // printed lines (`posten`)
         final detail = truth['posten_detail'] as List?;
         final soll = (detail != null ? [for (final p in detail) (p as Map)['betrag'] as int] : (truth['posten'] as List).cast<int>().toList())..sort();
-        if (ist.join(',') != soll.join(',')) problems.add('Beträge $ist statt $soll');
+        if (ist.join(',') != soll.join(',')) {
+          problems.add('Beträge $ist statt $soll');
+          amountsWrong = true;
+        }
         for (final p in (detail ?? const [])) {
           final q = p as Map<String, dynamic>;
           final match = d.items.where((i) => i.amount == q['betrag'] && i.qty == (q['menge'] ?? 1) && nameOk(q['name'] as String, i.name));
           if (match.isEmpty) {
+            // wrong quantity counts like a wrong amount (the check vouches for it); a wrong name alone does not
+            if (!d.items.any((i) => i.amount == q['betrag'] && i.qty == (q['menge'] ?? 1))) amountsWrong = true;
             final same = d.items.where((i) => i.amount == q['betrag']).map((i) => '${i.qty}× ${i.name}').join(' / ');
             problems.add('Posten ${q['menge'] ?? 1}× ${q['name']} = ${q['betrag']} fehlt (gelesen: ${same.isEmpty ? '–' : same})');
           }
@@ -110,9 +121,9 @@ void main() {
           print('OK   $name');
           continue;
         }
-        final line = '$name${d.checked ? ' [ALS GEPRÜFT GEMELDET]' : ''}: ${problems.join('; ')}';
-        // a wrong result reported as checked is never allowed, known or not
-        if (truth['bekannt'] != null && !d.checked) {
+        final line = '$name${d.checked && amountsWrong ? ' [FALSCH ALS GEPRÜFT GEMELDET]' : ''}: ${problems.join('; ')}';
+        // wrong amounts, quantities or total reported as checked are never allowed, known or not; a known name problem is
+        if (truth['bekannt'] != null && !(d.checked && amountsWrong)) {
           known.add('$line (bekannt: ${truth['bekannt']})');
           // ignore: avoid_print
           print('BEKANNT $line');

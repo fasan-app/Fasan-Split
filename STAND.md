@@ -396,6 +396,10 @@ Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md
   („í Cesta“, „t Vinho“), Ferreiras (**Menge 1 statt 2** bei „2 Coca cola 6.00“). Fehlerklassen: Reste aus Nachbarspalten im Namen
   (Uni-Spalte vorn, IVA/€-Spalte hinten), Artikelnummern, Durchschein-Text, führende Menge nicht übernommen.
 - Workflow `erkennung.yml` vor APK und Web (Zweig, nicht main); braucht `FASAN_DIAGNOSE_TOKEN` (offene Frage oben).
+- Behoben (06.11. nachts, Tests `name_vote_test`, Tor): Namensabstimmung gruppiert nach Kern (Spaltenreste überstimmen nicht mehr),
+  Menge stimmt mit (Ferreiras 2 × Coca cola), Artikelnummern vorn weg, Steuersatz-Rest „238“/„P13“ am Ende weg, Fleck „nm“ weg.
+  Tor echte Bons: **13/14 OK, Aldi bekannt** (Durchschein-Druck der Rückseite, Abhilfe offen: helle Schrift vor dem Lesen der
+  Namensspalte unterdrücken). Voller Lauf mit synthetischen Bons und SROIE-Vergleich: läuft / steht aus.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 

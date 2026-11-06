@@ -3,6 +3,7 @@
 // readings from the gate (Da Sé geknickt, Confeitaria, Estrela, Ferreiras, Aldi). MPL-2.0
 import 'package:fasan_split/recognition/model.dart';
 import 'package:fasan_split/recognition/name_repair.dart';
+import 'package:fasan_split/recognition/reader.dart' show nameFrom;
 import 'package:flutter_test/flutter_test.dart';
 
 List<Item> one(String name, int amount, {num qty = 1}) => [Item(name: name, amount: amount, qty: qty)];
@@ -48,5 +49,16 @@ void main() {
     final w = one('PAD', 200);
     voteNames(w, [one('PAO', 200), one('PAO', 200)]);
     expect(w.first.name, 'PAO');
+  });
+
+  test('Leser: Steuersatz-Rest am Namensende weg, echte Namen bleiben', () {
+    expect(nameFrom('Uni TULIPA 238 '), 'TULIPA');
+    expect(nameFrom('Un1 TABUA QUEIJOS P P13 '), allOf(startsWith('TABUA QUEIJOS'), isNot(contains('13'))));
+    expect(nameFrom('814998 Bio Spaghetti '), 'Bio Spaghetti');
+    expect(nameFrom('2Uni Croisssant c/ N 13x '), 'Croissant c/ N');
+    expect(nameFrom('1.00 Pedras 25 cl '), contains('Pedras 25 cl'));
+    expect(nameFrom('1 Uni Agua 50cl '), 'Agua 50cl');
+    expect(nameFrom('1.00 Cafe Duplo nm '), 'Cafe Duplo');
+    expect(nameFrom('1.00 Coca-Cola 33 cl '), 'Coca-Cola 33 cl');
   });
 }

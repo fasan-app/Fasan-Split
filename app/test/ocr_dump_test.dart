@@ -20,7 +20,7 @@ void main() {
       OnnxModel.fromBytes(File('$m/rec-latin.onnx').readAsBytesSync(), threads: 2),
       File('$m/dict-latin.txt').readAsStringSync(),
     );
-    final x = await Recognizer(ocr, earlyStop: false).recognize(File(f).readAsBytesSync());
+    final x = await Recognizer(ocr, earlyStop: Platform.environment['FASAN_EARLYSTOP'] != '0').recognize(File(f).readAsBytesSync());
     for (final l in x.result.lines) {
       // ignore: avoid_print
       print('LINE ${l.type}|${l.text}');

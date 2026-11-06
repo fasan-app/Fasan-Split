@@ -456,6 +456,11 @@ final _n2 = RegExp(r'^\s*(?:[^\s\d]{1,2}\s+(?=(?:u[nm][il1tfjíìĩ|!]?|jni)(?![
 final _n3 = RegExp(r'\b\d{1,2}\s*%');
 // a tax rate at the end of the name with „%“ read as „x“ (Esplanada 06.11.: „Croissant c/ N 13x“)
 final _n3x = RegExp(r'\s+(?:4|5|6|7|8|9|10|12|13|16|19|20|21|22|23|24|25)\s*[xX]\s*$');
+// the VAT column glued to the name end with a misread „%“ or a stray letter: „TULIPA 238“, „QUEIJOS P P13“ (Da Sé 06.11.)
+// two lower-case consonants at the end are a smudge read as letters („Cafe Duplo nm“, Confeitaria 06.11.), except units
+final _n3s = RegExp(r'\s+(?!(?:cl|ml|kg|gr|lt|st|pz|pk|cx|dz)\b)[b-df-hj-np-tv-z]{2}\s*$');
+// (a bare number stays: „Pizza 13“; only with a misread „%“ or a letter in front it is the VAT column)
+final _n3v = RegExp(r'\s+(?:[A-Za-z](?:6|13|23)[%8xX]?|(?:6|13|23)[%8xX])\s*$');
 // OCR doubles letters on thermal print („Croisssant“); three equal letters in a row do not occur in item names
 final _tripleLetter = RegExp(r'([A-Za-zÀ-ÿ])\1{2,}');
 final _n4 = RegExp(
@@ -516,6 +521,8 @@ String nameFrom(String t) {
       .replaceFirst(_n2, '')
       .replaceAll(_n3, '')
       .replaceFirst(_n3x, '')
+      .replaceFirst(_n3v, '')
+      .replaceFirst(_n3s, '')
       .replaceAllMapped(_tripleLetter, (m) => '${m[1]}${m[1]}')
       .replaceAll(_n4, '') // currency only as its own word (else KRAEUTERQUARK became AEUTERQUARK)
       .replaceFirst(_n5, '')
