@@ -7,6 +7,8 @@ Posten zuordnen, wer hat bezahlt, Export. Der Code zieht später in Fasan Karte.
 
 Diese Regeln stehen über allem anderen in dieser Datei. Wer sie nicht erfüllen kann, sagt das dem Nutzer, bevor er arbeitet.
 
+**Mehrere Sitzungen arbeiten parallel (ab 06.11.):** vor jeder Arbeit `docs/ZUSAMMENARBEIT.md` lesen, Paket dort belegen, nur im eigenen Zweig arbeiten, Ende eintragen.
+
 **Schritt 0 – Repos und Pflichtlektüre, prüfbar:**
 1. Anbinden mit `add_repo` und je ein `git clone --depth 1`: `fasan-app/Fasan-Split` (push), `fasan-app/Fasan` (lesen),
    `fasan-app/fasan_ui` (push, Nutzer 06.11.), `fasan-app/fasan-diagnose` (lesen), **`fasan-app/Fasan-Karte` (lesen)**, **`fasan-app/Fasan-Camera`
