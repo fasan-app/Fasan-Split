@@ -20,7 +20,7 @@ am Code nachprüfen und hier berichtigen.** Stand: ✅ umgesetzt und nachgewiese
 | Datum | Anforderung | Grund | Stand | Ort |
 |---|---|---|---|---|
 | 05.11. | Belém-Bon korrekt lesen, Algorithmus stresstesten, keine neue Version vorher | „völlige Katastrophe“ | ◐ (Korrektur da, Tor fehlt) | reader.dart, pipeline.dart |
-| 05.11. | Viel mehr echte, weltweite Bons/Rechnungen in die Tests (7-Eleven Japan, Miete Italien) | weltweit nutzbar | ◐ (Latein; andere Schriften später) | test/, fasan-diagnose |
+| 05.11., 06.11. | Viel mehr echte, weltweite Bons/Rechnungen in die Tests (7-Eleven Japan, Miete Italien); alle auffindbaren, auch vereinzelte; ~100 selbst beschrieben | „13 Bons sind keine Grundlage“ | ❌ → in Arbeit (Korpus) | fasan-diagnose/tests/welt, CI |
 | 06.11. | „13 Croissants“: zuvor gut laufender, kritischer Teil darf nie schlechter werden | Regression | ◐ (Ursache gefunden, ungeprüft im Zweig) | reader.dart (Steuersatz als Menge) |
 | 06.11. | Tor in der CI über privates fasan-diagnose, stoppt Veröffentlichung | nie wieder unbemerkt | ❌ | Punkt 2 |
 | 06.11. | Weltweite Schriften: erst Latein perfekt, dann Modelle in die APK | Beschluss 02.11. offline | ❌ | Punkt 7 |

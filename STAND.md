@@ -372,8 +372,6 @@ Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-na
 Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md`) beantwortet hat (Nutzer 06.11.).
 
 - Foto oder Protokoll des Esplanada-Bons (13 Croissants) schicken, damit der ganze Bon ins Erkennungs-Tor kommt.
-- **Fotos teilen bestätigen** mit den richtigen Fakten (Korrektur in `docs/VORSCHLAEGE-06-11.md`, Ende): Relays nur in Stücken ≤ 40 KB,
-  Blossom nur cdn.hzrd149.com und nostr.download für verschlüsselte Dateien.
 - **Lese-Geheimnis `FASAN_DIAGNOSE_TOKEN` anlegen** (Anleitung mit vorausgefülltem Link: `docs/ERKENNUNGS-TOR.md`). Ohne es scheitert das
   Erkennungs-Tor und es wird nichts veröffentlicht (gewollt).
 
@@ -406,6 +404,14 @@ Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md
   Menge stimmt mit (Ferreiras 2 × Coca cola), Artikelnummern vorn weg, Steuersatz-Rest „238“/„P13“ am Ende weg, Fleck „nm“ weg.
   Tor echte Bons: **13/14 OK, Aldi bekannt** (Durchschein-Druck der Rückseite, Abhilfe offen: helle Schrift vor dem Lesen der
   Namensspalte unterdrücken). Voller Lauf mit synthetischen Bons und SROIE-Vergleich: läuft / steht aus.
+
+### Testkorpus weltweit (Nutzer 05.11. und erneut 06.11.: „13 Bons sind keine Grundlage“) – jetzt Vorrang in Punkt 1
+
+Beschluss Befragung 4: alle auffindbaren echten Rechnungen/Kassenzettel (Datensätze jeder Lizenz nur zum Testen, Einzelfunde), dazu
+**~100 selbst nach Foto beschriebene Bons** aus vielen Ländern/Formaten. Ablage: Datensätze lädt die CI selbst (nie in Repos);
+Einzelfunde mit Wahrheit in `fasan-diagnose/tests/welt/` (privat), Quelle + Lizenz je Datei. Tor-Aufbau: Stufe A (echte Bons des Nutzers +
+synthetische) blockiert bei jedem Fehler; Stufe B (Korpus) blockiert bei Verschlechterung gegen gespeicherte Bestwerte.
+Vorhanden: CORD test+validation (200, Wahrheit je Posten, CC-BY-4.0) in `/home/user/tools/cord`, SROIE (~1000, Summen) in `/home/user/tools/sroie`.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
