@@ -81,3 +81,7 @@ der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. 
 - 06.11. nachts (Nutzer, Frage): Muss die Web-Anpassung jedes Mal gemacht werden, greift der modulare Aufbau auch im Web (App-Änderung → Web)? Antwort + Regel in CLAUDE.md; Stand: beantwortet, modularer Neubau offen.
 
 - 06.11. nachts (Nutzer, Kritik/Frage): Warum gab es Unterschiede Web/App; arbeitest du am Neuaufbau vom Fundament (letzte Nacht beauftragt), was ist der Plan? Stand: Neuaufbau NICHT begonnen (ehrlich gemeldet); Schritt 1 Bestandsaufnahme + Plan in docs/ARCHITEKTUR.md; Umsetzung als Nächstes.
+
+- 06.11. 23:35 (Nutzer an Sitzung B): B übernimmt parallel zu A; selbstständig arbeiten ohne Rückfragen je Schritt; Repos wie CLAUDE.md Schritt 0 (Fasan nur lesend);
+  Vorschlag für B: Bereich „Erkennung“, vorher in `docs/ZUSAMMENARBEIT.md` belegen; eine Veröffentlichung auf main am Ende nach vollem Tor; jede Zusage/Nachricht/
+  jeden Beschluss sofort in Dateien. Stand: angenommen, belegt 06.11. 23:50 (Zweig `mitarbeit/B-erkennung`). Rohtext: nicht in `../fasan/nutzer/` (B nur lesend).
