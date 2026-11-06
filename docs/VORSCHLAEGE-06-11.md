@@ -83,3 +83,17 @@ Befragung 1 (06.11.):
 - **Tests:** nur gegen einen lokalen Blossom-Nachbau (Regel „nie in fremde Dienste schreiben“).
 
 Quellen: github.com/hzrd149/blossom (README, `buds/01.md`, `02.md`, `11.md`), b.nostr.build (Anbieterangaben), NIP-11-Antworten der drei Relays.
+
+Befragung 2 (06.11.):
+1. **Fotos teilen: Relays UND Blossom, beides als Standard** – doppelte Sicherung in niedriger (Relays: Ausschnitte + verkleinertes
+   Original, verschlüsselt, in Stücken) und hoher Qualität (Blossom: volle Auflösung, verschlüsselt). **Bedingung des Nutzers:** darf
+   Sicherheit und Leistung nicht beeinträchtigen. Umsetzung dafür (Vorschlag der Sitzung): eigener Schlüssel je Datei, Hochladen mit einem
+   **Einmal-Schlüssel** (nicht dem Konto-Schlüssel), damit der Server kein Konto zuordnen kann; Server sieht dann nur IP-Adresse (wie die
+   Relays auch), Zeit und Größe einer verschlüsselten Datei; Hochladen und Verkleinern im Hintergrund, nie im Bild-Takt; ohne Netz oder
+   bei Fehler bleibt alles lokal und wird später wiederholt. Tests nur gegen lokalen Blossom-Nachbau. Welche Server: offen (Recherche).
+2. **Architektur: komplett neu schreiben** (statt Kerne umziehen). Alte Teile nur als Vorlage; Schutz durch die Tore aus Schritt 1–2.
+3. **Grundfunktionen in diese Runde:** Rückgängig/Wiederholen, Ausgaben ohne Bon, Aufteilen-Arten (gleich, fest, Anteile, nach Posten),
+   exakter Ausgleich + „bezahlt“ eintragen. **Dazu:** „Prüfe, was zusätzlich noch offen ist – mir fallen sehr viele Dinge ein, die immer
+   noch fehlen“ → vollständige Lückenliste in § E (aus Fasan-Karte-Beschlüssen = Soll-Umfang, Soll-Liste, Roadmap, Nachrichten).
+4. **Reihenfolge: erst Tore, dann Umbau** – 0 Pflicht → 1 Erkennung + Tor → 2 Paritäts-Tor → 3 Neuschreiben → 4 Fotos teilen, Menüs →
+   5 Leistung → 6 Gestaltung nach Prüfliste → 7 Grundfunktionen; alles in **einer** Veröffentlichung.
