@@ -7,9 +7,14 @@ environment:
   sdk: ^3.13.5
   flutter: '>=3.47.0'
 
+# Pub workspace (docs/ARCHITEKTUR.md): the app is the root, the building blocks are packages beside it.
+workspace:
+  - packages/fasan_core
+
 dependencies:
   flutter:
     sdk: flutter
+  fasan_core: ^0.1.0          # own package: model, splitting, names (packages/fasan_core)
   flutter_localizations:
     sdk: flutter
   # Designpaket der Familie (MPL-2.0). Lokal über pubspec_overrides.yaml als Pfad ../../fasan_ui.
