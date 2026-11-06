@@ -433,6 +433,10 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   Posten-Bereich ist erst nach Scrollen erreichbar. Offen als Gestaltungsaufgabe (Querformat: Leiste schmaler oder in die App-Leiste, Kopfbereich einklappen); Prüflisten-Eintrag
   folgt. Noch nicht verglichen: Englisch, Beitritt, Gruppe/Personen, Scan, Archiv/Papierkorb, Chat/Notizen.
 
+- **Bildschirmvergleich, Fund 4 (06.11. nachts):** Der Browser-Nutzer (Angi) stand in seiner eigenen Liste „Freunde“. Behoben (`FriendsPage` blendet den eigenen Namen aus), Test
+  `friends_not_me_test` (scheitert ohne die Korrektur). Verglichen und gleich (App und Browser): Archiv, Papierkorb (leer), Gruppenliste, Freunde, Gruppe mit Personen-Bereich,
+  Notizen, Chat (nur Browser-Bilder, die App-Seite braucht Zusammenarbeit im Test). Noch offen im Vergleich: Beitritt, Scan, Englisch.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
