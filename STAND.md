@@ -473,7 +473,15 @@ Drosselung endet) für Ziel ~100.
    Jetzt verkleinerter Scan + Original verschlüsselt in Stücken ≤ 40 KB über die Relays (collab/photo_sync.dart), Lage der Posten
    im Dokument, Ausschnitte schneidet der Empfänger; Menü zeigt alle Einträge (deaktiviert mit Grund), Bon-Knopf immer (digital),
    Hinweis „Foto kommt …“. Geprüft: Unit- und Zwei-Telefon-Test, Widget-Test (scheitert ohne Korrektur), Zufallstest.
-   Offen in Punkt 3: Browser-Ende-zu-Ende mit echtem Bon (tool/e2e/photo.js, läuft), Bildschirm-für-Bildschirm-Vergleich App/Browser
+   **Browser-Ende-zu-Ende 06.11. (echter Bon Esplanada, Chromium 393×873, lokales Relay):** Telefon-Seite erkennt den Bon wie die App
+   (billFromScan), teilt ihn; der Browser tritt bei und hat nach 34 s (inkl. 15 s App-Start) Scan, Original und Ausschnitte; ⋮-Menü
+   mit allen 4 Einträgen („Alles gleichmäßig teilen“ deaktiviert mit Grund, da nur eine Person dabei), Bon-Ansicht mit Scan / Original /
+   Digital. Bildschirmfotos `/home/user/tools/e2e-photo/photo-*.png` angesehen. Skript `/home/user/tools/e2e-photo.sh`.
+   **Neuer Befund:** Symbole vor den Postennamen (Emoji aus speisen.dart) erscheinen im Browser als leere Kästchen: Flutter-Web lädt
+   Emoji-Schriften von fonts.gstatic.com nach (im Test gesperrt; beim Nutzer: Anfrage an Google bzw. offline Kästchen). Plan:
+   Teilmenge von Noto Color Emoji (OFL) nur mit den genutzten Symbolen mitliefern, als Schrift-Rückfall – Browser = APK und keine
+   Anfrage an Dritte.
+   Offen in Punkt 3: Bildschirm-für-Bildschirm-Vergleich App/Browser
    mit Fotos, Blossom (volle Auflösung) als zweiter Kanal, Fotos im Browser erst bei Bedarf laden (images_web lädt heute alle beim
    Start → Punkt 4), Stücke eines Fotos von jedem Mitglied neu senden können, wenn das scannende Gerät weg ist.
 4. **Leistung in echten Abläufen** (Bon mit Foto, Scannen, Gruppe; S23 und gedrosselt wie 10 Jahre altes Gerät); Ursachen beheben,
