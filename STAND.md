@@ -444,6 +444,10 @@ Werkzeug neu: OCR-Zwischenspeicher für Testläufe (`app/test/support/ocr_cache.
 kosten ~1 s statt ~30 s je Bon. Die Diagnose-Ausgabe (`ocr_dump_test.dart`) nutzt jetzt UVDoc wie das Tor (vorher andere Zeilen!).
 Gefahr gesehen: Bei b1-000 meldete eine Zwischenstufe falsche Zuordnung als „geprüft“ (Löser repariert eine Ziffer, damit die Summe
 passt). Jede Änderung muss über alle Bons laufen; „falsch als geprüft“ ist das schlimmste Ergebnis.
+Messung 06.11. ~07:00 (Arbeitsbaum, alle Korrekturen bis „Sub Total“): Tor Stufe A 132 Bons, 0 Fehler, 1 bekannt (Aldi);
+Weltkorpus 23/72 ganz richtig (alter Code auf denselben ersten 46: 4 → neu 12, keiner schlechter), Hangul 1/5. 11 Welt-Bons „falsch als
+geprüft“ (meist Menge oder fehlender Steuer-/Rundungsposten) – Vergleich mit altem Code läuft (`/home/user/tools/wg-old.log`).
+CORD-Basis alter Code: 56/176 ganz richtig (`/home/user/tools/n1-cord.log`). SROIE alter Code: 55/60 Summen, 1 falsch geprüft.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
