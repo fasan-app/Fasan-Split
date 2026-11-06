@@ -106,6 +106,14 @@ Bill _walkBill(Directory dir) {
   return b;
 }
 
+/// The walk bill with Angi added and the two items assigned (what the browser walk does by tapping).
+Bill _two(Bill b) {
+  if (b.ps.length < 2) b.ps.add(Person('Angi', 1));
+  b.its[0].shares = {0: 1};
+  b.its[1].shares = {1: 1};
+  return b;
+}
+
 Future<void> _fonts() async {
   // Direkt aus den Dateien (fasan_ui neben diesem Repo, FASAN_UI überschreibt), damit kein Bundle-Fehler stumm bleibt.
   final ui = Platform.environment['FASAN_UI'] ?? '../../fasan_ui';
@@ -179,8 +187,9 @@ void main() {
     'b10-bon-ansicht': (b) => ReceiptScreen(bill: b),
     'b11-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
     'b12-bon-digital': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.digital),
-    'b14-fertig': (b) => PayScreen(bill: b),
-    'b15-ergebnis': (b) => ResultScreen(bill: b..payer = 0),
+    'b14b-zuordnen': (b) => ReviewScreen(bill: _two(b)),
+    'b14-fertig': (b) => PayScreen(bill: _two(b)),
+    'b15-ergebnis': (b) => ResultScreen(bill: _two(b)..payer = 0),
   };
   // interaction before the picture (same steps as the browser walk)
   final acts = <String, Future<void> Function(WidgetTester)>{

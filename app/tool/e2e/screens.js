@@ -64,7 +64,7 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     // every screen of the main flow, one screenshot each (compared with test/screens_test.dart, same bill); a step that fails is
     // noted and the walk goes on, so one missing control does not hide the rest
     const steps = [];
-    const step = async (name, fn) => { try { await fn(); await p.waitForTimeout(1200); await shot(name); steps.push(name); } catch (e) { steps.push('FEHLT ' + name + ': ' + String(e).slice(0, 100)); await shot('fehlt-' + name); } };
+    const step = async (name, fn) => { try { await fn(); await p.waitForTimeout(1200); await shot(name); steps.push(name); } catch (e) { steps.push('FEHLT ' + name + ': ' + String(e).slice(0, 100)); await shot('fehlt-' + name); try { fs.writeFileSync(dir + '/aria-' + name + '.txt', await p.locator('body').ariaSnapshot({ timeout: 8000 })); } catch (_) {} } };
     const back = async () => { await p.getByRole('button', { name: /Zurück|Back/ }).first().click({ timeout: 8000 }).catch(() => {}); await p.waitForTimeout(800); };
     await step('b01-bon', async () => {});
     await step('b02-menue', async () => { await p.getByRole('button', { name: /Mehr|More/ }).first().click(); });
@@ -73,16 +73,30 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('b05-posten-blatt-fest', async () => { await p.getByText('Chris').last().click(); await p.waitForTimeout(500); await p.getByText(/Fester Betrag/).first().click(); });
     await step('b06-posten-zu', async () => { await p.keyboard.press('Escape'); });
     await step('b07-pruefen', async () => { await p.getByRole('button', { name: /Posten und Summe prüfen/ }).first().click(); });
-    await step('b08-person-lang', async () => { await p.getByText('Chris').first().click({ delay: 700 }); });
+    await p.keyboard.press('Escape'); await p.waitForTimeout(800);
+    await step('b08-person-lang', async () => { await p.getByRole('checkbox', { name: /Chris/ }).first().click({ delay: 700 }); });
     await step('b09-person-zu', async () => { await p.keyboard.press('Escape'); });
     await step('b10-bon-ansicht', async () => { await p.getByRole('button', { name: 'Bon' }).first().click(); });
     await step('b11-bon-original', async () => { await p.getByRole('button', { name: 'Original' }).first().click(); });
     await step('b12-bon-digital', async () => { await p.getByRole('button', { name: 'Digital' }).first().click(); });
     await step('b13-zurueck', async () => { await back(); });
-    await step('b14-fertig', async () => { await p.getByRole('button', { name: /Speichern|offen|Fertig/ }).first().click(); });
-    await step('b15-weiter', async () => { await p.getByRole('button', { name: /Weiter|Fertig|Ergebnis/ }).first().click(); });
+    await step('b14-angi', async () => { await p.getByRole('checkbox', { name: /Angi/ }).first().click(); });
+    await step('b14b-zuordnen', async () => {
+      // via the item sheets (a tap on a row opens the sheet when no person is active)
+      await p.getByText('Pizza').first().click(); await p.waitForTimeout(800);
+      await p.getByRole('button', { name: /Chris/ }).first().click(); await p.waitForTimeout(400);
+      await p.keyboard.press('Escape'); await p.waitForTimeout(800);
+      await p.getByText('Wein').first().click(); await p.waitForTimeout(800);
+      await p.getByRole('button', { name: /Angi/ }).first().click(); await p.waitForTimeout(400);
+      await p.keyboard.press('Escape');
+    });
+    await step('b14c-weiter', async () => { await p.getByRole('button', { name: /offen|Weiter|Fertig|Eintragen|Speichern/ }).last().click(); });
+    await step('b15-danach', async () => {});
     await step('b16-zurueck', async () => { await back(); });
-    await step('z01-gruppe-nachher', async () => {});
+    await step('b17-gruppe', async () => { await back(); });
+    await step('h01-home', async () => { await back(); });
+    await step('h02-einstellungen', async () => { await p.getByRole('button', { name: /Einstellungen|Settings/ }).first().click(); });
+    await step('h03-zurueck', async () => { await back(); });
     result.steps = steps;
   } catch (e) { console.log('FAIL', String(e).slice(0, 300)); await shot('fail'); }
   fs.writeFileSync(dir + '/photo-done.txt', JSON.stringify(result));
