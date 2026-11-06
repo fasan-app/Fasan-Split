@@ -59,6 +59,7 @@ void main() {
     expect(nameFrom('1.00 Pedras 25 cl '), contains('Pedras 25 cl'));
     expect(nameFrom('1 Uni Agua 50cl '), 'Agua 50cl');
     expect(nameFrom('1.00 Cafe Duplo nm '), 'Cafe Duplo');
+    expect(nameFrom('1.00 Cafe Duplo nm € '), 'Cafe Duplo');
     expect(nameFrom('1.00 Coca-Cola 33 cl '), 'Coca-Cola 33 cl');
   });
 }

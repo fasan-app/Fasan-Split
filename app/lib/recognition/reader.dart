@@ -532,7 +532,9 @@ String nameFrom(String t) {
       .replaceAll(_n9, '')
       .replaceAll(_ws, ' ')
       .trim();
-  return jsSlice(s, 0, 40);
+  // once more at the very end: currency signs and tax codes are gone only now („Cafe Duplo nm €“ → „Cafe Duplo nm“ → „Cafe Duplo“)
+  final e = ' $s'.replaceFirst(_n3v, '').replaceFirst(_n3s, '').trim();
+  return jsSlice(e.isEmpty ? s : e, 0, 40);
 }
 
 final _splitAmount = RegExp(r'^\s*(-?\d{1,3})\s?(\d{2})\s*[A-D*]?\s*\*?\s*$');

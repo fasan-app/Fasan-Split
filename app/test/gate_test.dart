@@ -96,7 +96,15 @@ void main() {
           problems.add('Summe ${d.total} statt ${truth['total']}');
           amountsWrong = true;
         }
-        final ist = [for (final i in d.items) i.amount]..sort();
+        // with a per-item truth: amounts as the app shows them; without: the printed lines, deposit/discount lines counted
+        // separately like e2e_test.dart (the app adds them to the article)
+        final ist = (truth['posten_detail'] != null
+            ? [for (final i in d.items) i.amount]
+            : [
+                for (final q in x.result.items)
+                  if (q.extras.isNotEmpty) ...[q.amount - q.extras.fold<int>(0, (a, z) => a + z.amount), ...q.extras.map((z) => z.amount)] else q.amount
+              ])
+          ..sort();
         // with a per-item truth, its amounts are what the user sees (deposit and discounts on the article, Karte 3.13); else the
         // printed lines (`posten`)
         final detail = truth['posten_detail'] as List?;
