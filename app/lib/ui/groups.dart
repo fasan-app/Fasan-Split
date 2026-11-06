@@ -145,13 +145,41 @@ class GroupScreen extends StatelessWidget {
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text('${t.billsCount(bills.length)} · ${money(sum, de: t.de)} ${signOf(context)}', style: tt.bodyMedium)),
         if (live != null) CollabGroupPanel(group: live),
-        GroupPeople(name: name),
-        const SizedBox(height: FasanSpace.l),
         if (live == null) _ShareButton(name: name),
+        // receipts first (Nutzer 06.11.: the people block pushed the receipts off the screen), people in one folded section below
         if (bills.isEmpty) Text(t.groupEmpty, style: tt.bodyMedium),
         for (final b in bills)
           Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {})),
+        const SizedBox(height: FasanSpace.m),
+        _PeopleSection(name: name),
       ]),
+    );
+  }
+}
+
+/// „Personen“ – the one place for everyone in the group (in the app or not), folded by default; balances and settling inside.
+class _PeopleSection extends StatelessWidget {
+  const _PeopleSection({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    final n = CollabScope.of(context).peopleOf(name).length;
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Container(
+        decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
+        child: ExpansionTile(
+          shape: const Border(),
+          collapsedShape: const Border(),
+          leading: Icon(Icons.group_outlined, color: l.accent),
+          title: Text('${t.groupPeople} · $n', style: tt.titleMedium),
+          childrenPadding: const EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, FasanSpace.m),
+          children: [GroupPeople(name: name)],
+        ),
+      ),
     );
   }
 }
@@ -178,8 +206,6 @@ class GroupPeople extends StatelessWidget {
     final moves = settle(bal);
     final anyDone = store.inGroup(name, done: true).isNotEmpty;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      FasanLabel(t.groupPeople),
-      const SizedBox(height: FasanSpace.s),
       if (people.isEmpty) Text(t.groupNoPeople, style: tt.bodyMedium!.copyWith(color: l.textMuted)),
       for (final (i, p) in people.indexed)
         InkWell(
@@ -200,9 +226,9 @@ class GroupPeople extends StatelessWidget {
                     docId: GroupSession.members,
                     builder: (context) => Text(
                       switch (live.session.memberOfPerson(p)) {
-                        final m? when label('@$m') != p => '${t.linkedTo(live.session.nameOf(m))} · ${t.countsWith(label('@$m'))}',
-                        final m? => t.linkedTo(live.session.nameOf(m)),
-                        _ => t.notLinked,
+                        final m? when label('@$m') != p => '${t.inTheApp} · ${t.countsWith(label('@$m'))}',
+                        _?  => t.inTheApp,
+                        _ => t.withoutApp,
                       },
                       style: tt.bodySmall!.copyWith(color: l.textMuted),
                     ),
@@ -306,12 +332,16 @@ Future<void> _personActions(BuildContext context, CollabGroup g, String person) 
               onTap: () => Navigator.pop(ctx, 'link:$k'),
             ),
         if (linked != null) ListTile(leading: const Icon(Icons.link_off_rounded), title: Text(t.unlink), subtitle: Text(t.linkedTo(g.session.nameOf(linked))), onTap: () => Navigator.pop(ctx, 'unlink')),
+        // rights and removal live in the person's sheet too (Nutzer 06.11.: one concept „Personen“)
+        if (linked != null) ListTile(leading: const Icon(Icons.admin_panel_settings_outlined), title: Text(t.personRights), onTap: () => Navigator.pop(ctx, 'rights')),
       ]),
     ),
   );
   if (choice == null || !context.mounted) return;
   if (choice == 'invite') {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g, person: person)));
+  } else if (choice == 'rights') {
+    await memberActions(context, g, linked!);
   } else if (choice == 'unlink') {
     s.unlinkPerson(g, linked!, person);
   } else if (choice.startsWith('link:')) {

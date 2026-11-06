@@ -12,6 +12,9 @@ extension GroupTexts on S {
   String allFromGroup(String g) => de ? 'Alle aus „$g“' : 'Everyone from “$g”';
   String inviteFor(String p) => de ? '$p einladen' : 'Invite $p';
   String linkedTo(String m) => de ? 'Verknüpft mit $m' : 'Linked to $m';
+  String get inTheApp => de ? 'In der App' : 'In the app';
+  String get withoutApp => de ? 'Ohne App' : 'Without the app';
+  String get personRights => de ? 'Rechte und Verwaltung' : 'Rights and admin';
   String get notLinked => de ? 'Noch nicht in der App' : 'Not in the app yet';
   String get linkMember => de ? 'Mit Mitglied verknüpfen' : 'Link to a member';
   String get unlink => de ? 'Verknüpfung lösen' : 'Unlink';

@@ -92,7 +92,15 @@ void main() {
     final ctl = FasanController(settings: FasanSettings(reduceMotion: true));
     await tester.pumpWidget(SplitApp(store: store, ui: ctl, home: GroupScreen(name: 'WG', queue: q)));
     await tester.pump(const Duration(milliseconds: 100));
+    // receipts first, people folded in one section „Personen“ below them (Nutzer 06.11.)
+    expect(find.text('Pizza'), findsOneWidget);
+    expect(find.text('Personen · 4'), findsOneWidget);
+    expect(find.text('Dora'), findsNothing, reason: 'eingeklappt');
+    expect(tester.getTopLeft(find.text('Pizza')).dy, lessThan(tester.getTopLeft(find.text('Personen · 4')).dy));
+    await tester.tap(find.text('Personen · 4'));
+    await tester.pumpAndSettle();
     expect(find.text('Dora'), findsOneWidget);
+    expect(find.text('Ohne App'), findsNothing, reason: 'nur Gruppen mit Live-Teilen zeigen den Status');
     expect(find.text('So gleicht ihr aus'), findsOneWidget);
     expect(find.textContaining('Ben zahlt Anna 10,00'), findsOneWidget);
     expect(find.textContaining('Cem zahlt Anna 10,00'), findsOneWidget);

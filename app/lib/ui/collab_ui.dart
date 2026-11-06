@@ -566,7 +566,7 @@ class MembersScreen extends StatelessWidget {
                   if (s.distrusted.contains(k)) t.confirmsAboutMe,
                 ].join(' · ')),
                 trailing: k == me ? null : const Icon(Icons.more_vert_rounded),
-                onTap: k == me && !group.isAdmin ? null : () => _memberActions(context, group, k),
+                onTap: k == me && !group.isAdmin ? null : () => memberActions(context, group, k),
               ),
           ]);
         },
@@ -1124,7 +1124,7 @@ class CollabGroupPanel extends StatelessWidget {
     final t = S.of(context), g = group;
     return GroupChangeBuilder(
       group: g,
-      // one compact row of three equal buttons (Nutzer 04.11.: members, notes and messages in one line)
+      // one compact row (notes, chat); the people sit in one section „Personen“ under the receipts (Nutzer 06.11.: one concept)
       builder: (context) {
         final c = CollabScope.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
         final unread = c.unread(g), held = c.held.where((h) => h.group.secret.tag == g.secret.tag).length;
@@ -1150,8 +1150,6 @@ class CollabGroupPanel extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: FasanSpace.m),
           child: Column(children: [
             Row(children: [
-              button(Icons.group_outlined, '${g.session.memberKeys.length}', 0, MembersScreen(group: g)),
-              const SizedBox(width: FasanSpace.s),
               button(Icons.edit_note_rounded, t.notesTitle, 0, NotesScreen(group: g)),
               const SizedBox(width: FasanSpace.s),
               button(Icons.chat_bubble_outline_rounded, t.de ? 'Chat' : 'Chat', unread, ChatScreen(group: g)),
@@ -1171,7 +1169,7 @@ class CollabGroupPanel extends StatelessWidget {
 }
 
 /// What can be done with one member: link a person, give or take the admin role, trust, remove (with a new group key).
-Future<void> _memberActions(BuildContext context, CollabGroup g, String pub) async {
+Future<void> memberActions(BuildContext context, CollabGroup g, String pub) async {
   final t = S.of(context), s = CollabScope.read(context);
   final me = s.identity?.pub, isFounder = pub == g.secret.adminPub, isAdm = g.session.admins.contains(pub);
   final trusted = !s.distrusted.contains(pub);
