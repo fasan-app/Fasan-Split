@@ -389,6 +389,13 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   Einladen/Beitreten, Papierkorb, Kamera/Scan) → je Bildschirm Handy-Bildschirmfoto der App-Ansicht (Flutter-Test mit echtem Bon) und des Browsers
   (Playwright, 393×873) nebeneinander ansehen, Unterschiede und Prüflistenverstöße notieren und beheben. Ergebnis in `docs/WEB-GRENZEN.md`.
 
+- **Bildschirmvergleich App/Browser, Zwischenstand 06.11. abends** (`tool/e2e/screens.js` + `test/screens_test.dart` Bildschirme `b01…b15`, gleicher Bon,
+  Handygröße 393×873, Seite an Seite angesehen): Bon-Bildschirm, ⋮-Menü, Bon-Ansicht Scan/Original/Digital: Aufbau, Schrift, Chips, Symbole **gleich**.
+  Gefunden und behoben: (1) Rückgängig-Pfeil im Browser sofort aktiv, weil Vorschau, Fotostücke und Gruppen-Änderungen als eigene Schritte zählten →
+  `upsert(record:false)`. (2) Vergleichsbild der App zeigte Glas-Hintergrund, die Voreinstellung (PerfMode.light, Beschluss 05.11.) ist flach →
+  Test nutzt jetzt dieselbe Voreinstellung. Offen: Browser-Durchlauf mit dem gezeichneten Bon wiederholen (Posten-Blatt, Festbetrag, Person lang,
+  Fertig/Ergebnis fehlten, weil der Lauf den echten Bon nahm und „Pizza“ nicht fand), Gruppen-/Personen-/Einstellungs-/Beitritts-Bildschirme.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
