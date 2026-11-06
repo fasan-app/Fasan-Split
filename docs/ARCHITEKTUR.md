@@ -60,6 +60,10 @@ Tore, die vor und nach jedem Schritt grün sein müssen: Erkennungs-Tor (alle ec
    `lib/platform/web_platform*.dart`, Update-Prüfung nach `lib/flows/update.dart`. In der Wurzel von `lib/` liegen nur noch `main.dart` und die Texte (Schritt 6).
    Adapter-Regel: ein Adapter liegt in der Schicht, die ihn nutzt (`state/images_*`, `collab/ws_connect_*`, `recognition/onnx_*`, `recognition/browser_*`);
    nur Fähigkeiten ohne eigene Schicht stehen in `lib/platform/`.
+   Schritt 6 **großteils erledigt**: 602 Texte, die im Code standen (`de ? '…' : '…'`), stehen jetzt in `lib/l10n/strings_de.dart`/`strings_en.dart` (342 aus `l10n*.dart` mit
+   `tool/l10n_migrate.py`, 260 aus den Bildschirmen mit `tool/l10n_inline.py`; beide Werkzeuge ändern nur eindeutige Fälle und listen den Rest). Nachweis: alle 699 Texte von `S`
+   in beiden Sprachen vorher = nachher (`test/l10n_dump_test.dart`, L10N_DUMP), 336 Tests grün, Bildschirme Pixel-Vergleich vorher/nachher. **Offen:** 7 verschachtelte Stellen
+   (Datum, Plural im Satz, Mehrfach-Zahler) von Hand; danach Wächter „kein `de ? '` mehr im Code“; Texte nach Bereichen in eigene Dateien teilen.
 2. **`core` herauslösen**: `model/` + `split_math` ohne Fremdabhängigkeit; die zwei Verweise auf `recognition` umdrehen (Erkennung liefert Daten *an* das Modell, nicht umgekehrt).
 3. **`platform_api`** mit den vier Verträgen anlegen, bestehende `*_web.dart`/Stubs dahinter verschieben.
 4. **`store` und `sync` trennen** (Zyklus auflösen: `sync` kennt `store` nur über eine Schnittstelle).
