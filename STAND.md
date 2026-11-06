@@ -19,8 +19,8 @@ Stand 01.11.2026.
 8. **Fotos teilen:** Relays (Ausschnitte + verkleinertes Original) UND Blossom (volle Auflösung), beides Standard, verschlüsselt, Einmal-
    Schlüssel beim Hochladen; darf Sicherheit und Leistung nicht beeinträchtigen (Details `docs/VORSCHLAEGE-06-11.md`).
 9. **Architektur: komplett neu schreiben**, geschützt durch die Tore (Erkennung, Parität), die vorher stehen.
-10. **In diese Runde:** Rückgängig/Wiederholen, Ausgaben ohne Bon, Aufteilen-Arten, exakter Ausgleich + „bezahlt“, plus alles aus der
-    Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E), was der Nutzer bestätigt.
+10. **In diese Runde (eine Veröffentlichung):** Rückgängig/Wiederholen, Ausgaben ohne Bon, Aufteilen-Arten, exakter Ausgleich + „bezahlt“
+    **und alle vier Bereiche der Lückenliste** (`docs/VORSCHLAEGE-06-11.md` § E2–E5, Nutzer 06.11.). Folge: lange kein Update aufs Handy.
 5. **Bon-Ausschnitte unter den Posten sind Standard** (einzig krisensicherer Beleg, ob ein Posten stimmt); kompakt, abschaltbar.
    Ersetzt den Beschluss 05.11. „keine Dauer-Bildchen“ (Grund damals: zu groß/unruhig → jetzt kompakt statt weg).
 6. Grundeinstellung Leistung „Sparsam“ (05.11.) bleibt.

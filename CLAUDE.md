@@ -50,6 +50,9 @@ Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete ste
   Familie → `../fasan/ENTSCHEIDUNGEN.md`. **Vor jeder Antwort prüfen:** Steht etwas, das ich gerade sage, nur im Chat? Dann erst
   schreiben, dann antworten. Regeln müssen auf **main** liegen (neue Sitzungen starten dort); reine Doku mit `[skip ci]` im Commit
   auf main schieben, das löst keine Veröffentlichung aus (06.11. geprüft: kein CI-Lauf).
+- **Vorschläge und Wünsche des Nutzers sofort festhalten (Nutzer 06.11.):** jede Idee, jeder Wunsch, jede Kritik kommt im selben Schritt
+  sinngemäß in `docs/ANFORDERUNGEN.md` (mit Datum, Grund, Stand „neu“) und im Rohtext in `../fasan/nutzer/split-nachrichten.md`;
+  was davon im Plan landet, steht in `STAND.md`. Nichts davon darf nur im Chat stehen.
 - **Öffentliches Repo:** Fasan-Split ist öffentlich. Keine Rohtexte von Nutzer-Nachrichten, keine Fotos, keine privaten Daten hier
   ablegen (06.11. hat das Werkzeug genau das zu Recht blockiert). Private Ablage: `fasan-diagnose` (Bons), `Fasan` (privat).
 

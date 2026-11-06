@@ -149,3 +149,9 @@ Quellen: Soll-Umfang `../fasan-karte/docs/ENTSCHEIDUNGEN.md` (Bon 3.5–3.19, Ko
 - SEPA-QR gegen das EPC-PDF; Wallet-Links (Nutzer 05.11.: „ob Wallets richtig lesen, musst du recherchieren“); EZB-Kurs im Browser (CORS);
   Benachrichtigungen, Tor/Orbot, Koppeln per QR, Bon-Status – alle „nicht auf dem Gerät geprüft“.
 - Foto-Warteschlange „lief rot“ (Nutzer 05.11.) – Stand prüfen.
+
+Befragung 3 (06.11.): **Alle vier Bereiche (E2 Bon & Erkennung, E3 Gruppe & Chat, E4 Übersicht & Saldo, E5 Plattform & Gestaltung)
+kommen zusätzlich in diese eine Veröffentlichung.** Liste nach Nutzer vorerst vollständig. Neue Regel des Nutzers: „Wenn ich Vorschläge
+für die App mache, müssen diese direkt aufgeschrieben und festgehalten werden.“
+Folge (von der Sitzung benannt): Mit diesem Umfang und „keine Zwischenveröffentlichung“ kommt lange kein Update aufs Handy – auch die
+Korrektur der 13 Croissants nicht. Der Nutzer kann das jederzeit ändern; bis dahin gilt sein Beschluss.
