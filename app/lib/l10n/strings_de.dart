@@ -770,4 +770,20 @@ const Map<String, String> stringsDe = {
   'settings_screen.takesEffectAfterThe': 'Gilt nach dem nächsten Start der App.',
   'update_ui.newVersionAvailableReload': 'Neue Version da. Lade die Seite neu.',
   'update_ui.reload': 'Neu laden',
+  // --- moved by hand (nested texts) ---
+  'bill_tile.paidMany': '{0} zahlten',
+  'collab_ui.lastSeen': 'zuletzt online {0}.{1}. {2}:{3}',
+  'pairing_ui.doneNone': 'Konto übernommen. Keine Gruppen gefunden.',
+  'pairing_ui.doneSome': 'Konto übernommen. {0} Gruppen sind da.',
+  's.autoNextNever': 'Nie',
+  's.autoNextPause': 'Kurz warten',
+  's.autoNextOnce': 'Sofort',
+  's.trashManual': 'Nur manuell',
+  's.trashDays': '{0} Tage',
+  's.stepOf': 'Schritt {0}/4',
+  // --- moved from the code by tool/l10n_migrate.py (backup_ui) ---
+  'backup_ui.backupSecretHint': 'Dann ist die Datei so geheim wie deine 12 Wörter. Gib sie niemandem.',
+  'backup_ui.backupPasswordHint': 'Mit Passwort darf die Datei auch per Mail an dich oder in einen Cloud-Ordner. Ein vergessenes Passwort lässt sich nicht wiederherstellen.',
+  // --- moved from the code by tool/l10n_migrate.py (pairing_ui) ---
+  'pairing_ui.newText': 'Öffne auf deinem anderen Gerät Fasan Split → Konto → „Gerät hinzufügen“ und scanne diesen Code. Oder scanne ihn mit der Kamera-App.',
 };

@@ -70,4 +70,19 @@ void main() {
     ];
     expect(bad, isEmpty);
   });
+
+  test('Keine Texte im Code: kein „de ? \'…\'“ außerhalb von lib/l10n (Texte stehen in strings_de/en.dart)', () {
+    // allowed: formatting that is not a text (a date written differently per language)
+    const allowed = {'lib/ui/currency_ui.dart'};
+    final bad = <String>[];
+    for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart') && !f.path.contains('lib/l10n/'))) {
+      if (allowed.contains(f.path)) continue;
+      final lines = f.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        final next = i + 1 < lines.length ? lines[i + 1].trimLeft() : '';
+        if (RegExp(r"\bde\s*\?\s*'(?!de' : 'en')").hasMatch(lines[i]) || (lines[i].trimRight().endsWith('=> de') && next.startsWith("? '"))) bad.add('${f.path}:${i + 1}');
+      }
+    }
+    expect(bad, isEmpty, reason: 'Text in lib/l10n/strings_de.dart und strings_en.dart eintragen (tool/l10n_inline.py hilft)');
+  });
 }

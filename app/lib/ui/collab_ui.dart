@@ -933,7 +933,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(n.isEmpty ? t.chatTitle : n),
                   if (peer != null && (c.isOnline(peer) || seen != null))
                     Text(
-                      c.isOnline(peer) ? 'online' : (t.de ? 'zuletzt online ${seen!.day}.${seen.month}. ${seen.hour.toString().padLeft(2, '0')}:${seen.minute.toString().padLeft(2, '0')}' : 'last seen ${seen!.day}.${seen.month}. ${seen.hour.toString().padLeft(2, '0')}:${seen.minute.toString().padLeft(2, '0')}'),
+                      c.isOnline(peer) ? 'online' : trLang(t.de ? 'de' : 'en', 'collab_ui.lastSeen', [seen!.day, seen.month, seen.hour.toString().padLeft(2, '0'), seen.minute.toString().padLeft(2, '0')]),
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
                 ]);

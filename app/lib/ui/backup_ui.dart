@@ -20,14 +20,10 @@ extension _T on S {
   String get backupRestore => trLang(de ? 'de' : 'en', 'backup_ui.restoreBackup');
   String get backupRestoreSub => trLang(de ? 'de' : 'en', 'backup_ui.missingReceiptsAreAdded');
   String get backupWithAccount => trLang(de ? 'de' : 'en', 'backup_ui.includeAccountAndShared');
-  String get backupSecretHint => de
-      ? 'Dann ist die Datei so geheim wie deine 12 Wörter. Gib sie niemandem.'
-      : 'Then the file is as secret as your 12 words. Never share it.';
+  String get backupSecretHint => trLang(de ? 'de' : 'en', 'backup_ui.backupSecretHint');
   String get backupFailed => trLang(de ? 'de' : 'en', 'backup_ui.backupFailed');
   String get backupPassword => trLang(de ? 'de' : 'en', 'backup_ui.passwordOptional');
-  String get backupPasswordHint => de
-      ? 'Mit Passwort darf die Datei auch per Mail an dich oder in einen Cloud-Ordner. Ein vergessenes Passwort lässt sich nicht wiederherstellen.'
-      : 'With a password the file may go by mail to you or into a cloud folder. A lost password cannot be recovered.';
+  String get backupPasswordHint => trLang(de ? 'de' : 'en', 'backup_ui.backupPasswordHint');
   String get backupShare => trLang(de ? 'de' : 'en', 'backup_ui.send');
   String get backupWrongPassword => trLang(de ? 'de' : 'en', 'backup_ui.wrongPassword');
   String get backupSaved => trLang(de ? 'de' : 'en', 'backup_ui.backupSaved');

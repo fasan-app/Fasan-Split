@@ -86,7 +86,7 @@ class BillTile extends StatelessWidget {
         bill.settled ? (trLang(t.de ? 'de' : 'en', 'bill_tile.settled')) : bill.done ? (trLang(t.de ? 'de' : 'en', 'bill_tile.entered')) : t.stepOf(bill.step),
         if (bill.done) '${bill.ps.length} ${trLang(t.de ? 'de' : 'en', 'bill_tile.ppl')}',
         if (bill.multiPay)
-          t.de ? '${bill.paid.keys.where((i) => i < bill.ps.length).map((i) => bill.ps[i].name).join(' + ')} zahlten' : '${bill.paid.keys.where((i) => i < bill.ps.length).map((i) => bill.ps[i].name).join(' + ')} paid'
+          trLang(t.de ? 'de' : 'en', 'bill_tile.paidMany', [bill.paid.keys.where((i) => i < bill.ps.length).map((i) => bill.ps[i].name).join(' + ')])
         else if (payer != null)
           trLang(t.de ? 'de' : 'en', 'bill_tile.paid', [payer]),
         ?city,

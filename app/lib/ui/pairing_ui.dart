@@ -22,12 +22,10 @@ class _T {
   const _T(this.de);
   final bool de;
   String get newTitle => trLang(de ? 'de' : 'en', 'pairing_ui.signInWithAnother');
-  String get newText => de
-      ? 'Öffne auf deinem anderen Gerät Fasan Split → Konto → „Gerät hinzufügen“ und scanne diesen Code. Oder scanne ihn mit der Kamera-App.'
-      : 'On your other device open Fasan Split → Account → “Add device” and scan this code, or scan it with the camera app.';
+  String get newText => trLang(de ? 'de' : 'en', 'pairing_ui.newText');
   String get check => trLang(de ? 'de' : 'en', 'pairing_ui.checkCode');
   String get waiting => trLang(de ? 'de' : 'en', 'pairing_ui.waitingForYourOther');
-  String done(int n) => de ? 'Konto übernommen. ${n == 0 ? 'Keine Gruppen gefunden.' : '$n Gruppen sind da.'}' : 'Account taken over. ${n == 0 ? 'No groups found.' : '$n groups are here.'}';
+  String done(int n) => n == 0 ? trLang(de ? 'de' : 'en', 'pairing_ui.doneNone') : trLang(de ? 'de' : 'en', 'pairing_ui.doneSome', [n]);
   String get failed => trLang(de ? 'de' : 'en', 'pairing_ui.noAnswerTryAgain');
   String get addTitle => trLang(de ? 'de' : 'en', 'pairing_ui.addDevice');
   String get addText => trLang(de ? 'de' : 'en', 'pairing_ui.scanTheCodeYour');

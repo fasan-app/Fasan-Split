@@ -71,7 +71,7 @@ class S {
   String personRemoved(String n) => text('s.personRemoved', [n]);
   String personAdded(String n) => text('s.personAdded', [n]);
   String get setAutoNext => text('s.setAutoNext');
-  String autoNextLabel(int v) => switch (v) { 0 => de ? 'Nie' : 'Never', 1 => de ? 'Kurz warten' : 'After a pause', _ => de ? 'Sofort' : 'At once' };
+  String autoNextLabel(int v) => switch (v) { 0 => text('s.autoNextNever'), 1 => text('s.autoNextPause'), _ => text('s.autoNextOnce') };
   String get goingOn => text('s.goingOn');
   String piecesOf(String n) => text('s.piecesOf', [n]);
   String get splitCheck => text('s.splitCheck');
@@ -163,7 +163,7 @@ class S {
   String get deleteGroup => text('s.deleteGroup');
   String get groupEmpty => text('s.groupEmpty');
   String get setTrash => text('s.setTrash');
-  String trashAfter(int d) => d == 0 ? (de ? 'Nur manuell' : 'Manual') : (de ? '$d Tage' : '$d days');
+  String trashAfter(int d) => d == 0 ? text('s.trashManual') : text('s.trashDays', [d]);
   String queuedN(int n) => text('s.queuedN', [n]);
   String get waiting => text('s.waiting');
   String get readingNow => text('s.readingNow');
@@ -179,7 +179,7 @@ class S {
   String get markOpen => text('s.markOpen');
   String get ok => 'OK';
   String deletedN(int n) => de ? (n == 1 ? 'Bon gelöscht' : '$n Bons gelöscht') : (n == 1 ? 'Receipt deleted' : '$n receipts deleted');
-  String stepOf(int s) => de ? 'Schritt $s/4' : 'Step $s/4'; // short: the subtitle must stay on one line (04.11.)
+  String stepOf(int s) => text('s.stepOf', [s]); // short: the subtitle must stay on one line (04.11.)
   String get receiptHintPick => text('s.receiptHintPick');
   String receiptHintPerson(String n) => text('s.receiptHintPerson', [n]);
   String get receiptHintView => text('s.receiptHintView');
