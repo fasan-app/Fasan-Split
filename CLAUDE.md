@@ -3,17 +3,63 @@
 Fasan Split (`app.fasan.split`, Flutter) ist die Rechnungs-App der Fasan-Familie: Bon scannen, Summe, wer war dabei,
 Posten zuordnen, wer hat bezahlt, Export. Der Code zieht später in Fasan Karte.
 
-## Vor der Arbeit lesen (nur diese Dateien)
+## PFLICHT vor jeder Arbeit (Nutzer 06.11. – nach wiederholt halbfertigen Lösungen; gilt ohne Ausnahme)
+
+Diese Regeln stehen über allem anderen in dieser Datei. Wer sie nicht erfüllen kann, sagt das dem Nutzer, bevor er arbeitet.
+
+**Schritt 0 – Repos und Pflichtlektüre, prüfbar:**
+1. Anbinden mit `add_repo` und je ein `git clone --depth 1`: `fasan-app/Fasan-Split` (push), `fasan-app/Fasan` (lesen),
+   `fasan-app/fasan_ui` (lesen), `fasan-app/fasan-diagnose` (lesen), **`fasan-app/Fasan-Karte` (lesen)**, **`fasan-app/Fasan-Camera`
+   (lesen)**. Klon-Ordner neben diesem Repo: `../fasan`, `../fasan_ui`, `../fasan-diagnose`, `../fasan-karte`, `../fasan-camera`.
+2. Prüfen, dass alles da ist – **nie mit `2>/dev/null` wegdrücken** (am 05.11. lief so eine Suche ins Leere und der Umbau geschah
+   trotzdem ohne die Recherchen):
+   `for d in ../fasan ../fasan_ui ../fasan-diagnose ../fasan-karte/docs/recherche ../fasan-camera/docs/recherche; do [ -e "$d" ] || echo "FEHLT $d"; done`
+   Fehlt etwas: **stoppen, dem Nutzer melden, keine Design- oder Bedienarbeit beginnen.**
+3. **Vor jeder Design-, UI- oder Bedienarbeit vollständig lesen (nicht per grep):** alle Dateien in `../fasan-karte/docs/recherche/`,
+   `../fasan-camera/docs/recherche/`, `../fasan_ui/docs/recherche/`, dazu `../fasan/GRUNDSAETZE.md`, `../fasan/ZUSTAENDE-UND-PROFILE.md`,
+   `docs/REGELWERK-OBERFLAECHE.md` und `docs/recherche/`. Daraus gilt die Prüfliste `docs/PRUEFLISTE-OBERFLAECHE.md` (Regel + Quelle);
+   jeder geänderte Bildschirm wird gegen sie geprüft, Verstöße mit Bildschirmfoto belegt. Wo die Recherchen nichts sagen: neu
+   recherchieren (Stand des Jahres, echte Quellen, keine Erinnerung aus Trainingsdaten) und als neu kennzeichnen.
+4. `docs/ANFORDERUNGEN.md` lesen (alle Anweisungen des Nutzers mit Datum und Grund) und die Beschlüsse oben in `STAND.md`.
+   Rohtext der Nutzer-Nachrichten gehört **nicht** in dieses öffentliche Repo (Ablageort klärt der Nutzer; bis dahin aus dem
+   Sitzungsverlauf auswerten und nur sinngemäß, ohne private Details, ins Register schreiben).
+
+**Fertig heißt (alle Punkte, sonst ist es nicht fertig und wird nicht so gemeldet):**
+1. Fehler mit echten Daten nachgestellt (echter Bon, echte Gruppe, echter Browser).
+2. Ursache behoben, nicht nur die gemeldete Stelle.
+3. Dieselbe Fehlerklasse über **alle** echten Bons und **alle** Bildschirme gesucht.
+4. Ein Test, der ohne die Korrektur scheitert. Erkennung: je Posten **Name, Menge, Einzelpreis, Betrag** und die Summe (nicht nur Beträge
+   – so rutschten am 06.11. „13 Croissants“ durch).
+5. Mit echtem Bon auf Handygröße **angesehen**, App-Ansicht und Browser nebeneinander (Bildschirmfotos ansehen, nicht nur Tests).
+6. Leistung im **echten Ablauf** gemessen (Bon mit Foto, Scannen, Gruppe), nicht nur Start- oder Einführungsbildschirm.
+7. Bericht sagt genau, was wie geprüft ist und was nicht. Kein „fertig“, kein „wie vorher“, kein „grün“ ohne diesen Nachweis.
+Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete stehen offen in `STAND.md`.
+
+**Feste Regeln:**
+- **Browser = APK 1:1** (Menü, Knöpfe, Layout, Funktionen, Design). Eine Codebasis; `kIsWeb` nur in Plattform-Adaptern, nie in Bildschirmen.
+  Jede Änderung wird in beiden geprüft.
+- **Veröffentlichen (main)** nur, wenn Erkennungs-Tor (alle echten Bons, keine Verschlechterung), alle Tests, Browser-Ende-zu-Ende und
+  Leistungsmessung grün sind. Jede Veröffentlichung steht in `STAND.md`.
+- **Frühere Beschlüsse nie still umdrehen.** Widerspruch zwischen Anweisungen benennen und klären (Beispiel: „Bon-Ausschnitte zu groß“
+  hieß kompakt machen, nicht entfernen).
+- **Bei Kritik des Nutzers nicht sofort losprogrammieren:** erst zeigen, dass die Kritik verstanden ist, und den Plan nennen.
+- **Nichts dem Nutzer zum Prüfen überlassen, was die Sitzung selbst prüfen kann.** Was sie nicht kann (z. B. echtes iPhone), vorher sagen.
+
+**Fehler, die passiert sind und nicht wieder passieren dürfen (05./06.11.):** grüne Tests als Beweis ausgegeben, obwohl sie das
+Entscheidende nicht prüften; Bildschirme veröffentlicht, ohne sie mit echtem Bon angesehen zu haben; Web 1:1 behauptet statt Bildschirm
+für Bildschirm verglichen (⋮-Menü kaputt, Original/Digital-Knopf fehlte); Leistung nur am Startbildschirm gemessen und Effekte
+abgeschaltet statt Ursachen gesucht; Bon-Ausschnitte entfernt statt verkleinert; Symptome statt Fehlerklassen behoben; Prüfaufgaben
+dem Nutzer überlassen; die Pflicht-Recherchen nie gelesen und nach Gefühl gestaltet.
+
+## Vor der Arbeit lesen (zusätzlich zur PFLICHT oben, nicht statt ihr)
 
 1. `STAND.md` in diesem Repo.
 2. `../fasan/ENTSCHEIDUNGEN.md`, `GRUNDSAETZE.md`, `ZUSTAENDE-UND-PROFILE.md` (Repo fasan-app/Fasan).
 3. `../fasan-karte/docs/PLAN-FLUTTER.md`, Abschnitte „Stile und Effekte“ und „Rechnung“.
 4. `../fasan-diagnose/README.md` (Regression der Erkennung; Dart-Gegenstücke in `app/test/`).
 5. `../fasan-karte/docs/ENTSCHEIDUNGEN.md`: alle Beschlüsse zu Bon und Kosten. Das ist der Soll-Umfang dieser App.
-6. Vor Design- und Bedienarbeit die Kurzfassungen der Recherchen: `../fasan-karte/docs/recherche/` (gestaltung-psychologie,
-   ui-design-2026, natives-gefuehl, rechnung-teilen-ux, gemeinsam-bearbeiten, bon-ansicht-und-farben, scan-und-bedienung,
-   kosten-und-fuehrung), `../fasan-camera/docs/recherche/` (psychologie-bedienung, gestaltung-start-einstellungen, haptik),
-   `../fasan_ui/docs/recherche/`. Details per grep.
+6. Vor Design- und Bedienarbeit die Recherchen **vollständig** (PFLICHT, Schritt 3): `../fasan-karte/docs/recherche/`,
+   `../fasan-camera/docs/recherche/`, `../fasan_ui/docs/recherche/`, `docs/recherche/`. Nicht per grep, nicht nur Kurzfassungen.
 7. Prüfen heißt: Emulator-Bildschirmfotos mit echtem Bon (aus `fasan-diagnose`) ansehen, nicht nur grep.
 
 ## Regeln
@@ -27,7 +73,7 @@ Posten zuordnen, wer hat bezahlt, Export. Der Code zieht später in Fasan Karte.
 - Echte Bonfotos nie ins Repo und nie in den Code; bekannte Test-Bons nicht in der App hinterlegen.
 - Tippfläche ≥ 48 dp (Profil „Einfach“ 60 dp), Bewegung folgt „Animationen entfernen“ und der App-Einstellung.
 - Backlog: `STAND.md`, Abschnitt „Noch offen – Reihenfolge“, ist die Liste von allem, was fehlt. Nach jedem Paket aktualisieren, nie etwas still fallen lassen. Die Priorität setzt die Sitzung selbst; weicht sie von der Reihenfolge des Nutzers ab, steht der Grund im Abschnitt und in der Antwort (Nutzer 02.11.).
-- Token sparen: große Dateien nur per grep lesen; nach jedem Arbeitspaket `STAND.md` aktualisieren.
+- Token sparen: große Code-Dateien per grep lesen (nicht die Pflichtlektüre, die wird ganz gelesen); nach jedem Arbeitspaket `STAND.md` aktualisieren.
 - Commits als `Fasan <fasan@christopherziehm.de>`.
 
 ## Neue Sitzung starten (Token sparen)
@@ -42,8 +88,8 @@ Der Nutzer hat keinen eigenen Rechner im Spiel. Nie „bei dir auf dem Rechner�
 E2E-Läufe und Commits macht die Sitzung selbst, Rückmeldung kommt vom Handy (S23). Ablauf, der funktioniert hat:
 
 1. Repos anbinden mit `add_repo` (nicht vorher per curl prüfen): `fasan-app/Fasan-Split` (push), `fasan-app/Fasan` (Grundlagen),
-   `fasan-app/fasan_ui` (Design, anonym lesbar, Klon nach `/home/claude/fasan-app/fasan_ui`), `fasan-app/fasan-diagnose` (privat,
-   Test-Bons und Wahrheit). Dann je Repo EIN `git clone --depth 1 …` nach `/home/claude/<name>`, Timeout 10 min, nie parallel;
+   `fasan-app/fasan_ui` (Design), `fasan-app/fasan-diagnose` (privat, Test-Bons und Wahrheit), `fasan-app/Fasan-Karte` und
+   `fasan-app/Fasan-Camera` (Recherchen, lesen) – siehe PFLICHT, Schritt 0. Dann je Repo EIN `git clone --depth 1 …` nach `/home/claude/<name>`, Timeout 10 min, nie parallel;
    danach `register_repo_root`. Bei „service unavailable“ oder „token is being refreshed“: kurz warten, einmal wiederholen.
 2. Flutter 3.47.7 (wie CI): `https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.7-stable.tar.xz`
    nach `/home/claude/tools` (Download im Hintergrund, Entpacken dauert ~2 min), `git config --global --add safe.directory

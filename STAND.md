@@ -4,6 +4,19 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## Beschlüsse 06.11. (Nutzer, nach Fehlern in 0.2: 13 Croissants, Web-Menü, Web langsam)
+
+1. **Eine Codebasis** für APK und Browser (Flutter). Browser muss in allem 1:1 der APK gleichen (Menü, Knöpfe, Layout,
+   Funktionen); jede Änderung gilt für beide. Leistung wird gemessen (S23 und gedrosselt wie 10 Jahre altes Gerät), in der CI geprüft.
+2. **Erkennung als Tor vor jeder Veröffentlichung:** Echte Bonfotos liegen im privaten `fasan-diagnose`; die CI liest sie mit einem
+   Lese-Geheimnis und stoppt jede Veröffentlichung bei Verschlechterung.
+3. **Veröffentlichen** auf main selbstständig, aber nur wenn alle Prüfungen grün sind (Erkennung, Tests, Browser-E2E, Leistung);
+   jede Veröffentlichung steht hier.
+4. **Gruppe „Bons zuerst“:** eine Zeile Avatare + Chat + Notizen, eine Ausgleich-Zeile, dann die Bons; Personen im Blatt.
+5. **Bon-Ausschnitte unter den Posten sind Standard** (einzig krisensicherer Beleg, ob ein Posten stimmt); kompakt, abschaltbar.
+   Ersetzt den Beschluss 05.11. „keine Dauer-Bildchen“ (Grund damals: zu groß/unruhig → jetzt kompakt statt weg).
+6. Grundeinstellung Leistung „Sparsam“ (05.11.) bleibt.
+
 ## Was da ist
 
 - Erkennung in Dart (Port aus `Fasan-Karte/site/bon.js`, `scan.js`): PP-OCRv5 det/rec und UVDoc über ONNX Runtime
@@ -332,6 +345,25 @@ Tests: `export PATH=/home/claude/tools/flutter/bin:$PATH; cd app; flutter test` 
   Testversion deinstallieren, neu installieren, Sicherung einspielen, App neu starten. ERLEDIGT 04.11. nachts: Flag entfernt (Nutzer hat mit Konto gesichert).
 
 ## Noch offen – Reihenfolge (aufgeräumt 04.11. abends; die einzige Liste, die gepflegt wird)
+
+### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
+
+0. **Pflicht aus CLAUDE.md, Schritt 0:** Fasan-Karte und Fasan-Camera anhängen (bis 06.11. nie geschehen), alle Recherchen ganz lesen,
+   daraus `docs/PRUEFLISTE-OBERFLAECHE.md` bauen (Regel + Quelle), `docs/ANFORDERUNGEN.md` aus den Nachrichten des Nutzers bauen (sinngemäß, ohne private Details – das Repo ist öffentlich)
+   (jede Anweisung: Datum, Grund, Stand umgesetzt/teilweise/fehlt/Widerspruch, Ort im Code, Test). Beide Dateien sind am 06.11.
+   **noch nicht erstellt** (nur Platzhalter).
+1. **Erkennung:** Goldens je Posten (Name, Menge, Einzelpreis, Betrag) für alle echten Bons; Vergleich alter/neuer Stand; Fehlerklasse
+   „Steuersatz als Menge“ (Esplanada „2Uni Croissant c/ N 13x 8,00“ → 13 Stück; Korrektur liegt ungeprüft im Commit 5b35e5d) über alle
+   Bons suchen; Fotos Belém/Esplanada nach `fasan-diagnose/tests/echt` (Nutzer 06.11. erlaubt; Esplanada-Foto vom Nutzer erbitten).
+2. **Erkennungs-Tor in der CI** über privates `fasan-diagnose` (Lese-Geheimnis; Schritte für den Nutzer aufschreiben).
+3. **Browser = APK 1:1:** jeden Bildschirm, jedes Menü, jeden Knopf mit echten Daten nebeneinander vergleichen (Bildschirmfotos);
+   bekannt kaputt: ⋮-Menü im Bon (ging nicht / nur 1 Eintrag), Original/Digital-Knopf fehlt; Bilder im Browser speichern.
+4. **Leistung in echten Abläufen** (Bon mit Foto, Scannen, Gruppe; S23 und gedrosselt wie 10 Jahre altes Gerät); Ursachen beheben,
+   WebAssembly-Renderer prüfen (Doku), Leistungsbudget in der CI.
+5. **Bon-Ausschnitte unter Posten wieder Standard** (kompakt, abschaltbar) und **Gruppe „Bons zuerst“** – nach der Prüfliste aus 0.
+6. **Architektur:** Module mit stabilen Kernen und Tor-Tests, Regeln für künftige Änderungen, Recherche Stand 2026 (echte Quellen).
+7. Danach die alte Liste unten.
+
 
 ### Leistung im Browser und auf alten Geräten (05.11. nachts)
 Anlass: Nutzer 05.11.: Web-App extrem langsam. Messung (Chromium, Handy-Fenster, Software-Rendering = pessimistisch): Vollglas mit
