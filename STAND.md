@@ -485,8 +485,8 @@ Drosselung endet) für Ziel ~100.
    Teilmenge von Noto Color Emoji (OFL) nur mit den genutzten Symbolen mitliefern, als Schrift-Rückfall – Browser = APK und keine
    Anfrage an Dritte.
    **Emoji behoben (Commit 7c2735e):** eigene Schrift FasanEmoji (Teilmenge Noto Color Emoji, OFL, 107 KB), im Browser bestätigt.
-   **In Arbeit:** Fotos im Browser nur bei Bedarf laden (images_web.dart: beim Start nur die Liste, Bytes beim Anzeigen, 16 im
-   Speicher) – Browser-Test mit Neustart der Seite läuft.
+   **Fotos im Browser bei Bedarf (Commit nach 7c2735e):** beim Start nur die Liste, Bytes beim Anzeigen, 16 im Speicher; Browser-Test
+   mit Neuladen bestanden (Scan nach 22 s inkl. 12 s Start wieder da). Ladezeit gedrosselt noch nicht gemessen (Punkt 4).
    Offen in Punkt 3: Bildschirm-für-Bildschirm-Vergleich App/Browser
    mit Fotos, Blossom (volle Auflösung) als zweiter Kanal, Fotos im Browser erst bei Bedarf laden (images_web lädt heute alle beim
    Start → Punkt 4), Stücke eines Fotos von jedem Mitglied neu senden können, wenn das scannende Gerät weg ist.
