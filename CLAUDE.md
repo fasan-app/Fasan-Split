@@ -44,6 +44,8 @@ Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete ste
   Leistungsmessung grün sind. Jede Veröffentlichung steht in `STAND.md`.
 - **Frühere Beschlüsse nie still umdrehen.** Widerspruch zwischen Anweisungen benennen und klären (Beispiel: „Bon-Ausschnitte zu groß“
   hieß kompakt machen, nicht entfernen).
+- **Vor jeder Frage oder Empfehlung an den Nutzer** die vorhandenen Recherchen zum Thema lesen (`docs/recherche/`, Karte, Camera, fasan_ui);
+  nie aus Erinnerung oder Fremdseiten antworten, wenn es eigene Messungen gibt (06.11.: Blossom/Relay-Grenzen falsch angegeben).
 - **Bei Kritik des Nutzers nicht sofort losprogrammieren:** erst zeigen, dass die Kritik verstanden ist, und den Plan nennen.
 - **Nichts dem Nutzer zum Prüfen überlassen, was die Sitzung selbst prüfen kann.** Was sie nicht kann (z. B. echtes iPhone), vorher sagen.
 - **Was die Zukunft betrifft, sofort festschreiben – ohne Aufforderung (Nutzer 06.11.: „Dass ich dich daran erinnern muss …“).**

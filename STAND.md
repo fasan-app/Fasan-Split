@@ -372,9 +372,16 @@ Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-na
 Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md`) beantwortet hat (Nutzer 06.11.).
 
 - Foto oder Protokoll des Esplanada-Bons (13 Croissants) schicken, damit der ganze Bon ins Erkennungs-Tor kommt.
-- Lese-Geheimnis für `fasan-diagnose` in der CI anlegen (Schritte schreibt die Sitzung auf, sobald der Workflow steht).
+- **Fotos teilen bestätigen** mit den richtigen Fakten (Korrektur in `docs/VORSCHLAEGE-06-11.md`, Ende): Relays nur in Stücken ≤ 40 KB,
+  Blossom nur cdn.hzrd149.com und nostr.download für verschlüsselte Dateien.
+- **Lese-Geheimnis `FASAN_DIAGNOSE_TOKEN` anlegen** (Anleitung mit vorausgefülltem Link: `docs/ERKENNUNGS-TOR.md`). Ohne es scheitert das
+  Erkennungs-Tor und es wird nichts veröffentlicht (gewollt).
 
 ### Lehren aus 05./06.11. (nicht wiederholen)
+
+- 06.11. nachts: In der Befragung zu Fotos/Blossom aus dem Gedächtnis und Fremdseiten geantwortet, ohne die eigene Recherche
+  `docs/recherche/2026-11-02-gruppe-nostr.md` zu lesen, die genau das gemessen hatte (nos.lol ab 64 KB, nostr.build nimmt keine
+  verschlüsselten Dateien). **Vor jeder Frage an den Nutzer erst die vorhandenen Recherchen zum Thema lesen.**
 
 - `test/e2e_test.dart` prüft je Bon nur Beträge und Summe – Mengen und Namen nicht. Deshalb blieb „13 Croissants“ (Steuersatz „13%“
   als „13x“ gelesen) unbemerkt. Goldens müssen Name, Menge, Einzelpreis und Betrag je Posten prüfen.
@@ -383,6 +390,22 @@ Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md
 - Die Pflicht-Recherchen (Fasan-Karte, Fasan-Camera) waren in dieser Sitzung nie angehängt; der Umbau „ein Bildschirm“ und die Gruppe
   entstanden ohne sie. Vor der nächsten Design-Arbeit gegen die Prüfliste nachprüfen, was davon bleibt.
 - Älterer Verlauf (vor 04.11. 23:36) ist in der Sitzung nicht verfügbar; Anweisungen von dort nur über die Doku erreichbar.
+
+### Punkt 1 Erkennung – Stand 06.11. nachts (läuft)
+
+- Vergleich alter Stand `aa233db` gegen Zweig über alle 13 echten Bons (`test/snapshot_test.dart`, `docs/ERKENNUNGS-TOR.md`):
+  **„13 Croissants“ war schon im alten Stand** (keine Verschlechterung, aber nie entdeckt: alter Test prüfte nur Beträge). Im Zweig
+  behoben (Esplanada jetzt 2 × 4,00). Sonst gleich oder besser (Confeitaria „Gin Tonico Marti“, Da Sé geknickt „CANECA“ statt „2× Posten“).
+- Wahrheit je Posten (Name, Menge, Betrag, Einzelpreis) für alle 13 + Belém voll, nach Fotos geprüft, in `fasan-diagnose` (0393f23).
+- **Tor `test/gate_test.dart` (scheitert wirklich):** 14 Bons, **9 OK, 5 Fehler** – Aldi (Artikelnummern vorn, Werbedruck der Rückseite
+  im Namen, „Takis“ unlesbar), Confeitaria („Cafe Duplo nm“), Da Sé geknickt („TULIPA 238“, „Jn AZEITONAS“, „PAD“, „…P P13“), Estrela
+  („í Cesta“, „t Vinho“), Ferreiras (**Menge 1 statt 2** bei „2 Coca cola 6.00“). Fehlerklassen: Reste aus Nachbarspalten im Namen
+  (Uni-Spalte vorn, IVA/€-Spalte hinten), Artikelnummern, Durchschein-Text, führende Menge nicht übernommen.
+- Workflow `erkennung.yml` vor APK und Web (Zweig, nicht main); braucht `FASAN_DIAGNOSE_TOKEN` (offene Frage oben).
+- Behoben (06.11. nachts, Tests `name_vote_test`, Tor): Namensabstimmung gruppiert nach Kern (Spaltenreste überstimmen nicht mehr),
+  Menge stimmt mit (Ferreiras 2 × Coca cola), Artikelnummern vorn weg, Steuersatz-Rest „238“/„P13“ am Ende weg, Fleck „nm“ weg.
+  Tor echte Bons: **13/14 OK, Aldi bekannt** (Durchschein-Druck der Rückseite, Abhilfe offen: helle Schrift vor dem Lesen der
+  Namensspalte unterdrücken). Voller Lauf mit synthetischen Bons und SROIE-Vergleich: läuft / steht aus.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
