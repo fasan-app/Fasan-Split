@@ -87,6 +87,8 @@ dem Nutzer überlassen; die Pflicht-Recherchen nie gelesen und nach Gefühl gest
 - Tippfläche ≥ 48 dp (Profil „Einfach“ 60 dp), Bewegung folgt „Animationen entfernen“ und der App-Einstellung.
 - Backlog: `STAND.md`, Abschnitt „Noch offen – Reihenfolge“, ist die Liste von allem, was fehlt. Nach jedem Paket aktualisieren, nie etwas still fallen lassen. Die Priorität setzt die Sitzung selbst; weicht sie von der Reihenfolge des Nutzers ab, steht der Grund im Abschnitt und in der Antwort (Nutzer 02.11.).
 - Token sparen: große Code-Dateien per grep lesen (nicht die Pflichtlektüre, die wird ganz gelesen); nach jedem Arbeitspaket `STAND.md` aktualisieren.
+- **Kontingent im Blick (Nutzer 06.11.):** Zeigt der Nutzer die Nutzung, gilt sie: Stand und Folgen in `STAND.md` („Kontingent“),
+  Teures zuerst dort, wo es am meisten wirkt, laufend sichern; nie so weiterarbeiten, als wäre das Kontingent unbegrenzt.
 - Commits als `Fasan <fasan@christopherziehm.de>`.
 
 ## Neue Sitzung starten (Token sparen)
