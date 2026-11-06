@@ -66,6 +66,9 @@ bool nameOk(String truth, String read) {
 
 void main() {
   final dirs = (Platform.environment['FASAN_BONORDNER'] ?? '').split(':').where((d) => d.isNotEmpty && Directory(d).existsSync()).toList();
+  // Stage B (Korpus, 06.11.): public data sets and single finds; measured per folder, may not get worse than the stored best
+  final korpus = (Platform.environment['FASAN_KORPUS'] ?? '').split(':').where((d) => d.isNotEmpty && Directory(d).existsSync()).toSet();
+  dirs.addAll(korpus.where((d) => !dirs.contains(d)));
   final ready = dirs.isNotEmpty && File('assets/models/det.onnx').existsSync();
   test('Erkennungs-Tor', () async {
     const m = 'assets/models';
@@ -80,6 +83,7 @@ void main() {
     final rec = Recognizer(ocr);
     final pick = RegExp(Platform.environment['FASAN_BONS'] ?? r'\.(png|jpg|jpeg)$', caseSensitive: false);
     final failures = <String>[], known = <String>[];
+    final okPer = <String, int>{}, nPer = <String, int>{};
     var checkedBons = 0;
     for (final dir in dirs) {
       final files = Directory(dir).listSync().whereType<File>().map((f) => f.path).where((p) => pick.hasMatch(p)).toList()..sort();
@@ -124,6 +128,13 @@ void main() {
           }
         }
         final name = f.split('/').last;
+        nPer[dir] = (nPer[dir] ?? 0) + 1;
+        if (problems.isEmpty) okPer[dir] = (okPer[dir] ?? 0) + 1;
+        if (korpus.contains(dir)) {
+          // ignore: avoid_print
+          print('${problems.isEmpty ? 'K-OK' : 'K-FEHLER'} $name${problems.isEmpty ? '' : ': ${problems.join('; ')}'}');
+          continue;
+        }
         if (problems.isEmpty) {
           // ignore: avoid_print
           print('OK   $name');
@@ -141,6 +152,14 @@ void main() {
           print('FEHLER $line');
         }
       }
+    }
+    final minFile = Platform.environment['FASAN_KORPUS_MIN'];
+    final min = minFile != null && File(minFile).existsSync() ? jsonDecode(File(minFile).readAsStringSync()) as Map<String, dynamic> : const {};
+    for (final d in korpus) {
+      final key = d.split('/').where((x) => x.isNotEmpty).last;
+      // ignore: avoid_print
+      print('KORPUS $key: ${okPer[d] ?? 0}/${nPer[d] ?? 0} ganz richtig (Bestwert ${min[key] ?? '–'})');
+      if (min[key] is int && (okPer[d] ?? 0) < (min[key] as int)) failures.add('Korpus $key schlechter: ${okPer[d] ?? 0} < ${min[key]}');
     }
     // ignore: avoid_print
     print('TOR: $checkedBons Bons, ${failures.length} Fehler, ${known.length} bekannt');

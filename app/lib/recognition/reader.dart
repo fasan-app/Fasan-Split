@@ -1391,6 +1391,17 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
     }
     p.suggestions = sugg.take(4).toList();
   }
+  // A storno line can be torn in two (de-discount 06.11.: „Storno os Paprika“ without amount, „cYanmaGtaYelow -1,79“ with a misread
+  // name): a negative item without its own kind right next to a storno line that has no amount is that line's amount.
+  for (final p in items) {
+    if (p.amount >= 0 || p.kind2 != null || p.line < 0) continue;
+    for (final j in [p.line - 1, p.line + 1]) {
+      if (j >= 0 && j < info.length && info[j].kind == 'storno' && info[j].amounts.isEmpty) {
+        p.kind2 = 'storno';
+        break;
+      }
+    }
+  }
   _cancelPairs(items, info);
   _attachExtras(items, info);
   for (final p in items) {

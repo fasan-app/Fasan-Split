@@ -405,6 +405,8 @@ Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md
   Tor echte Bons: **13/14 OK, Aldi bekannt** (Durchschein-Druck der Rückseite, Abhilfe offen: helle Schrift vor dem Lesen der
   Namensspalte unterdrücken). Voller Lauf mit synthetischen Bons und SROIE-Vergleich: läuft / steht aus.
 
+### Nachtlauf 06.11.: Weckung 06:10 (Berlin) geplant (`trig_01JPM4pxpuJzYvP43bJRTGAP`), falls ein Limit die Arbeit stoppt.
+
 ### Testkorpus weltweit (Nutzer 05.11. und erneut 06.11.: „13 Bons sind keine Grundlage“) – jetzt Vorrang in Punkt 1
 
 Beschluss Befragung 4: alle auffindbaren echten Rechnungen/Kassenzettel (Datensätze jeder Lizenz nur zum Testen, Einzelfunde), dazu
