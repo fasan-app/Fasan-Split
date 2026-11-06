@@ -25,6 +25,14 @@ weiter** und werden hier nicht wiederholt; hier stehen (a) neue Regeln aus den 0
   bessere-bilder, musik-erkennen, ki-werkzeuge, beta-ohne-github, video-haptik-belege (Haptik-Teil in HA). **Kopf noch nicht geprüft**
   – das geschieht in 0b, vorher gilt die Einstufung als vorläufig.
 
+### Fortschritt 0b (06.11. vormittags)
+Ganz gelesen: Split einstellungen, konkurrenz-bedienung-saldo, einladen-benachrichtigen-messenger, einladung-situationen,
+konto-wiederherstellung, gruppe-nostr, updates-delta, anbindungen-zahlung-netz, zusammenarbeit-verschluesselung.
+Daraus für Punkt 3 (Browser = APK): Fotos verschlüsselt auf Blossom (eigener Schlüssel je Foto, `{h,k,u,n}` in der Rechnung,
+Upload an 2 Server, lokale Kopie bleibt, „Foto nicht mehr online“ als Zustand), Relay-Ereignis ≤ 48 KB, Snippets/kleines Original
+in Chunks über Relays; Web-Speicher: Safari löscht nach 7 Tagen ohne Besuch (Home-Bildschirm ausgenommen) → Sicherung anbieten.
+Offen in 0b: Karte (10 Dateien), Camera (5 Dateien).
+
 ## Neue Regeln
 
 ### A. Aufmerksamkeit und Bewegung
