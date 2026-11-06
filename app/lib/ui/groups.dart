@@ -52,7 +52,8 @@ class GroupsPage extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: FasanSpace.s),
           child: Builder(builder: (context) {
             final bills = store.inGroup(g);
-            final sum = bills.fold<int>(0, (a, b) => a + b.effectiveTotal);
+            final spend = bills.where((b) => !b.isTransfer).toList(); // settlement payments are no spending
+            final sum = spend.fold<int>(0, (a, b) => a + b.effectiveTotal);
             final lg = CollabScope.of(context).groupByLocalName(g), live = lg != null;
             final unread = lg == null ? 0 : CollabScope.of(context).unread(lg);
             final last = lg == null ? null : CollabScope.of(context).lastMessage(lg);
@@ -75,8 +76,8 @@ class GroupsPage extends StatelessWidget {
                             last != null && unread > 0
                                 ? '${lg!.session.nameOf(last.from)}: ${last.text}'
                                 : live
-                                    ? '${t.billsCount(bills.length)} · ${t.shared}'
-                                    : t.billsCount(bills.length),
+                                    ? '${t.billsCount(spend.length)} · ${t.shared}'
+                                    : t.billsCount(spend.length),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: tt.bodySmall!.copyWith(fontWeight: unread > 0 ? FontWeight.w700 : null)),
@@ -110,7 +111,8 @@ class GroupScreen extends StatelessWidget {
     final t = S.of(context), tt = Theme.of(context).textTheme;
     final store = StoreScope.of(context);
     final bills = store.inGroup(name);
-    final sum = bills.fold<int>(0, (a, b) => a + b.effectiveTotal);
+    final spend = bills.where((b) => !b.isTransfer).toList(); // settlement payments are no spending
+    final sum = spend.fold<int>(0, (a, b) => a + b.effectiveTotal);
     final live = CollabScope.of(context).groupByLocalName(name);
     return Scaffold(
       appBar: AppBar(
@@ -144,7 +146,7 @@ class GroupScreen extends StatelessWidget {
         ],
       ),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
-        Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text('${t.billsCount(bills.length)} · ${money(sum, de: t.de)} ${signOf(context)}', style: tt.bodyMedium)),
+        Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text('${t.billsCount(spend.length)} · ${money(sum, de: t.de)} ${signOf(context)}', style: tt.bodyMedium)),
         if (live != null) CollabGroupPanel(group: live),
         if (live == null) _ShareButton(name: name),
         // receipts first (Nutzer 06.11.: the people block pushed the receipts off the screen), people in one folded section below

@@ -25,6 +25,10 @@ void main() {
     expect(store.groupBalance('Lissabon'), {'Chris': 600, 'Angi': -600});
     store.recordPayment('Lissabon', 'Angi', 'Chris', 600, purpose: 'Ausgleich', item: 'Ausgleichszahlung');
     expect(store.groupBalance('Lissabon').values.every((v) => v == 0), isTrue);
+    // a settlement payment is no spending: not in the per-person spending (Freunde) and not a receipt of its own there
+    final angi = store.friends.firstWhere((f) => f.name == 'Angi');
+    expect((angi.bills, angi.sum), (1, 1000));
+    expect(part.isTransfer, isTrue);
     store.remove(part); // undo of one booking
     expect(store.groupBalance('Lissabon'), {'Chris': 400, 'Angi': -400});
   });

@@ -332,6 +332,10 @@ class Bill {
   /// The date that matters for the user: printed date, else when it was captured.
   DateTime get date => receiptDate ?? created;
 
+  /// A settlement payment booked with „bezahlt“ (store.recordPayment): moves balances, but is no spending – not counted in sums,
+  /// counts of receipts or per-person spending.
+  bool get isTransfer => category == 'transfer';
+
   List<BillItem> get its => items ??= [];
   List<Person> get ps => people ??= [];
 

@@ -342,7 +342,7 @@ class BillStore extends ChangeNotifier {
     final gone = forgotten;
     final map = <String, ({int bills, int sum, int color})>{};
     for (final b in bills) {
-      if (!_show(b)) continue;
+      if (!_show(b) || b.isTransfer) continue; // settlement payments are no spending
       final pp = b.perPerson();
       for (var i = 0; i < b.ps.length; i++) {
         final p = b.ps[i];

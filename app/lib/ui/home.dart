@@ -589,7 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(children: [
               if (groupName != null) ...[Icon(Icons.folder_outlined, size: 16, color: l.textMuted), const SizedBox(width: 6)],
               Expanded(child: FasanLabel(heading)),
-              if (groupName != null) Text('${list.length} · ${money(list.fold(0, (a, b) => a + b.toHome(b.effectiveTotal)), de: t.de)} ${signOf(context)}', style: Theme.of(context).textTheme.bodySmall),
+              if (groupName != null) Text('${list.where((b) => !b.isTransfer).length} · ${money(list.where((b) => !b.isTransfer).fold(0, (a, b) => a + b.toHome(b.effectiveTotal)), de: t.de)} ${signOf(context)}', style: Theme.of(context).textTheme.bodySmall),
             ]),
           ),
           for (final b in list) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.xs + 2), child: _row(context, store, mode, b)),

@@ -460,7 +460,9 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
 - **Grundfunktionen (06.11. nachts):** **Ausgleich exakt** mit den wenigsten Überweisungen (`fasan_core/settle.dart`, Teilmengen-Verfahren bis 16 Personen, sonst gierig; auch
   mehrere Zahler auf einem Bon). Beispiel, bei dem der alte Weg 4 statt 3 brauchte, plus 400 Zufallsfälle gegen eine Brute-Force-Lösung (`settle_exact_test`). **„Bezahlt“ je
   Ausgleichszahlung** in der Gruppe (Häkchen an „Angi zahlt Chris …“ → Rückfrage → Ausgleichsbuchung als kleiner Bon, Rückgängig; `store.recordPayment`, `record_payment_test`).
-  Noch ohne Bildschirmfoto-Prüfung im Browser; Teilzahlung (anderer Betrag) noch nicht wählbar.
+  **Im Browser angesehen (06.11. nachts):** Zeile „Angi zahlt Chris 10,00 €“ mit „Bezahlen“ und „Als bezahlt eintragen“ (beschriftet, unter dem Satz), Rückfrage, Buchung,
+  Hinweis mit Rückgängig, Saldo danach ausgeglichen. Dabei gefunden und behoben: die Buchung zählte als Ausgabe („2 Bons · 34,00 €“) → `Bill.isTransfer`, aus Summen,
+  Bon-Zahlen und Ausgaben je Person ausgenommen. Offen: Teilzahlung (anderer Betrag) wählbar; Personen-Bereich klappt nach dem Eintragen wieder zu.
 
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
