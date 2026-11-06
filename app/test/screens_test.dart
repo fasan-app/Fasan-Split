@@ -229,7 +229,7 @@ void main() {
           Bill bill;
           if (e.key.startsWith('b')) {
             // variants only for the screens that are also walked in the browser with DARK=1 / LAND=1
-            if ((dark || land) && !const ['b01-bon', 'b10-bon-ansicht', 'b15b-ergebnis', 'b04-posten-blatt'].contains(e.key)) return;
+            if ((dark || land) && !(const ['b01-bon', 'b10-bon-ansicht', 'b15b-ergebnis'].contains(e.key) || (dark && e.key == 'b04-posten-blatt'))) return;
             bill = _walkBill(dir);
             _pushBill = bill;
             await tester.runAsync(() => fillSnippets(bill, File(bill.imagePath!).readAsBytesSync()));
