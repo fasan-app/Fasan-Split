@@ -504,6 +504,9 @@ Besitzer. Nutzer neu anlegen lassen, danach Probelauf wiederholen (`git commit -
    je ein Ausreißer (383 ms normal, 867 ms gedrosselt – beim Übergang zum Ergebnis). Die Erkennung läuft im Worker und blockiert die
    Oberfläche nicht. Anmerkung: der Test ist mit einem kleinen Foto (Nutzerfoto, verkleinert hochgeladen), große Handyfotos dauern länger.
    **Bon-Ausschnitte unter den Posten jetzt Standard** (Commit unten), im Browser mit dem echten Bon angesehen.
+   **Gruppe „Bons zuerst“ + ein Begriff „Personen“ (06.11.):** Gruppenseite = Summe, Zeile Notizen/Chat, Bons, darunter ein eingeklappter Block
+   „Personen · n“ (Status „In der App“ / „Ohne App“, Saldo und Ausgleich darin; Rechte und Verwaltung im Blatt der Person). Der
+   Mitglieder-Knopf entfällt. Im Browser mit echtem Bon angesehen, Tests angepasst (groups_test prüft Reihenfolge und Einklappen).
    Noch nicht gemessen: Start mit vielen Bons, großes Handyfoto (4000 px), echtes S23. Budget für die CI fehlt noch
    (Prüfliste G6: Vielfaches des Medians, fail-on-alert).
    Offen in Punkt 3: Bildschirm-für-Bildschirm-Vergleich App/Browser
