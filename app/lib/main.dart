@@ -171,8 +171,8 @@ class _SplitAppState extends State<SplitApp> {
               // Settings → Language: German, English, or the phone's language (null)
               locale: switch (widget.store.language) { 'de' => const Locale('de'), 'en' => const Locale('en'), _ => null },
               debugShowCheckedModeBanner: false,
-              theme: ui.theme(Brightness.light),
-              darkTheme: ui.theme(Brightness.dark),
+              theme: withEmoji(ui.theme(Brightness.light)),
+              darkTheme: withEmoji(ui.theme(Brightness.dark)),
               themeMode: ui.themeMode,
               // style changes morph instead of jumping (fasan_ui Norm): colours, radii and glow are interpolated
               themeAnimationDuration: const Duration(milliseconds: 380),
@@ -232,3 +232,10 @@ class StoreScope extends InheritedNotifier<BillStore> {
   /// save loops forever).
   static BillStore read(BuildContext context) => context.getInheritedWidgetOfExactType<StoreScope>()!.notifier!;
 }
+
+/// Every text falls back to the app's own emoji font (assets/fonts/FasanEmoji.ttf) before the system's: the symbols look the
+/// same on the phone and in the browser, and the browser asks no font server (06.11.).
+ThemeData withEmoji(ThemeData t) => t.copyWith(
+      textTheme: t.textTheme.apply(fontFamilyFallback: const ['FasanEmoji']),
+      primaryTextTheme: t.primaryTextTheme.apply(fontFamilyFallback: const ['FasanEmoji']),
+    );
