@@ -21,8 +21,8 @@ Diese Regeln stehen über allem anderen in dieser Datei. Wer sie nicht erfüllen
    jeder geänderte Bildschirm wird gegen sie geprüft, Verstöße mit Bildschirmfoto belegt. Wo die Recherchen nichts sagen: neu
    recherchieren (Stand des Jahres, echte Quellen, keine Erinnerung aus Trainingsdaten) und als neu kennzeichnen.
 4. `docs/ANFORDERUNGEN.md` lesen (alle Anweisungen des Nutzers mit Datum und Grund) und die Beschlüsse oben in `STAND.md`.
-   Rohtext der Nutzer-Nachrichten gehört **nicht** in dieses öffentliche Repo (Ablageort klärt der Nutzer; bis dahin aus dem
-   Sitzungsverlauf auswerten und nur sinngemäß, ohne private Details, ins Register schreiben).
+   Rohtext der Nutzer-Nachrichten: **`../fasan/nutzer/split-nachrichten.md`** (privat; Nutzer 06.11.). Jede Sitzung hängt dort neue
+   Nachrichten an. Ins öffentliche Register nur sinngemäß, ohne private Details.
 
 **Fertig heißt (alle Punkte, sonst ist es nicht fertig und wird nicht so gemeldet):**
 1. Fehler mit echten Daten nachgestellt (echter Bon, echte Gruppe, echter Browser).
