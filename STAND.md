@@ -460,6 +460,11 @@ Coles (Namen eine Zeile verschoben), „Qty 20“ (@ als 0 gelesen) in Stufe B p
 gedruckt). Zur Wahl der Bons: 240 weitere Openverse-Fotos gesichtet, 33 brauchbar übernommen; weitere Quellen (Wikimedia, wenn die
 Drosselung endet) für Ziel ~100.
 
+### Erkennungs-Tor in der CI – Probelauf 06.11. ~11:47
+Workflow `tor-zweig.yml` (nur Arbeitszweig, keine Veröffentlichung). Ergebnis: Geheimnis `FASAN_DIAGNOSE_TOKEN` ist gesetzt, aber der
+Klon von `fasan-diagnose` scheitert mit „Bad credentials“ → Schlüssel falsch kopiert, noch nicht freigegeben (pending) oder falscher
+Besitzer. Nutzer neu anlegen lassen, danach Probelauf wiederholen (`git commit --allow-empty` + Push auf den Zweig löst ihn aus).
+
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
 0. **Pflicht aus CLAUDE.md, Schritt 0:** Fasan-Karte und Fasan-Camera anhängen (bis 06.11. nie geschehen), alle Recherchen ganz lesen,
