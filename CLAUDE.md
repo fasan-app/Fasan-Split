@@ -15,8 +15,10 @@ Diese Regeln stehen über allem anderen in dieser Datei. Wer sie nicht erfüllen
    trotzdem ohne die Recherchen):
    `for d in ../fasan ../fasan_ui ../fasan-diagnose ../fasan-karte/docs/recherche ../fasan-camera/docs/recherche; do [ -e "$d" ] || echo "FEHLT $d"; done`
    Fehlt etwas: **stoppen, dem Nutzer melden, keine Design- oder Bedienarbeit beginnen.**
-3. **Vor jeder Design-, UI- oder Bedienarbeit vollständig lesen (nicht per grep):** alle Dateien in `../fasan-karte/docs/recherche/`,
-   `../fasan-camera/docs/recherche/`, `../fasan_ui/docs/recherche/`, dazu `../fasan/GRUNDSAETZE.md`, `../fasan/ZUSTAENDE-UND-PROFILE.md`,
+3. **Vor jeder Design-, UI- oder Bedienarbeit vollständig lesen (nicht per grep):** in `../fasan-karte/docs/recherche/`,
+   `../fasan-camera/docs/recherche/`, `../fasan_ui/docs/recherche/` und `docs/recherche/` jede Datei zu Bedienung, Gestaltung, Psychologie,
+   Bon, Kosten, Gruppe, Tests oder Plattform ganz; reine Fachthemen anderer Apps (Kamera-Hardware, Reiseinhalte wie Strände, Fahrpläne)
+   nur Kopf und Kurzfassung – welche Datei so eingestuft wurde und warum, steht in der Prüfliste (06.11.). Dazu `../fasan/GRUNDSAETZE.md`, `../fasan/ZUSTAENDE-UND-PROFILE.md`,
    `docs/REGELWERK-OBERFLAECHE.md` und `docs/recherche/`. Daraus gilt die Prüfliste `docs/PRUEFLISTE-OBERFLAECHE.md` (Regel + Quelle);
    jeder geänderte Bildschirm wird gegen sie geprüft, Verstöße mit Bildschirmfoto belegt. Wo die Recherchen nichts sagen: neu
    recherchieren (Stand des Jahres, echte Quellen, keine Erinnerung aus Trainingsdaten) und als neu kennzeichnen.
