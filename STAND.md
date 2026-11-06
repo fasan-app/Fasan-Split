@@ -428,6 +428,11 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   Antwort: Oberfläche und Logik ja, automatisch (eine Codebasis). Nur Änderungen an Plattform-Fähigkeiten brauchen einen Adapter; dafür jetzt Regel in CLAUDE.md. Ehrlich offen: der
   geplante modulare Neubau (Aufgabe „Architektur“) ist noch nicht gemacht; heute bewacht nur `web_parity_test` + CI-Web-Build + Foto-Ende-zu-Ende + Bildschirmdurchlauf die Übereinstimmung.
 
+- **Bildschirmvergleich, Varianten (06.11. nachts):** Dunkelmodus und Querformat (873×393) Bon-Bildschirm und Ergebnis: App und Browser **gleich**. **Gemeinsamer Befund
+  (beide Plattformen, kein Web-Unterschied):** im Querformat bleibt oben nur Platz für etwa drei Zeilen; die Aktionsleiste („Speichern/Fertig“) liegt über dem Inhalt (Bon-Bildschirm), der
+  Posten-Bereich ist erst nach Scrollen erreichbar. Offen als Gestaltungsaufgabe (Querformat: Leiste schmaler oder in die App-Leiste, Kopfbereich einklappen); Prüflisten-Eintrag
+  folgt. Noch nicht verglichen: Englisch, Beitritt, Gruppe/Personen, Scan, Archiv/Papierkorb, Chat/Notizen.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
