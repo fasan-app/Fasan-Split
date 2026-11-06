@@ -15,7 +15,7 @@ import '../l10n.dart';
 import 'scope.dart';
 import 'collab_ui.dart' show ensureConsent, QrView;
 import 'common.dart';
-import '../web_platform.dart';
+import '../platform/web_platform.dart';
 
 class _T {
   const _T(this.de);

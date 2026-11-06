@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../recognition/place.dart';
-import '../recognition_service.dart';
+import '../recognition/service.dart';
 import '../state/store.dart';
 import '../model/bill.dart';
 import 'package:fasan_core/category_guess.dart';

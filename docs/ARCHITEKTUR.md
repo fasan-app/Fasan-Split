@@ -56,6 +56,10 @@ Tore, die vor und nach jedem Schritt grün sein müssen: Erkennungs-Tor (alle ec
    **kein Bildschirm importiert mehr `main.dart`** (vorher 22 von 32). `main.dart` exportiert `scope.dart` nur noch für die Tests.
    Wächter erzwingt jetzt: model → nichts, recognition → model, state → model/recognition, collab → model/state, flows → model/recognition/state/collab,
    ui → alles außer Einstieg, perf → nichts; niemand außer dem Einstieg importiert `main.dart`.
+   Schritt 4 **erledigt**: Erkennungs-Ausführung nach `lib/recognition/service.dart` (+ `browser*.dart`, Web-Worker-Adapter), Browser-Plattform nach
+   `lib/platform/web_platform*.dart`, Update-Prüfung nach `lib/flows/update.dart`. In der Wurzel von `lib/` liegen nur noch `main.dart` und die Texte (Schritt 6).
+   Adapter-Regel: ein Adapter liegt in der Schicht, die ihn nutzt (`state/images_*`, `collab/ws_connect_*`, `recognition/onnx_*`, `recognition/browser_*`);
+   nur Fähigkeiten ohne eigene Schicht stehen in `lib/platform/`.
 2. **`core` herauslösen**: `model/` + `split_math` ohne Fremdabhängigkeit; die zwei Verweise auf `recognition` umdrehen (Erkennung liefert Daten *an* das Modell, nicht umgekehrt).
 3. **`platform_api`** mit den vier Verträgen anlegen, bestehende `*_web.dart`/Stubs dahinter verschieben.
 4. **`store` und `sync` trennen** (Zyklus auflösen: `sync` kennt `store` nur über eine Schnittstelle).

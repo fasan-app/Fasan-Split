@@ -12,7 +12,7 @@ import '../l10n/tr.dart';
 import 'scope.dart';
 import '../model/bill.dart';
 import '../flows/scan_bill.dart' show remainderName;
-import '../recognition_service.dart';
+import '../recognition/service.dart';
 import '../state/images.dart';
 import 'assign.dart';
 import 'category_ui.dart';

@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../model/bill.dart';
 import '../flows/scan_bill.dart';
-import '../recognition_service.dart';
+import '../recognition/service.dart';
 import '../state/scan_live.dart';
 import 'scan_stage.dart';
 import 'flow.dart';

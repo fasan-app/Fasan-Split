@@ -56,7 +56,7 @@ jobs:
           dart compile js -O2 -o build/web/recognition_worker.js lib/recognition/web_worker.dart
           mkdir -p build/web/ort
           cp "$RUNNER_TEMP/ort/package/dist/"{ort.wasm.min.js,ort-wasm-simd-threaded.wasm,ort-wasm-simd-threaded.mjs} build/web/ort/
-          echo "${{ github.sha }}" > build/web/build.txt   # update check (lib/web_platform_web.dart)
+          echo "${{ github.sha }}" > build/web/build.txt   # update check (lib/platform/web_platform_web.dart)
           touch build/web/.nojekyll
 
       - uses: actions/upload-pages-artifact@v4

@@ -4,7 +4,7 @@
 // bei mehreren Bons soll jede Miniatur dieselbe Scan-Animation zeigen wie bei einem einzelnen).
 import 'package:flutter/foundation.dart';
 
-import '../recognition_service.dart';
+import '../recognition/service.dart';
 
 class ScanLive extends ChangeNotifier {
   Uint8List? preview;

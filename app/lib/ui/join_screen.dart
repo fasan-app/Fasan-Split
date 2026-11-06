@@ -15,7 +15,7 @@ import '../collab/service.dart';
 import '../l10n/tr.dart';
 import 'scope.dart';
 import '../flows/scan_queue.dart';
-import '../web_platform.dart';
+import '../platform/web_platform.dart';
 import 'backup_ui.dart';
 import 'collab_ui.dart' show AccountScreen, ChatScreen, ensureConsent, pendingInviteLink;
 import 'groups.dart' show GroupScreen;

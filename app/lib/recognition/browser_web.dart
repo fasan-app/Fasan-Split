@@ -8,7 +8,7 @@ import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
 
-import 'recognition/scan_events.dart';
+import 'scan_events.dart';
 
 web.Worker? _worker;
 Future<void>? _ready;

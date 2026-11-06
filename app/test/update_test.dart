@@ -1,5 +1,5 @@
 // Fasan Split – change list for in-app updates (lib/update.dart). MPL-2.0
-import 'package:fasan_split/update.dart';
+import 'package:fasan_split/flows/update.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

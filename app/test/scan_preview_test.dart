@@ -7,7 +7,7 @@ import 'package:fasan_split/recognition/image.dart';
 import 'package:fasan_split/recognition/model.dart';
 import 'package:fasan_split/recognition/scan.dart';
 import 'package:fasan_split/recognition/scan_preview.dart';
-import 'package:fasan_split/recognition_service.dart';
+import 'package:fasan_split/recognition/service.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/scan_screen.dart';
 import 'package:fasan_ui/fasan_ui.dart';

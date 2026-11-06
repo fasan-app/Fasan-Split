@@ -21,7 +21,7 @@ import 'common.dart';
 import 'diagnose.dart';
 import 'onboarding.dart';
 import 'update_ui.dart';
-import '../update.dart';
+import '../flows/update.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

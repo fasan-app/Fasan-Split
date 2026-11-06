@@ -11,13 +11,13 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter/services.dart';
 
-import 'recognition/onnx.dart' if (dart.library.js_interop) 'recognition/onnx_web.dart';
-import 'recognition/paddle.dart';
-import 'recognition/pipeline.dart';
-import 'recognition/scan_events.dart';
-import 'recognition_browser.dart';
+import 'onnx.dart' if (dart.library.js_interop) 'onnx_web.dart';
+import 'paddle.dart';
+import 'pipeline.dart';
+import 'scan_events.dart';
+import 'browser.dart';
 
-export 'recognition/scan_events.dart';
+export 'scan_events.dart';
 
 class RecognitionService {
   RecognitionService._();

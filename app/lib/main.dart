@@ -14,7 +14,7 @@ import 'collab/keys.dart';
 import 'collab/nostr.dart' show relayProxy;
 import 'collab/pairing.dart';
 import 'ui/pairing_ui.dart';
-import 'web_platform.dart';
+import 'platform/web_platform.dart';
 import 'collab/activity.dart' show activityGerman;
 import 'collab/service.dart';
 import 'collab/notify.dart';

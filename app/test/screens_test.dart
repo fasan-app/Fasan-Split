@@ -25,7 +25,7 @@ import 'package:image/image.dart' as img;
 import 'package:fasan_split/recognition/onnx.dart';
 import 'package:fasan_split/recognition/paddle.dart';
 import 'package:fasan_split/recognition/pipeline.dart';
-import 'package:fasan_split/recognition_service.dart';
+import 'package:fasan_split/recognition/service.dart';
 import 'package:fasan_split/ui/receipt_view.dart';
 
 const _lines = [

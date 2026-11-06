@@ -37,9 +37,10 @@ void main() {
     'state': {'model', 'recognition'},
     'collab': {'model', 'state'},
     'perf': <String>{},
+    'platform': <String>{},
     // flows: what a screen starts (scan queue, scan → bill, backup); below ui, above store and sync
-    'flows': {'model', 'recognition', 'state', 'collab'},
-    'ui': {'model', 'recognition', 'state', 'collab', 'perf', 'l10n', 'flows'},
+    'flows': {'model', 'recognition', 'state', 'collab', 'platform'},
+    'ui': {'model', 'recognition', 'state', 'collab', 'perf', 'l10n', 'flows', 'platform'},
   };
   for (final e in allowed.entries) {
     test('lib/${e.key} nutzt nur ${e.value.isEmpty ? 'fasan_core' : e.value.join(', ')}', () {

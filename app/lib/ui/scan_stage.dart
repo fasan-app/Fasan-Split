@@ -6,7 +6,7 @@ import 'dart:ui' as ui;
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
-import '../recognition_service.dart';
+import '../recognition/service.dart';
 import '../state/scan_live.dart';
 
 /// Shows what [live] collects: [placeholder] until the first preview, then the preview with its boxes, at the end the

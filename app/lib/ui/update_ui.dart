@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:ota_update/ota_update.dart';
 
 import '../l10n.dart';
-import '../update.dart';
-import '../web_platform.dart';
+import '../flows/update.dart';
+import '../platform/web_platform.dart';
 
 /// Banner on the start page when a newer version exists.
 class UpdateBanner extends StatelessWidget {

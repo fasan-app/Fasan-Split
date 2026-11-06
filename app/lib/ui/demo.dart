@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 
 import 'scope.dart';
 import '../model/bill.dart';
-import '../recognition_service.dart';
+import '../recognition/service.dart';
 import '../state/store.dart';
 import 'assign.dart';
 import 'flow.dart';

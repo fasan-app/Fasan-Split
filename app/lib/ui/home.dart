@@ -10,12 +10,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../l10n.dart';
-import '../web_platform.dart';
+import '../platform/web_platform.dart';
 import 'scope.dart';
 import '../model/bill.dart';
 import '../flows/scan_queue.dart';
 import '../state/store.dart';
-import '../update.dart';
+import '../flows/update.dart';
 import 'bill_tile.dart';
 import 'hints.dart';
 import 'flow.dart';

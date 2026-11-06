@@ -15,7 +15,7 @@ import '../collab/notes.dart';
 import '../collab/service.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
-import '../web_platform.dart';
+import '../platform/web_platform.dart';
 import '../l10n_groups.dart';
 import 'scope.dart';
 import '../flows/scan_queue.dart';

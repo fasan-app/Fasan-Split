@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart';
 
 import '../model/bill.dart';
 import 'scan_bill.dart';
-import '../recognition_service.dart';
+import '../recognition/service.dart';
 import '../state/scan_live.dart';
 import '../state/store.dart';
 
