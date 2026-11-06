@@ -108,11 +108,19 @@ jobs:
           E2E_DIR: ${{ runner.temp }}/e2e
         run: bash tool/e2e/run.sh
 
+      - name: Bonfoto für die Gruppe Ende zu Ende (Scan, Original, Ausschnitte im Browser)
+        working-directory: app
+        env:
+          E2E_DIR: ${{ runner.temp }}/e2e-photo
+        run: bash tool/e2e/run-photo.sh
+
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-bilder
-          path: ${{ runner.temp }}/e2e
+          path: |
+            ${{ runner.temp }}/e2e
+            ${{ runner.temp }}/e2e-photo
           retention-days: 7
 
   # Erkennungs-Tor: ohne Bestehen keine Veröffentlichung der Web-App (Nutzer 06.11.)

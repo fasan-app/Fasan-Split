@@ -92,7 +92,9 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await shot('9-scan-nach-neustart');
   } catch (e) { console.log('FAIL', String(e).slice(0, 300)); await shot('fail'); }
   fs.writeFileSync(dir + '/photo-done.txt', JSON.stringify(result));
-  const ok = result.ready && result.layers && result.layers.scan && result.layers.original && result.layers.digital && result.afterReload && result.afterReload.scan && errs.length === 0;
+  const ok = result.ready && result.layers && result.layers.scan && result.layers.original && result.layers.digital && result.afterReload && result.afterReload.scan && errs.length === 0
+    // frame budget (Prüfliste G6, coarse because CI runners vary): idle at least 20 fps, median frame ≤ 50 ms while scrolling
+    && result.billIdle.fps >= 20 && result.billScroll.p50 <= 50;
   console.log(`${ok ? 'OK' : 'FAIL'} ${JSON.stringify(result)} · Fehler: ${errs.join(' | ') || 'keine'}`);
   await b.close();
   process.exit(ok ? 0 : 1);
