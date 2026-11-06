@@ -1,4 +1,5 @@
 // Fasan Split – update banner and install sheet (lib/update.dart). MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:ota_update/ota_update.dart';
@@ -53,8 +54,8 @@ class WebUpdateBanner extends StatelessWidget {
         child: Row(children: [
           Icon(Icons.refresh_rounded, color: l.accent),
           const SizedBox(width: FasanSpace.m),
-          Expanded(child: Text(t.de ? 'Neue Version da. Lade die Seite neu.' : 'New version available. Reload the page.', style: Theme.of(context).textTheme.bodyMedium)),
-          TextButton(onPressed: reloadPage, child: Text(t.de ? 'Neu laden' : 'Reload')),
+          Expanded(child: Text(trLang(t.de ? 'de' : 'en', 'update_ui.newVersionAvailableReload'), style: Theme.of(context).textTheme.bodyMedium)),
+          TextButton(onPressed: reloadPage, child: Text(trLang(t.de ? 'de' : 'en', 'update_ui.reload'))),
           IconButton(tooltip: t.close, onPressed: onClose, icon: const Icon(Icons.close_rounded, size: 20)),
         ]),
       ),

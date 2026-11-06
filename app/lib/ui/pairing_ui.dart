@@ -1,6 +1,7 @@
 // Fasan Split – link a second device to the same account (collab/pairing.dart). New device: QR code + check code,
 // waits. Old device: reads the code (system camera opens the link, photo of the QR, or pasted link), compares the
 // check code, sends. MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'dart:typed_data';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -20,23 +21,23 @@ import '../platform/web_platform.dart';
 class _T {
   const _T(this.de);
   final bool de;
-  String get newTitle => de ? 'Mit anderem Gerät anmelden' : 'Sign in with another device';
+  String get newTitle => trLang(de ? 'de' : 'en', 'pairing_ui.signInWithAnother');
   String get newText => de
       ? 'Öffne auf deinem anderen Gerät Fasan Split → Konto → „Gerät hinzufügen“ und scanne diesen Code. Oder scanne ihn mit der Kamera-App.'
       : 'On your other device open Fasan Split → Account → “Add device” and scan this code, or scan it with the camera app.';
-  String get check => de ? 'Prüfcode' : 'Check code';
-  String get waiting => de ? 'Warte auf dein anderes Gerät …' : 'Waiting for your other device …';
+  String get check => trLang(de ? 'de' : 'en', 'pairing_ui.checkCode');
+  String get waiting => trLang(de ? 'de' : 'en', 'pairing_ui.waitingForYourOther');
   String done(int n) => de ? 'Konto übernommen. ${n == 0 ? 'Keine Gruppen gefunden.' : '$n Gruppen sind da.'}' : 'Account taken over. ${n == 0 ? 'No groups found.' : '$n groups are here.'}';
-  String get failed => de ? 'Keine Antwort. Versuch es noch einmal.' : 'No answer. Try again.';
-  String get addTitle => de ? 'Gerät hinzufügen' : 'Add device';
-  String get addText => de ? 'Scanne den Code, den dein neues Gerät zeigt.' : 'Scan the code your new device shows.';
-  String get photo => de ? 'Code fotografieren' : 'Photograph the code';
-  String get paste => de ? 'Link einfügen' : 'Paste link';
-  String get noCode => de ? 'Kein Kopplungs-Code erkannt.' : 'No pairing code found.';
-  String get compare => de ? 'Zeigt dein neues Gerät denselben Prüfcode?' : 'Does your new device show the same check code?';
-  String get send => de ? 'Ja, Konto übertragen' : 'Yes, transfer account';
-  String get sent => de ? 'Konto übertragen. Das neue Gerät holt jetzt deine Gruppen.' : 'Account transferred. The new device now fetches your groups.';
-  String get noWords => de ? 'Dieses Konto hat keine 12 Wörter gespeichert. Übertrage es mit einer Sicherung mit Konto.' : 'This account has no stored 12 words. Transfer it with a backup including the account.';
+  String get failed => trLang(de ? 'de' : 'en', 'pairing_ui.noAnswerTryAgain');
+  String get addTitle => trLang(de ? 'de' : 'en', 'pairing_ui.addDevice');
+  String get addText => trLang(de ? 'de' : 'en', 'pairing_ui.scanTheCodeYour');
+  String get photo => trLang(de ? 'de' : 'en', 'pairing_ui.photographTheCode');
+  String get paste => trLang(de ? 'de' : 'en', 'pairing_ui.pasteLink');
+  String get noCode => trLang(de ? 'de' : 'en', 'pairing_ui.noPairingCodeFound');
+  String get compare => trLang(de ? 'de' : 'en', 'pairing_ui.doesYourNewDevice');
+  String get send => trLang(de ? 'de' : 'en', 'pairing_ui.yesTransferAccount');
+  String get sent => trLang(de ? 'de' : 'en', 'pairing_ui.accountTransferredTheNew');
+  String get noWords => trLang(de ? 'de' : 'en', 'pairing_ui.thisAccountHasNo');
 }
 
 /// New device.

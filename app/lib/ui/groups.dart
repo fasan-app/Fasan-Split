@@ -1,5 +1,6 @@
 // Fasan Split – Gruppen and Freunde, group page. A group is local until it is shared live (see collab_ui.dart); the
 // invitation and the live part of a group live in collab_ui.dart. MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -268,7 +269,7 @@ class GroupPeople extends StatelessWidget {
                 TextButton(
                   onPressed: () => payFlow(context,
                       name: label(to), pub: to.startsWith('@') ? to.substring(1) : live?.session.memberOfPerson(to), cents: c, currency: StoreScope.read(context).homeCurrency, purpose: name),
-                  child: Text(t.de ? 'Bezahlen' : 'Pay'),
+                  child: Text(trLang(t.de ? 'de' : 'en', 'groups.pay')),
                 ),
             ]),
           ),
@@ -276,7 +277,7 @@ class GroupPeople extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: FasanSpace.s),
             child: FasanButton(
-              label: t.de ? 'Alle haben bezahlt – ausgleichen' : 'Everyone paid – settle',
+              label: trLang(t.de ? 'de' : 'en', 'groups.everyonePaidSettle'),
               icon: Icons.task_alt_rounded,
               kind: FasanButtonKind.secondary,
               expand: true,
@@ -290,7 +291,7 @@ class GroupPeople extends StatelessWidget {
                         : 'Mark all ${list.length} entered receipts as paid? They go to the archive and no longer count in the balances.'),
                     actions: [
                       TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.cancel)),
-                      FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(t.de ? 'Ausgleichen' : 'Settle')),
+                      FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(trLang(t.de ? 'de' : 'en', 'groups.settle'))),
                     ],
                   ),
                 );
@@ -435,7 +436,7 @@ class FriendsPage extends StatelessWidget {
         if (ta != null || tb != null) return (tb ?? DateTime(0)).compareTo(ta ?? DateTime(0));
         return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       });
-    final inviteButton = FasanButton(label: de ? 'Freund einladen' : 'Invite a friend', icon: Icons.person_add_alt_1_rounded, expand: true, onPressed: () => inviteFriend(context));
+    final inviteButton = FasanButton(label: trLang(de ? 'de' : 'en', 'groups.inviteAFriend'), icon: Icons.person_add_alt_1_rounded, expand: true, onPressed: () => inviteFriend(context));
 
     Future<void> openChat(_Friend f) async {
       final c = CollabScope.read(context);
@@ -465,19 +466,19 @@ class FriendsPage extends StatelessWidget {
       final hasChat = !f.deleted && (f.pub != null || f.direct != null);
       final bold = f.unread > 0;
       final sub = f.deleted
-          ? (de ? 'Konto gelöscht' : 'Account deleted')
+          ? (trLang(de ? 'de' : 'en', 'groups.accountDeleted'))
           : f.last != null
-          ? (f.last!.from == collab.identity?.pub ? (de ? 'Du: ' : 'You: ') : '') + f.last!.text
+          ? (f.last!.from == collab.identity?.pub ? (trLang(de ? 'de' : 'en', 'groups.you')) : '') + f.last!.text
           : [
               if (f.bills > 0) t.billsCount(f.bills),
               if (f.pub != null && collab.isOnline(f.pub!))
                 'online'
               else if (f.pub != null && collab.lastSeen(f.pub!) != null)
-                (de ? 'zuletzt ${when(collab.lastSeen(f.pub!)!)}' : 'last seen ${when(collab.lastSeen(f.pub!)!)}')
+                (trLang(de ? 'de' : 'en', 'groups.lastSeen', [when(collab.lastSeen(f.pub!)!)]))
               else if (hasChat)
-                de ? 'in der App' : 'in the app'
+                trLang(de ? 'de' : 'en', 'groups.inTheApp2')
               else
-                de ? 'nur in Bons' : 'only in receipts',
+                trLang(de ? 'de' : 'en', 'groups.onlyInReceipts'),
             ].join(' · ');
       final card = Material(
         color: l.surfaceAlt,
@@ -549,8 +550,8 @@ class FriendsPage extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: FasanSpace.s),
           child: ListTile(
             leading: Icon(Icons.schedule_send_rounded, color: l.textMuted),
-            title: Text(de ? 'Einladung offen' : 'Invitation open'),
-            subtitle: Text(de ? 'Noch hat niemand den Link geöffnet. Tippen: erneut schicken' : 'Nobody opened the link yet. Tap: send again'),
+            title: Text(trLang(de ? 'de' : 'en', 'groups.invitationOpen')),
+            subtitle: Text(trLang(de ? 'de' : 'en', 'groups.nobodyOpenedTheLink')),
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g))),
           ),
         ),
@@ -564,11 +565,11 @@ Future<void> _removeDeleted(BuildContext context, String name, String pub) async
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(de ? '$name hat das Konto gelöscht' : '$name deleted the account'),
-      content: Text(de ? 'Aus der Freundesliste entfernen? Die Beträge in alten Bons bleiben, wie sie sind.' : 'Remove from your friends? Amounts in old receipts stay as they are.'),
+      title: Text(trLang(de ? 'de' : 'en', 'groups.deletedTheAccount', [name])),
+      content: Text(trLang(de ? 'de' : 'en', 'groups.removeFromYourFriends')),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(de ? 'Behalten' : 'Keep')),
-        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(de ? 'Entfernen' : 'Remove')),
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(trLang(de ? 'de' : 'en', 'groups.keep'))),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(trLang(de ? 'de' : 'en', 'groups.remove'))),
       ],
     ),
   );
@@ -611,24 +612,24 @@ Future<void> friendActions(BuildContext context, String name) async {
       child: ListView(shrinkWrap: true, children: [
         ListTile(leading: FasanAvatar(name: name, index: 0, size: 32), title: Text(name, style: Theme.of(ctx).textTheme.titleMedium)),
         if (direct != null || pub != null)
-          ListTile(leading: const Icon(Icons.chat_bubble_outline_rounded), title: Text(de ? 'Nachricht schreiben' : 'Write a message'), onTap: () => Navigator.pop(ctx, 'direct'))
+          ListTile(leading: const Icon(Icons.chat_bubble_outline_rounded), title: Text(trLang(de ? 'de' : 'en', 'groups.writeAMessage')), onTap: () => Navigator.pop(ctx, 'direct'))
         else
           ListTile(
             leading: const Icon(Icons.link_rounded),
-            title: Text(de ? 'Mit $name verbinden' : 'Connect with $name'),
-            subtitle: Text(de ? 'Link schicken: chatten und die App testen, ohne Gruppe' : 'Send a link: chat and try the app, no group needed'),
+            title: Text(trLang(de ? 'de' : 'en', 'groups.connectWith', [name])),
+            subtitle: Text(trLang(de ? 'de' : 'en', 'groups.sendALinkChat')),
             onTap: () => Navigator.pop(ctx, 'connect'),
           ),
         ListTile(
           leading: const Icon(Icons.group_add_outlined),
-          title: Text(de ? 'In Gruppe aufnehmen' : 'Add to a group'),
-          subtitle: Text(de ? 'Bei geteilten Gruppen geht ein Einladungslink mit' : 'Shared groups: an invitation link comes with it'),
+          title: Text(trLang(de ? 'de' : 'en', 'groups.addToAGroup')),
+          subtitle: Text(trLang(de ? 'de' : 'en', 'groups.sharedGroupsAnInvitation')),
           onTap: () => Navigator.pop(ctx, 'add'),
         ),
         for (final g in chats)
-          ListTile(leading: const Icon(Icons.forum_outlined), title: Text(de ? 'Nachricht in „${g.localName}“' : 'Message in “${g.localName}”'), onTap: () => Navigator.pop(ctx, 'chat:${g.secret.tag}')),
-        ListTile(leading: const Icon(Icons.receipt_long_outlined), title: Text(de ? 'Bons mit $name' : 'Receipts with $name'), onTap: () => Navigator.pop(ctx, 'bills')),
-        ListTile(leading: Icon(Icons.person_remove_outlined, color: Colors.red.shade700), title: Text(de ? 'Aus den Vorschlägen entfernen' : 'Remove from suggestions'), onTap: () => Navigator.pop(ctx, 'forget')),
+          ListTile(leading: const Icon(Icons.forum_outlined), title: Text(trLang(de ? 'de' : 'en', 'groups.messageIn', [g.localName])), onTap: () => Navigator.pop(ctx, 'chat:${g.secret.tag}')),
+        ListTile(leading: const Icon(Icons.receipt_long_outlined), title: Text(trLang(de ? 'de' : 'en', 'groups.receiptsWith', [name])), onTap: () => Navigator.pop(ctx, 'bills')),
+        ListTile(leading: Icon(Icons.person_remove_outlined, color: Colors.red.shade700), title: Text(trLang(de ? 'de' : 'en', 'groups.removeFromSuggestions')), onTap: () => Navigator.pop(ctx, 'forget')),
       ]),
     ),
   );
@@ -641,7 +642,7 @@ Future<void> friendActions(BuildContext context, String name) async {
               ListTile(
                 leading: Icon(collab.groupByLocalName(g) != null ? Icons.sensors_rounded : Icons.folder_outlined),
                 title: Text(g),
-                subtitle: collab.groupByLocalName(g) != null ? Text(de ? 'geteilt' : 'shared') : null,
+                subtitle: collab.groupByLocalName(g) != null ? Text(trLang(de ? 'de' : 'en', 'groups.shared')) : null,
                 onTap: () => Navigator.pop(ctx, g),
               ),
             ListTile(leading: const Icon(Icons.create_new_folder_outlined), title: Text(t.newGroup), onTap: () => Navigator.pop(ctx, '+')),
@@ -667,13 +668,13 @@ Future<void> friendActions(BuildContext context, String name) async {
         // shared: the person still has to get in – the link for them opens at once
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: c, person: name)));
       } else {
-        showNote(context, de ? '$name ist in „${g.trim()}“.' : '$name is in “${g.trim()}”.');
+        showNote(context, trLang(de ? 'de' : 'en', 'groups.isIn', [name, g.trim()]));
       }
     case 'bills':
       final list = store.bills.where((b) => b.trashedAt == null && b.ps.any((p) => p.name == name)).toList()..sort((a, b) => b.date.compareTo(a.date));
       Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => Scaffold(
-          appBar: AppBar(title: Text(de ? 'Bons mit $name' : 'Receipts with $name')),
+          appBar: AppBar(title: Text(trLang(de ? 'de' : 'en', 'groups.receiptsWith2', [name]))),
           body: ListView(padding: const EdgeInsets.all(FasanSpace.l), children: [
             for (final b in list)
               Padding(

@@ -1,6 +1,7 @@
 // Fasan Split – shared widgets of the flow screens. MPL-2.0
 
 
+import '../l10n/tr.dart' show trLang;
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -368,7 +369,7 @@ class TitleHelp extends StatelessWidget {
   Widget build(BuildContext context) => Row(children: [
         Flexible(child: Text(title)),
         IconButton(
-          tooltip: S.of(context).de ? 'Erklärung' : 'Explanation',
+          tooltip: trLang(S.of(context).de ? 'de' : 'en', 'common.explanation'),
           visualDensity: VisualDensity.compact,
           icon: Icon(Icons.help_outline_rounded, size: 18, color: FasanLook.of(context).textMuted),
           onPressed: () => showModalBottomSheet<void>(

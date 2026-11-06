@@ -1,5 +1,6 @@
 // Fasan Split – category chip on a bill and the picker (base list, own categories, „Eigene Kategorie…“), and the
 // sort/filter sheet of the bill lists (Nutzer 04.11.: sort by status, date, place, amount, category). MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +25,7 @@ class CategoryChip extends StatelessWidget {
     return ActionChip(
       visualDensity: VisualDensity.compact,
       avatar: Icon(c?.icon ?? Icons.category_outlined, size: 18, color: c?.color),
-      label: Text(c?.label(t.de) ?? (t.de ? 'Kategorie wählen' : 'Choose category')),
+      label: Text(c?.label(t.de) ?? (trLang(t.de ? 'de' : 'en', 'category_ui.chooseCategory'))),
       onPressed: () async {
         final id = await pickCategory(context, bill.category);
         if (id == null || !context.mounted) return;
@@ -46,7 +47,7 @@ Future<String?> pickCategory(BuildContext context, String? current) async {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.8),
         child: ListView(shrinkWrap: true, children: [
-          ListTile(title: Text(t.de ? 'Kategorie' : 'Category', style: Theme.of(ctx).textTheme.titleMedium)),
+          ListTile(title: Text(trLang(t.de ? 'de' : 'en', 'category_ui.category'), style: Theme.of(ctx).textTheme.titleMedium)),
           for (final c in all)
             ListTile(
               leading: Icon(c.icon, color: c.color),
@@ -54,14 +55,14 @@ Future<String?> pickCategory(BuildContext context, String? current) async {
               trailing: c.id == current ? const Icon(Icons.check_rounded) : null,
               onTap: () => Navigator.pop(ctx, c.id),
             ),
-          ListTile(leading: const Icon(Icons.add_rounded), title: Text(t.de ? 'Eigene Kategorie …' : 'Own category …'), onTap: () => Navigator.pop(ctx, '+')),
-          if (current != null) ListTile(leading: const Icon(Icons.close_rounded), title: Text(t.de ? 'Keine Kategorie' : 'No category'), onTap: () => Navigator.pop(ctx, '')),
+          ListTile(leading: const Icon(Icons.add_rounded), title: Text(trLang(t.de ? 'de' : 'en', 'category_ui.ownCategory')), onTap: () => Navigator.pop(ctx, '+')),
+          if (current != null) ListTile(leading: const Icon(Icons.close_rounded), title: Text(trLang(t.de ? 'de' : 'en', 'category_ui.noCategory')), onTap: () => Navigator.pop(ctx, '')),
         ]),
       ),
     ),
   );
   if (r != '+' || !context.mounted) return r;
-  final name = await askText(context, t.de ? 'Eigene Kategorie' : 'Own category', t.de ? 'Name' : 'Name');
+  final name = await askText(context, trLang(t.de ? 'de' : 'en', 'category_ui.ownCategory2'), trLang(t.de ? 'de' : 'en', 'category_ui.name'));
   if (name == null || name.trim().isEmpty) return null;
   store.addCategory(name.trim());
   return 'c:${name.trim()}';
@@ -71,12 +72,12 @@ Future<String?> pickCategory(BuildContext context, String? current) async {
 enum BillSort { own, date, amount, shop, category, status }
 
 String sortLabel(BillSort s, bool de) => switch (s) {
-      BillSort.own => de ? 'Eigene Reihenfolge' : 'Own order',
-      BillSort.date => de ? 'Datum (neueste zuerst)' : 'Date (newest first)',
-      BillSort.amount => de ? 'Betrag (höchster zuerst)' : 'Amount (highest first)',
-      BillSort.shop => de ? 'Ort / Geschäft (A–Z)' : 'Place / shop (A–Z)',
-      BillSort.category => de ? 'Kategorie' : 'Category',
-      BillSort.status => de ? 'Status (unfertige zuerst)' : 'Status (unfinished first)',
+      BillSort.own => trLang(de ? 'de' : 'en', 'category_ui.ownOrder'),
+      BillSort.date => trLang(de ? 'de' : 'en', 'category_ui.dateNewestFirst'),
+      BillSort.amount => trLang(de ? 'de' : 'en', 'category_ui.amountHighestFirst'),
+      BillSort.shop => trLang(de ? 'de' : 'en', 'category_ui.placeShopAZ'),
+      BillSort.category => trLang(de ? 'de' : 'en', 'category_ui.category2'),
+      BillSort.status => trLang(de ? 'de' : 'en', 'category_ui.statusUnfinishedFirst'),
     };
 
 /// Sorts and filters one list of bills for display.
@@ -114,18 +115,18 @@ Future<void> sortSheet(BuildContext context, {required String? filter, required 
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, set) => SafeArea(
         child: ListView(shrinkWrap: true, padding: const EdgeInsets.only(bottom: FasanSpace.l), children: [
-          ListTile(title: Text(t.de ? 'Sortieren' : 'Sort', style: Theme.of(ctx).textTheme.titleMedium)),
+          ListTile(title: Text(trLang(t.de ? 'de' : 'en', 'category_ui.sort'), style: Theme.of(ctx).textTheme.titleMedium)),
           RadioGroup<BillSort>(
             groupValue: store.sortMode,
             onChanged: (v) => set(() => store.sortMode = v ?? BillSort.own),
             child: Column(children: [for (final s in BillSort.values) RadioListTile<BillSort>(value: s, title: Text(sortLabel(s, t.de)))]),
           ),
           if (used.isNotEmpty) ...[
-            ListTile(title: Text(t.de ? 'Nur Kategorie' : 'Only category', style: Theme.of(ctx).textTheme.titleSmall)),
+            ListTile(title: Text(trLang(t.de ? 'de' : 'en', 'category_ui.onlyCategory'), style: Theme.of(ctx).textTheme.titleSmall)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l),
               child: Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [
-                ChoiceChip(label: Text(t.de ? 'Alle' : 'All'), selected: filter == null, onSelected: (_) => set(() => onFilter(filter = null))),
+                ChoiceChip(label: Text(trLang(t.de ? 'de' : 'en', 'category_ui.all')), selected: filter == null, onSelected: (_) => set(() => onFilter(filter = null))),
                 for (final id in used)
                   if (categoryById(id) case final c?)
                     ChoiceChip(

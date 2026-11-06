@@ -1,5 +1,6 @@
 // Fasan Split – one bill as a card on the overview. MPL-2.0
 
+import '../l10n/tr.dart' show trLang;
 import 'dart:convert';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
@@ -82,12 +83,12 @@ class BillTile extends StatelessWidget {
       sub = [
         if (bill.refund) t.refundBadge,
         date,
-        bill.settled ? (t.de ? 'ausgeglichen' : 'settled') : bill.done ? (t.de ? 'eingetragen' : 'entered') : t.stepOf(bill.step),
-        if (bill.done) '${bill.ps.length} ${t.de ? 'Pers.' : 'ppl'}',
+        bill.settled ? (trLang(t.de ? 'de' : 'en', 'bill_tile.settled')) : bill.done ? (trLang(t.de ? 'de' : 'en', 'bill_tile.entered')) : t.stepOf(bill.step),
+        if (bill.done) '${bill.ps.length} ${trLang(t.de ? 'de' : 'en', 'bill_tile.ppl')}',
         if (bill.multiPay)
           t.de ? '${bill.paid.keys.where((i) => i < bill.ps.length).map((i) => bill.ps[i].name).join(' + ')} zahlten' : '${bill.paid.keys.where((i) => i < bill.ps.length).map((i) => bill.ps[i].name).join(' + ')} paid'
         else if (payer != null)
-          t.de ? '$payer zahlte' : '$payer paid',
+          trLang(t.de ? 'de' : 'en', 'bill_tile.paid', [payer]),
         ?city,
       ].join(' · ');
     }

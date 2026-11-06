@@ -1,5 +1,6 @@
 // Fasan Split – „Sichern“ in the settings: save everything into one file, put a file back (state/backup.dart).
 // Files through file_picker (saveFile / pickFiles, file_picker 13.3.2 API). MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -14,25 +15,25 @@ import 'collab_ui.dart' show askText;
 import 'common.dart';
 
 extension _T on S {
-  String get backupSave => de ? 'Sicherung speichern' : 'Save backup';
-  String get backupSaveSub => de ? 'Alle Bons mit Fotos in eine Datei' : 'All receipts with photos in one file';
-  String get backupRestore => de ? 'Sicherung einspielen' : 'Restore backup';
-  String get backupRestoreSub => de ? 'Fehlende Bons kommen dazu, nichts wird gelöscht' : 'Missing receipts are added, nothing is deleted';
-  String get backupWithAccount => de ? 'Konto und geteilte Gruppen mitsichern' : 'Include account and shared groups';
+  String get backupSave => trLang(de ? 'de' : 'en', 'backup_ui.saveBackup');
+  String get backupSaveSub => trLang(de ? 'de' : 'en', 'backup_ui.allReceiptsWithPhotos');
+  String get backupRestore => trLang(de ? 'de' : 'en', 'backup_ui.restoreBackup');
+  String get backupRestoreSub => trLang(de ? 'de' : 'en', 'backup_ui.missingReceiptsAreAdded');
+  String get backupWithAccount => trLang(de ? 'de' : 'en', 'backup_ui.includeAccountAndShared');
   String get backupSecretHint => de
       ? 'Dann ist die Datei so geheim wie deine 12 Wörter. Gib sie niemandem.'
       : 'Then the file is as secret as your 12 words. Never share it.';
-  String get backupFailed => de ? 'Sicherung ging nicht' : 'Backup failed';
-  String get backupPassword => de ? 'Passwort (freiwillig)' : 'Password (optional)';
+  String get backupFailed => trLang(de ? 'de' : 'en', 'backup_ui.backupFailed');
+  String get backupPassword => trLang(de ? 'de' : 'en', 'backup_ui.passwordOptional');
   String get backupPasswordHint => de
       ? 'Mit Passwort darf die Datei auch per Mail an dich oder in einen Cloud-Ordner. Ein vergessenes Passwort lässt sich nicht wiederherstellen.'
       : 'With a password the file may go by mail to you or into a cloud folder. A lost password cannot be recovered.';
-  String get backupShare => de ? 'Senden …' : 'Send …';
-  String get backupWrongPassword => de ? 'Das Passwort passt nicht.' : 'Wrong password.';
-  String get backupSaved => de ? 'Sicherung gespeichert.' : 'Backup saved.';
-  String get backupBad => de ? 'Das ist keine Sicherung von Fasan Split.' : 'This is not a Fasan Split backup.';
-  String backupDone(int a, int s) => de ? '$a Bons eingespielt, $s waren schon da.' : '$a receipts restored, $s were here already.';
-  String get backupRestart => de ? ' Konto und Gruppen sind zurück, wenn du die App neu startest.' : ' Account and groups are back after restarting the app.';
+  String get backupShare => trLang(de ? 'de' : 'en', 'backup_ui.send');
+  String get backupWrongPassword => trLang(de ? 'de' : 'en', 'backup_ui.wrongPassword');
+  String get backupSaved => trLang(de ? 'de' : 'en', 'backup_ui.backupSaved');
+  String get backupBad => trLang(de ? 'de' : 'en', 'backup_ui.thisIsNotA');
+  String backupDone(int a, int s) => trLang(de ? 'de' : 'en', 'backup_ui.receiptsRestoredWereHere', [a, s]);
+  String get backupRestart => trLang(de ? 'de' : 'en', 'backup_ui.accountAndGroupsAre');
 }
 
 Future<void> saveBackupFlow(BuildContext context) async {
@@ -131,13 +132,13 @@ class BackupReminder extends StatelessWidget {
           Expanded(
             child: Text(
               last == null
-                  ? (t.de ? 'Noch keine Sicherung. Speicher deine Bons einmal als Datei.' : 'No backup yet. Save your receipts to a file once.')
-                  : (t.de ? '${store.changesSinceBackup} Änderungen seit der letzten Sicherung.' : '${store.changesSinceBackup} changes since the last backup.'),
+                  ? (trLang(t.de ? 'de' : 'en', 'backup_ui.noBackupYetSave'))
+                  : (trLang(t.de ? 'de' : 'en', 'backup_ui.changesSinceTheLast', [store.changesSinceBackup])),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
-          TextButton(onPressed: () => saveBackupFlow(context), child: Text(t.de ? 'Sichern' : 'Back up')),
-          IconButton(tooltip: t.de ? 'Später' : 'Later', onPressed: store.snoozeBackupHint, icon: const Icon(Icons.close_rounded, size: 20)),
+          TextButton(onPressed: () => saveBackupFlow(context), child: Text(trLang(t.de ? 'de' : 'en', 'backup_ui.backUp'))),
+          IconButton(tooltip: trLang(t.de ? 'de' : 'en', 'backup_ui.later'), onPressed: store.snoozeBackupHint, icon: const Icon(Icons.close_rounded, size: 20)),
         ]),
       ),
     );

@@ -1,6 +1,7 @@
 // Fasan Split – introduction on first start and an example receipt to try (Beschluss 02.11.: beides überspringbar).
 // Rules (REGELWERK §7, Karte 24.10.): few pages, „Weiter“ always visible, skip at any time, reachable again in settings.
 // The example receipt is invented and drawn at run time (Regel: keine bekannten Test-Bons in der App). MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
@@ -65,7 +66,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               _done();
               navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => const AccountScreen()));
             },
-            child: Text(t.de ? 'Schon ein Konto?' : 'Have an account?'),
+            child: Text(trLang(t.de ? 'de' : 'en', 'onboarding.haveAnAccount')),
           ),
           TextButton(onPressed: _done, child: Text(t.skip)),
         ],
@@ -160,7 +161,7 @@ Future<Bill> exampleBill(bool de) async {
   return Bill(
     id: id,
     created: DateTime.now(),
-    purpose: de ? 'Beispiel: Café Fasan' : 'Example: Café Fasan',
+    purpose: trLang(de ? 'de' : 'en', 'onboarding.exampleCafFasan'),
     total: 4180,
     checked: true,
     items: items,

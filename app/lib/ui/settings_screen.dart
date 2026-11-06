@@ -113,7 +113,7 @@ class SettingsScreen extends StatelessWidget {
         FasanSwitchTile(
           padded: true,
           secondary: const Icon(Icons.view_carousel_outlined),
-          title: TitleHelp(t.de ? 'Fokus und Karten beim Zuordnen' : 'Focus and cards when assigning', t.de ? 'Zusätzlich zu Bon und Liste.' : 'In addition to receipt and list.'),
+          title: TitleHelp(trLang(t.de ? 'de' : 'en', 'settings_screen.focusAndCardsWhen'), trLang(t.de ? 'de' : 'en', 'settings_screen.inAdditionToReceipt')),
           value: store.assignExtraModes,
           onChanged: (v) => store.assignExtraModes = v,
         ),
@@ -143,18 +143,18 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(t.accountOpen),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AccountScreen())),
         ),
-        head(t.de ? 'Währung' : 'Currency'),
+        head(trLang(t.de ? 'de' : 'en', 'settings_screen.currency')),
         ...currencyTiles(context),
-        head(t.de ? 'Sichern' : 'Backup'),
+        head(trLang(t.de ? 'de' : 'en', 'settings_screen.backup')),
         ...backupTiles(context),
         // one place for notifications (Nutzer 04.11.: no contradicting settings hidden in sub menus)
-        head(t.de ? 'Benachrichtigungen' : 'Notifications'),
+        head(trLang(t.de ? 'de' : 'en', 'settings_screen.notifications')),
         if (deviceNotifier != null) const _DeviceNotifyTile(),
         if (proxySupported) const _TorTile(),
         SwitchListTile(
           secondary: const Icon(Icons.visibility_outlined),
           title: TitleHelp(
-            t.de ? 'Online-Status und „gelesen“ teilen' : 'Share online status and “read”',
+            trLang(t.de ? 'de' : 'en', 'settings_screen.shareOnlineStatusAnd'),
             t.de
                 ? 'An: Deine Gruppen und Freunde sehen, ob du gerade online bist, wann zuletzt, und ob du ihre Nachrichten gelesen hast. Aus: Nichts davon geht hinaus – und du siehst es bei den anderen auch nicht.'
                 : 'On: your groups and friends see whether you are online, when you were last, and whether you read their messages. Off: none of it goes out – and you do not see it from others either.',
@@ -178,12 +178,12 @@ class SettingsScreen extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.palette_outlined),
           title: Text(t.appearance),
-          subtitle: Text(t.de ? 'Stil, Farbe, Schrift, Bewegung' : 'Style, colour, font, motion'),
+          subtitle: Text(trLang(t.de ? 'de' : 'en', 'settings_screen.styleColourFontMotion')),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FasanAppearancePage())),
         ),
         ListTile(
           leading: const Icon(Icons.grid_view_outlined),
-          title: Text(t.de ? 'Alle Stile vergleichen' : 'Compare all styles'),
+          title: Text(trLang(t.de ? 'de' : 'en', 'settings_screen.compareAllStyles')),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FasanGalleryPage())),
         ),
         if (perfGovernor != null) _PerfTile(governor: perfGovernor!),
@@ -320,7 +320,7 @@ class _DeviceNotifyTileState extends State<_DeviceNotifyTile> {
     return SwitchListTile(
       secondary: const Icon(Icons.notifications_active_outlined),
       title: TitleHelp(
-        t.de ? 'Auf dem Gerät anzeigen' : 'Show on the device',
+        trLang(t.de ? 'de' : 'en', 'settings_screen.showOnTheDevice'),
         t.de
             ? 'Solange die App läuft oder im Hintergrund ist, zeigt dein Gerät Neuigkeiten als Benachrichtigung. Ist die App ganz geschlossen, siehst du sie beim nächsten Öffnen in der Glocke – Fasan nutzt keinen Push-Dienst von Google.'
             : 'While the app runs or is in the background, your device shows news as notifications. When the app is fully closed you see them in the bell next time – Fasan uses no Google push service.',
@@ -332,7 +332,7 @@ class _DeviceNotifyTileState extends State<_DeviceNotifyTile> {
         if (!mounted) return;
         setState(() {});
         if (v && !ok) {
-          messenger.showSnackBar(SnackBar(content: Text(t.de ? 'Benachrichtigungen sind in den Geräte-Einstellungen gesperrt.' : 'Notifications are blocked in the device settings.')));
+          messenger.showSnackBar(SnackBar(content: Text(trLang(t.de ? 'de' : 'en', 'settings_screen.notificationsAreBlockedIn'))));
         }
       },
     );
@@ -360,7 +360,7 @@ class _TorTileState extends State<_TorTile> {
     return SwitchListTile(
       secondary: const Icon(Icons.security_rounded),
       title: TitleHelp(
-        t.de ? 'Über Tor verbinden (Orbot)' : 'Connect through Tor (Orbot)',
+        trLang(t.de ? 'de' : 'en', 'settings_screen.connectThroughTorOrbot'),
         t.de
             ? 'Alle Verbindungen zu den Relays laufen über Tor. Dann sehen die Relays deine IP-Adresse nicht. Dafür muss die App Orbot (Guardian Project) installiert sein und laufen. Verbindungen werden langsamer. Gilt nach dem nächsten Start von Fasan Split.'
             : 'All relay connections go through Tor, so relays do not see your IP address. Needs the Orbot app (Guardian Project) installed and running. Connections get slower. Takes effect after the next start of Fasan Split.',
@@ -369,13 +369,13 @@ class _TorTileState extends State<_TorTile> {
       onChanged: (v) async {
         final messenger = ScaffoldMessenger.of(context);
         if (v && !await proxyReachable('127.0.0.1:8118')) {
-          messenger.showSnackBar(SnackBar(content: Text(t.de ? 'Orbot läuft nicht. Erst Orbot starten, dann einschalten.' : 'Orbot is not running. Start Orbot first.')));
+          messenger.showSnackBar(SnackBar(content: Text(trLang(t.de ? 'de' : 'en', 'settings_screen.orbotIsNotRunning'))));
           return;
         }
         await prefs?.setBool('net.tor', v);
         if (!mounted) return;
         setState(() => _on = v);
-        messenger.showSnackBar(SnackBar(content: Text(t.de ? 'Gilt nach dem nächsten Start der App.' : 'Takes effect after the next start.')));
+        messenger.showSnackBar(SnackBar(content: Text(trLang(t.de ? 'de' : 'en', 'settings_screen.takesEffectAfterThe'))));
       },
     );
   }

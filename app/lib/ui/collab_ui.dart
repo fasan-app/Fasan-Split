@@ -1,6 +1,7 @@
 // Fasan Split – screens of the collaboration: joining, live sharing with the one-time consent, invitations, members,
 // notes, chat and the account. The screens talk only to CollabService. Public relays are contacted only after the user
 // has agreed in the consent dialog, and tests never reach them (they use MemoryRelay). MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'dart:async';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -258,10 +259,10 @@ class OpenInviteCard extends StatelessWidget {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(
                       inv.direct
-                          ? (t.de ? '${inv.name} möchte sich mit dir verbinden' : '${inv.name} wants to connect with you')
-                          : (t.de ? 'Einladung zu „${inv.name}“' : 'Invitation to “${inv.name}”'),
+                          ? (trLang(t.de ? 'de' : 'en', 'collab_ui.wantsToConnectWith', [inv.name]))
+                          : (trLang(t.de ? 'de' : 'en', 'collab_ui.invitationTo', [inv.name])),
                       style: tt.titleMedium),
-                  Text(t.de ? 'Tippe hier, gib deinen Namen ein und tritt bei.' : 'Tap here, enter your name and join.', style: tt.bodySmall),
+                  Text(trLang(t.de ? 'de' : 'en', 'collab_ui.tapHereEnterYour'), style: tt.bodySmall),
                 ]),
               ),
               Icon(Icons.chevron_right_rounded, color: l.accent),
@@ -397,20 +398,20 @@ class _InviteScreenState extends State<InviteScreen> {
     final requests = inv?.pending.values.toList() ?? const <JoinRequest>[];
     final me = s.identity?.name.trim().isNotEmpty == true ? s.identity!.name.trim() : StoreScope.read(context).me;
     final shareText = g.secret.direct
-        ? (de ? '$me lädt dich zu Fasan Split ein. Tippe auf den Link, dann seid ihr verbunden: $link' : '$me invites you to Fasan Split. Tap the link to connect: $link')
-        : (de ? '$me lädt dich in „${g.localName}“ ein (Fasan Split, Rechnungen teilen). Tippe auf den Link, dann bist du gleich dabei: $link' : '$me invites you to “${g.localName}” (Fasan Split, sharing bills). Tap the link and you are in: $link');
+        ? (trLang(de ? 'de' : 'en', 'collab_ui.invitesYouToFasan', [me, link]))
+        : (trLang(de ? 'de' : 'en', 'collab_ui.invitesYouToFasan2', [me, g.localName, link]));
     return Scaffold(
-      appBar: AppBar(title: Text(g.secret.direct ? (de ? 'Freund einladen' : 'Invite a friend') : (de ? 'In „${g.localName}“ einladen' : 'Invite to “${g.localName}”'))),
+      appBar: AppBar(title: Text(g.secret.direct ? (trLang(de ? 'de' : 'en', 'collab_ui.inviteAFriend')) : (trLang(de ? 'de' : 'en', 'collab_ui.inviteTo', [g.localName])))),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Text(
             g.secret.direct
-                ? (de ? 'Wer den Link öffnet, ist mit dir verbunden und kann dir schreiben – in der App oder im Browser, ohne Anmeldung.' : 'Whoever opens the link is connected with you and can write to you – in the app or the browser, no sign-up.')
+                ? (trLang(de ? 'de' : 'en', 'collab_ui.whoeverOpensTheLink'))
                 : (de
                     ? 'Wer den Link öffnet, ist sofort in der Gruppe – in der App oder im Browser, ohne Anmeldung. Er sieht die Bons, macht mit und ist dein Freund.'
                     : 'Whoever opens the link is in the group at once – in the app or the browser, no sign-up. They see the receipts, take part and are your friend.'),
             style: tt.bodyMedium),
         const SizedBox(height: FasanSpace.l),
-        Text(de ? 'Gültig' : 'Valid for', style: tt.labelLarge!.copyWith(color: l.textMuted)),
+        Text(trLang(de ? 'de' : 'en', 'collab_ui.validFor'), style: tt.labelLarge!.copyWith(color: l.textMuted)),
         const SizedBox(height: FasanSpace.xs),
         FasanSegmented<int>(
           values: const [1, 7, 30],
@@ -420,7 +421,7 @@ class _InviteScreenState extends State<InviteScreen> {
         ),
         const SizedBox(height: FasanSpace.l),
         if (link != null) ...[
-          FasanButton(label: de ? 'Link teilen' : 'Share link', icon: Icons.ios_share_rounded, expand: true, onPressed: () => SharePlus.instance.share(ShareParams(text: shareText))),
+          FasanButton(label: trLang(de ? 'de' : 'en', 'collab_ui.shareLink'), icon: Icons.ios_share_rounded, expand: true, onPressed: () => SharePlus.instance.share(ShareParams(text: shareText))),
           const SizedBox(height: FasanSpace.s),
           FasanButton(
             label: t.inviteCopy,
@@ -441,9 +442,9 @@ class _InviteScreenState extends State<InviteScreen> {
             ),
           ),
           const SizedBox(height: FasanSpace.xs),
-          Center(child: Text(de ? 'Oder mit der Kamera scannen lassen' : 'Or let them scan it with the camera', style: tt.bodySmall)),
+          Center(child: Text(trLang(de ? 'de' : 'en', 'collab_ui.orLetThemScan'), style: tt.bodySmall)),
         ] else if (inv == null)
-          Text(de ? 'Nur die Verwaltung der Gruppe kann einladen.' : 'Only the group admins can invite.', style: tt.bodyMedium),
+          Text(trLang(de ? 'de' : 'en', 'collab_ui.onlyTheGroupAdmins'), style: tt.bodyMedium),
         // requests only appear for groups that let people in by hand
         if (requests.isNotEmpty) ...[
           const SizedBox(height: FasanSpace.l),
@@ -467,35 +468,35 @@ class _InviteScreenState extends State<InviteScreen> {
         // every open link, with whom it is for and until when, each one can be withdrawn (Nutzer 04.11.)
         if (inv != null && inv.open.isNotEmpty) ...[
           const SizedBox(height: FasanSpace.xl),
-          Text(de ? 'Offene Einladungen' : 'Open invitations', style: tt.titleMedium),
+          Text(trLang(de ? 'de' : 'en', 'collab_ui.openInvitations'), style: tt.titleMedium),
           for (final i in (inv.open..sort((a, b) => b.expires.compareTo(a.expires))))
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(i == _current ? Icons.link_rounded : Icons.link_outlined, color: i == _current ? l.accent : l.textMuted),
-              title: Text(i.person != null ? (de ? 'Für ${i.person}' : 'For ${i.person}') : (de ? 'Für alle mit dem Link' : 'For anyone with the link')),
-              subtitle: Text('${de ? 'gültig bis' : 'valid until'} ${i.expires.day}.${i.expires.month}. ${i.expires.hour.toString().padLeft(2, '0')}:${i.expires.minute.toString().padLeft(2, '0')}${i == _current ? (de ? ' · oben gezeigt' : ' · shown above') : ''}'),
+              title: Text(i.person != null ? (trLang(de ? 'de' : 'en', 'collab_ui.for', [i.person])) : (trLang(de ? 'de' : 'en', 'collab_ui.forAnyoneWithThe'))),
+              subtitle: Text('${trLang(de ? 'de' : 'en', 'collab_ui.validUntil')} ${i.expires.day}.${i.expires.month}. ${i.expires.hour.toString().padLeft(2, '0')}:${i.expires.minute.toString().padLeft(2, '0')}${i == _current ? (trLang(de ? 'de' : 'en', 'collab_ui.shownAbove')) : ''}'),
               trailing: IconButton(
-                tooltip: de ? 'Zurückziehen' : 'Withdraw',
+                tooltip: trLang(de ? 'de' : 'en', 'collab_ui.withdraw'),
                 icon: Icon(Icons.close_rounded, color: Colors.red.shade600),
                 onPressed: () {
                   s.revokeInvite(g, i);
                   setState(() {
                     if (i == _current) _current = null;
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(de ? 'Link zurückgezogen. Wer schon drin ist, bleibt.' : 'Link withdrawn. Whoever is in stays.')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trLang(de ? 'de' : 'en', 'collab_ui.linkWithdrawnWhoeverIs'))));
                 },
               ),
             ),
         ],
         if (link == null && inv != null) ...[
           const SizedBox(height: FasanSpace.m),
-          FasanButton(label: de ? 'Neuen Link erstellen' : 'Create a new link', icon: Icons.add_link_rounded, expand: true, onPressed: () => _setDays(_days)),
+          FasanButton(label: trLang(de ? 'de' : 'en', 'collab_ui.createANewLink'), icon: Icons.add_link_rounded, expand: true, onPressed: () => _setDays(_days)),
         ],
         const SizedBox(height: FasanSpace.xl),
         if (inv != null)
           Align(
             alignment: Alignment.centerLeft,
-            child: TextButton.icon(icon: const Icon(Icons.link_off_rounded), label: Text(de ? 'Alle Links ungültig machen' : 'Make all links invalid'), onPressed: _revoke),
+            child: TextButton.icon(icon: const Icon(Icons.link_off_rounded), label: Text(trLang(de ? 'de' : 'en', 'collab_ui.makeAllLinksInvalid')), onPressed: _revoke),
           ),
       ]),
     );
@@ -755,8 +756,8 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       builder: (ctx) => SafeArea(
         child: ListView(shrinkWrap: true, children: [
-          ListTile(title: Text(de ? 'Wen erwähnen?' : 'Mention whom?', style: Theme.of(ctx).textTheme.titleMedium)),
-          if (people.isEmpty) ListTile(title: Text(de ? 'Niemand sonst in der Gruppe.' : 'Nobody else in the group.')),
+          ListTile(title: Text(trLang(de ? 'de' : 'en', 'collab_ui.mentionWhom'), style: Theme.of(ctx).textTheme.titleMedium)),
+          if (people.isEmpty) ListTile(title: Text(trLang(de ? 'de' : 'en', 'collab_ui.nobodyElseInThe'))),
           for (final p in people) ListTile(leading: FasanAvatar(name: p.$2, index: 0, size: 32), title: Text(p.$2), onTap: () => Navigator.pop(ctx, p)),
         ]),
       ),
@@ -824,11 +825,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
             ]),
           ),
-          ListTile(leading: const Icon(Icons.reply_rounded), title: Text(de ? 'Antworten' : 'Reply'), onTap: () => Navigator.pop(ctx, 'reply')),
-          if (m.text.isNotEmpty) ListTile(leading: const Icon(Icons.copy_rounded), title: Text(de ? 'Kopieren' : 'Copy'), onTap: () => Navigator.pop(ctx, 'copy')),
-          ListTile(leading: Icon(m.pinned ? Icons.push_pin : Icons.push_pin_outlined), title: Text(m.pinned ? (de ? 'Nicht mehr anpinnen' : 'Unpin') : (de ? 'Anpinnen' : 'Pin')), onTap: () => Navigator.pop(ctx, 'pin')),
-          if (mine && m.bill == null) ListTile(leading: const Icon(Icons.edit_outlined), title: Text(de ? 'Bearbeiten' : 'Edit'), onTap: () => Navigator.pop(ctx, 'edit')),
-          if (mine) ListTile(leading: const Icon(Icons.delete_outline_rounded), title: Text(de ? 'Für alle löschen' : 'Delete for everyone'), onTap: () => Navigator.pop(ctx, 'delete')),
+          ListTile(leading: const Icon(Icons.reply_rounded), title: Text(trLang(de ? 'de' : 'en', 'collab_ui.reply')), onTap: () => Navigator.pop(ctx, 'reply')),
+          if (m.text.isNotEmpty) ListTile(leading: const Icon(Icons.copy_rounded), title: Text(trLang(de ? 'de' : 'en', 'collab_ui.copy')), onTap: () => Navigator.pop(ctx, 'copy')),
+          ListTile(leading: Icon(m.pinned ? Icons.push_pin : Icons.push_pin_outlined), title: Text(m.pinned ? (trLang(de ? 'de' : 'en', 'collab_ui.unpin')) : (trLang(de ? 'de' : 'en', 'collab_ui.pin'))), onTap: () => Navigator.pop(ctx, 'pin')),
+          if (mine && m.bill == null) ListTile(leading: const Icon(Icons.edit_outlined), title: Text(trLang(de ? 'de' : 'en', 'collab_ui.edit')), onTap: () => Navigator.pop(ctx, 'edit')),
+          if (mine) ListTile(leading: const Icon(Icons.delete_outline_rounded), title: Text(trLang(de ? 'de' : 'en', 'collab_ui.deleteForEveryone')), onTap: () => Navigator.pop(ctx, 'delete')),
           ]),
         ),
       ),
@@ -858,7 +859,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   /// Short one-line description of a message for quotes.
-  String _preview(ChatMessage m, bool de) => m.deleted ? (de ? 'Nachricht gelöscht' : 'Message deleted') : (m.bill != null ? (de ? 'Bon: ${m.text}' : 'Receipt: ${m.text}') : m.text);
+  String _preview(ChatMessage m, bool de) => m.deleted ? (trLang(de ? 'de' : 'en', 'collab_ui.messageDeleted')) : (m.bill != null ? (trLang(de ? 'de' : 'en', 'collab_ui.receipt', [m.text])) : m.text);
 
   /// Tag a bill in the chat: the bills of this group, or – writing to a friend – of the groups we share.
   Future<void> _attach() async {
@@ -876,8 +877,8 @@ class _ChatScreenState extends State<ChatScreen> {
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.7),
           child: ListView(shrinkWrap: true, children: [
-            ListTile(title: Text(de ? 'Welchen Bon?' : 'Which receipt?', style: Theme.of(ctx).textTheme.titleMedium)),
-            if (bills.isEmpty) ListTile(title: Text(de ? 'Noch keine gemeinsamen Bons.' : 'No shared receipts yet.')),
+            ListTile(title: Text(trLang(de ? 'de' : 'en', 'collab_ui.whichReceipt'), style: Theme.of(ctx).textTheme.titleMedium)),
+            if (bills.isEmpty) ListTile(title: Text(trLang(de ? 'de' : 'en', 'collab_ui.noSharedReceiptsYet'))),
             for (final b in bills)
               ListTile(
                 leading: const Icon(Icons.receipt_long_outlined),
@@ -901,7 +902,7 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
           actions: [
             IconButton(
-              tooltip: t.de ? 'Im Chat suchen' : 'Search this chat',
+              tooltip: trLang(t.de ? 'de' : 'en', 'collab_ui.searchThisChat'),
               icon: Icon(_searching ? Icons.search_off_rounded : Icons.search_rounded),
               onPressed: () => setState(() {
                 _searching = !_searching;
@@ -909,17 +910,17 @@ class _ChatScreenState extends State<ChatScreen> {
               }),
             ),
             IconButton(
-              tooltip: CollabScope.of(context).isMuted(widget.group) ? (t.de ? 'Stumm aus' : 'Unmute') : (t.de ? 'Stumm schalten' : 'Mute'),
+              tooltip: CollabScope.of(context).isMuted(widget.group) ? (trLang(t.de ? 'de' : 'en', 'collab_ui.unmute')) : (trLang(t.de ? 'de' : 'en', 'collab_ui.mute')),
               icon: Icon(CollabScope.of(context).isMuted(widget.group) ? Icons.notifications_off_rounded : Icons.notifications_none_rounded),
               onPressed: () {
                 final c = CollabScope.read(context), now = !c.isMuted(widget.group);
                 c.setMuted(widget.group, now);
-                showNote(context, now ? (t.de ? 'Stumm: keine Meldungen aus diesem Chat, außer wenn dich jemand erwähnt.' : 'Muted: no notifications from this chat, except mentions.') : (t.de ? 'Meldungen wieder an.' : 'Notifications on again.'));
+                showNote(context, now ? (trLang(t.de ? 'de' : 'en', 'collab_ui.mutedNoNotificationsFrom')) : (trLang(t.de ? 'de' : 'en', 'collab_ui.notificationsOnAgain')));
               },
             ),
           ],
           title: _searching
-              ? TextField(controller: _query, autofocus: true, decoration: InputDecoration(hintText: t.de ? 'Suchen' : 'Search', border: InputBorder.none), onChanged: (_) => setState(() {}))
+              ? TextField(controller: _query, autofocus: true, decoration: InputDecoration(hintText: trLang(t.de ? 'de' : 'en', 'collab_ui.search'), border: InputBorder.none), onChanged: (_) => setState(() {}))
               : GroupChangeBuilder(
               group: widget.group,
               docId: GroupSession.members,
@@ -951,7 +952,7 @@ class _ChatScreenState extends State<ChatScreen> {
               // open chat = read (after this frame: marking notifies)
               WidgetsBinding.instance.addPostFrameCallback((_) => s.markRead(widget.group));
               if (q.isNotEmpty && msgs.isEmpty) {
-                return Center(child: Text(t.de ? 'Nichts gefunden.' : 'Nothing found.', style: tt.bodyMedium));
+                return Center(child: Text(trLang(t.de ? 'de' : 'en', 'collab_ui.nothingFound'), style: tt.bodyMedium));
               }
               if (msgs.isEmpty) {
                 return Center(child: Padding(padding: const EdgeInsets.all(FasanSpace.l), child: Text(t.chatEmpty, style: tt.bodyMedium, textAlign: TextAlign.center)));
@@ -1003,7 +1004,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               decoration: BoxDecoration(border: Border(left: BorderSide(color: l.accent, width: 3))),
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                                 if (q != null) Text(q.from == me ? t.you : widget.group.session.nameOf(q.from), style: tt.labelSmall),
-                                Text(q == null ? (t.de ? 'Nachricht nicht mehr da' : 'Message no longer available') : _preview(q, t.de), maxLines: 2, overflow: TextOverflow.ellipsis, style: tt.bodySmall),
+                                Text(q == null ? (trLang(t.de ? 'de' : 'en', 'collab_ui.messageNoLongerAvailable')) : _preview(q, t.de), maxLines: 2, overflow: TextOverflow.ellipsis, style: tt.bodySmall),
                               ]),
                             );
                           }),
@@ -1017,13 +1018,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                   child: BillTile(bill: b, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)), selecting: false, selected: false, onToggle: () {}, onRetry: () {}),
                                 ),
                               ),
-                            _ => Text(t.de ? '(Bon nicht verfügbar)' : '(receipt not available)', style: tt.bodySmall),
+                            _ => Text(trLang(t.de ? 'de' : 'en', 'collab_ui.receiptNotAvailable'), style: tt.bodySmall),
                           },
                         if (m.deleted)
-                          Text(t.de ? 'Nachricht gelöscht' : 'Message deleted', style: tt.bodySmall?.copyWith(fontStyle: FontStyle.italic, color: l.textMuted))
+                          Text(trLang(t.de ? 'de' : 'en', 'collab_ui.messageDeleted2'), style: tt.bodySmall?.copyWith(fontStyle: FontStyle.italic, color: l.textMuted))
                         else if (m.text.isNotEmpty && m.bill == null)
                           Text.rich(_rich(m, tt.bodyMedium, l.accent)),
-                        if (m.edited && !m.deleted) Text(t.de ? 'bearbeitet' : 'edited', style: tt.labelSmall),
+                        if (m.edited && !m.deleted) Text(trLang(t.de ? 'de' : 'en', 'collab_ui.edited'), style: tt.labelSmall),
                         // reactions: emoji with the number of people; changed through the long-press menu
                         if (m.reactions.isNotEmpty)
                           Padding(
@@ -1043,7 +1044,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             final read = readers.isNotEmpty;
                             return Row(mainAxisSize: MainAxisSize.min, children: [
                               Icon(read ? Icons.done_all_rounded : Icons.done_rounded, size: 14, color: read ? l.accent : l.textMuted),
-                              if (read && !widget.group.secret.direct) ...[const SizedBox(width: 3), Text(t.de ? 'gelesen von ${readers.length}' : 'read by ${readers.length}', style: tt.labelSmall)],
+                              if (read && !widget.group.secret.direct) ...[const SizedBox(width: 3), Text(trLang(t.de ? 'de' : 'en', 'collab_ui.readBy', [readers.length]), style: tt.labelSmall)],
                             ]);
                           }),
                       ]),
@@ -1071,14 +1072,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     const SizedBox(width: FasanSpace.s),
                     Expanded(
                       child: Text(
-                        _editing != null ? (t.de ? 'Nachricht bearbeiten' : 'Edit message') : '${t.de ? 'Antwort an' : 'Reply to'} ${_replyTo!.from == CollabScope.read(context).identity?.pub ? t.you : widget.group.session.nameOf(_replyTo!.from)}: ${_preview(_replyTo!, t.de)}',
+                        _editing != null ? (trLang(t.de ? 'de' : 'en', 'collab_ui.editMessage')) : '${trLang(t.de ? 'de' : 'en', 'collab_ui.replyTo')} ${_replyTo!.from == CollabScope.read(context).identity?.pub ? t.you : widget.group.session.nameOf(_replyTo!.from)}: ${_preview(_replyTo!, t.de)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: tt.bodySmall,
                       ),
                     ),
                     IconButton(
-                      tooltip: t.de ? 'Abbrechen' : 'Cancel',
+                      tooltip: trLang(t.de ? 'de' : 'en', 'collab_ui.cancel'),
                       icon: const Icon(Icons.close_rounded),
                       onPressed: () => setState(() {
                         if (_editing != null) _input.clear();
@@ -1088,8 +1089,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   ]),
                 ),
               Row(children: [
-              IconButton(tooltip: t.de ? 'Bon anhängen' : 'Attach a receipt', icon: const Icon(Icons.attach_file_rounded), onPressed: _attach),
-              if (!widget.group.secret.direct) IconButton(tooltip: t.de ? 'Jemanden erwähnen' : 'Mention someone', icon: const Icon(Icons.alternate_email_rounded), onPressed: _mention),
+              IconButton(tooltip: trLang(t.de ? 'de' : 'en', 'collab_ui.attachAReceipt'), icon: const Icon(Icons.attach_file_rounded), onPressed: _attach),
+              if (!widget.group.secret.direct) IconButton(tooltip: trLang(t.de ? 'de' : 'en', 'collab_ui.mentionSomeone'), icon: const Icon(Icons.alternate_email_rounded), onPressed: _mention),
               Expanded(
                 child: TextField(
                   controller: _input,
@@ -1152,7 +1153,7 @@ class CollabGroupPanel extends StatelessWidget {
             Row(children: [
               button(Icons.edit_note_rounded, t.notesTitle, 0, NotesScreen(group: g)),
               const SizedBox(width: FasanSpace.s),
-              button(Icons.chat_bubble_outline_rounded, t.de ? 'Chat' : 'Chat', unread, ChatScreen(group: g)),
+              button(Icons.chat_bubble_outline_rounded, trLang(t.de ? 'de' : 'en', 'collab_ui.chat'), unread, ChatScreen(group: g)),
             ]),
             if (held > 0)
               Align(
@@ -1256,7 +1257,7 @@ Future<void> leaveGroupFlow(BuildContext context, CollabGroup g) async {
   final t = S.of(context), s = CollabScope.read(context);
   // only a warning when nobody else can manage the group afterwards (several admins, 04.11.)
   final text = g.isAdmin && g.session.admins.length == 1
-      ? '${t.leaveText} ${t.de ? 'Du bist die einzige Verwaltung: gib die Verwaltung vorher in „Mitglieder“ weiter, sonst kann niemand mehr einladen.' : 'You are the only admin: hand it over in “Members” first, or nobody can invite any more.'}'
+      ? '${t.leaveText} ${trLang(t.de ? 'de' : 'en', 'collab_ui.youAreTheOnly')}'
       : t.leaveText;
   if (!await confirmDialog(context, t.leaveGroup, text, t.leaveGroup)) return;
   await s.leave(g);
@@ -1357,7 +1358,7 @@ class _AccountScreenState extends State<AccountScreen> {
         TextField(
           controller: _name,
           textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(labelText: t.accountName, helperText: t.de ? 'Gilt überall: Bons, Gruppen, Freunde.' : 'Used everywhere: receipts, groups, friends.'),
+          decoration: InputDecoration(labelText: t.accountName, helperText: trLang(t.de ? 'de' : 'en', 'collab_ui.usedEverywhereReceiptsGroups')),
           // saved while typing (04.11.: only Enter saved, leaving the field lost the name)
           onChanged: (v) {
             _nameTimer?.cancel();
@@ -1387,16 +1388,16 @@ class _AccountScreenState extends State<AccountScreen> {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.qr_code_2_rounded),
-          title: Text(t.de ? 'Mit anderem Gerät anmelden' : 'Sign in with another device'),
-          subtitle: Text(t.de ? 'Dieses Gerät zeigt einen Code, dein anderes Gerät überträgt das Konto.' : 'This device shows a code, your other device transfers the account.'),
+          title: Text(trLang(t.de ? 'de' : 'en', 'collab_ui.signInWithAnother')),
+          subtitle: Text(trLang(t.de ? 'de' : 'en', 'collab_ui.thisDeviceShowsA')),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PairNewScreen())),
         ),
         if (id != null)
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.add_to_home_screen_rounded),
-            title: Text(t.de ? 'Gerät hinzufügen' : 'Add device'),
-            subtitle: Text(t.de ? 'Den Code eines neuen Geräts scannen und dieses Konto dorthin übertragen.' : 'Scan the code of a new device and transfer this account there.'),
+            title: Text(trLang(t.de ? 'de' : 'en', 'collab_ui.addDevice')),
+            subtitle: Text(trLang(t.de ? 'de' : 'en', 'collab_ui.scanTheCodeOf')),
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PairSendScreen())),
           ),
         const Divider(height: FasanSpace.xl),
@@ -1425,7 +1426,7 @@ class ActivityBell extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = CollabScope.of(context), n = c.unseenActivity;
     return IconButton(
-      tooltip: S.of(context).de ? 'Neuigkeiten' : 'News',
+      tooltip: trLang(S.of(context).de ? 'de' : 'en', 'collab_ui.news'),
       icon: Badge(isLabelVisible: n > 0, label: Text(n > 99 ? '99+' : '$n'), child: Icon(n > 0 ? Icons.notifications_rounded : Icons.notifications_none_rounded)),
       onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ActivityScreen())),
     );
@@ -1463,9 +1464,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
         };
     String when(DateTime d) {
       final m = DateTime.now().difference(d).inMinutes;
-      if (m < 1) return de ? 'gerade' : 'now';
-      if (m < 60) return de ? 'vor $m Min.' : '$m min ago';
-      if (m < 24 * 60) return de ? 'vor ${m ~/ 60} Std.' : '${m ~/ 60} h ago';
+      if (m < 1) return trLang(de ? 'de' : 'en', 'collab_ui.now');
+      if (m < 60) return trLang(de ? 'de' : 'en', 'collab_ui.minAgo', [m]);
+      if (m < 24 * 60) return trLang(de ? 'de' : 'en', 'collab_ui.hAgo', [m ~/ 60]);
       return '${d.day}.${d.month}.';
     }
 
@@ -1480,12 +1481,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(de ? 'Neuigkeiten' : 'News')),
+      appBar: AppBar(title: Text(trLang(de ? 'de' : 'en', 'collab_ui.news2'))),
       body: list.isEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(FasanSpace.xl),
-                child: Text(de ? 'Noch nichts Neues. Hier erscheint, wer beitritt, neue und geänderte Bons und Nachrichten.' : 'Nothing new yet. Joins, new and changed receipts and messages show up here.',
+                child: Text(trLang(de ? 'de' : 'en', 'collab_ui.nothingNewYetJoins'),
                     style: tt.bodyMedium!.copyWith(color: l.textMuted), textAlign: TextAlign.center),
               ),
             )

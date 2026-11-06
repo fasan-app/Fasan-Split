@@ -1,5 +1,6 @@
 // Fasan Split – notes on a bill (Nutzer 04.11.): anyone in the group writes a note, can pin it as a hint on top of the
 // bill, and can mention people with @ – they find it in their „Neuigkeiten“. Shared with the bill (BillSync `n/`). MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -72,8 +73,8 @@ class _BillNotesState extends State<BillNotes> {
       context: context,
       builder: (ctx) => SafeArea(
         child: ListView(shrinkWrap: true, children: [
-          ListTile(title: Text(de ? 'Wen erwähnen?' : 'Mention whom?', style: Theme.of(ctx).textTheme.titleMedium)),
-          if (people.isEmpty) ListTile(title: Text(de ? 'Niemand sonst in diesem Bon.' : 'Nobody else on this receipt.')),
+          ListTile(title: Text(trLang(de ? 'de' : 'en', 'bill_notes.mentionWhom'), style: Theme.of(ctx).textTheme.titleMedium)),
+          if (people.isEmpty) ListTile(title: Text(trLang(de ? 'de' : 'en', 'bill_notes.nobodyElseOnThis'))),
           for (final p in people) ListTile(leading: FasanAvatar(name: p, index: 0, size: 32), title: Text(p), onTap: () => Navigator.pop(ctx, p)),
         ]),
       ),
@@ -105,7 +106,7 @@ class _BillNotesState extends State<BillNotes> {
     final de = S.of(context).de, l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     final store = StoreScope.of(context), b = widget.bill;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      FasanLabel(de ? 'Notizen' : 'Notes'),
+      FasanLabel(trLang(de ? 'de' : 'en', 'bill_notes.notes')),
       const SizedBox(height: FasanSpace.s),
       for (final n in b.notes)
         Padding(
@@ -120,7 +121,7 @@ class _BillNotesState extends State<BillNotes> {
               ]),
             ),
             IconButton(
-              tooltip: n.pinned ? (de ? 'Nicht mehr anpinnen' : 'Unpin') : (de ? 'Oben anpinnen' : 'Pin on top'),
+              tooltip: n.pinned ? (trLang(de ? 'de' : 'en', 'bill_notes.unpin')) : (trLang(de ? 'de' : 'en', 'bill_notes.pinOnTop')),
               icon: Icon(n.pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined, size: 20, color: n.pinned ? Colors.amber : l.textMuted),
               onPressed: () {
                 n.pinned = !n.pinned;
@@ -128,7 +129,7 @@ class _BillNotesState extends State<BillNotes> {
               },
             ),
             IconButton(
-              tooltip: de ? 'Löschen' : 'Delete',
+              tooltip: trLang(de ? 'de' : 'en', 'bill_notes.delete'),
               icon: Icon(Icons.delete_outline_rounded, size: 20, color: l.textMuted),
               onPressed: () {
                 b.notes.remove(n);
@@ -138,23 +139,23 @@ class _BillNotesState extends State<BillNotes> {
           ]),
         ),
       Row(children: [
-        IconButton(tooltip: de ? 'Jemanden erwähnen' : 'Mention someone', icon: const Icon(Icons.alternate_email_rounded), onPressed: _mention),
+        IconButton(tooltip: trLang(de ? 'de' : 'en', 'bill_notes.mentionSomeone'), icon: const Icon(Icons.alternate_email_rounded), onPressed: _mention),
         Expanded(
           child: TextField(
             controller: _c,
             minLines: 1,
             maxLines: 4,
             textCapitalization: TextCapitalization.sentences,
-            decoration: InputDecoration(hintText: de ? 'Notiz schreiben, @ erwähnt jemanden' : 'Write a note, @ mentions someone'),
+            decoration: InputDecoration(hintText: trLang(de ? 'de' : 'en', 'bill_notes.writeANoteMentions')),
             onSubmitted: (_) => _add(),
           ),
         ),
         IconButton(
-          tooltip: de ? 'Oben anpinnen' : 'Pin on top',
+          tooltip: trLang(de ? 'de' : 'en', 'bill_notes.pinOnTop2'),
           icon: Icon(_pin ? Icons.push_pin_rounded : Icons.push_pin_outlined, color: _pin ? Colors.amber : l.textMuted),
           onPressed: () => setState(() => _pin = !_pin),
         ),
-        IconButton.filled(tooltip: de ? 'Notiz speichern' : 'Save note', icon: const Icon(Icons.send_rounded), onPressed: _add),
+        IconButton.filled(tooltip: trLang(de ? 'de' : 'en', 'bill_notes.saveNote'), icon: const Icon(Icons.send_rounded), onPressed: _add),
       ]),
     ]);
   }

@@ -2,6 +2,7 @@
 // the group may be incomplete and a program telling people to pay feels wrong; always visible at a glance; research docs/recherche/2026-11-04-konkurrenz-bedienung-saldo.md §3).
 // Only finished bills with a payer count. Me = the name in Einstellungen → „Das bin ich“ and, in live groups, the
 // names linked to my member key. MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'dart:async';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -22,17 +23,17 @@ import 'settings_screen.dart';
 class _T {
   const _T(this.de);
   final bool de;
-  String get title => de ? 'Mein Stand' : 'My balance';
-  String get total => de ? 'Gesamt' : 'Total';
-  String get youGet => de ? 'Du bekommst' : 'You get';
-  String get youOwe => de ? 'Du schuldest' : 'You owe';
-  String get even => de ? 'Alles ausgeglichen' : 'All settled';
-  String get perGroup => de ? 'Je Gruppe' : 'Per group';
-  String get perPerson => de ? 'Je Person' : 'Per person';
-  String get noGroup => de ? 'Ohne Gruppe' : 'No group';
-  String get setMe => de ? 'Sag zuerst, wer du bist: Einstellungen → Das bin ich.' : 'First tell who you are: Settings → This is me.';
-  String getsFrom(String p) => de ? '$p gibt dir' : '$p owes you';
-  String owesTo(String p) => de ? 'Du gibst $p' : 'You owe $p';
+  String get title => trLang(de ? 'de' : 'en', 'my_balance.myBalance');
+  String get total => trLang(de ? 'de' : 'en', 'my_balance.total');
+  String get youGet => trLang(de ? 'de' : 'en', 'my_balance.youGet');
+  String get youOwe => trLang(de ? 'de' : 'en', 'my_balance.youOwe');
+  String get even => trLang(de ? 'de' : 'en', 'my_balance.allSettled');
+  String get perGroup => trLang(de ? 'de' : 'en', 'my_balance.perGroup');
+  String get perPerson => trLang(de ? 'de' : 'en', 'my_balance.perPerson');
+  String get noGroup => trLang(de ? 'de' : 'en', 'my_balance.noGroup');
+  String get setMe => trLang(de ? 'de' : 'en', 'my_balance.firstTellWhoYou');
+  String getsFrom(String p) => trLang(de ? 'de' : 'en', 'my_balance.owesYou', [p]);
+  String owesTo(String p) => trLang(de ? 'de' : 'en', 'my_balance.youOwe2', [p]);
 }
 
 /// My names: the own name and every name linked to my key in a live group.
@@ -62,7 +63,7 @@ class MyBalanceBadge extends StatelessWidget {
     final v = myTotal(context);
     final color = v > 0 ? Colors.green.shade600 : (v < 0 ? Colors.red.shade600 : l.textMuted);
     return Tooltip(
-      message: t.de ? 'Profil' : 'Profile',
+      message: trLang(t.de ? 'de' : 'en', 'my_balance.profile'),
       child: InkWell(
         customBorder: const StadiumBorder(),
         // the whole profile behind the avatar (Nutzer 04.11.: not hidden in the menu)
@@ -195,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onTap: onTap,
         );
     return Scaffold(
-      appBar: AppBar(title: Text(de ? 'Profil' : 'Profile')),
+      appBar: AppBar(title: Text(trLang(de ? 'de' : 'en', 'my_balance.profile2'))),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Row(children: [
           ListenableBuilder(listenable: _name, builder: (context, _) => FasanAvatar(name: _name.text.trim().isEmpty ? '?' : _name.text.trim(), index: 0, size: 64)),
@@ -205,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               controller: _name,
               textCapitalization: TextCapitalization.words,
               style: tt.titleLarge,
-              decoration: InputDecoration(labelText: de ? 'Dein Name' : 'Your name', helperText: de ? 'Gilt überall: Bons, Gruppen, Freunde' : 'Used everywhere: receipts, groups, friends'),
+              decoration: InputDecoration(labelText: trLang(de ? 'de' : 'en', 'my_balance.yourName'), helperText: trLang(de ? 'de' : 'en', 'my_balance.usedEverywhereReceiptsGroups')),
               onChanged: (_) {
                 _timer?.cancel();
                 _timer = Timer(const Duration(milliseconds: 600), _save);
@@ -236,24 +237,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         const SizedBox(height: FasanSpace.l),
-        FasanLabel(de ? 'Freunde' : 'Friends'),
-        tile(Icons.person_add_alt_1_rounded, de ? 'Freund einladen' : 'Invite a friend', de ? 'Link schicken: chatten und die App testen' : 'Send a link: chat and try the app', () => FriendsPage.inviteFriend(context)),
-        if (collab.directs.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: Text(de ? '${collab.directs.length} verbunden' : '${collab.directs.length} connected', style: tt.bodySmall)),
+        FasanLabel(trLang(de ? 'de' : 'en', 'my_balance.friends')),
+        tile(Icons.person_add_alt_1_rounded, trLang(de ? 'de' : 'en', 'my_balance.inviteAFriend'), trLang(de ? 'de' : 'en', 'my_balance.sendALinkChat'), () => FriendsPage.inviteFriend(context)),
+        if (collab.directs.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: Text(trLang(de ? 'de' : 'en', 'my_balance.connected', [collab.directs.length]), style: tt.bodySmall)),
         const SizedBox(height: FasanSpace.m),
-        FasanLabel(de ? 'Konto und Geräte' : 'Account and devices'),
-        tile(Icons.qr_code_2_rounded, de ? 'Gerät hinzufügen' : 'Add a device', de ? 'Konto aufs Tablet, zweite Handy oder in den Browser' : 'Your account on a tablet, second phone or browser', () => open(const PairSendScreen())),
-        tile(Icons.login_rounded, de ? 'Mit anderem Gerät anmelden' : 'Sign in with another device', null, () => open(const PairNewScreen())),
-        tile(Icons.payments_outlined, de ? 'So kann man dich bezahlen' : 'How people can pay you', de ? 'IBAN, PayPal.Me, Wallet – nur für deine Gruppen' : 'IBAN, PayPal.Me, wallet – only for your groups', () => open(const PaySetupScreen())),
-        tile(Icons.save_alt_rounded, de ? 'Sicherung speichern' : 'Save a backup', de ? 'Mit Passwort, z. B. an dich selbst schicken' : 'With a password, e.g. send it to yourself', () => saveBackupFlow(context)),
-        tile(Icons.key_rounded, de ? 'Wörter, Schlüssel, Vertrauen' : 'Words, key, trust', de ? '12 Wörter zum Wiederherstellen' : '12 words to restore', () => open(const AccountScreen())),
+        FasanLabel(trLang(de ? 'de' : 'en', 'my_balance.accountAndDevices')),
+        tile(Icons.qr_code_2_rounded, trLang(de ? 'de' : 'en', 'my_balance.addADevice'), trLang(de ? 'de' : 'en', 'my_balance.yourAccountOnA'), () => open(const PairSendScreen())),
+        tile(Icons.login_rounded, trLang(de ? 'de' : 'en', 'my_balance.signInWithAnother'), null, () => open(const PairNewScreen())),
+        tile(Icons.payments_outlined, trLang(de ? 'de' : 'en', 'my_balance.howPeopleCanPay'), trLang(de ? 'de' : 'en', 'my_balance.ibanPaypalMeWallet'), () => open(const PaySetupScreen())),
+        tile(Icons.save_alt_rounded, trLang(de ? 'de' : 'en', 'my_balance.saveABackup'), trLang(de ? 'de' : 'en', 'my_balance.withAPasswordE'), () => saveBackupFlow(context)),
+        tile(Icons.key_rounded, trLang(de ? 'de' : 'en', 'my_balance.wordsKeyTrust'), trLang(de ? 'de' : 'en', 'my_balance.wordsToRestore'), () => open(const AccountScreen())),
         const SizedBox(height: FasanSpace.m),
-        tile(Icons.tune_rounded, de ? 'Einstellungen' : 'Settings', null, () => open(const SettingsScreen())),
+        tile(Icons.tune_rounded, trLang(de ? 'de' : 'en', 'my_balance.settings'), null, () => open(const SettingsScreen())),
         const SizedBox(height: FasanSpace.xl),
         if (collab.identity != null)
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: Icon(Icons.person_off_outlined, color: Colors.red.shade600),
-            title: Text(de ? 'Konto löschen' : 'Delete account', style: TextStyle(color: Colors.red.shade600)),
+            title: Text(trLang(de ? 'de' : 'en', 'my_balance.deleteAccount'), style: TextStyle(color: Colors.red.shade600)),
             onTap: () => _deleteAccount(context),
           ),
       ]),
@@ -270,7 +271,7 @@ Future<void> _deleteAccount(BuildContext context) async {
     context: context,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, set) => AlertDialog(
-        title: Text(de ? 'Konto löschen?' : 'Delete the account?'),
+        title: Text(trLang(de ? 'de' : 'en', 'my_balance.deleteTheAccount')),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(de
               ? 'Deine Gruppen und Freunde sehen „Konto gelöscht“. Du trittst überall aus. Schlüssel und 12 Wörter werden auf diesem Gerät gelöscht – ohne sie kommst du nicht zurück. Die Relays werden gebeten, deine Daten zu löschen (sie sind verschlüsselt; ganz sicher ist das Löschen dort nicht).'
@@ -279,12 +280,12 @@ Future<void> _deleteAccount(BuildContext context) async {
             contentPadding: EdgeInsets.zero,
             value: alsoBills,
             onChanged: (v) => set(() => alsoBills = v ?? false),
-            title: Text(de ? 'Auch alle Bons auf diesem Gerät löschen' : 'Also delete all receipts on this device'),
+            title: Text(trLang(de ? 'de' : 'en', 'my_balance.alsoDeleteAllReceipts')),
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(de ? 'Abbrechen' : 'Cancel')),
-          FilledButton(style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600), onPressed: () => Navigator.pop(ctx, true), child: Text(de ? 'Endgültig löschen' : 'Delete for good')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(trLang(de ? 'de' : 'en', 'my_balance.cancel'))),
+          FilledButton(style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600), onPressed: () => Navigator.pop(ctx, true), child: Text(trLang(de ? 'de' : 'en', 'my_balance.deleteForGood'))),
         ],
       ),
     ),
@@ -293,5 +294,5 @@ Future<void> _deleteAccount(BuildContext context) async {
   final nav = Navigator.of(context), messenger = ScaffoldMessenger.of(context);
   await CollabScope.read(context).deleteAccount(alsoBills: alsoBills);
   nav.popUntil((r) => r.isFirst);
-  messenger.showSnackBar(SnackBar(content: Text(de ? 'Konto gelöscht.' : 'Account deleted.')));
+  messenger.showSnackBar(SnackBar(content: Text(trLang(de ? 'de' : 'en', 'my_balance.accountDeleted'))));
 }

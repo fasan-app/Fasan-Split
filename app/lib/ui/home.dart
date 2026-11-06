@@ -1,6 +1,7 @@
 // Fasan Split – start: three main tabs below (Rechnungen, Gruppen, Freunde), a floating plus for new bills, and on Rechnungen
 // three views above (Offen, Archiv, Papierkorb). One horizontal pager carries all five pages, so swiping moves through
 // them in order (Nutzer 02.11.). Research: fasan_ui docs/recherche/2026-11-02-navigation-layout-glas-ton.md. MPL-2.0
+import '../l10n/tr.dart' show trLang;
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -264,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (r == null) return;
     final same = existing.where((g) => g.toLowerCase() == r.trim().toLowerCase());
     store.setGroup(list, same.isEmpty ? r : same.first); // no second „WG“ next to „wg“
-    if (same.isEmpty && r.trim().isNotEmpty && mounted) showNote(this.context, S.of(this.context).de ? 'Neue Gruppe „${r.trim()}“' : 'New group “${r.trim()}”');
+    if (same.isEmpty && r.trim().isNotEmpty && mounted) showNote(this.context, trLang(S.of(this.context).de ? 'de' : 'en', 'home.newGroup', [r.trim()]));
     if (mounted) {
       FasanHaptics.of(this.context).snap();
       _exitSelect();
@@ -310,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final changed = store.setSettled(list, settled);
     final skipped = list.length - changed.length;
     if (changed.isEmpty) {
-      if (settled && skipped > 0) showNote(context, t.de ? 'Erst eintragen (alle Schritte), dann ausgleichen. Ins Archiv kommen nur ausgeglichene Bons.' : 'Enter it first (all steps), then settle. Only settled receipts go to the archive.');
+      if (settled && skipped > 0) showNote(context, trLang(t.de ? 'de' : 'en', 'home.enterItFirstAll'));
       return;
     }
     _undoable(context, settled ? t.archivedN(changed.length) : t.reopenedN(changed.length), () => store.setSettled(changed, !settled));
@@ -356,7 +357,7 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: selecting
             ? AppBar(
                 leading: IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: _exitSelect),
-                title: Text(_dragging ? (t.de ? 'Auf ein Ziel unten ziehen' : 'Drag onto a target below') : any ? t.nSelected(selected.length) : t.selectHint),
+                title: Text(_dragging ? (trLang(t.de ? 'de' : 'en', 'home.dragOntoATarget')) : any ? t.nSelected(selected.length) : t.selectHint),
                 // while dragging only the targets below act (Nutzer 04.11.: two sets of archive/trash symbols)
                 actions: _dragging ? const [] : [
                   if (inTrash) ...[
@@ -402,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const ActivityBell(),
                   if (list != null && list != BillList.trash && _hasAny(store, list))
                     IconButton(
-                      tooltip: t.de ? 'Sortieren und filtern' : 'Sort and filter',
+                      tooltip: trLang(t.de ? 'de' : 'en', 'home.sortAndFilter'),
                       icon: Badge(isLabelVisible: _catFilter != null || store.sortMode != BillSort.own, smallSize: 8, child: const Icon(Icons.sort_rounded)),
                       onPressed: () => sortSheet(context, filter: _catFilter, onFilter: (f) => setState(() => _catFilter = f)),
                     ),
@@ -618,7 +619,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // to the archive: the card springs back and says why.
       confirmDismiss: (dir) async {
         if (dir == DismissDirection.startToEnd && !archive && !b.done) {
-          showNote(context, t.de ? 'Erst eintragen (alle Schritte), dann ausgleichen. Ins Archiv kommen nur ausgeglichene Bons.' : 'Enter it first (all steps), then settle. Only settled receipts go to the archive.');
+          showNote(context, trLang(t.de ? 'de' : 'en', 'home.enterItFirstAll2'));
           return false;
         }
         return true;
@@ -875,10 +876,10 @@ class _DropDock extends StatelessWidget {
   Widget build(BuildContext context) {
     final de = S.of(context).de, l = FasanLook.of(context);
     final targets = <(IconData, String, String, Color, void Function(List<Bill>))>[
-      if (from != BillList.open) (Icons.inbox_rounded, de ? 'Offen' : 'Open', de ? 'Loslassen: wieder offen' : 'Release: open again', l.accent, (b) => onList(b, BillList.open)),
-      (Icons.folder_rounded, de ? 'Gruppe' : 'Group', de ? 'Loslassen: Gruppe wählen' : 'Release: choose a group', l.accent, onGroup),
-      if (from != BillList.archive) (Icons.task_alt_rounded, de ? 'Ausgleichen' : 'Settle', de ? 'Loslassen: bezahlt, ins Archiv' : 'Release: paid, to the archive', Colors.green.shade600, (b) => onList(b, BillList.archive)),
-      if (from != BillList.trash) (Icons.delete_rounded, de ? 'Papierkorb' : 'Trash', de ? 'Loslassen: in den Papierkorb' : 'Release: to the trash', Colors.red.shade600, (b) => onList(b, BillList.trash)),
+      if (from != BillList.open) (Icons.inbox_rounded, trLang(de ? 'de' : 'en', 'home.open'), trLang(de ? 'de' : 'en', 'home.releaseOpenAgain'), l.accent, (b) => onList(b, BillList.open)),
+      (Icons.folder_rounded, trLang(de ? 'de' : 'en', 'home.group'), trLang(de ? 'de' : 'en', 'home.releaseChooseAGroup'), l.accent, onGroup),
+      if (from != BillList.archive) (Icons.task_alt_rounded, trLang(de ? 'de' : 'en', 'home.settle'), trLang(de ? 'de' : 'en', 'home.releasePaidToThe'), Colors.green.shade600, (b) => onList(b, BillList.archive)),
+      if (from != BillList.trash) (Icons.delete_rounded, trLang(de ? 'de' : 'en', 'home.trash'), trLang(de ? 'de' : 'en', 'home.releaseToTheTrash'), Colors.red.shade600, (b) => onList(b, BillList.trash)),
     ];
     return Padding(
       padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s + MediaQuery.paddingOf(context).bottom),

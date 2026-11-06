@@ -34,11 +34,11 @@ Future<void> rereadFlow(BuildContext context, Bill bill) async {
   if (q == null || path == null) return;
   final ok = await confirmDialog(
     context,
-    t.de ? 'Bon neu lesen' : 'Read receipt again',
+    trLang(t.de ? 'de' : 'en', 'flow.readReceiptAgain'),
     t.de
         ? 'Die Posten werden mit der neuesten Erkennung neu gelesen. Die Zuordnung der Posten geht dabei verloren. Personen, Zahler, Gruppe, Kategorie und Name bleiben.'
         : 'The items are read again with the newest recognition. The assignment of the items is lost; people, payer, group, category and name stay.',
-    t.de ? 'Neu lesen' : 'Read again',
+    trLang(t.de ? 'de' : 'en', 'flow.readAgain'),
   );
   if (!ok || !context.mounted) return;
   final bytes = await readImage(path);
@@ -85,10 +85,10 @@ class _PayScreenState extends State<PayScreen> {
   Widget build(BuildContext context) {
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     return StepScaffold(
-      title: t.de ? 'Übersicht' : 'Summary',
+      title: trLang(t.de ? 'de' : 'en', 'flow.summary'),
       step: 4,
       bill: b,
-      action: t.de ? 'Eintragen' : 'Save',
+      action: trLang(t.de ? 'de' : 'en', 'flow.save'),
       onAction: b.payer == null || b.paidGap != 0
           ? null
           : () {
@@ -200,7 +200,7 @@ class ResultBody extends StatelessWidget {
                   final live = bill.group == null ? null : CollabScope.read(context).groupByLocalName(bill.group!);
                   payFlow(context, name: bill.ps[to].name, pub: live?.session.memberOfPerson(bill.ps[to].name), cents: c, currency: bill.currency ?? StoreScope.read(context).homeCurrency, purpose: bill.purpose);
                 },
-                child: Text(t.de ? 'Bezahlen' : 'Pay'),
+                child: Text(trLang(t.de ? 'de' : 'en', 'flow.pay')),
               ),
           ]),
         ),
@@ -295,7 +295,7 @@ class ResultScreen extends StatelessWidget {
               }
             },
             itemBuilder: (_) => [
-              if (imageExists(bill.originalPath)) PopupMenuItem(value: 'reread', child: Text(t.de ? 'Bon neu lesen' : 'Read receipt again')),
+              if (imageExists(bill.originalPath)) PopupMenuItem(value: 'reread', child: Text(trLang(t.de ? 'de' : 'en', 'flow.readReceiptAgain2'))),
               PopupMenuItem(value: 'log', child: Text(t.shareLog)),
               PopupMenuItem(value: 'del', child: Text(t.deleteBill)),
             ],
@@ -321,7 +321,7 @@ class ResultScreen extends StatelessWidget {
           // Nutzer 04.11.: the archive is for bills that are paid back; this is where one says so
           if (bill.done && bill.payer != null && bill.transfers().isNotEmpty) ...[
             FasanButton(
-              label: bill.settled ? (t.de ? 'Wieder offen (nicht bezahlt)' : 'Open again (not paid)') : (t.de ? 'Alles bezahlt – ausgleichen' : 'All paid – settle'),
+              label: bill.settled ? (trLang(t.de ? 'de' : 'en', 'flow.openAgainNotPaid')) : (trLang(t.de ? 'de' : 'en', 'flow.allPaidSettle')),
               icon: bill.settled ? Icons.undo_rounded : Icons.task_alt_rounded,
               kind: bill.settled ? FasanButtonKind.secondary : FasanButtonKind.primary,
               expand: true,
