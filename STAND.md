@@ -464,6 +464,9 @@ Drosselung endet) für Ziel ~100.
 Workflow `tor-zweig.yml` (nur Arbeitszweig, keine Veröffentlichung). Ergebnis: Geheimnis `FASAN_DIAGNOSE_TOKEN` ist gesetzt, aber der
 Klon von `fasan-diagnose` scheitert mit „Bad credentials“ → Schlüssel falsch kopiert, noch nicht freigegeben (pending) oder falscher
 Besitzer. Nutzer neu anlegen lassen, danach Probelauf wiederholen (`git commit --allow-empty` + Push auf den Zweig löst ihn aus).
+**Wiederholung 06.11. ~12:10 mit neuem Schlüssel: bestanden, Lauf 42213210623, 20 Minuten.** Die CI misst exakt wie lokal: Stufe A 132 Bons,
+0 Fehler, 1 bekannt; Weltkorpus 25/72 (Bestwert 25), 8 falsch geprüft (höchstens 8); Hangul 1/5, 0 falsch. Das Tor ist damit scharf
+(Punkt 2 erledigt); vor der Veröffentlichung läuft es in `android.yml` und `web.yml` mit. `tor-zweig.yml` bleibt als Probelauf für den Zweig.
 
 ### Arbeitsplan ab 06.11. (Nutzer, verbindlich; Reihenfolge einhalten, je Paket „Fertig heißt“ aus CLAUDE.md)
 
