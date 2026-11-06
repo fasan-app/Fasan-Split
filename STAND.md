@@ -469,6 +469,13 @@ Drosselung endet) für Ziel ~100.
 2. **Erkennungs-Tor in der CI** über privates `fasan-diagnose` (Lese-Geheimnis; Schritte für den Nutzer aufschreiben).
 3. **Browser = APK 1:1:** jeden Bildschirm, jedes Menü, jeden Knopf mit echten Daten nebeneinander vergleichen (Bildschirmfotos);
    bekannt kaputt: ⋮-Menü im Bon (ging nicht / nur 1 Eintrag), Original/Digital-Knopf fehlt; Bilder im Browser speichern.
+   **Stand 06.11. vormittags (Commit 42947eb, Zweig):** Ursache gefunden und behoben: das Foto verließ nie das scannende Gerät.
+   Jetzt verkleinerter Scan + Original verschlüsselt in Stücken ≤ 40 KB über die Relays (collab/photo_sync.dart), Lage der Posten
+   im Dokument, Ausschnitte schneidet der Empfänger; Menü zeigt alle Einträge (deaktiviert mit Grund), Bon-Knopf immer (digital),
+   Hinweis „Foto kommt …“. Geprüft: Unit- und Zwei-Telefon-Test, Widget-Test (scheitert ohne Korrektur), Zufallstest.
+   Offen in Punkt 3: Browser-Ende-zu-Ende mit echtem Bon (tool/e2e/photo.js, läuft), Bildschirm-für-Bildschirm-Vergleich App/Browser
+   mit Fotos, Blossom (volle Auflösung) als zweiter Kanal, Fotos im Browser erst bei Bedarf laden (images_web lädt heute alle beim
+   Start → Punkt 4), Stücke eines Fotos von jedem Mitglied neu senden können, wenn das scannende Gerät weg ist.
 4. **Leistung in echten Abläufen** (Bon mit Foto, Scannen, Gruppe; S23 und gedrosselt wie 10 Jahre altes Gerät); Ursachen beheben,
    WebAssembly-Renderer prüfen (Doku), Leistungsbudget in der CI.
 5. **Bon-Ausschnitte unter Posten wieder Standard** (kompakt, abschaltbar) und **Gruppe „Bons zuerst“** – nach der Prüfliste aus 0.
