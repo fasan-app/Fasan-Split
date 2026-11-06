@@ -417,6 +417,13 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   direkt (Flutter, eine Codebasis, Bildschirme und Logik identisch, nur 6 `_web.dart`-Adapter + wenige `kIsWeb`-Stellen, vom Test bewacht). Unterschiede sind Grenzen
   des Browsers (`docs/WEB-GRENZEN.md`), keine Doppelarbeit. Aussage zu anderen Diensten aus dem Gedächtnis, **nicht geprüft** (Recherche bei Bedarf, Quellen nötig).
 
+- **Frage des Nutzers 06.11. nachts: „Wenn Flutter den gleichen Code nutzt, wieso haben sich Web und App bisher so unterschieden, und warum ist die Anpassung so kompliziert?“**
+  Antwort (aus dem, was in dieser Arbeit gefunden wurde): Ursachen der Unterschiede waren (1) **Daten**: der Browser bekam das Bonfoto nie, es blieb auf dem Telefon → Menüeinträge
+  deaktiviert, keine Ausschnitte (unser Fehler, behoben mit Foto-Sync über die Relays); (2) **Schrift**: der Browser hat keine System-Emoji-Schrift → leere Kästchen, eigene Schrift nötig;
+  (3) **Speicher/Dateien**: kein Dateisystem → IndexedDB; (4) **Erkennung**: kein natives ONNX → Web-Worker + WASM; (5) **Voreinstellungen/Leistung**; (6) Bildschirm-für-Bildschirm
+  wurde früher nicht verglichen, „1:1“ war behauptet. Echte Flutter-/Browser-Grenzen sind nur (3)–(5) und die Screenreader-Schicht. Anpassung „kompliziert“, weil der Browser jede
+  native Fähigkeit anders bietet; der UI-Teil selbst war nicht doppelt.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der

@@ -75,3 +75,5 @@ der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. 
 - 06.11. abends (Nutzer): Als Nächstes Vergleich Bildschirm für Bildschirm zwischen App und Browser; nach Kontextverlust nichts übergehen oder vergessen. Grund: „Web 1:1“ war behauptet, nicht verglichen. Stand: in Arbeit.
 
 - 06.11. nachts (Nutzer, Frage): Warum Code nicht direkt als Browser-Version, machen andere alles doppelt? Antwort gegeben (eine Codebasis, dünne Adapter, Grenzen des Browsers); Aussage zu anderen Diensten nicht geprüft. Stand: beantwortet.
+
+- 06.11. nachts (Nutzer, Frage): Wenn Flutter denselben Code nutzt, warum waren Web und App so verschieden und die Anpassung so kompliziert? Antwort gegeben (Daten nicht geteilt, Schrift, Speicher, Erkennung, kein früherer Vergleich); Stand: beantwortet.
