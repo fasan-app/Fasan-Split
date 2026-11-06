@@ -498,6 +498,9 @@ List<String> nameAlternatives(String n) {
 }
 
 /// Item name from the text left of the amount [nameAus].
+// article number in front of the name (Aldi/Lidl: „814998 Bio Spaghetti“): five to eight digits, then letters
+final _articleNo = RegExp(r'^\s*\d{5,8}\s+(?=[A-Za-zÀ-ÿ])');
+
 // Portuguese „c/ Nata“, „s/ Gelo“ (com/sem): part of the name, not a tax code (else „Croissant c/ N“ became „Croissant c“)
 final _withWithout = RegExp(r'\s([cCsS])/\s*([A-Za-zÀ-ÿ]{1,14})\.?\s*$');
 
@@ -508,6 +511,7 @@ String nameFrom(String t) {
     if (head.isNotEmpty) return jsSlice('$head ${ww[1]!.toLowerCase()}/ ${ww[2]}', 0, 40);
   }
   final s = t
+      .replaceFirst(_articleNo, '')
       .replaceFirst(_qtyFront, '')
       .replaceFirst(_n2, '')
       .replaceAll(_n3, '')

@@ -64,17 +64,50 @@ void fixDigitLetters(List<Item> items) {
 
 String _norm(String s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9äöüßàáâãçéêíóôõú]'), '');
 
+/// Core of a name for voting: without short leftovers at the start or end (≤ 3 characters: „Jn“, „í“, „nm“, „P13“) and without
+/// digit-only tokens next to them („238“ = „23%“ of the VAT column). „TULIPA“ and „TULIPA 238“ are the same vote (Da Sé 06.11.).
+String nameCore(String name) {
+  final w = name.trim().split(RegExp(r'\s+')).where((x) => x.isNotEmpty).toList();
+  bool debris(String t) => _norm(t).length <= 3 || RegExp(r'^\d+[%x8]?$').hasMatch(t);
+  while (w.length > 1 && debris(w.first)) {
+    w.removeAt(0);
+  }
+  while (w.length > 1 && debris(w.last)) {
+    w.removeLast();
+  }
+  return _norm(w.join(' '));
+}
+
+/// How much a name looks like words: share of tokens that have a vowel, no digits glued inside letters, and at most one switch
+/// from lower to upper case („SpaghettiioTnsldanAstnen“, „nedtelwol“ from text shining through the paper score low).
+double wordLikeness(String name) {
+  final w = name.split(RegExp(r'\s+')).where((x) => RegExp(r'[A-Za-zÀ-ÿ]{2,}').hasMatch(x)).toList();
+  if (w.isEmpty) return 0;
+  var good = 0;
+  for (final t in w) {
+    final switches = RegExp(r'[a-zà-ÿ][A-ZÀ-Þ]').allMatches(t).length;
+    final vowels = RegExp(r'[aeiouyäöüàáâãéêíóôõú]', caseSensitive: false).allMatches(t).length;
+    final letters = RegExp(r'[A-Za-zÀ-ÿ]').allMatches(t).length;
+    final ratio = letters == 0 ? 0 : vowels / letters;
+    if (switches <= 1 && ratio >= 0.2 && ratio <= 0.75 && letters <= 18) good++;
+  }
+  return good / w.length;
+}
+
 /// The names other passes read for the same item (same position, same amount) vote; a winner name that fewer passes
 /// share than another one is replaced. [others] are the item lists of the other passes (already cleaned).
+/// Votes are grouped by [nameCore], so leftovers of neighbouring columns never outvote the clean name; the group's cleanest member
+/// (fewest extra tokens) is taken. A winner that does not look like words gives way to any readable name. The quantity votes too:
+/// when the winner read none (1) and two other passes agree on more, it is taken (Ferreiras 06.11.: „z 23 e 6.00“ = 2 Coca cola).
 void voteNames(List<Item> items, List<List<Item>> others) {
   for (var i = 0; i < items.length; i++) {
     final p = items[i];
-    final votes = <String, (int, String)>{};
+    final groups = <String, List<String>>{};
+    final qtys = <num, int>{};
     void add(String n) {
-      final k = _norm(n);
+      final k = nameCore(n);
       if (k.length < 2) return;
-      final old = votes[k];
-      votes[k] = (old == null ? 1 : old.$1 + 1, old?.$2 ?? n.trim());
+      (groups[k] ??= []).add(n.trim());
     }
 
     add(p.name);
@@ -83,13 +116,35 @@ void voteNames(List<Item> items, List<List<Item>> others) {
       for (final j in [i, i - 1, i + 1]) {
         if (j >= 0 && j < o.length && o[j].amount == p.amount) {
           add(o[j].name);
+          qtys[o[j].qty] = (qtys[o[j].qty] ?? 0) + 1;
           break;
         }
       }
     }
-    if (votes.length < 2) continue;
-    final mine = votes[_norm(p.name)]?.$1 ?? 0;
-    final best = votes.values.reduce((a, b) => b.$1 > a.$1 ? b : a);
-    if (best.$1 >= 2 && best.$1 > mine) p.name = best.$2;
+    if (p.qty == 1) {
+      final more = qtys.entries.where((e) => e.key > 1 && e.value >= 2).toList()..sort((a, b) => b.value.compareTo(a.value));
+      if (more.isNotEmpty && p.amount % more.first.key == 0) {
+        p.qty = more.first.key;
+        p.unit = p.amount / more.first.key;
+      }
+    }
+    if (groups.isEmpty) continue;
+    String cleanest(List<String> g) => g.reduce((a, b) => b.split(' ').length < a.split(' ').length || (b.split(' ').length == a.split(' ').length && b.length < a.length) ? b : a);
+    final mineKey = nameCore(p.name);
+    final mine = groups[mineKey]?.length ?? 0;
+    final best = groups.entries.reduce((a, b) => b.value.length > a.value.length ? b : a);
+    final readable = wordLikeness(p.name) > 0.5;
+    // a winner that does not look like words: the most voted other group that does
+    final legible = groups.entries.where((e) => e.key != mineKey && wordLikeness(cleanest(e.value)) >= 0.75).toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+    if (best.key != mineKey && best.value.length >= 2 && best.value.length > mine) {
+      p.name = cleanest(best.value);
+    } else if (!readable && legible.isNotEmpty) {
+      p.name = cleanest(legible.first.value);
+    } else if (groups[mineKey] != null && groups[mineKey]!.length > 1) {
+      // same name, other passes read it with fewer leftovers: take the cleanest spelling of the own group
+      final c = cleanest(groups[mineKey]!);
+      if (c.split(' ').length < p.name.trim().split(RegExp(r'\s+')).length) p.name = c;
+    }
   }
 }
