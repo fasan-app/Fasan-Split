@@ -35,9 +35,7 @@ Future<void> rereadFlow(BuildContext context, Bill bill) async {
   final ok = await confirmDialog(
     context,
     trLang(t.de ? 'de' : 'en', 'flow.readReceiptAgain'),
-    t.de
-        ? 'Die Posten werden mit der neuesten Erkennung neu gelesen. Die Zuordnung der Posten geht dabei verloren. Personen, Zahler, Gruppe, Kategorie und Name bleiben.'
-        : 'The items are read again with the newest recognition. The assignment of the items is lost; people, payer, group, category and name stay.',
+    trLang(t.de ? 'de' : 'en', 'flow.theItemsAreRead'),
     trLang(t.de ? 'de' : 'en', 'flow.readAgain'),
   );
   if (!ok || !context.mounted) return;
@@ -126,9 +124,7 @@ class _PayScreenState extends State<PayScreen> {
             ResultBody(bill: b),
             const SizedBox(height: FasanSpace.m),
             Text(
-              t.de
-                  ? 'Nach „Eintragen“ steht der Bon unter Offen und zählt im Saldo. Ins Archiv kommt er, wenn alles bezahlt ist.'
-                  : 'After “Save” the receipt is under Open and counts in the balances. It goes to the archive once everything is paid.',
+              trLang(t.de ? 'de' : 'en', 'flow.afterSaveTheReceipt'),
               style: tt.bodySmall!.copyWith(color: l.textMuted),
             ),
           ],

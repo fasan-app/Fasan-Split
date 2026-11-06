@@ -292,9 +292,7 @@ class GroupPeople extends StatelessWidget {
                 final ok = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    content: Text(t.de
-                        ? 'Alle ${list.length} eingetragenen Bons als bezahlt markieren? Sie kommen ins Archiv und zählen nicht mehr im Saldo.'
-                        : 'Mark all ${list.length} entered receipts as paid? They go to the archive and no longer count in the balances.'),
+                    content: Text(trLang(t.de ? 'de' : 'en', 'groups.markAllEnteredReceipts', [list.length])),
                     actions: [
                       TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.cancel)),
                       FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(trLang(t.de ? 'de' : 'en', 'groups.settle'))),

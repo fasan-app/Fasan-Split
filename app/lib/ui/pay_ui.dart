@@ -57,9 +57,7 @@ class _PaySetupScreenState extends State<PaySetupScreen> {
       appBar: AppBar(title: Text(trLang(de ? 'de' : 'en', 'pay_ui.howPeopleCanPay'))),
       body: ListView(padding: const EdgeInsets.all(FasanSpace.l), children: [
         Text(
-            de
-                ? 'Alles freiwillig. Was du einträgst, sehen nur deine Gruppen und Freunde (verschlüsselt). Fasan überweist nichts: Beim Ausgleichen öffnet „Bezahlen“ die Banking-, PayPal- oder Wallet-App mit dem Betrag.'
-                : 'All optional. Only your groups and friends see it (encrypted). Fasan transfers nothing: when settling, “Pay” opens the banking, PayPal or wallet app with the amount.',
+            trLang(de ? 'de' : 'en', 'pay_ui.allOptionalOnlyYour'),
             style: tt.bodyMedium),
         const SizedBox(height: FasanSpace.l),
         TextField(controller: _holder, textCapitalization: TextCapitalization.words, decoration: d(trLang(de ? 'de' : 'en', 'pay_ui.accountHolder'))),

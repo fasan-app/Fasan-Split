@@ -155,9 +155,7 @@ class SettingsScreen extends StatelessWidget {
           secondary: const Icon(Icons.visibility_outlined),
           title: TitleHelp(
             trLang(t.de ? 'de' : 'en', 'settings_screen.shareOnlineStatusAnd'),
-            t.de
-                ? 'An: Deine Gruppen und Freunde sehen, ob du gerade online bist, wann zuletzt, und ob du ihre Nachrichten gelesen hast. Aus: Nichts davon geht hinaus – und du siehst es bei den anderen auch nicht.'
-                : 'On: your groups and friends see whether you are online, when you were last, and whether you read their messages. Off: none of it goes out – and you do not see it from others either.',
+            trLang(t.de ? 'de' : 'en', 'settings_screen.onYourGroupsAnd'),
           ),
           value: CollabScope.of(context).presence,
           onChanged: (v) => CollabScope.read(context).presence = v,
@@ -290,9 +288,7 @@ class SettingsScreen extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('Fasan Split'),
-          subtitle: Text(t.de
-              ? 'Frei (MPL-2.0), offline, ohne Konto, ohne Telemetrie. Texterkennung: PaddleOCR (Apache-2.0), UVDoc (MIT), ONNX Runtime (MIT).'
-              : 'Free (MPL-2.0), offline, no account, no telemetry. Text recognition: PaddleOCR (Apache-2.0), UVDoc (MIT), ONNX Runtime (MIT).'),
+          subtitle: Text(trLang(t.de ? 'de' : 'en', 'settings_screen.freeMplOfflineNo')),
           onTap: () => showLicensePage(context: context, applicationName: 'Fasan Split', applicationLegalese: 'MPL-2.0 · fasan-app'),
         ),
         Padding(
@@ -321,9 +317,7 @@ class _DeviceNotifyTileState extends State<_DeviceNotifyTile> {
       secondary: const Icon(Icons.notifications_active_outlined),
       title: TitleHelp(
         trLang(t.de ? 'de' : 'en', 'settings_screen.showOnTheDevice'),
-        t.de
-            ? 'Solange die App läuft oder im Hintergrund ist, zeigt dein Gerät Neuigkeiten als Benachrichtigung. Ist die App ganz geschlossen, siehst du sie beim nächsten Öffnen in der Glocke – Fasan nutzt keinen Push-Dienst von Google.'
-            : 'While the app runs or is in the background, your device shows news as notifications. When the app is fully closed you see them in the bell next time – Fasan uses no Google push service.',
+        trLang(t.de ? 'de' : 'en', 'settings_screen.whileTheAppRuns'),
       ),
       value: n.enabled,
       onChanged: (v) async {
@@ -361,9 +355,7 @@ class _TorTileState extends State<_TorTile> {
       secondary: const Icon(Icons.security_rounded),
       title: TitleHelp(
         trLang(t.de ? 'de' : 'en', 'settings_screen.connectThroughTorOrbot'),
-        t.de
-            ? 'Alle Verbindungen zu den Relays laufen über Tor. Dann sehen die Relays deine IP-Adresse nicht. Dafür muss die App Orbot (Guardian Project) installiert sein und laufen. Verbindungen werden langsamer. Gilt nach dem nächsten Start von Fasan Split.'
-            : 'All relay connections go through Tor, so relays do not see your IP address. Needs the Orbot app (Guardian Project) installed and running. Connections get slower. Takes effect after the next start of Fasan Split.',
+        trLang(t.de ? 'de' : 'en', 'settings_screen.allRelayConnectionsGo'),
       ),
       value: on,
       onChanged: (v) async {

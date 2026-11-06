@@ -273,9 +273,7 @@ Future<void> _deleteAccount(BuildContext context) async {
       builder: (ctx, set) => AlertDialog(
         title: Text(trLang(de ? 'de' : 'en', 'my_balance.deleteTheAccount')),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(de
-              ? 'Deine Gruppen und Freunde sehen „Konto gelöscht“. Du trittst überall aus. Schlüssel und 12 Wörter werden auf diesem Gerät gelöscht – ohne sie kommst du nicht zurück. Die Relays werden gebeten, deine Daten zu löschen (sie sind verschlüsselt; ganz sicher ist das Löschen dort nicht).'
-              : 'Your groups and friends see “account deleted”. You leave everywhere. Key and 12 words are deleted on this device – without them there is no way back. The relays are asked to delete your data (it is encrypted; deletion there cannot be guaranteed).'),
+          Text(trLang(de ? 'de' : 'en', 'my_balance.yourGroupsAndFriends')),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             value: alsoBills,

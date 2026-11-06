@@ -21,11 +21,19 @@ def main(files):
     existing = set(re.findall(r"^  '([^']+)':", open('lib/l10n/strings_de.dart').read(), re.M))
     for path in files:
         group = os.path.splitext(os.path.basename(path))[0]
-        used = {k.split('.', 1)[1] for k in existing if k.startswith(group + '.')}; src = open(path).read(); lines = src.split('\n'); changed = False
+        used = {k.split('.', 1)[1] for k in existing if k.startswith(group + '.')}; src = open(path).read(); raw = src.split('\n'); changed = False
+        lines, j = [], 0
+        while j < len(raw):  # `… t.de` / `? '…'` / `: '…'…` on three lines → one line (only when it then converts)
+            if j + 2 < len(raw) and re.search(r"\bde\s*$", raw[j]) and raw[j + 1].strip().startswith("? '") and raw[j + 2].strip().startswith(": '"):
+                merged = raw[j].rstrip() + ' ' + raw[j + 1].strip() + ' ' + raw[j + 2].strip()
+                if any(mm.group(2, 3) != ('de', 'en') for mm in INLINE.finditer(merged)):
+                    lines.append(merged); j += 3; changed = True; continue
+            lines.append(raw[j]); j += 1
         for i, line in enumerate(lines):
             if line.lstrip().startswith('//'): continue
             def rep(m):
                 flag, de, en = m.groups()
+                if (de, en) == ('de', 'en'): return m.group(0)  # already a language switch of trLang
                 exprs = []
                 def sub(mm):
                     e = mm.group(1) or mm.group(2)

@@ -792,4 +792,17 @@ const Map<String, String> stringsDe = {
   'groups.paymentPurpose': 'Ausgleich {0} → {1}',
   'groups.paymentItem': 'Ausgleichszahlung',
   'groups.markPaidDone': 'Eingetragen: {0} hat {1} {2} gezahlt.',
+  // --- moved from the screens by tool/l10n_inline.py ---
+  'collab_ui.yourBrowserStoresNothing': 'Dein Browser speichert hier nichts (privates Fenster oder gesperrte Website-Daten). Mitmachen geht, aber nach dem Schließen ist alles weg. Öffne den Link besser in Chrome oder in der App.',
+  'collab_ui.whoeverOpensTheLink2': 'Wer den Link öffnet, ist sofort in der Gruppe – in der App oder im Browser, ohne Anmeldung. Er sieht die Bons, macht mit und ist dein Freund.',
+  'groups.markAllEnteredReceipts': 'Alle {0} eingetragenen Bons als bezahlt markieren? Sie kommen ins Archiv und zählen nicht mehr im Saldo.',
+  'pay_ui.allOptionalOnlyYour': 'Alles freiwillig. Was du einträgst, sehen nur deine Gruppen und Freunde (verschlüsselt). Fasan überweist nichts: Beim Ausgleichen öffnet „Bezahlen“ die Banking-, PayPal- oder Wallet-App mit dem Betrag.',
+  'flow.theItemsAreRead': 'Die Posten werden mit der neuesten Erkennung neu gelesen. Die Zuordnung der Posten geht dabei verloren. Personen, Zahler, Gruppe, Kategorie und Name bleiben.',
+  'flow.afterSaveTheReceipt': 'Nach „Eintragen“ steht der Bon unter Offen und zählt im Saldo. Ins Archiv kommt er, wenn alles bezahlt ist.',
+  'my_balance.yourGroupsAndFriends': 'Deine Gruppen und Freunde sehen „Konto gelöscht“. Du trittst überall aus. Schlüssel und 12 Wörter werden auf diesem Gerät gelöscht – ohne sie kommst du nicht zurück. Die Relays werden gebeten, deine Daten zu löschen (sie sind verschlüsselt; ganz sicher ist das Löschen dort nicht).',
+  'backup_ui.tipShareAddTo': 'Tipp: Teilen → „Zum Home-Bildschirm“. Sonst löscht Safari deine Daten, wenn du 7 Tage nicht hier warst.',
+  'settings_screen.onYourGroupsAnd': 'An: Deine Gruppen und Freunde sehen, ob du gerade online bist, wann zuletzt, und ob du ihre Nachrichten gelesen hast. Aus: Nichts davon geht hinaus – und du siehst es bei den anderen auch nicht.',
+  'settings_screen.freeMplOfflineNo': 'Frei (MPL-2.0), offline, ohne Konto, ohne Telemetrie. Texterkennung: PaddleOCR (Apache-2.0), UVDoc (MIT), ONNX Runtime (MIT).',
+  'settings_screen.whileTheAppRuns': 'Solange die App läuft oder im Hintergrund ist, zeigt dein Gerät Neuigkeiten als Benachrichtigung. Ist die App ganz geschlossen, siehst du sie beim nächsten Öffnen in der Glocke – Fasan nutzt keinen Push-Dienst von Google.',
+  'settings_screen.allRelayConnectionsGo': 'Alle Verbindungen zu den Relays laufen über Tor. Dann sehen die Relays deine IP-Adresse nicht. Dafür muss die App Orbot (Guardian Project) installiert sein und laufen. Verbindungen werden langsamer. Gilt nach dem nächsten Start von Fasan Split.',
 };

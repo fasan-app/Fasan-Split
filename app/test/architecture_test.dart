@@ -88,7 +88,7 @@ void main() {
       final lines = f.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
         final next = i + 1 < lines.length ? lines[i + 1].trimLeft() : '';
-        if (RegExp(r"\bde\s*\?\s*'(?!de' : 'en')").hasMatch(lines[i]) || (lines[i].trimRight().endsWith('=> de') && next.startsWith("? '"))) bad.add('${f.path}:${i + 1}');
+        if (RegExp(r"\bde\s*\?\s*'(?!de' : 'en')").hasMatch(lines[i]) || (RegExp(r'\bde$').hasMatch(lines[i].trimRight()) && next.startsWith("? '"))) bad.add('${f.path}:${i + 1}');
       }
     }
     expect(bad, isEmpty, reason: 'Text in lib/l10n/strings_de.dart und strings_en.dart eintragen (tool/l10n_inline.py hilft)');

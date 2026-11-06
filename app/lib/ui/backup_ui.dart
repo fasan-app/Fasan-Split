@@ -160,9 +160,7 @@ class HomeScreenHint extends StatelessWidget {
           const SizedBox(width: FasanSpace.m),
           Expanded(
             child: Text(
-              t.de
-                  ? 'Tipp: Teilen → „Zum Home-Bildschirm“. Sonst löscht Safari deine Daten, wenn du 7 Tage nicht hier warst.'
-                  : 'Tip: Share → “Add to Home Screen”. Otherwise Safari deletes your data after 7 days without a visit.',
+              trLang(t.de ? 'de' : 'en', 'backup_ui.tipShareAddTo'),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),

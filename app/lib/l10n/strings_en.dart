@@ -792,4 +792,17 @@ const Map<String, String> stringsEn = {
   'groups.paymentPurpose': 'Settlement {0} → {1}',
   'groups.paymentItem': 'Settlement payment',
   'groups.markPaidDone': 'Entered: {0} paid {1} {2}.',
+  // --- moved from the screens by tool/l10n_inline.py ---
+  'collab_ui.yourBrowserStoresNothing': 'Your browser stores nothing here (private window or blocked site data). You can take part, but everything is gone when you close it. Better open the link in Chrome or in the app.',
+  'collab_ui.whoeverOpensTheLink2': 'Whoever opens the link is in the group at once – in the app or the browser, no sign-up. They see the receipts, take part and are your friend.',
+  'groups.markAllEnteredReceipts': 'Mark all {0} entered receipts as paid? They go to the archive and no longer count in the balances.',
+  'pay_ui.allOptionalOnlyYour': 'All optional. Only your groups and friends see it (encrypted). Fasan transfers nothing: when settling, “Pay” opens the banking, PayPal or wallet app with the amount.',
+  'flow.theItemsAreRead': 'The items are read again with the newest recognition. The assignment of the items is lost; people, payer, group, category and name stay.',
+  'flow.afterSaveTheReceipt': 'After “Save” the receipt is under Open and counts in the balances. It goes to the archive once everything is paid.',
+  'my_balance.yourGroupsAndFriends': 'Your groups and friends see “account deleted”. You leave everywhere. Key and 12 words are deleted on this device – without them there is no way back. The relays are asked to delete your data (it is encrypted; deletion there cannot be guaranteed).',
+  'backup_ui.tipShareAddTo': 'Tip: Share → “Add to Home Screen”. Otherwise Safari deletes your data after 7 days without a visit.',
+  'settings_screen.onYourGroupsAnd': 'On: your groups and friends see whether you are online, when you were last, and whether you read their messages. Off: none of it goes out – and you do not see it from others either.',
+  'settings_screen.freeMplOfflineNo': 'Free (MPL-2.0), offline, no account, no telemetry. Text recognition: PaddleOCR (Apache-2.0), UVDoc (MIT), ONNX Runtime (MIT).',
+  'settings_screen.whileTheAppRuns': 'While the app runs or is in the background, your device shows news as notifications. When the app is fully closed you see them in the bell next time – Fasan uses no Google push service.',
+  'settings_screen.allRelayConnectionsGo': 'All relay connections go through Tor, so relays do not see your IP address. Needs the Orbot app (Guardian Project) installed and running. Connections get slower. Takes effect after the next start of Fasan Split.',
 };

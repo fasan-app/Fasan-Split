@@ -217,9 +217,7 @@ class StorageWarningCard extends StatelessWidget {
             const SizedBox(width: FasanSpace.m),
             Expanded(
               child: Text(
-                t.de
-                    ? 'Dein Browser speichert hier nichts (privates Fenster oder gesperrte Website-Daten). Mitmachen geht, aber nach dem Schließen ist alles weg. Öffne den Link besser in Chrome oder in der App.'
-                    : 'Your browser stores nothing here (private window or blocked site data). You can take part, but everything is gone when you close it. Better open the link in Chrome or in the app.',
+                trLang(t.de ? 'de' : 'en', 'collab_ui.yourBrowserStoresNothing'),
                 style: tt.bodySmall,
               ),
             ),
@@ -406,9 +404,7 @@ class _InviteScreenState extends State<InviteScreen> {
         Text(
             g.secret.direct
                 ? (trLang(de ? 'de' : 'en', 'collab_ui.whoeverOpensTheLink'))
-                : (de
-                    ? 'Wer den Link öffnet, ist sofort in der Gruppe – in der App oder im Browser, ohne Anmeldung. Er sieht die Bons, macht mit und ist dein Freund.'
-                    : 'Whoever opens the link is in the group at once – in the app or the browser, no sign-up. They see the receipts, take part and are your friend.'),
+                : (trLang(de ? 'de' : 'en', 'collab_ui.whoeverOpensTheLink2')),
             style: tt.bodyMedium),
         const SizedBox(height: FasanSpace.l),
         Text(trLang(de ? 'de' : 'en', 'collab_ui.validFor'), style: tt.labelLarge!.copyWith(color: l.textMuted)),
