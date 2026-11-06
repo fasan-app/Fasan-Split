@@ -4,6 +4,19 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## Beschlüsse 06.11. (Nutzer, nach Fehlern in 0.2: 13 Croissants, Web-Menü, Web langsam)
+
+1. **Eine Codebasis** für APK und Browser (Flutter). Browser muss in allem 1:1 der APK gleichen (Menü, Knöpfe, Layout,
+   Funktionen); jede Änderung gilt für beide. Leistung wird gemessen (S23 und gedrosselt wie 10 Jahre altes Gerät), in der CI geprüft.
+2. **Erkennung als Tor vor jeder Veröffentlichung:** Echte Bonfotos liegen im privaten `fasan-diagnose`; die CI liest sie mit einem
+   Lese-Geheimnis und stoppt jede Veröffentlichung bei Verschlechterung.
+3. **Veröffentlichen** auf main selbstständig, aber nur wenn alle Prüfungen grün sind (Erkennung, Tests, Browser-E2E, Leistung);
+   jede Veröffentlichung steht hier.
+4. **Gruppe „Bons zuerst“:** eine Zeile Avatare + Chat + Notizen, eine Ausgleich-Zeile, dann die Bons; Personen im Blatt.
+5. **Bon-Ausschnitte unter den Posten sind Standard** (einzig krisensicherer Beleg, ob ein Posten stimmt); kompakt, abschaltbar.
+   Ersetzt den Beschluss 05.11. „keine Dauer-Bildchen“ (Grund damals: zu groß/unruhig → jetzt kompakt statt weg).
+6. Grundeinstellung Leistung „Sparsam“ (05.11.) bleibt.
+
 ## Was da ist
 
 - Erkennung in Dart (Port aus `Fasan-Karte/site/bon.js`, `scan.js`): PP-OCRv5 det/rec und UVDoc über ONNX Runtime

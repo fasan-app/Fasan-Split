@@ -454,6 +454,10 @@ int lettersIn(String t) => countMatches(_az, foldLower(t).replaceAll(_unitsWord,
 // 02.11.: „P Pizza Peperoni“ wurde erkannt); they are dropped only when a unit word follows.
 final _n2 = RegExp(r'^\s*(?:[^\s\d]{1,2}\s+(?=(?:u[nm][il1tfjíìĩ|!]?|jni)(?![A-Za-zÀ-ÿ])))?(u[nm][il1tfjíìĩ|!]?|jni|und|unid|unidade|uds?|stk|pcs|pc)(?![A-Za-zÀ-ÿ])\.?\s*', caseSensitive: false);
 final _n3 = RegExp(r'\b\d{1,2}\s*%');
+// a tax rate at the end of the name with „%“ read as „x“ (Esplanada 06.11.: „Croissant c/ N 13x“)
+final _n3x = RegExp(r'\s+(?:4|5|6|7|8|9|10|12|13|16|19|20|21|22|23|24|25)\s*[xX]\s*$');
+// OCR doubles letters on thermal print („Croisssant“); three equal letters in a row do not occur in item names
+final _tripleLetter = RegExp(r'([A-Za-zÀ-ÿ])\1{2,}');
 final _n4 = RegExp(
     r'[€$£¥₩₹]|(?<![\p{L}])(euro|eur|usd|chf|gbp|jpy|fr\.|kr|zł|kč|rm|myr|sgd|thb|idr|php|vnd|aud|nzd|cad|hkd|cny|rmb|krw|inr|try|pln|czk|huf|sek|nok|dkk|brl|mxn|zar|aed)(?![\p{L}])',
     caseSensitive: false,
@@ -494,11 +498,21 @@ List<String> nameAlternatives(String n) {
 }
 
 /// Item name from the text left of the amount [nameAus].
+// Portuguese „c/ Nata“, „s/ Gelo“ (com/sem): part of the name, not a tax code (else „Croissant c/ N“ became „Croissant c“)
+final _withWithout = RegExp(r'\s([cCsS])/\s*([A-Za-zÀ-ÿ]{1,14})\.?\s*$');
+
 String nameFrom(String t) {
+  final ww = _withWithout.firstMatch(t.replaceAll(_n3, '').replaceFirst(_n3x, '').trimRight());
+  if (ww != null) {
+    final head = nameFrom(t.replaceAll(_n3, '').replaceFirst(_n3x, '').trimRight().substring(0, ww.start));
+    if (head.isNotEmpty) return jsSlice('$head ${ww[1]!.toLowerCase()}/ ${ww[2]}', 0, 40);
+  }
   final s = t
       .replaceFirst(_qtyFront, '')
       .replaceFirst(_n2, '')
       .replaceAll(_n3, '')
+      .replaceFirst(_n3x, '')
+      .replaceAllMapped(_tripleLetter, (m) => '${m[1]}${m[1]}')
       .replaceAll(_n4, '') // currency only as its own word (else KRAEUTERQUARK became AEUTERQUARK)
       .replaceFirst(_n5, '')
       .replaceFirst(_n6, '')
@@ -835,10 +849,20 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
     num? menge;
     num? einzel;
     final d = RegExp.escape(dec);
-    final mx = RegExp(
+    var mx = RegExp(
             '(\\d{1,3}(?:[.,]\\d{1,3})?)\\s*(?:stk\\.?|st\\.?|kg|pcs|un\\.?|uni|l|ltr|lt|liter|litros|lts|gal|n[aä]chte?|noites|nights|n\\.|tage|dias|days|pers\\.?|personen|pax)?\\s*[x×*]\\s*(\\d+$d ?\\d{2,3})(?!\\d)',
             caseSensitive: false)
         .firstMatch(z.text);
+    // A mid-line „13x 8,00“ after a name is often the tax rate with a misread „%“ (Esplanada, Lisboa 06.11.: „2Uni Croissant
+    // c/ N 13x 8,00“ became 13 croissants). When the line already starts with its own quantity and the x-price is the last
+    // amount of the line (no separate line total), the leading quantity wins.
+    final lead = qtyFront ?? (() {
+      final m = _qtyLead.firstMatch(z.text);
+      return m == null ? null : jsInt(m[1]!).toDouble();
+    })();
+    if (mx != null && lead != null && lead > 0 && mx.start > 0 && r.last != null && mx.end >= r.last!.end - 1 && jsParseFloat(mx[1]!.replaceFirst(',', '.')) != lead) {
+      mx = null;
+    }
     final mx2 = mx == null ? RegExp('(\\d+$d ?\\d{2,3})\\s*(?:€|eur)?\\s*[x×*]\\s*(\\d{1,3})(?![.,]\\d)\\b', caseSensitive: false).firstMatch(z.text) : null;
     if (mx != null) {
       menge = jsParseFloat(mx[1]!.replaceFirst(',', '.'));
