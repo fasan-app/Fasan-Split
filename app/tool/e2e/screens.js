@@ -65,6 +65,8 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     // noted and the walk goes on, so one missing control does not hide the rest
     const steps = [];
     const step = async (name, fn) => { try { await fn(); await p.waitForTimeout(1200); await shot(name); steps.push(name); } catch (e) { steps.push('FEHLT ' + name + ': ' + String(e).slice(0, 100)); await shot('fehlt-' + name); try { fs.writeFileSync(dir + '/aria-' + name + '.txt', await p.locator('body').ariaSnapshot({ timeout: 8000 })); } catch (_) {} } };
+    // a real long press: pointer down, hold, up at the centre of the element (click({delay}) is taken as a tap by the semantics layer)
+    const hold = async (loc, ms = 900, noSemantics = false) => { const bb = await loc.boundingBox(); if (noSemantics) await p.evaluate(() => document.querySelector('flt-semantics-host')?.remove()); const x = bb.x + bb.width / 2, y = bb.y + bb.height / 2; await p.mouse.move(x, y); await p.mouse.down(); await p.waitForTimeout(ms); await p.mouse.up(); };
     const back = async () => { await p.getByRole('button', { name: /Zurück|Back/ }).first().click({ timeout: 8000 }).catch(() => {}); await p.waitForTimeout(800); };
     await step('b01-bon', async () => {});
     await step('b02-menue', async () => { await p.getByRole('button', { name: /Mehr|More/ }).first().click(); });
@@ -74,7 +76,9 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('b06-posten-zu', async () => { await p.keyboard.press('Escape'); });
     await step('b07-pruefen', async () => { await p.getByRole('button', { name: /Posten und Summe prüfen/ }).first().click(); });
     await p.keyboard.press('Escape'); await p.waitForTimeout(800);
-    await step('b08-person-lang', async () => { await p.getByRole('checkbox', { name: /Chris/ }).first().click({ delay: 700 }); });
+    // the long press only works without the accessibility layer in the browser (see docs/WEB-GRENZEN.md): its own run with NOSEM=1,
+    // which ends the walk after this picture because the role locators need that layer
+    if (process.env.NOSEM) { await step('b08-person-lang', async () => { await hold(p.getByRole('checkbox', { name: /Chris/ }).first(), 900, true); }); result.steps = steps; fs.writeFileSync(dir + '/photo-done.txt', JSON.stringify(result)); await b.close(); process.exit(0); }
     await step('b09-person-zu', async () => { await p.keyboard.press('Escape'); });
     await step('b10-bon-ansicht', async () => { await p.getByRole('button', { name: 'Bon' }).first().click(); });
     await step('b11-bon-original', async () => { await p.getByRole('button', { name: 'Original' }).first().click(); });

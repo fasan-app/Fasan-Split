@@ -405,6 +405,12 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
 - **Nutzer 06.11. abends:** bietet Schreibrechte auf `fasan_ui` an („fände ich sinnvoll“). Angenommen: Ursachen, die im Designpaket liegen (z. B. `FasanOpenContainer`
   mit deckender `openColor`), werden dort behoben statt in Split umgangen. Sitzung hängt `fasan_ui` mit `add_repo` (push) an; CLAUDE.md „Schritt 0“ von „lesen“ auf „push“ ändern.
 
+- **Bildschirmvergleich, Stand 06.11. spätabends:** gleich in App und Browser (Seite an Seite angesehen): Bon-Bildschirm, ⋮-Menü, Posten-Blatt (mit „Fester Betrag“),
+  Bon-Ansicht Scan/Original/Digital, Home, Einstellungen, Person-Blatt (ohne Screenreader-Schicht). **Echter Unterschied:** mit Screenreader-Schicht wird
+  langes Drücken im Browser zum Antippen (steht in `docs/WEB-GRENZEN.md`; Folgearbeit: benannte Aktion am Personen-Chip für Screenreader, auch in der APK
+  nützlich). Noch nicht verglichen: Zahlen-/Ergebnis-Bildschirm mit zwei Personen, Beitritt, Gruppe/Personen-Bereich, Scan, Papierkorb/Archiv,
+  Chat/Notizen, Dunkelmodus und Querformat im Browser.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
