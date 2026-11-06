@@ -396,6 +396,12 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   Test nutzt jetzt dieselbe Voreinstellung. Offen: Browser-Durchlauf mit dem gezeichneten Bon wiederholen (Posten-Blatt, Festbetrag, Person lang,
   Fertig/Ergebnis fehlten, weil der Lauf den echten Bon nahm und „Pizza“ nicht fand), Gruppen-/Personen-/Einstellungs-/Beitritts-Bildschirme.
 
+- **Bildschirmvergleich, Fund 3 (06.11. abends, APK und Browser betroffen):** Ein Bon, der aus seiner Kachel aufging, stand auf einer deckenden Farbe
+  (`FasanOpenContainer` malt `openColor: look.background`), ihm fehlte der weiche Hintergrund aller anderen Bildschirme. Ursache behoben mit
+  `ui/open_container.dart` (`BillOpenContainer`, durchsichtig), Test `open_container_test`; im Browser bestätigt (Pixelwerte Bon = Gruppe = App).
+  Gehört eigentlich nach `fasan_ui` (nur lesend zugänglich): Hinweis dorthin offen. Bon-Bildschirm, Posten-Blatt, Bon-Ansicht, ⋮-Menü jetzt Seite an Seite gleich.
+  Noch zu vergleichen: Zahlen/Ergebnis (Browser-Weg über „offen“), Person-Blatt, Home, Einstellungen, Beitritt, Gruppe/Personen, Scan.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der
