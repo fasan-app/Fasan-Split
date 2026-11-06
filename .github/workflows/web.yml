@@ -115,8 +115,12 @@ jobs:
           path: ${{ runner.temp }}/e2e
           retention-days: 7
 
+  # Erkennungs-Tor: ohne Bestehen keine Veröffentlichung der Web-App (Nutzer 06.11.)
+  erkennung:
+    uses: ./.github/workflows/erkennung.yml
+    secrets: inherit
   deploy:
-    needs: [build, e2e]
+    needs: [build, e2e, erkennung]
     runs-on: ubuntu-24.04
     environment:
       name: github-pages

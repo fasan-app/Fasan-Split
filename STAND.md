@@ -372,7 +372,8 @@ Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-na
 Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md`) beantwortet hat (Nutzer 06.11.).
 
 - Foto oder Protokoll des Esplanada-Bons (13 Croissants) schicken, damit der ganze Bon ins Erkennungs-Tor kommt.
-- Lese-Geheimnis für `fasan-diagnose` in der CI anlegen (Schritte schreibt die Sitzung auf, sobald der Workflow steht).
+- **Lese-Geheimnis `FASAN_DIAGNOSE_TOKEN` anlegen** (Anleitung mit vorausgefülltem Link: `docs/ERKENNUNGS-TOR.md`). Ohne es scheitert das
+  Erkennungs-Tor und es wird nichts veröffentlicht (gewollt).
 
 ### Lehren aus 05./06.11. (nicht wiederholen)
 

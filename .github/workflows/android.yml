@@ -12,7 +12,12 @@ concurrency:
   group: android
   cancel-in-progress: true
 jobs:
+  # Erkennungs-Tor zuerst: ohne Bestehen keine APK (Nutzer 06.11.)
+  erkennung:
+    uses: ./.github/workflows/erkennung.yml
+    secrets: inherit
   apk:
+    needs: [erkennung]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:

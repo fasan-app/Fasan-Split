@@ -21,9 +21,13 @@ void main() {
       File('$m/dict-latin.txt').readAsStringSync(),
     );
     final x = await Recognizer(ocr, earlyStop: false).recognize(File(f).readAsBytesSync());
-    // ignore: avoid_print
-    for (final l in x.result.lines) print('LINE ${l.type}|${l.text}');
-    // ignore: avoid_print
-    for (final q in x.result.items) print('ITEM ${q.name} = ${q.amount} qty ${q.qty} unit ${q.unit}');
+    for (final l in x.result.lines) {
+      // ignore: avoid_print
+      print('LINE ${l.type}|${l.text}');
+    }
+    for (final q in x.result.items) {
+      // ignore: avoid_print
+      print('ITEM ${q.name} = ${q.amount} qty ${q.qty} unit ${q.unit}');
+    }
   }, timeout: const Timeout(Duration(minutes: 5)));
 }

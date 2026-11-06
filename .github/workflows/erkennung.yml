@@ -1,0 +1,58 @@
+# Erkennungs-Tor (Nutzer 06.11.): vor jeder Veröffentlichung läuft die Erkennung über alle echten Bons (privates fasan-diagnose)
+# und die synthetischen Bons; jede Verschlechterung (falscher Betrag, falsche Menge, falscher Name, falsche Summe, falsches „geprüft“)
+# lässt den Lauf scheitern und stoppt damit APK und Web-App. Fehlt das Geheimnis FASAN_DIAGNOSE_TOKEN, scheitert das Tor sichtbar:
+# ohne Prüfung keine Veröffentlichung. Das Token braucht nur Lesezugriff auf den Inhalt von fasan-app/fasan-diagnose.
+name: Erkennungs-Tor
+on:
+  workflow_call:
+    secrets:
+      FASAN_DIAGNOSE_TOKEN:
+        required: false
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  tor:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Geheimnis vorhanden?
+        env:
+          TOKEN: ${{ secrets.FASAN_DIAGNOSE_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::FASAN_DIAGNOSE_TOKEN fehlt – ohne die echten Bons keine Prüfung, also keine Veröffentlichung (Anleitung: docs/ERKENNUNGS-TOR.md)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+        with:
+          repository: fasan-app/fasan-diagnose
+          token: ${{ secrets.FASAN_DIAGNOSE_TOKEN }}
+          path: diag
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Modelle und ONNX Runtime
+        working-directory: app
+        run: |
+          bash tool/fetch_models.sh
+          curl -sSL -o "$RUNNER_TEMP/ort.tgz" https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-linux-x64-1.22.0.tgz
+          tar xzf "$RUNNER_TEMP/ort.tgz" -C "$RUNNER_TEMP"
+
+      - name: Tor
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter pub get
+          export LD_LIBRARY_PATH="$RUNNER_TEMP/onnxruntime-linux-x64-1.22.0/lib"
+          export FASAN_BONORDNER="$GITHUB_WORKSPACE/diag/tests/echt:$GITHUB_WORKSPACE/diag/tests/bons"
+          export FASAN_THREADS=4
+          flutter test test/gate_test.dart --reporter expanded 2>&1 | tee "$RUNNER_TEMP/tor.log"
+          grep -E '^(OK|FEHLER|BEKANNT|TOR)' "$RUNNER_TEMP/tor.log" >> "$GITHUB_STEP_SUMMARY" || true

@@ -860,7 +860,12 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
       final m = _qtyLead.firstMatch(z.text);
       return m == null ? null : jsInt(m[1]!).toDouble();
     })();
-    if (mx != null && lead != null && lead > 0 && mx.start > 0 && r.last != null && mx.end >= r.last!.end - 1 && jsParseFloat(mx[1]!.replaceFirst(',', '.')) != lead) {
+    // Generally: when the x-price IS the only/last amount of a line that also carries a name before it, „N x price“ would claim a
+    // total N × price that is printed nowhere (Karte 3.18: „Menge × Preis passt zu keinem Betrag“ is a contradiction). Then N is not
+    // a quantity (tax rate, size „33 x“ …); the leading quantity of the line counts, else 1. Lines that are only „2 x 0,79“ (name on
+    // the line above) keep their quantity.
+    if (mx != null && r.last != null && mx.end >= r.last!.end - 1 && _letterAZ.hasMatch(jsSlice(z.text, 0, mx.start)) &&
+        (lead == null || jsParseFloat(mx[1]!.replaceFirst(',', '.')) != lead)) {
       mx = null;
     }
     final mx2 = mx == null ? RegExp('(\\d+$d ?\\d{2,3})\\s*(?:€|eur)?\\s*[x×*]\\s*(\\d{1,3})(?![.,]\\d)\\b', caseSensitive: false).firstMatch(z.text) : null;

@@ -1,0 +1,122 @@
+// Recognition gate (Nutzer 06.11.: „Erkennung darf nie wieder unbemerkt schlechter werden“). Unlike e2e_test.dart, which only prints,
+// this test FAILS. For every photo in FASAN_BONORDNER (folders separated by ':') with a truth JSON next to it, it checks what the user
+// sees (items as the app builds them, RecognitionService.fromRecognition):
+//   - total and the multiset of item amounts (truth `posten`, cents),
+//   - per item, where the truth has `posten_detail` [{name, menge, betrag, einzel?}]: an item with that amount, that quantity and a
+//     matching name (normalised, small edit distance) – „13 Croissants“ (06.11.) only shows here, the amounts were right,
+//   - „geprüft“ on a wrong result is the worst failure and is never allowed.
+// A receipt may carry `bekannt: "<reason>"` in its truth: its failure is reported but allowed (known, documented, to be fixed).
+// Run: FASAN_BONORDNER=…/tests/echt:…/tests/bons LD_LIBRARY_PATH=…/onnxruntime/lib flutter test test/gate_test.dart
+// Without FASAN_BONORDNER the test is skipped (CI sets it from the private fasan-diagnose checkout). MPL-2.0
+@Tags(['e2e'])
+library;
+
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math' as math;
+
+import 'package:fasan_split/recognition/onnx.dart';
+import 'package:fasan_split/recognition/paddle.dart';
+import 'package:fasan_split/recognition/pipeline.dart';
+import 'package:fasan_split/recognition_service.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+String norm(String s) => s
+    .toLowerCase()
+    .replaceAll(RegExp('[àáâã]'), 'a')
+    .replaceAll(RegExp('[éê]'), 'e')
+    .replaceAll('í', 'i')
+    .replaceAll(RegExp('[óôõ]'), 'o')
+    .replaceAll('ú', 'u')
+    .replaceAll('ç', 'c')
+    .replaceAll('ä', 'ae')
+    .replaceAll('ö', 'oe')
+    .replaceAll('ü', 'ue')
+    .replaceAll('ß', 'ss')
+    .replaceAll(RegExp('[^a-z0-9]'), '');
+
+int lev(String a, String b) {
+  final d = List.generate(a.length + 1, (i) => List<int>.filled(b.length + 1, 0)..[0] = i);
+  for (var j = 1; j <= b.length; j++) {
+    d[0][j] = j;
+  }
+  for (var i = 1; i <= a.length; i++) {
+    for (var j = 1; j <= b.length; j++) {
+      d[i][j] = math.min(math.min(d[i - 1][j] + 1, d[i][j - 1] + 1), d[i - 1][j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
+    }
+  }
+  return d[a.length][b.length];
+}
+
+/// The printed name is good enough when it is the truth up to a few OCR slips (≤ 25 % of the letters, at least 2).
+bool nameOk(String truth, String read) {
+  final t = norm(truth), r = norm(read);
+  if (t.isEmpty) return true;
+  if (r.contains(t) || (r.length >= 4 && t.contains(r))) return true;
+  return lev(t, r) <= math.max(2, (t.length * 0.25).round());
+}
+
+void main() {
+  final dirs = (Platform.environment['FASAN_BONORDNER'] ?? '').split(':').where((d) => d.isNotEmpty && Directory(d).existsSync()).toList();
+  final ready = dirs.isNotEmpty && File('assets/models/det.onnx').existsSync();
+  test('Erkennungs-Tor', () async {
+    const m = 'assets/models';
+    final uv = File('$m/uvdoc.onnx');
+    final threads = int.tryParse(Platform.environment['FASAN_THREADS'] ?? '') ?? 2;
+    final ocr = PaddleOcr(
+      OnnxModel.fromBytes(File('$m/det.onnx').readAsBytesSync(), threads: threads),
+      OnnxModel.fromBytes(File('$m/rec-latin.onnx').readAsBytesSync(), threads: threads),
+      File('$m/dict-latin.txt').readAsStringSync(),
+      uvdoc: uv.existsSync() ? OnnxModel.fromBytes(uv.readAsBytesSync(), threads: threads) : null,
+    );
+    final rec = Recognizer(ocr);
+    final pick = RegExp(Platform.environment['FASAN_BONS'] ?? r'\.(png|jpg|jpeg)$', caseSensitive: false);
+    final failures = <String>[], known = <String>[];
+    var checkedBons = 0;
+    for (final dir in dirs) {
+      final files = Directory(dir).listSync().whereType<File>().map((f) => f.path).where((p) => pick.hasMatch(p)).toList()..sort();
+      for (final f in files) {
+        final tf = File(f.replaceFirst(RegExp(r'(-mild|-hart|-extrem|-kopf|-quer)?\.(png|jpg|jpeg)$', caseSensitive: false), '.json'));
+        if (!tf.existsSync()) continue;
+        final truth = jsonDecode(tf.readAsStringSync()) as Map<String, dynamic>;
+        final x = await rec.recognize(File(f).readAsBytesSync());
+        final d = RecognitionService.fromRecognition(x);
+        checkedBons++;
+        final problems = <String>[];
+        if (d.total != truth['total']) problems.add('Summe ${d.total} statt ${truth['total']}');
+        final ist = [for (final i in d.items) i.amount]..sort();
+        final soll = (truth['posten'] as List).cast<int>().toList()..sort();
+        if (ist.join(',') != soll.join(',')) problems.add('Beträge $ist statt $soll');
+        for (final p in (truth['posten_detail'] as List? ?? const [])) {
+          final q = p as Map<String, dynamic>;
+          final match = d.items.where((i) => i.amount == q['betrag'] && i.qty == (q['menge'] ?? 1) && nameOk(q['name'] as String, i.name));
+          if (match.isEmpty) {
+            final same = d.items.where((i) => i.amount == q['betrag']).map((i) => '${i.qty}× ${i.name}').join(' / ');
+            problems.add('Posten ${q['menge'] ?? 1}× ${q['name']} = ${q['betrag']} fehlt (gelesen: ${same.isEmpty ? '–' : same})');
+          }
+        }
+        final name = f.split('/').last;
+        if (problems.isEmpty) {
+          // ignore: avoid_print
+          print('OK   $name');
+          continue;
+        }
+        final line = '$name${d.checked ? ' [ALS GEPRÜFT GEMELDET]' : ''}: ${problems.join('; ')}';
+        // a wrong result reported as checked is never allowed, known or not
+        if (truth['bekannt'] != null && !d.checked) {
+          known.add('$line (bekannt: ${truth['bekannt']})');
+          // ignore: avoid_print
+          print('BEKANNT $line');
+        } else {
+          failures.add(line);
+          // ignore: avoid_print
+          print('FEHLER $line');
+        }
+      }
+    }
+    // ignore: avoid_print
+    print('TOR: $checkedBons Bons, ${failures.length} Fehler, ${known.length} bekannt');
+    expect(checkedBons, greaterThan(0), reason: 'keine Bons mit Wahrheit gefunden');
+    expect(failures, isEmpty, reason: failures.join('\n'));
+  }, skip: ready ? false : 'FASAN_BONORDNER oder Modelle fehlen', timeout: const Timeout(Duration(hours: 3)));
+}
