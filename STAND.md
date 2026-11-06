@@ -399,8 +399,11 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
 - **Bildschirmvergleich, Fund 3 (06.11. abends, APK und Browser betroffen):** Ein Bon, der aus seiner Kachel aufging, stand auf einer deckenden Farbe
   (`FasanOpenContainer` malt `openColor: look.background`), ihm fehlte der weiche Hintergrund aller anderen Bildschirme. Ursache behoben mit
   `ui/open_container.dart` (`BillOpenContainer`, durchsichtig), Test `open_container_test`; im Browser bestätigt (Pixelwerte Bon = Gruppe = App).
-  Gehört eigentlich nach `fasan_ui` (nur lesend zugänglich): Hinweis dorthin offen. Bon-Bildschirm, Posten-Blatt, Bon-Ansicht, ⋮-Menü jetzt Seite an Seite gleich.
+  **Aktualisiert 06.11.:** Behoben jetzt im Designpaket selbst (`fasan_ui` main df7b20f, `FasanOpenContainer.openColor` durchsichtig, 61 Tests grün); Split nutzt wieder `FasanOpenContainer`, `BillOpenContainer` entfernt, Lock auf df7b20f. Betrifft auch Karte/Kamera (gleicher Entwurf: Seiten durchsichtig über dem Hintergrund). Bon-Bildschirm, Posten-Blatt, Bon-Ansicht, ⋮-Menü jetzt Seite an Seite gleich.
   Noch zu vergleichen: Zahlen/Ergebnis (Browser-Weg über „offen“), Person-Blatt, Home, Einstellungen, Beitritt, Gruppe/Personen, Scan.
+
+- **Nutzer 06.11. abends:** bietet Schreibrechte auf `fasan_ui` an („fände ich sinnvoll“). Angenommen: Ursachen, die im Designpaket liegen (z. B. `FasanOpenContainer`
+  mit deckender `openColor`), werden dort behoben statt in Split umgangen. Sitzung hängt `fasan_ui` mit `add_repo` (push) an; CLAUDE.md „Schritt 0“ von „lesen“ auf „push“ ändern.
 
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 

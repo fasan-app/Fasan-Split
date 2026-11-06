@@ -9,7 +9,7 @@ Diese Regeln stehen über allem anderen in dieser Datei. Wer sie nicht erfüllen
 
 **Schritt 0 – Repos und Pflichtlektüre, prüfbar:**
 1. Anbinden mit `add_repo` und je ein `git clone --depth 1`: `fasan-app/Fasan-Split` (push), `fasan-app/Fasan` (lesen),
-   `fasan-app/fasan_ui` (lesen), `fasan-app/fasan-diagnose` (lesen), **`fasan-app/Fasan-Karte` (lesen)**, **`fasan-app/Fasan-Camera`
+   `fasan-app/fasan_ui` (push, Nutzer 06.11.), `fasan-app/fasan-diagnose` (lesen), **`fasan-app/Fasan-Karte` (lesen)**, **`fasan-app/Fasan-Camera`
    (lesen)**. Klon-Ordner neben diesem Repo: `../fasan`, `../fasan_ui`, `../fasan-diagnose`, `../fasan-karte`, `../fasan-camera`.
 2. Prüfen, dass alles da ist – **nie mit `2>/dev/null` wegdrücken** (am 05.11. lief so eine Suche ins Leere und der Umbau geschah
    trotzdem ohne die Recherchen):
