@@ -1175,7 +1175,7 @@ class CollabService extends ChangeNotifier {
       if (src == null) return;
       final small = img.copyResize(src, width: 120);
       b.thumb = base64.encode(img.encodeJpg(small, quality: 60));
-      store.upsert(b);
+      store.upsert(b, record: false);
     } catch (_) {
       // no preview: the bill is shared without it
     }
@@ -1248,7 +1248,7 @@ class CollabService extends ChangeNotifier {
           } else {
             b.photoRef = ref.toJson();
           }
-          store.upsert(b); // goes out with the bill; the pieces follow in _sendPhotos
+          store.upsert(b, record: false); // goes out with the bill; the pieces follow in _sendPhotos
         } catch (_) {
           // no shared photo for this bill; the others keep the digital receipt
         } finally {
@@ -1331,7 +1331,7 @@ class CollabService extends ChangeNotifier {
             b.imageAspect = await fillSnippets(b, bytes) ?? b.imageAspect;
           } catch (_) {}
         }
-        store.upsert(b);
+        store.upsert(b, record: false);
         notifyListeners();
       }
     } finally {
@@ -1492,7 +1492,7 @@ class CollabService extends ChangeNotifier {
     }
     final bill = BillSync.read(doc, id: billId, into: existing);
     bill.group = g.localName;
-    store.upsert(bill); // notifies; the write back finds nothing to change
+    store.upsert(bill, record: false); // notifies; the write back finds nothing to change (not a step of the user's undo)
     _wantPhotos(g, bill);
   }
 

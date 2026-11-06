@@ -44,7 +44,7 @@ Uint8List _drawn() {
 
 void main() {
   final env = Platform.environment;
-  final relayUrl = env['FASAN_E2E_RELAY'], file = env['FASAN_FILE'];
+  final relayUrl = env['FASAN_E2E_RELAY'], file = (env['FASAN_FILE'] ?? '').isEmpty ? null : env['FASAN_FILE'];
   final dir = env['FASAN_E2E_DIR'] ?? '/tmp';
   test('Bon mit Foto teilen, Browser bekommt Scan, Original und Ausschnitte (Telefon-Seite)', () async {
     final tmp = await Directory.systemTemp.createTemp('fasan_e2e_photo');

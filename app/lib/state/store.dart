@@ -485,7 +485,7 @@ class BillStore extends ChangeNotifier {
     if (!_hist.containsKey(b.id)) _hist[b.id] = (states: [_state(b)], at: 0);
   }
 
-  void _record(Bill b) {
+  void _record(Bill b, {bool step = true}) {
     final h = _hist[b.id];
     final s = _state(b);
     if (h == null) {
@@ -493,6 +493,10 @@ class BillStore extends ChangeNotifier {
       return;
     }
     if (h.states[h.at] == s) return;
+    if (!step) {
+      h.states[h.at] = s;
+      return;
+    }
     final st = h.states.sublist(0, h.at + 1)..add(s);
     if (st.length > _histMax) st.removeAt(0);
     _hist[b.id] = (states: st, at: st.length - 1);
@@ -518,7 +522,9 @@ class BillStore extends ChangeNotifier {
     return true;
   }
 
-  void upsert(Bill b) {
+  /// Saves [b]. [record] false for changes that are not the user's own (preview, photo pieces, what arrived from the group): they
+  /// become the new baseline of the undo history instead of a step.
+  void upsert(Bill b, {bool record = true}) {
     b.updated = DateTime.now();
     _changed();
     final i = bills.indexWhere((x) => x.id == b.id);
@@ -527,7 +533,7 @@ class BillStore extends ChangeNotifier {
     } else {
       bills.add(b);
     }
-    _record(b);
+    _record(b, step: record);
     _persist();
   }
 

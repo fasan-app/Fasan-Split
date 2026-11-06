@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/model/bill.dart';
+import 'package:fasan_split/perf/perf_governor.dart';
 import 'package:fasan_split/state/snippets.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/assign.dart';
@@ -224,8 +225,9 @@ void main() {
             bill = _bill(path, bx, assigned: !e.key.startsWith('4a'));
           }
           final store = BillStore.memory([_bill(path, bx)..payer = 1])..onboarded = true;
-          final ctl = FasanController(
-              settings: FasanSettings(reduceMotion: true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light));
+          // the walk screens show the look of the default (PerfMode.light: no blur, no grain, no moving background), like the browser
+          final ctl = SplitController(settings: FasanSettings(reduceMotion: true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light));
+          if (e.key.startsWith('b')) ctl.tier = PerfTier.slow;
           final key = GlobalKey();
           await tester.pumpWidget(RepaintBoundary(key: key, child: SplitApp(store: store, ui: ctl, home: e.value(bill))));
           // Bon-Foto und Shader laden echt asynchron; danach ein paar Bilder ohne Dauer-Animation.
