@@ -79,7 +79,8 @@ class StepScaffold extends StatelessWidget {
                 FasanLabel('$step / 4'),
                 Text(title),
               ])
-            : Text(title),
+            // shrinks instead of „Rec…“ when the title is long and the bar is full (English „Receipt“ next to five buttons, Bildschirmvergleich 06.11.)
+            : FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerStart, child: Text(title)),
         toolbarHeight: showStep ? 72 : null,
         actions: [
           // the receipt view always has the digital receipt; scan and original come with the photo (Nutzer 06.11.: in the

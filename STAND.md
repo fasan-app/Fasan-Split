@@ -444,6 +444,12 @@ Hinweis der App: bei diesem Tempo ist das Wochenlimit Sonntagabend aufgebraucht.
   `recognition`-, `l10n`-Pakete, Wächter-Tests; alles unter den Toren, eine Veröffentlichung am Ende.
   Die gefundenen Unterschiede lagen nicht am Web: 3 der 4 Funde des Bildschirmvergleichs (Hintergrund, Rückgängig, Freunde) traten **in der APK ebenso** auf; die echten Web-Unterschiede waren Fotodaten und Schrift.
 
+- **Bildschirmvergleich, Funde 5 + 6 (06.11. nachts, Englisch, App und Browser gleich betroffen):** (5) Summe im Feld deutsch formatiert („24,00 €“) über englischen Posten
+  („14.00 €“) → `money(…, de: …)` nach Sprache, Test `english_money_test` (scheitert ohne Korrektur); (6) Titel „Receipt“ zu „Rec…“ abgeschnitten neben fünf Knöpfen → Titel
+  verkleinert sich statt abzuschneiden (`StepScaffold`). Gleiche Fehlerklasse gesucht: alle übrigen `money()`-Aufrufe der Oberfläche geben die Sprache mit; **offen:** Hinweise
+  „Pfand 0,25“/„Rabatt …“ werden beim Scannen als fertiger deutscher Text im Posten gespeichert (`recognition/scan_events.dart`) – braucht strukturierte Zusätze statt Text.
+  **Beitritt:** gleich bis auf die zwei Web-Knöpfe „In der App öffnen“/„Android-App laden“ (gewollt, steht in WEB-GRENZEN). Vergleich damit bis auf Scan abgeschlossen.
+
 ### Offene Fragen an den Nutzer (06.11.; hier pflegen, bis beantwortet)
 
 Beantwortet 06.11.: Rohtext der Nachrichten → privat `../fasan/nutzer/split-nachrichten.md`. Punkt 0 beginnt erst, wenn der

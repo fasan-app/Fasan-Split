@@ -38,7 +38,7 @@ class ReviewScreen extends StatefulWidget {
 
 class _ReviewScreenState extends State<ReviewScreen> {
   late final _purpose = TextEditingController(text: widget.bill.purpose);
-  late final _total = TextEditingController(text: widget.bill.total == null ? '' : money(widget.bill.total!));
+  late final _total = TextEditingController(text: widget.bill.total == null ? '' : money(widget.bill.total!, de: context.langCode == 'de'));
 
   Bill get b => widget.bill;
 
@@ -56,9 +56,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
     });
     // a bill saved before the sign rule: turn the signs once when it is opened
     if (b.alignSigns()) {
-      _total.text = b.total == null ? '' : money(b.total!);
+      // after the first frame: the language (an inherited widget) cannot be read in initState
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) StoreScope.read(context).upsert(b);
+        if (!mounted) return;
+        _total.text = b.total == null ? '' : money(b.total!, de: context.langCode == 'de');
+        StoreScope.read(context).upsert(b);
       });
     }
   }
@@ -75,7 +77,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   /// Undo (−1) / redo (+1) through the history of this bill.
   void _step(int dir) {
     if (StoreScope.read(context).stepHistory(b, dir)) {
-      setState(() => _total.text = b.total == null ? '' : money(b.total!));
+      setState(() => _total.text = b.total == null ? '' : money(b.total!, de: context.langCode == 'de'));
     }
   }
 
@@ -87,7 +89,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final before = [for (final p in b.its) p.amount], beforeTotal = b.total;
     if (!b.alignSigns()) return;
     StoreScope.read(context).upsert(b);
-    setState(() => _total.text = b.total == null ? '' : money(b.total!));
+    setState(() => _total.text = b.total == null ? '' : money(b.total!, de: context.langCode == 'de'));
     showNote(
       context,
       context.tr('bill.signTurned'),
@@ -99,7 +101,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             b.its[i].amount = before[i];
           }
           b.total = beforeTotal;
-          _total.text = b.total == null ? '' : money(b.total!);
+          _total.text = b.total == null ? '' : money(b.total!, de: context.langCode == 'de');
           b.checked = false;
         });
         StoreScope.read(context).upsert(b);
@@ -110,7 +112,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   void _answerSign(bool refund) {
     setState(() {
       b.resolveSign(refund: refund);
-      _total.text = b.total == null ? '' : money(b.total!);
+      _total.text = b.total == null ? '' : money(b.total!, de: context.langCode == 'de');
     });
     StoreScope.read(context).upsert(b);
   }
@@ -294,7 +296,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   onPressed: () {
                     setState(() {
                       b.total = b.itemSum;
-                      _total.text = money(b.total!);
+                      _total.text = money(b.total!, de: context.langCode == 'de');
                       b.checked = false;
                     });
                     Navigator.pop(ctx);
