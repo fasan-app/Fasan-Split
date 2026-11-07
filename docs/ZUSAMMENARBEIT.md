@@ -46,6 +46,12 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 
 ## Protokoll (laufend, neueste oben; je Eintrag: Zeit, Kürzel, getan, als Nächstes)
 
+- 07.11. 13:10, B: **Priorität 2 Leistung, erste Messung** (Browser, Chromium ohne GPU, also pessimistisch gegenüber dem S23; Zweig `mitarbeit/B-web-gleich`). Echter Ablauf: 12-MP-Foto wählen → Lesen → Ergebnis.
+  Quellkarte des Builds (`--source-maps`) zeigt die Hauptfaden-Blockaden: (1) `image_picker_for_web` kodiert jedes Foto neu, sobald Grenzen/Qualität gesetzt sind (toBlob ~0,4–0,5 s, Langzeitaufgabe, verlustbehaftet) →
+  im Browser jetzt ohne Grenzen (Adapter `web_platform_*`, Handy unverändert 4000 px/95); (2) 40–55 % der Wanderzeit beim Lesen sind Bilder von 250–500 ms (`CkSurface.rasterizeToCanvas` → `createImageBitmap`, GPU-Warten im
+  CanvasKit-Pfad). Stufen: „Alle Effekte“ = 94 Langzeitaufgaben/22 s in 20 s (praktisch ruckelnd), „Sparsam“ 8/2,5 s, Automatik 14/4 s. Ablauf Bildschirm für Bildschirm (35 Schritte, Sparsam): 32 von 35 Schritten haben ein Bild > 50 ms,
+  schlechtestes 467 ms (ungedrosselt) bzw. 1,5 s „Eintragen“ (4× gedrosselt). `screens.js` misst jetzt je Schritt. **Als Nächstes:** Wasm/skwasm-Build (`--wasm`, Dry-Run war erfolgreich) gegen CanvasKit im selben Ablauf messen;
+  Foto-Größe > 40 MP im Browser prüfen (Worker-Speicher); Ursachen der Ausreißer je Bildschirm (erste Zeichnung = Shader-Übersetzung?).
 - 07.11. 11:35, B: **Web = App, Schritt 2 (Englisch, Dunkel, Querformat)**. Browser-Läufe (`screens.js` mit LANG_TAG=en-US, DARK=1, LAND=1) gegen die App-Aufnahmen (`screens_test.dart`, hell/dunkel × hoch/quer) angesehen:
   Bon, Bon-Ansicht Scan/Original/Digital, Ergebnis dunkel und quer gleich (Unterschiede nur Testdaten: Datum, Zurück-Pfeil, Tooltip „Mehr“, Fokusrahmen am Zoom-Knopf in der App-Aufnahme).
   **Gefunden und behoben:** Auswahlblatt des Plus lief im Querformat um 21 px über (App und Browser), gleiche Klasse in 3 weiteren Blättern (Neue Gruppe, Person wählen, Hilfe) → scrollbare Listen;

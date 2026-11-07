@@ -75,6 +75,8 @@ Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete ste
 - **Öffentliches Repo:** Fasan-Split ist öffentlich. Keine Rohtexte von Nutzer-Nachrichten, keine Fotos, keine privaten Daten hier
   ablegen (06.11. hat das Werkzeug genau das zu Recht blockiert). Private Ablage: `fasan-diagnose` (Bons), `Fasan` (privat).
 
+**Lehre 07.11.:** Nie `git add -A` über `app` (oder `.`), solange ein Web-Build läuft oder lief: `flutter create` legt `app/web/`, `.metadata`, `analysis_options.yaml` an und `pub get` ändert `pubspec.lock` – das landete so im Commit (Sitzung B, 07.11.). Vor jedem Commit `git status --short` ansehen und nur die gewollten Dateien mit Pfad hinzufügen; Build-Skripte räumen am Ende selbst auf.
+
 **Fehler, die passiert sind und nicht wieder passieren dürfen (05./06.11.):** grüne Tests als Beweis ausgegeben, obwohl sie das
 Entscheidende nicht prüften; Bildschirme veröffentlicht, ohne sie mit echtem Bon angesehen zu haben; Web 1:1 behauptet statt Bildschirm
 für Bildschirm verglichen (⋮-Menü kaputt, Original/Digital-Knopf fehlte); Leistung nur am Startbildschirm gemessen und Effekte
