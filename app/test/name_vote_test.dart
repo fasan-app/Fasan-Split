@@ -71,4 +71,21 @@ void main() {
     expect(nameFrom('1.00 Cafe Duplo nm € '), 'Cafe Duplo');
     expect(nameFrom('1.00 Coca-Cola 33 cl '), 'Coca-Cola 33 cl');
   });
+
+  test('Durchlauf mit um eine Zeile verschobener Betragsspalte stimmt nicht mit (Weltkorpus b2-084, 07.11.)', () {
+    List<Item> pass(List<String> names) => [
+          for (final (k, a) in [634, 499, 1499, 299, 299, 170].indexed) Item(name: names[k], amount: a),
+        ];
+    const right = ['POTATO SWEET WHITE PREMIUM', 'Shrimp Rice Rolls 1KG TTC', 'Pork Sausages 375GM TRANS FOOD', 'BERRIES STRAWBERRIES 250g', 'BERRIES BLUEBERRIES 125G', 'AVOCADO HASS LARGE'];
+    // amount column one row up: every amount gets the name of the next item
+    final shifted = [...right.skip(1), 'Number of Items'];
+    final w = pass(right);
+    voteNames(w, [pass(shifted), pass(shifted), pass(shifted)]);
+    expect([for (final p in w) p.name], right);
+    // a pass with one extra item above only moves the index, the pairing is right: it still votes (fixes a slip)
+    final slip = pass(right)..[1].name = 'Shrimp Rice Rols 1KG TTC';
+    final extra = [Item(name: 'Chadstone VIC', amount: 5), ...pass(right)];
+    voteNames(slip, [extra, extra]);
+    expect(slip[1].name, 'Shrimp Rice Rolls 1KG TTC');
+  });
 }

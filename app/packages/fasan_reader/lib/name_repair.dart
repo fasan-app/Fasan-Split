@@ -99,7 +99,28 @@ double wordLikeness(String name) {
 /// Votes are grouped by [nameCore], so leftovers of neighbouring columns never outvote the clean name; the group's cleanest member
 /// (fewest extra tokens) is taken. A winner that does not look like words gives way to any readable name. The quantity votes too:
 /// when the winner read none (1) and two other passes agree on more, it is taken (Ferreiras 06.11.: „z 23 e 6.00“ = 2 Coca cola).
+/// Names and amounts paired differently than in the winner: a name we also read comes with another amount more often than with ours
+/// (an extra or missing item above only moves the index, not the pairing, and does not count).
+bool _shifted(List<Item> items, List<Item> o) {
+  final mine = <String, Set<int>>{};
+  for (final p in items) {
+    final n = nameCore(p.name);
+    if (n.length >= 2) (mine[n] ??= {}).add(p.amount);
+  }
+  var same = 0, off = 0;
+  for (final q in o) {
+    final a = mine[nameCore(q.name)];
+    if (a == null) continue;
+    a.contains(q.amount) ? same++ : off++;
+  }
+  return off >= 2 && off > same;
+}
+
 void voteNames(List<Item> items, List<List<Item>> others) {
+  // A pass whose names sit one row off against the winner (amount column shifted by a line: „Pork Sausages“ next to 4.99) pairs every
+  // amount with its neighbour's name; several such passes outvoted the right reading (Weltkorpus b2-084, 07.11.). It may not vote:
+  // more of its names match our item one row up or down than the same row.
+  others = [for (final o in others) if (!_shifted(items, o)) o];
   for (var i = 0; i < items.length; i++) {
     final p = items[i];
     final groups = <String, List<String>>{};
