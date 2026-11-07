@@ -2,6 +2,7 @@
 // Nur zum Ansehen, kein Vergleichstest: läuft nur mit FASAN_SCREENS=<Ausgabeordner>, sonst übersprungen (CI).
 // Der Bon ist erfunden und wird hier gezeichnet (Regel: keine echten oder bekannten Test-Bons in Repo oder App).
 // Aufruf: FASAN_SCREENS=/tmp/screens flutter test test/screens_test.dart
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -29,35 +30,9 @@ import 'package:fasan_split/recognition/paddle.dart';
 import 'package:fasan_split/recognition/pipeline.dart';
 import 'package:fasan_split/recognition/service.dart';
 import 'package:fasan_split/ui/receipt_view.dart';
+import 'support/synthetic_receipt.dart';
+import 'package:fasan_split/ui/scan_screen.dart';
 
-const _lines = [
-  ('Flammkuchen', '12,50'),
-  ('Apfelschorle 0,4', '4,20'),
-  ('Weizen 0,5', '5,40'),
-  ('Salat Bowl', '11,90'),
-  ('2 x Espresso', '5,60'),
-  ('  a 2,80', ''),
-];
-
-/// Draws a plain receipt (bitmap font, ASCII) and returns its path and the normalised box of every line.
-(String, List<NBox>) _receipt(Directory dir) {
-  const w = 600, h = 1500, top = 360, step = 64;
-  final im = img.Image(width: w, height: h)..clear(img.ColorRgb8(250, 248, 242));
-  final ink = img.ColorRgb8(30, 30, 30);
-  img.drawString(im, 'GASTHAUS AM FLUSS', font: img.arial24, x: 170, y: 120, color: ink);
-  img.drawString(im, 'Tisch 7', font: img.arial24, x: 250, y: 170, color: ink);
-  final boxes = <NBox>[];
-  for (var i = 0; i < _lines.length; i++) {
-    final y = top + i * step;
-    img.drawString(im, _lines[i].$1, font: img.arial24, x: 40, y: y, color: ink);
-    if (_lines[i].$2.isNotEmpty) img.drawString(im, _lines[i].$2, font: img.arial24, x: 470, y: y, color: ink);
-    boxes.add(NBox(30 / w, (y - 12) / h, 570 / w, (y + 36) / h));
-  }
-  final ys = top + _lines.length * step + 40;
-  img.drawString(im, 'SUMME EUR 39,60', font: img.arial24, x: 300, y: ys, color: ink);
-  final f = File('${dir.path}/bon.png')..writeAsBytesSync(img.encodePng(im));
-  return (f.path, boxes);
-}
 
 Bill _bill(String path, List<NBox> bx, {bool assigned = true}) {
   final b = Bill(
@@ -187,6 +162,10 @@ void main() {
     // group page with the walk receipt (Lissabon, Chris paid, Angi owes 10,00): Personen, settle as paid – whole and a part (06.11.)
     for (final k in ['h07-gruppe-offen', 'h08-personen', 'h08b-bezahlt-frage', 'h08d-teilbetrag', 'h08e-rest-offen'])
       k: (_) => Builder(builder: (c) => GroupScreen(name: 'Lissabon', queue: ScanQueue.current ?? ScanQueue(StoreScope.read(c)))),
+    // scanning (07.11.): the choice sheet of the plus, the reading page with its progress, the failure page; same steps in the browser (scan walk of screens.js)
+    'sc01-neuer-bon': (_) => const HomeScreen(),
+    'sc02-liest': (b) => ScanScreen(photo: File(b.imagePath!).readAsBytesSync(), events: StreamController<ScanEvent>().stream),
+    'sc03-fehler': (b) => ScanScreen(photo: File(b.imagePath!).readAsBytesSync(), events: Stream.fromIterable([ScanError('Test: nichts gelesen')])),
     'b08-person-lang': (b) => ReviewScreen(bill: b),
     'b10-bon-ansicht': (b) => ReceiptScreen(bill: b),
     'b11-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
@@ -244,6 +223,10 @@ void main() {
       await t.tap(find.widgetWithText(FilledButton, 'Bezahlt'));
       await _frames(t, 14);
     },
+    'sc01-neuer-bon': (t) async {
+      await t.tap(find.byIcon(Icons.add_rounded));
+      await _frames(t);
+    },
     'b07-pruefen': (t) async {
       await t.tap(find.byIcon(Icons.fact_check_outlined));
       await t.pump(const Duration(milliseconds: 500));
@@ -275,11 +258,11 @@ void main() {
           tester.platformDispatcher.localesTestValue = [Platform.environment['FASAN_LANG'] == 'en' ? const Locale('en', 'US') : const Locale('de', 'DE')];
           addTearDown(tester.platformDispatcher.clearLocalesTestValue);
           final dir = Directory(out!)..createSync(recursive: true);
-          final (path, bx) = await tester.runAsync(() async => _receipt(dir)) ?? ('', <NBox>[]);
+          final (path, bx) = await tester.runAsync(() async => syntheticReceipt(dir)) ?? ('', <NBox>[]);
           Bill bill;
-          if (e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j')) {
+          if (e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j') || e.key.startsWith('sc')) {
             // variants only for the screens that are also walked in the browser with DARK=1 / LAND=1
-            if ((dark || land) && !(const ['b01-bon', 'b10-bon-ansicht', 'b15b-ergebnis'].contains(e.key) || (dark && e.key == 'b04-posten-blatt'))) return;
+            if ((dark || land) && !(const ['b01-bon', 'b10-bon-ansicht', 'b15b-ergebnis', 'sc01-neuer-bon', 'sc02-liest'].contains(e.key) || (dark && e.key == 'b04-posten-blatt'))) return;
             bill = _walkBill(dir);
             _pushBill = bill;
             await tester.runAsync(() => fillSnippets(bill, File(bill.imagePath!).readAsBytesSync()));
@@ -293,15 +276,16 @@ void main() {
             bill = _bill(path, bx, assigned: !e.key.startsWith('4a'));
           }
           // group screens need the walk receipt in the store (done, so it counts in the balance)
-          final store = BillStore.memory([_bill(path, bx)..payer = 1, if (e.key.startsWith('h07') || e.key.startsWith('h08')) bill..done = true])
+          // the browser starts empty: so does the start page of the scan walk
+          final store = BillStore.memory([if (e.key != 'sc01-neuer-bon') _bill(path, bx)..payer = 1, if (e.key.startsWith('h07') || e.key.startsWith('h08')) bill..done = true])
             ..onboarded = true
             ..me = 'Angi';
           // the walk screens show the look of the default (PerfMode.light: no blur, no grain, no moving background), like the browser
           var look = FasanSettings(reduceMotion: e.key.startsWith('b01p') ? false : true, themeMode: dark ? FasanThemeMode.dark : FasanThemeMode.light);
           // like main(): glass without grain is the standard look
-          if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j'))) look = look.copyWith(style: FasanStyle.fullGlass, effects: look.effects.copyWith(grain: 0));
+          if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j') || e.key.startsWith('sc'))) look = look.copyWith(style: FasanStyle.fullGlass, effects: look.effects.copyWith(grain: 0));
           final ctl = SplitController(settings: look);
-          if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j'))) ctl.tier = PerfTier.slow;
+          if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j') || e.key.startsWith('sc'))) ctl.tier = PerfTier.slow;
           final key = GlobalKey();
           await tester.pumpWidget(RepaintBoundary(key: key, child: SplitApp(store: store, ui: ctl, home: e.value(bill))));
           // Bon-Foto und Shader laden echt asynchron; danach ein paar Bilder ohne Dauer-Animation.
@@ -317,7 +301,7 @@ void main() {
           expect(tester.takeException(), isNull);
           await tester.runAsync(() async {
             final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-            final image = await boundary.toImage(pixelRatio: (e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j')) ? 2.0 : 1.25);
+            final image = await boundary.toImage(pixelRatio: (e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j') || e.key.startsWith('sc')) ? 2.0 : 1.25);
             final png = await image.toByteData(format: ui.ImageByteFormat.png);
             File('${dir.path}/$tag-${e.key}.png').writeAsBytesSync(png!.buffer.asUint8List());
           });
