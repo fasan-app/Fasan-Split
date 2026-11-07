@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:fasan_core/bill.dart';
+import 'package:image/image.dart' as im;
 
 /// Fills [BillItem.snippet] for items that have boxes but no picture yet. Returns width/height of the scan (or null).
 Future<double?> fillSnippets(Bill b, Uint8List scan) async {
@@ -34,10 +35,15 @@ Future<double?> fillSnippets(Bill b, Uint8List scan) async {
           ui.Paint()..filterQuality = ui.FilterQuality.medium);
       final pic = rec.endRecording();
       final out = await pic.toImage(ow, oh);
-      final png = await out.toByteData(format: ui.ImageByteFormat.png);
+      // Raw pixels and our own PNG, not toByteData(format: png): the WebAssembly renderer (skwasm, Flutter 3.47.7) returned a PNG
+      // of the whole window size (786 × 1746) with the crop tiny in the top left corner (07.11., browser build with --wasm).
+      // The crop is small (≤ 56 px high), encoding it in Dart costs next to nothing and is the same in every renderer.
+      final raw = await out.toByteData(format: ui.ImageByteFormat.rawStraightRgba);
       out.dispose();
       pic.dispose();
-      if (png != null) it.snippet = png.buffer.asUint8List();
+      if (raw != null) {
+        it.snippet = im.encodePng(im.Image.fromBytes(width: ow, height: oh, bytes: raw.buffer, numChannels: 4, order: im.ChannelOrder.rgba));
+      }
     }
     return w / h;
   } finally {

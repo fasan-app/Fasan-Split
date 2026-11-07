@@ -9,12 +9,14 @@ const variant = { locale: process.env.LANG_TAG || 'de-DE', colorScheme: process.
 (async () => {
   const b = await chromium.launch();
   const errs = [];
+  let phase = 'start';
   const open = async () => {
     const ctx = await b.newContext(variant);
     await ctx.addInitScript(() => localStorage.setItem('flutter.split.settings', JSON.stringify(JSON.stringify({ me: 'Angi' }))));
     await ctx.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, r => r.abort()); // nothing to foreign services (Beschluss 02.11.)
     const p = await ctx.newPage();
-    p.on('pageerror', e => { errs.push(String(e).slice(0, 200)); console.log('PAGEERROR', String(e)); });
+    p.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') console.log('CONSOLE', phase, m.type(), m.text().slice(0, 400)); });
+    p.on('pageerror', e => { errs.push(String(e).slice(0, 200)); console.log('PAGEERROR', phase, String(e), String(e.stack || '').slice(0, 600)); });
     await p.goto(base + '/Fasan-Split/');
     await p.waitForTimeout(15000); // first visit: coi-serviceworker reloads once
     await p.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click());
@@ -31,8 +33,9 @@ const variant = { locale: process.env.LANG_TAG || 'de-DE', colorScheme: process.
   };
   const res = {};
   try {
-    const p = await open();
-    await pick(p, good, true);
+    phase = 'open-good'; const p = await open();
+    phase = 'pick-good'; await pick(p, good, true);
+    phase = 'reading-good';
     await p.waitForTimeout(3000);
     await p.screenshot({ path: `${dir}/screen-sc02-liest.png` });
     for (let i = 0; i < 300 && (await p.getByText(/Summe|Total/).count()) === 0; i++) await p.waitForTimeout(1000);
@@ -46,8 +49,9 @@ const variant = { locale: process.env.LANG_TAG || 'de-DE', colorScheme: process.
     res.missing = want.filter(w => !snap.includes(w));
     res.good = res.missing.length === 0;
     if (bad) {
-      const q = await open();
-      await pick(q, bad, false);
+      phase = 'open-bad'; const q = await open();
+      phase = 'pick-bad'; await pick(q, bad, false);
+      phase = 'reading-bad';
       for (let i = 0; i < 120 && (await q.getByText(/ließ sich nicht lesen|could not be read/).count()) === 0; i++) await q.waitForTimeout(1000);
       await q.waitForTimeout(800);
       await q.screenshot({ path: `${dir}/screen-sc03-fehler.png` });

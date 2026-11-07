@@ -140,7 +140,8 @@ ScanResultData decodeRecognition(Map m, Uint8List Function(Object?) unwrap) {
     total: m['total'] as int?,
     checked: m['checked'] as bool,
     contradiction: m['contradiction'] as bool,
-    photoQuad: (m['photoQuad'] as List?)?.cast<double>(),
+    // toDouble per element: jsonDecode gives int for 0 / 1, and cast<double> on ints throws later in the WebAssembly build (dart2wasm keeps int and double apart)
+    photoQuad: [for (final v in (m['photoQuad'] as List?) ?? const []) (v as num).toDouble()],
     photoAspect: (m['photoAspect'] as num?)?.toDouble(),
     display: unwrap(m['display']),
     width: m['width'] as int,
