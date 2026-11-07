@@ -583,6 +583,11 @@ Coles (Namen eine Zeile verschoben), „Qty 20“ (@ als 0 gelesen) in Stufe B p
 gedruckt). Zur Wahl der Bons: 240 weitere Openverse-Fotos gesichtet, 33 brauchbar übernommen; weitere Quellen (Wikimedia, wenn die
 Drosselung endet) für Ziel ~100.
 
+**Stand 07.11. (B, CI-Tor 42318963559 grün):** Weltkorpus 27/72 ganz richtig, 4 falsch als geprüft (vorher 25 / 8). Behobene Klassen (je mit Test): Rechen-Zufall statt
+Summenwort (b3-143), Netto-/Zwischensumme mit größerer Summe darunter (b1-092 IVA, b2-001), ungedruckte Rundung auf ganze Einheit, Namensabstimmung durch verschobene
+Durchläufe (b2-084) und Nachbarnamen (b3-013), „2 140.00 280.00“ = Menge × Preis, „n% off“ = Rabatt (b1-087), Artikelnummern 5–14 Ziffern, Pfand-Kette, „5 24“ ohne Punkt,
+Front-Menge nur wenn sie den Betrag teilt. Offen: Bestwerte in `korpus-min.json` anheben (privat, B nur lesend), b1-002/b1-006/b1-092/b2-031.
+
 ### Erkennungs-Tor in der CI – Probelauf 06.11. ~11:47
 Workflow `tor-zweig.yml` (nur Arbeitszweig, keine Veröffentlichung). Ergebnis: Geheimnis `FASAN_DIAGNOSE_TOKEN` ist gesetzt, aber der
 Klon von `fasan-diagnose` scheitert mit „Bad credentials“ → Schlüssel falsch kopiert, noch nicht freigegeben (pending) oder falscher

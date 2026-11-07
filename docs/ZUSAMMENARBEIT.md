@@ -34,15 +34,21 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 | Kürzel | Paket | Zweig | Dateien/Bereiche | seit |
 |---|---|---|---|---|
 | B (Teilbetrag erledigt 00:40) | **A's offenen Rest abschließen** (Nutzer 06.11. 23:48: „wichtiger als die Erkennung“): Teilzahlung/Ausgleich nach „Fertig heißt“ (App + Browser ansehen), Scan-Vergleich App/Browser, CI-Wackler-Nachweis, danach weiter nach A's Reihenfolge | `mitarbeit/B-a-rest` (von `mitarbeit/erkennung-und-ein-bildschirm`) | `app/lib/ui/groups.dart`, `test/record_payment_test.dart`, `test/screens_test.dart`, `tool/e2e/screens.js` (A pausiert; vor Rückkehr hier melden) | 06.11. 23:55 |
-| B (pausiert) | Erkennung: 8 Welt-Bons „falsch als geprüft“, Hangul, Aldi (Durchschein), SROIE/CORD-Gegenprobe, Pfand/Rabatt-Hinweise strukturiert statt Text | `mitarbeit/B-erkennung` (von `mitarbeit/erkennung-und-ein-bildschirm` 6b65cc3/86b95b8) | `app/packages/fasan_reader/**`, `app/lib/recognition/**`, `app/test/{gate,e2e,reader,name_vote,snapshot,world_reader,sroie,ocr_dump}*_test.dart`, `app/test/support/ocr_cache.dart`, `app/tool/korpus/**`; für die Pfand/Rabatt-Hinweise kurz auch `fasan_core` (`BillItem`, nur neues Feld) und die eine Anzeigestelle – vorher hier melden | 06.11. 23:50 |
+| B (erledigt 07.11., Rest offen) | Erkennung: 8 Welt-Bons „falsch als geprüft“, Hangul, Aldi (Durchschein), SROIE/CORD-Gegenprobe, Pfand/Rabatt-Hinweise strukturiert statt Text | `mitarbeit/B-erkennung` (von `mitarbeit/erkennung-und-ein-bildschirm` 6b65cc3/86b95b8) | `app/packages/fasan_reader/**`, `app/lib/recognition/**`, `app/test/{gate,e2e,reader,name_vote,snapshot,world_reader,sroie,ocr_dump}*_test.dart`, `app/test/support/ocr_cache.dart`, `app/tool/korpus/**`; für die Pfand/Rabatt-Hinweise kurz auch `fasan_core` (`BillItem`, nur neues Feld) und die eine Anzeigestelle – vorher hier melden | 06.11. 23:50 |
 
 ## Erledigt (neueste oben)
 
+- 07.11., B: Erkennung (siehe Protokoll 02:30): Welt 27/72, falsch geprüft 8→4, Tor grün; Teilbetrag fertig (App + Browser angesehen). Nachweise im Protokoll.
 - 06.11. nachts, A: Neuaufbau Schritte 2–6 (Pakete `fasan_core`, `fasan_reader`, Schichten + Wächter, 602 Texte in Tabellen), Bildschirmvergleich
   App/Browser (6 Funde behoben), Rückgängig/Wiederholen, Festbetrag, exakter Ausgleich, „bezahlt“ inkl. Teilbetrag. Volles Tor grün (341 Tests,
   Web-Build, Foto-Ende-zu-Ende, Erkennung 132 Bons/0 Fehler, Korpus gleich). Einzelheiten: `STAND.md`, `docs/ARCHITEKTUR.md`.
 
 ## Protokoll (laufend, neueste oben; je Eintrag: Zeit, Kürzel, getan, als Nächstes)
+
+- 07.11. 02:30 (Berlin), B: **Erkennung zusammengeführt** (678b6fc in `mitarbeit/erkennung-und-ein-bildschirm`). Nachweis: CI-Tor 42318963559 grün – Stufe A 132 Bons/0 Fehler/
+  1 bekannt (Aldi), Weltkorpus **27/72** ganz richtig (Bestwert 25), **4 falsch als geprüft** (vorher 8), Hangul 1/5 unverändert, kein Bon schlechter; lokal analyze ohne
+  Befund, 359 Tests grün. **Offen:** Bestwerte in `fasan-diagnose/tests/korpus-min.json` auf 27/4 anheben (B hat dort nur Leserecht → A oder Nutzer); restliche 4 „falsch geprüft“
+  (b1-002 KRW, b1-006 Stromrechnung, b1-092 Menge/OCR, b2-031 Coles). **Als Nächstes (Rangfolge Nutzer):** 1. Web = App komplett (zuerst A's offener Scan-Vergleich), 2. Leistung.
 
 - 07.11. 02:40, B: Erkennung f35c75d (`mitarbeit/B-erkennung`): zusätzlich „n% off“ = Rabatt (b1-087 jetzt ganz richtig), Artikelnummern 5–14 Ziffern, Pfand-Kette (Target),
   „5 24“ ohne Punkt, Front-Menge nur wenn sie den Betrag teilt, Nachbarname zählt nicht als Stimme; je Regel ein Test, der ohne sie scheitert. An b1-087/b3-013/b2-084/
