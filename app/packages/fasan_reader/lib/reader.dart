@@ -459,6 +459,8 @@ bool _fuzzyTotal(String n) {
 // „1.000ea @ $ 4.99/ea“ (Colonial, Australien; Weltkorpus 06.11.): „ea/each/pce/kpl“ are units like „kg“, else „1.000ea“ became the name
 final _qtyWordStart = RegExp(r'^\W*(?:qty|quantity|anz|menge|qtd|cant)\b', caseSensitive: false);
 final _qtyBeforePrice = RegExp(r'\s(\d{1,2})\s+(?:[$€£]\s?)?$');
+// quantity and unit price read as one grouped amount: „2 140.00“ → 2 × 140.00 (only used when it gives the line total)
+final _qtySpaceUnit = RegExp(r'^(\d{1,2}) (\d{3}[.,]\d{2})$');
 final _totalForItems = RegExp(r'\btotal\s+(?:for|of)\s+\d{1,3}\s+items?\b');
 final _qtyFront = RegExp(r'^\s*(\d{1,3}(?:[.,]\d{1,3})?)\s*(?:x|×|\*|stk\.?|st\.?|pcs\.?|pc\.?|pce|un\.?|uni|und\.?|pz\.?|kg|l|ea|each|kpl|items?|item\(s\))?\s*[x×*]?\s+', caseSensitive: false);
 
@@ -1031,6 +1033,21 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
       }
       // quantity column before the unit price: „EDE MICRO 3 KESKIKO 2 3,50 7,00“ (Finnland, Määrä/A-hinta/Summa; Weltkorpus
       // 06.11.). Only when quantity × unit price gives the line total exactly.
+      // „RED BULL 2 140.00 280.00“ (India, Qty/Rate/Amount; Weltkorpus b2-001 07.11.): the amount pattern allows a space as thousands
+      // separator, so „2 140.00“ was read as 2 140.00 and the quantity was lost. When quantity × the rest gives the line total exactly,
+      // the space separates the quantity column, not thousands.
+      if (menge == null) {
+        final sp = _qtySpaceUnit.firstMatch(jsSlice(z.text, e0.start, e0.end));
+        if (sp != null) {
+          final q = jsInt(sp[1]!);
+          final u = jsRound(jsParseFloat(sp[2]!.replaceFirst(',', '.')) * 100);
+          if (q >= 2 && u > 0 && (u * q - r.last!.v).abs() <= 1) {
+            menge = q;
+            einzel = u;
+            e0.v = e0.neg ? -u : u;
+          }
+        }
+      }
       if (menge == null) {
         final qb = _qtyBeforePrice.firstMatch(jsSlice(z.text, 0, e0.start));
         final q = qb != null ? jsInt(qb[1]!) : 0;
