@@ -405,7 +405,7 @@ abstract final class Kw {
   static final steuerTabelle = RegExp(r'\b(gst|tax|vat|mwst|iva|tva|sst|ust)\s*(summary|susmary|summ?ary|analysis|breakdown|code)\b|steuer\s*(ubersicht|aufstellung)|resumo (do )?iva|riepilogo iva|desglose iva');
   static final zahlung = RegExp(r'\b(bar|gegeben|kartenzahlung|karte|ec|ec-cash|girocard|kreditkarte|visa|mastercard|maestro|amex|vpay|paypal|apple pay|google pay|cash|card|tendered|entregue|valor entregue|pago|pagamento|efectivo|tarjeta|especes|carte|cb|contanti|carta|bancomat|pin|contant|kaart|pinnen|multibanco|mb way|dinheiro|numerario|cartao|kontaktlos|contactless|bezahlt|paid)\b');
   static final rueck = RegExp(r'\b(ruckgeld|wechselgeld|change|cambio|vuelto|rendu|resto|troco|wisselgeld)\b');
-  static final rabatt = RegExp(r'\b(rabatt|nachlass|coupon|gutschein|discount|desconto|descuento|sconto|remise|reduction|korting|preisvorteil|sofortrabatt|ersparnis|sie sparen|you save|reduziert|mhd|aktion|promo|promocao|oferta)\b');
+  static final rabatt = RegExp(r'\b(rabatt|nachlass|coupon|gutschein|discount|desconto|descuento|sconto|remise|reduction|korting|preisvorteil|sofortrabatt|ersparnis|sie sparen|you save|reduziert|mhd|aktion|promo|promocao|oferta)\b|\d ?% ?off\b');
   static final leergut = RegExp(r'\b(leergut|leergutbon|pfandbon|pfandruckgabe|pfand-?ruckgabe|pfandgutschrift|bottle return|statiegeld retour|retorno de vasilhame|devolucao de tara)\b');
   static final storno = RegExp(r'\b(storno|storniert|stornierung|void|voided|anulad[oa]|anulacao|anulacion|annullat[oa]|annulation|annule|cancelled|canceled|cancelado|ruckbuchung|correcao)\b');
   static final kaution = RegExp(r'\b(kaution|caucao|fianza|cauzione|security deposit|damage deposit|deposito de garantia|deposito caucao)\b');
@@ -460,6 +460,7 @@ bool _fuzzyTotal(String n) {
 final _qtyWordStart = RegExp(r'^\W*(?:qty|quantity|anz|menge|qtd|cant)\b', caseSensitive: false);
 final _qtyBeforePrice = RegExp(r'\s(\d{1,2})\s+(?:[$€£]\s?)?$');
 // quantity and unit price read as one grouped amount: „2 140.00“ → 2 × 140.00 (only used when it gives the line total)
+final _pctOff = RegExp(r'\d ?% ?off\b');
 final _qtySpaceUnit = RegExp(r'^(\d{1,2}) (\d{3}[.,]\d{2})$');
 final _totalForItems = RegExp(r'\btotal\s+(?:for|of)\s+\d{1,3}\s+items?\b');
 final _qtyFront = RegExp(r'^\s*(\d{1,3}(?:[.,]\d{1,3})?)\s*(?:x|×|\*|stk\.?|st\.?|pcs\.?|pc\.?|pce|un\.?|uni|und\.?|pz\.?|kg|l|ea|each|kpl|items?|item\(s\))?\s*[x×*]?\s+', caseSensitive: false);
@@ -598,8 +599,16 @@ List<String> nameAlternatives(String n) {
 }
 
 /// Item name from the text left of the amount [nameAus].
-// article number in front of the name (Aldi/Lidl: „814998 Bio Spaghetti“): five to eight digits, then letters
-final _articleNo = RegExp(r'^\s*\d{5,8}\s+(?=[A-Za-zÀ-ÿ])');
+// article number in front of the name: Aldi/Lidl „814998 Bio Spaghetti“ (5–8 digits), Woolworths UK „000001803 SPOCKLEY“, Target
+// „052080250 CGIRL LIPSTK“ (9), EAN (13). Long numbers may carry one OCR slip („0520B0250“, Weltkorpus b3-013 07.11.).
+final _articleNoRe = RegExp(r'^\s*([0-9OBIlSZ]{5,14})\s+(?=[A-Za-zÀ-ÿ])');
+String _dropArticleNo(String t) {
+  final m = _articleNoRe.firstMatch(t);
+  if (m == null) return t;
+  final g = m[1]!, letters = g.replaceAll(RegExp(r'\d'), '').length;
+  final ok = letters == 0 || (letters == 1 && g.length >= 8);
+  return ok ? t.substring(m.end) : t;
+}
 
 // Portuguese „c/ Nata“, „s/ Gelo“ (com/sem): part of the name, not a tax code (else „Croissant c/ N“ became „Croissant c“)
 final _withWithout = RegExp(r'\s([cCsS])/\s*([A-Za-zÀ-ÿ]{1,14})\.?\s*$');
@@ -624,8 +633,7 @@ String nameFrom(String t) {
     final head = nameFrom(t.replaceAll(_n3, '').replaceFirst(_n3x, '').trimRight().substring(0, ww.start));
     if (head.isNotEmpty) return jsSlice('$head ${ww[1]!.toLowerCase()}/ ${ww[2]}', 0, 40);
   }
-  final s = t
-      .replaceFirst(_articleNo, '')
+  final s = _dropArticleNo(t)
       .replaceFirst(_qtyFront, '')
       .replaceFirst(_n2, '')
       .replaceAll(_n3, '')
@@ -968,6 +976,10 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
       art = 'sonst'; // city tax is an item, not VAT
     } else if (Kw.service.hasMatch(n)) {
       art = 'service';
+    } else if (_pctOff.hasMatch(n)) {
+      // „50% Off Today -2.50“ under each article (Woolworths UK, Weltkorpus b1-087 07.11.): a line starting with a percentage is a
+      // tax line, except „n % off“ – that is a discount and belongs to the article above
+      art = 'rabatt';
     } else if ((Kw.steuer.hasMatch(n) || _pctStart.hasMatch(n)) && !_weightDetail.hasMatch(jsSlice(z.text, 0, bt.isNotEmpty ? bt.last.start : z.text.length))) {
       // („0.482 kg NET @ $4.50/kg 2.17“ is a weighed article, „NET“ there is no net-of-tax line)
       art = 'steuer';

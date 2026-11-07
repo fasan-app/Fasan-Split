@@ -43,4 +43,19 @@ void main() {
     expect([for (final p in r.items) p.amount], [114000, 214000]);
     expect(r.items.every((p) => p.qty == 1), isTrue);
   });
+
+  test('„50% Off Today -2.50“ ist Rabatt am Artikel darüber, nicht Steuer (Weltkorpus b1-087)', () {
+    final r = readGeneral(L(['000001803 SPOCKLEY 5.00', '50% Off Today -2.50', '000021013 MR BUMP PRESENTS: 12.75', '50% Off Today -6.38', 'Subtotal 8.87', 'Total 8.87']), null, null);
+    expect([for (final p in r.items) (p.name, p.amount - p.extras.fold<int>(0, (a, z) => a + z.amount))], [('SPOCKLEY', 500), ('MR BUMP PRESENTS', 1275)]);
+    expect([for (final p in r.items) p.extras.map((z) => z.amount).toList()], [[-250], [-638]]);
+    expect(r.check.ok, isTrue);
+  });
+
+  test('Artikelnummer vorn: 5–14 Ziffern, in langen Nummern ein Verleser; Wörter bleiben', () {
+    expect(nameFrom('000001803 SPOCKLEY'), 'SPOCKLEY');
+    expect(nameFrom('0520B0250 CGIRL LIPSTK'), 'CGIRL LIPSTK');
+    expect(nameFrom('4006381333931 Edding 3000'), 'Edding 3000');
+    expect(nameFrom('814998 Bio Spaghetti'), 'Bio Spaghetti');
+    expect(nameFrom('12B45 Bio'), '12B45 Bio', reason: 'kurze Nummer mit Buchstabe ist keine Artikelnummer');
+  });
 }
