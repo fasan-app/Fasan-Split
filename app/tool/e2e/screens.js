@@ -73,7 +73,11 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     // every screen of the main flow, one screenshot each (compared with test/screens_test.dart, same bill); a step that fails is
     // noted and the walk goes on, so one missing control does not hide the rest
     const steps = [];
-    const step = async (name, fn) => { try { await fn(); await p.waitForTimeout(1200); await shot(name); steps.push(name); } catch (e) { steps.push('FEHLT ' + name + ': ' + String(e).slice(0, 100)); await shot('fehlt-' + name); try { fs.writeFileSync(dir + '/aria-' + name + '.txt', await p.locator('body').ariaSnapshot({ timeout: 8000 })); } catch (_) {} } };
+    // frame times of every step (action + 1.2 s settling, before the screenshot): worst frame and frames over 50 ms (Prüfliste G2/G6)
+    result.perf = {};
+    const rec = () => p.evaluate(() => { window.__r = []; let last = performance.now(); window.__rs = false; (function f(t) { window.__r.push(t - last); last = t; if (!window.__rs) requestAnimationFrame(f); })(last); });
+    const recEnd = async name => { const d = await p.evaluate(() => { window.__rs = true; return window.__r; }), q = [...d].sort((a, c) => a - c); result.perf[name] = { n: d.length, p50: Math.round(q[Math.floor(q.length / 2)] || 0), max: Math.round(q[q.length - 1] || 0), slow: d.filter(x => x > 50).length }; };
+    const step = async (name, fn) => { try { await rec(); await fn(); await p.waitForTimeout(1200); await recEnd(name); await shot(name); steps.push(name); } catch (e) { await recEnd(name).catch(() => {}); steps.push('FEHLT ' + name + ': ' + String(e).slice(0, 100)); await shot('fehlt-' + name); try { fs.writeFileSync(dir + '/aria-' + name + '.txt', await p.locator('body').ariaSnapshot({ timeout: 8000 })); } catch (_) {} } };
     // a real long press: pointer down, hold, up at the centre of the element (click({delay}) is taken as a tap by the semantics layer)
     const hold = async (loc, ms = 900, noSemantics = false) => { const bb = await loc.boundingBox(); if (noSemantics) await p.evaluate(() => document.querySelector('flt-semantics-host')?.remove()); const x = bb.x + bb.width / 2, y = bb.y + bb.height / 2; await p.mouse.move(x, y); await p.mouse.down(); await p.waitForTimeout(ms); await p.mouse.up(); };
     const back = async () => { await p.getByRole('button', { name: /Zurück|Back/ }).first().click({ timeout: 8000 }).catch(() => {}); await p.waitForTimeout(800); };

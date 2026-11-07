@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
     XFile? f;
     try {
       // full resolution like the web app (it reads the whole photo); cap at 4000 px against memory spikes
-      f = await ImagePicker().pickImage(source: src, maxWidth: 4000, maxHeight: 4000, imageQuality: 95);
+      f = await ImagePicker().pickImage(source: src, maxWidth: photoMaxSide, maxHeight: photoMaxSide, imageQuality: photoQuality);
     } catch (_) {
       f = null;
     }
@@ -148,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final nav = Navigator.of(context), msg = ScaffoldMessenger.of(context), t = S.of(context), q = queue;
     List<XFile> files;
     try {
-      files = await ImagePicker().pickMultiImage(maxWidth: 4000, maxHeight: 4000, imageQuality: 95);
+      files = await ImagePicker().pickMultiImage(maxWidth: photoMaxSide, maxHeight: photoMaxSide, imageQuality: photoQuality);
     } catch (_) {
       files = const [];
     }

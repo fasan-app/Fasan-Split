@@ -91,3 +91,9 @@ bool needsHomeScreenHint() {
   final standalone = web.window.matchMedia('(display-mode: standalone)').matches;
   return ios && !standalone;
 }
+
+/// Browser: no limits. image_picker_for_web re-encodes every photo whenever a limit or a quality is given (image_resizer.dart:
+/// load into an <img>, draw on a canvas, toBlob on the main thread) – measured 07.11. for a 12 MP photo: a ~0.4–0.5 s freeze
+/// (long task) and a lossy copy. The recognition worker reads the photo as it is (docs/WEB-GRENZEN.md, „Foto-Größe“).
+double? get photoMaxSide => null;
+int? get photoQuality => null;
