@@ -44,6 +44,11 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 
 ## Protokoll (laufend, neueste oben; je Eintrag: Zeit, Kürzel, getan, als Nächstes)
 
+- 07.11. 01:40, B: CI-Tor 42313737557 für 10a037a: Stufe A grün, Welt „falsch als geprüft“ 8→7 (b3-143 behoben), aber **ganz richtig 25→24** (b2-084: falscher Name durch
+  Namensabstimmung) → Ursache behoben (verschobene Durchläufe stimmen nicht mit, Test). Neu: „2 140.00 280.00“ = Menge × Einzelpreis (b2-001, Test). CI-Tor läuft erneut.
+  Verbleibende „falsch geprüft“: b1-002 (KRW, Zahlungszeile als Posten), b1-006 (Stromrechnung), b1-087 („50% Off Today“ nicht am Artikel), b1-092 (Menge COLACAO, OCR „@AA“),
+  b2-031 (Coles, Namen eine Zeile versetzt), b3-013 (Pfand). **Als Nächstes:** CI-Ergebnis, dann diese Klassen einzeln.
+
 - 07.11. 00:40, B: Teilbetrag **zusammengeführt** in `mitarbeit/erkennung-und-ein-bildschirm` (a39f196) nach schnellem Tor: analyze ohne Befund, 355 Tests grün
   (137 übersprungen), `e2e_test` mit ONNX PNG 11/11, JPG 30/30, Posten 247/247; Varianten-Stresstest (bis 4 h) nicht gelaufen (gehört nicht ins schnelle Tor, Erkennung
   unberührt). Erkennung 10a037a (neu aufgesetzt auf a39f196) → **CI-Tor läuft** (Tor-Zweig 42313737557). **Als Nächstes:** Ergebnis auswerten, Fehlerklassen
