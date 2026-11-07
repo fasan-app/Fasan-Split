@@ -44,6 +44,12 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 
 ## Protokoll (laufend, neueste oben; je Eintrag: Zeit, Kürzel, getan, als Nächstes)
 
+- 07.11. 02:40, B: Erkennung f35c75d (`mitarbeit/B-erkennung`): zusätzlich „n% off“ = Rabatt (b1-087 jetzt ganz richtig), Artikelnummern 5–14 Ziffern, Pfand-Kette (Target),
+  „5 24“ ohne Punkt, Front-Menge nur wenn sie den Betrag teilt, Nachbarname zählt nicht als Stimme; je Regel ein Test, der ohne sie scheitert. An b1-087/b3-013/b2-084/
+  b1-092/b2-001/b3-143 mit `ocr_dump` angesehen. **CI-Tor läuft** (42318963559) – erst sein Ergebnis zählt. Offen in dieser Klasse: b1-002 (KRW), b1-006 (Strom), b2-031 (Coles),
+  b1-092 Menge „@AA“ (OCR). **Als Nächstes:** CI auswerten; bei grün `korpus-min.json` (privat, nur lesend für B → Bestwert-Anhebung braucht A/Nutzer oder Schreibrecht) und
+  Zusammenführen; dann Rangfolge 1. Web = App, 2. Leistung.
+
 - 07.11. 01:40, B: CI-Tor 42313737557 für 10a037a: Stufe A grün, Welt „falsch als geprüft“ 8→7 (b3-143 behoben), aber **ganz richtig 25→24** (b2-084: falscher Name durch
   Namensabstimmung) → Ursache behoben (verschobene Durchläufe stimmen nicht mit, Test). Neu: „2 140.00 280.00“ = Menge × Einzelpreis (b2-001, Test). CI-Tor läuft erneut.
   Verbleibende „falsch geprüft“: b1-002 (KRW, Zahlungszeile als Posten), b1-006 (Stromrechnung), b1-087 („50% Off Today“ nicht am Artikel), b1-092 (Menge COLACAO, OCR „@AA“),
