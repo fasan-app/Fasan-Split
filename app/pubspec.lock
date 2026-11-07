@@ -196,11 +196,9 @@ packages:
   fasan_ui:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: df7b20f622eff25d5e28891d167fcffb08c90a56
-      url: "https://github.com/fasan-app/fasan_ui.git"
-    source: git
+      path: "../../fasan_ui"
+      relative: true
+    source: path
     version: "0.1.0"
   ffi:
     dependency: "direct main"

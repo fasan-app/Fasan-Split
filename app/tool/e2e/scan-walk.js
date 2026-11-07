@@ -39,7 +39,8 @@ const variant = { locale: process.env.LANG_TAG || 'de-DE', colorScheme: process.
     await p.waitForTimeout(1500);
     await p.screenshot({ path: `${dir}/screen-sc04-ergebnis.png` });
     // the invented receipt must come out right: name, quantity and amount of every item, and the total (not only the sums)
-    const snap = await p.locator('body').ariaSnapshot({ timeout: 10000 });
+    // Playwright 1.48 (CI) has no ariaSnapshot: read the labels of the semantics layer directly
+    const snap = await p.evaluate(() => [...document.querySelectorAll('flt-semantics')].map(e => (e.getAttribute('aria-label') || e.textContent || '').trim()).filter(Boolean).join('\n'));
     require('fs').writeFileSync(`${dir}/aria-sc04.txt`, snap);
     const want = ['Flammkuchen', '12,50', 'Apfelschorle', '4,20', 'Weizen', '5,40', 'Salat', '11,90', 'Espresso', '5,60', '39,60', 'Posten · 5', '2 ×'];
     res.missing = want.filter(w => !snap.includes(w));
