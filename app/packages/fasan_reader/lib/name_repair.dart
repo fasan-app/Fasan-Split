@@ -101,6 +101,21 @@ double wordLikeness(String name) {
 /// when the winner read none (1) and two other passes agree on more, it is taken (Ferreiras 06.11.: „z 23 e 6.00“ = 2 Coca cola).
 /// Names and amounts paired differently than in the winner: a name we also read comes with another amount more often than with ours
 /// (an extra or missing item above only moves the index, not the pairing, and does not count).
+/// Two name cores differ only by a reading slip: edit distance at most 20 % of the longer one (at least 1).
+bool _slip(String a, String b) {
+  final n = a.length > b.length ? a.length : b.length;
+  var prev = List<int>.generate(b.length + 1, (j) => j);
+  for (var i = 1; i <= a.length; i++) {
+    final cur = List<int>.filled(b.length + 1, 0)..[0] = i;
+    for (var j = 1; j <= b.length; j++) {
+      final x = prev[j] + 1, y = cur[j - 1] + 1, z = prev[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1);
+      cur[j] = x < y ? (x < z ? x : z) : (y < z ? y : z);
+    }
+    prev = cur;
+  }
+  return prev[b.length] <= (n * 0.2).round().clamp(1, n);
+}
+
 bool _shifted(List<Item> items, List<Item> o) {
   final mine = <String, Set<int>>{};
   for (final p in items) {
@@ -121,6 +136,9 @@ void voteNames(List<Item> items, List<List<Item>> others) {
   // amount with its neighbour's name; several such passes outvoted the right reading (Weltkorpus b2-084, 07.11.). It may not vote:
   // more of its names match our item one row up or down than the same row.
   others = [for (final o in others) if (!_shifted(items, o)) o];
+  // the names of our items: a vote that is the name of ANOTHER of our items is a local shift („HEINZ“ next to 3.69 where one line was
+  // missing in that pass; Target b3-013 07.11.) and does not count; the same name twice on the receipt is still fine
+  final cores = [for (final p in items) nameCore(p.name)];
   for (var i = 0; i < items.length; i++) {
     final p = items[i];
     final groups = <String, List<String>>{};
@@ -136,6 +154,8 @@ void voteNames(List<Item> items, List<List<Item>> others) {
       // same amount near the same place (a pass can have one item more or less above)
       for (final j in [i, i - 1, i + 1]) {
         if (j >= 0 && j < o.length && o[j].amount == p.amount) {
+          final c = nameCore(o[j].name);
+          if (c != cores[i] && c.length >= 2 && !_slip(c, cores[i]) && [for (var k = 0; k < cores.length; k++) if (k != i) cores[k]].contains(c)) break;
           add(o[j].name);
           qtys[o[j].qty] = (qtys[o[j].qty] ?? 0) + 1;
           break;

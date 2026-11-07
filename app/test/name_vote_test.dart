@@ -88,4 +88,15 @@ void main() {
     voteNames(slip, [extra, extra]);
     expect(slip[1].name, 'Shrimp Rice Rolls 1KG TTC');
   });
+
+  test('Name eines Nachbarpostens ist keine Stimme (örtlich verschoben, Target b3-013); gleicher Name zweimal bleibt', () {
+    List<Item> pass(List<(String, int)> x) => [for (final (n, a) in x) Item(name: n, amount: a)];
+    final w = pass([('HEINZ', 177), ('2CT L PAPER', 369), ('MAYB MASC', 524)]);
+    final local = pass([('HEINZ', 177), ('HEINZ', 369), ('2CT L PAPER', 524)]);
+    voteNames(w, [local, local, local]);
+    expect([for (final p in w) p.name], ['HEINZ', '2CT L PAPER', 'MAYB MASC']);
+    final twice = pass([('CGIRL LIPSTK', 687), ('CGIRL LIPSTIK', 488)]);
+    voteNames(twice, [pass([('CGIRL LIPSTK', 687), ('CGIRL LIPSTK', 488)]), pass([('CGIRL LIPSTK', 687), ('CGIRL LIPSTK', 488)])]);
+    expect(twice[1].name, 'CGIRL LIPSTK');
+  });
 }

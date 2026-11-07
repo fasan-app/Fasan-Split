@@ -517,8 +517,20 @@ List<Amount> amountsIn(String t, [String dec = ',']) {
     final neg = (g2 != null && g2.isNotEmpty) || (g4 != null && g4.isNotEmpty);
     out.add(Amount(neg ? -v : v, start, end, neg));
   }
+  // An item line whose decimal point was not printed or read: „MAYB MASC 5 24“ (Target, faint dot; Weltkorpus b3-013 07.11.). Only at
+  // the end of a line with a name and no other amount; the total check decides whether it holds (a wrong guess cannot be „checked“).
+  if (out.isEmpty) {
+    final s = _spaceDecimal.firstMatch(t);
+    if (s != null) {
+      final v = jsInt(s[1]!) * 100 + jsInt(s[2]!);
+      final a0 = s.start + 1; // after the space before the digits
+      if (v > 0) out.add(Amount(v, a0, a0 + s[1]!.length + 1 + s[2]!.length, false));
+    }
+  }
   return out;
 }
+
+final _spaceDecimal = RegExp(r'(?<=[A-Za-zÀ-ÿ]{3}[^\d]*)\s(\d{1,3}) (\d{2})\s*(?:[A-Z]{1,2}|\*)?\s*$');
 
 /// Other readings of an amount from second-best digits (only unsure digits, one change each) [alternativen].
 List<Vote> alternatives(Line z, Amount b) {
@@ -749,6 +761,11 @@ void _attachExtras(List<Item> items, List<_Info> info) {
       var m = p.line;
       for (final r in info) {
         if (r.type == 'teil' && r.item == idx && r.i > m) m = r.i;
+      }
+      // lines already attached (deposit after deposit): „SPRITE ZERO 3 @ 2.50“ with three „DEPOSIT 0.48“ below (Target, Weltkorpus
+      // b3-013 07.11.) – the third was 3 lines away from the article and stayed a loose item; the chain counts from the last one
+      for (final x in p.extras) {
+        if (x.line > m) m = x.line;
       }
       return m;
     }
@@ -1074,7 +1091,10 @@ ReadResult readGeneral(List<Line> lines, QrInfo? qr, ReceiptKind? kind) {
       }
     } else {
       final mv = _qtyLead.firstMatch(z.text);
-      if (mv != null && jsInt(mv[1]!) > 0) menge = jsInt(mv[1]!);
+      // A leading number is a quantity only if the line amount splits into whole cents per piece: „94 MAYB MASC 5.24“ (rest of a cut
+      // article number, Target, Weltkorpus b3-013 07.11.) became 94 pieces at 5.5745 each
+      final q = mv != null ? jsInt(mv[1]!) : 0;
+      if (q > 0 && (q == 1 || r.last == null || r.last!.v % q == 0)) menge = q;
     }
     r.qty = menge;
     r.unit = einzel;
