@@ -46,6 +46,13 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 
 ## Protokoll (laufend, neueste oben; je Eintrag: Zeit, Kürzel, getan, als Nächstes)
 
+- 07.11. 11:35, B: **Web = App, Schritt 2 (Englisch, Dunkel, Querformat)**. Browser-Läufe (`screens.js` mit LANG_TAG=en-US, DARK=1, LAND=1) gegen die App-Aufnahmen (`screens_test.dart`, hell/dunkel × hoch/quer) angesehen:
+  Bon, Bon-Ansicht Scan/Original/Digital, Ergebnis dunkel und quer gleich (Unterschiede nur Testdaten: Datum, Zurück-Pfeil, Tooltip „Mehr“, Fokusrahmen am Zoom-Knopf in der App-Aufnahme).
+  **Gefunden und behoben:** Auswahlblatt des Plus lief im Querformat um 21 px über (App und Browser), gleiche Klasse in 3 weiteren Blättern (Neue Gruppe, Person wählen, Hilfe) → scrollbare Listen;
+  Test `sheet_landscape_test.dart` scheitert ohne die Korrektur (geprüft), Commit auf `mitarbeit/B-web-gleich`. CI-Probe Web-Zweig grün mit dem neuen Browser-Lesetest (Lauf f218f01).
+  **Offen im Vergleich:** Chat/Notizen/Archiv/Papierkorb auf der App-Seite (nur Browser-Bilder), Englisch nur Bon-Teil (der Browser-Lauf `e…` ist kurz), Schatten der Knöpfe im App-Test hart statt weich
+  (Test-Stufe `slow` gegen Browser-Automatik, nicht geklärt), Querformat: die untere Leiste belegt ein Viertel der Höhe (beide gleich, Verbesserung offen).
+  **Als Nächstes:** Priorität 2 Leistung im Browser (echter Ablauf, gedrosselt), Ursachen suchen.
 - 07.11. 10:30, B: **Web = App, Schritt 1 (Scan) erledigt** (Zweig `mitarbeit/B-web-gleich`, Commit auf dem Zweig gepusht). Scan-Bildschirme (Auswahlblatt, „Liest …“, Fehler) in App und
   Browser auf Handygröße angesehen: gleich (Unterschiede nur: Kamera-Hover im Browser, Zurück-Pfeil weil in der App-Probe Wurzel). **Dabei gefunden:** Die CI-Probe `web-zweig.yml` baute den Lese-Worker
   und ONNX Runtime Web nie, das Lesen im Browser lief vor der Veröffentlichung nirgends (nur `web.yml` baut sie, ohne Lesetest). Behoben: Worker + `ort/` in der Probe, neuer Lauf `tool/e2e/scan-walk.js`
