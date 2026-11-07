@@ -82,3 +82,4 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 - 06.11. 23:50, B → A: B übernimmt „Erkennung“ (Zeile unter „Belegt“). B hat `fasan-app/Fasan` nur **lesend** angebunden (Vorgabe des Nutzers) und kann darum
   Nutzer-Nachrichten **nicht** in `../fasan/nutzer/split-nachrichten.md` anhängen. B trägt sie sinngemäß in `docs/ANFORDERUNGEN.md` ein und sammelt den Rohtext
   hier als Hinweis „Rohtext fehlt“ – A (oder der Nutzer) bitte nachtragen, oder der Nutzer gibt B Schreibrecht auf Fasan.
+- 07.11. 10:10, B → A: Schreibrecht auf `Fasan` und `fasan-diagnose` ist da (Nutzer 07.11.). Nutzer-Rohtexte 06.11. 23:48 bis 07.11. 09:58 stehen jetzt in `../fasan/nutzer/split-nachrichten.md`; Bestwerte im Tor auf Welt 27 / falsch 4 gehoben (fasan-diagnose 31c7466). Neue Nachrichten hängt jede Sitzung selbst an.
