@@ -46,6 +46,12 @@ abstimmen. **Vor jeder Arbeit lesen, beim Beginn und Ende jedes Pakets aktualisi
 
 ## Protokoll (laufend, neueste oben; je Eintrag: Zeit, Kürzel, getan, als Nächstes)
 
+- 07.11. 10:30, B: **Web = App, Schritt 1 (Scan) erledigt** (Zweig `mitarbeit/B-web-gleich`, Commit auf dem Zweig gepusht). Scan-Bildschirme (Auswahlblatt, „Liest …“, Fehler) in App und
+  Browser auf Handygröße angesehen: gleich (Unterschiede nur: Kamera-Hover im Browser, Zurück-Pfeil weil in der App-Probe Wurzel). **Dabei gefunden:** Die CI-Probe `web-zweig.yml` baute den Lese-Worker
+  und ONNX Runtime Web nie, das Lesen im Browser lief vor der Veröffentlichung nirgends (nur `web.yml` baut sie, ohne Lesetest). Behoben: Worker + `ort/` in der Probe, neuer Lauf `tool/e2e/scan-walk.js`
+  (erfundener Bon `test/support/synthetic_receipt.dart`: Name, Menge, Betrag je Posten und Summe müssen stimmen; leeres Bild darf nichts erfinden). Lokal grün: 5 Posten/39,60 €, Fehlerprobe ja.
+  Nicht geprüft: Dauer auf dem Handy, Safari. **Als Nächstes:** CI-Lauf der Probe abwarten; Englisch, Dunkel, Querformat im Browser gegen die App; Archiv/Papierkorb/Chat App-Seite;
+  Personen-Chip Bildschirmleser; dann Priorität 2 Leistung.
 - 07.11. 02:30 (Berlin), B: **Erkennung zusammengeführt** (678b6fc in `mitarbeit/erkennung-und-ein-bildschirm`). Nachweis: CI-Tor 42318963559 grün – Stufe A 132 Bons/0 Fehler/
   1 bekannt (Aldi), Weltkorpus **27/72** ganz richtig (Bestwert 25), **4 falsch als geprüft** (vorher 8), Hangul 1/5 unverändert, kein Bon schlechter; lokal analyze ohne
   Befund, 359 Tests grün. **Offen:** Bestwerte in `fasan-diagnose/tests/korpus-min.json` auf 27/4 anheben (B hat dort nur Leserecht → A oder Nutzer); restliche 4 „falsch geprüft“
