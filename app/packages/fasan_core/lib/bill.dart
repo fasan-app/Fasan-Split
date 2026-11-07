@@ -60,6 +60,9 @@ class NBox {
   static NBox? fromJson(Object? j) => j is List && j.length == 4 ? NBox((j[0] as num).toDouble(), (j[1] as num).toDouble(), (j[2] as num).toDouble(), (j[3] as num).toDouble()) : null;
 }
 
+/// How much of an item is assigned (frame colour on the bill).
+enum ItemFill { open, partial, complete }
+
 class BillItem {
   BillItem({
     required this.name,
@@ -76,6 +79,7 @@ class BillItem {
     Map<int, int>? fixed,
     String? uid,
     this.proportional = false,
+    this.perUnit = false,
   })  : shares = shares ?? {},
         fixed = fixed ?? {},
         uid = uid ?? newUid();
@@ -107,6 +111,11 @@ class BillItem {
   /// Shared like the other items, not by own weights: whoever had more pays more of it (VAT/service without an item
   /// line, Nutzer 04.11.: „jemand der weniger hatte muss auch weniger Steuern zahlen“). [shares] is ignored then.
   bool proportional;
+
+  /// Pieces mode (Nutzer 07.11.: „3 × Cola“ for one person must not close the item): [shares] then count PIECES per
+  /// person (a piece shared by three people is 1/3 for each) and the pieces that nobody has stay open. Without this flag
+  /// [shares] are plain weights and the whole amount is shared (all items before 07.11.).
+  bool perUnit;
 
   // Leading till words in front of the name ("2 Uni", "1 Unj", "Un."): OCR variants of „Unidade“ (PT tills).
   static final _tillPrefix = RegExp(r'^\s*(\d+([.,]00)?\s+)?(u[nm][il1tfjíìĩ|!]?|und|unid|unidade)(?![A-Za-zÀ-ÿ])\.?\s+', caseSensitive: false);
@@ -151,6 +160,28 @@ class BillItem {
 
   bool get assigned => proportional || shares.values.any((w) => w > 0);
 
+  /// Pieces somebody has (pieces mode); 0 outside it.
+  double get coveredUnits => !perUnit ? 0 : shares.values.where((w) => w > 0).fold<double>(0, (a, w) => a + w);
+
+  /// Cents that are assigned: the whole amount, or in pieces mode the share of the pieces somebody has (exact integer
+  /// result, rounded half up; the full amount as soon as all pieces are taken).
+  int get coveredAmount {
+    if (!perUnit || qty <= 1) return amount;
+    final c = coveredUnits;
+    if (c >= qty - 1e-9) return amount;
+    return (amount * c / qty).round();
+  }
+
+  /// Assignment state for the frame colour: nothing / some pieces / everything. Items from before 07.11. with several
+  /// pieces and exactly one person count as „partial“ so that the user checks them (Nutzer 07.11.).
+  ItemFill get fill {
+    if (!assigned) return ItemFill.open;
+    if (proportional) return ItemFill.complete;
+    if (perUnit) return coveredUnits >= qty - 1e-9 ? ItemFill.complete : ItemFill.partial;
+    if (qty > 1 && fixed.isEmpty && shares.values.where((w) => w > 0).length == 1) return ItemFill.partial;
+    return ItemFill.complete;
+  }
+
   Map<String, Object?> toJson() => {
         'uid': uid,
         'name': name,
@@ -166,6 +197,7 @@ class BillItem {
         'shares': {for (final e in shares.entries) '${e.key}': e.value},
         if (fixed.isNotEmpty) 'fixed': {for (final e in fixed.entries) '${e.key}': e.value},
         if (proportional) 'prop': true,
+        if (perUnit) 'pu': true,
       };
 
   static BillItem fromJson(Map<String, dynamic> j) => BillItem(
@@ -183,6 +215,7 @@ class BillItem {
         shares: {for (final e in ((j['shares'] as Map?) ?? const {}).entries) int.parse(e.key as String): (e.value as num).toDouble()},
         fixed: {for (final e in ((j['fixed'] as Map?) ?? const {}).entries) int.parse(e.key as String): (e.value as num).toInt()},
         proportional: j['prop'] == true,
+        perUnit: j['pu'] == true,
       );
 }
 
@@ -384,6 +417,9 @@ class Bill {
 
   int get unassigned => its.where((p) => !p.assigned).length;
 
+  /// Items that still have something nobody has (open or partial).
+  int get notComplete => its.where((p) => p.fill != ItemFill.complete).length;
+
   /// Cents per person for one item. Exact integer arithmetic, leftover cents rotate with [rotate] (the item index).
   static Map<int, int> split(int amount, Map<int, double> shares, {int rotate = 0, Map<int, int> fixed = const {}}) => SplitMath.splitFixed(amount, shares, fixed, rotate: rotate);
 
@@ -391,7 +427,7 @@ class Bill {
   /// What each person pays of item [n]. Proportional items follow the other items (largest remainders, exact cents).
   Map<int, int> partsOf(int n) {
     final it = its[n];
-    if (!it.proportional) return split(it.amount, it.shares, rotate: n, fixed: it.fixed);
+    if (!it.proportional) return split(it.coveredAmount, it.shares, rotate: n, fixed: it.fixed);
     final base = _baseSums();
     if (!base.values.any((v) => v > 0)) return const {};
     return SplitMath.spread(it.amount, base, rotate: n);
@@ -402,7 +438,7 @@ class Bill {
     for (var n = 0; n < its.length; n++) {
       final it = its[n];
       if (it.proportional) continue;
-      for (final e in split(it.amount, it.shares, rotate: n, fixed: it.fixed).entries) {
+      for (final e in split(it.coveredAmount, it.shares, rotate: n, fixed: it.fixed).entries) {
         if (e.key < ps.length) out[e.key] = out[e.key]! + e.value;
       }
     }
@@ -453,7 +489,7 @@ class Bill {
   int get expectedShared {
     final shared = its.where((p) => !p.proportional && p.assigned && p.shares.keys.any((k) => k < ps.length && (p.shares[k] ?? 0) > 0));
     // proportional items count once anyone has a share of the others (partsOf)
-    final assigned = shared.fold<int>(0, (a, p) => a + p.amount) + (shared.isEmpty ? 0 : its.where((p) => p.proportional).fold<int>(0, (a, p) => a + p.amount));
+    final assigned = shared.fold<int>(0, (a, p) => a + p.coveredAmount) + (shared.isEmpty ? 0 : its.where((p) => p.proportional).fold<int>(0, (a, p) => a + p.amount));
     return assigned + (assigned != 0 || its.any((p) => p.assigned) ? difference : 0);
   }
 
@@ -462,10 +498,10 @@ class Bill {
     final issues = <AuditIssue>[];
     for (var n = 0; n < its.length; n++) {
       final it = its[n];
-      final a = SplitMath.splitFixed(it.amount, it.shares, it.fixed, rotate: n);
-      final b = it.fixed.isEmpty ? SplitMath.splitCumulative(it.amount, it.shares) : a; // fixed amounts have no second method: the sum check below covers them
+      final a = SplitMath.splitFixed(it.coveredAmount, it.shares, it.fixed, rotate: n);
+      final b = it.fixed.isEmpty ? SplitMath.splitCumulative(it.coveredAmount, it.shares) : a; // fixed amounts have no second method: the sum check below covers them
       final sa = a.values.fold<int>(0, (x, y) => x + y);
-      if (a.isNotEmpty && sa != it.amount) issues.add(AuditIssue('sum', '${it.name}: $sa ≠ ${it.amount}'));
+      if (a.isNotEmpty && sa != it.coveredAmount) issues.add(AuditIssue('sum', '${it.name}: $sa ≠ ${it.coveredAmount}'));
       if (a.isNotEmpty && !SplitMath.agree(a, b)) issues.add(AuditIssue('method', '${it.name}: $a ≠ $b'));
     }
     final pp = perPerson();

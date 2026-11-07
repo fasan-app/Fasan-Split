@@ -67,6 +67,7 @@ abstract final class BillSync {
         'note': it.note,
         'pos': n,
         if (it.proportional) 'prop': true,
+        if (it.perUnit) 'pu': true,
         // place on the receipt, rounded (4 decimals ≈ 0.1 px on a 1300 px scan)
         if (it.boxes.isNotEmpty) 'bx': [for (final x in it.boxes) [for (final v in x.toJson()) (v * 10000).round() / 10000]],
       });
@@ -125,7 +126,8 @@ abstract final class BillSync {
         ..amount = (v['amount'] as num?)?.toInt() ?? 0
         ..qty = (v['qty'] as num?)?.toInt() ?? 1
         ..note = v['note'] as String?
-        ..proportional = v['prop'] == true;
+        ..proportional = v['prop'] == true
+        ..perUnit = v['pu'] == true;
       if (v['bx'] case final List bx when it.boxes.isEmpty) it.boxes = bx.map(NBox.fromJson).whereType<NBox>().toList();
       final shares = <int, double>{};
       for (final sk in doc.keys('s/$uid/')) {
