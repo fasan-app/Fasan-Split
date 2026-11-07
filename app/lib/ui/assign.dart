@@ -442,7 +442,7 @@ class ListAssign extends StatelessWidget {
         builder: (context) => StatefulBuilder(
           builder: (context, set) => Padding(
             padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.xl),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child: ListView(shrinkWrap: true, children: [
               if (it.snippet != null) Snippet(it.snippet, height: 40),
               const SizedBox(height: FasanSpace.s),
               Row(children: [Expanded(child: ItemTitle(it, style: Theme.of(context).textTheme.titleMedium)), Money(it.amount)]),

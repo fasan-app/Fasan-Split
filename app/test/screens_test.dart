@@ -22,7 +22,6 @@ import 'package:fasan_split/ui/settings_screen.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:fasan_split/recognition/onnx.dart';
@@ -31,6 +30,7 @@ import 'package:fasan_split/recognition/pipeline.dart';
 import 'package:fasan_split/recognition/service.dart';
 import 'package:fasan_split/ui/receipt_view.dart';
 import 'support/synthetic_receipt.dart';
+import 'support/fonts.dart';
 import 'package:fasan_split/ui/scan_screen.dart';
 
 
@@ -82,23 +82,6 @@ Bill _walkBill(Directory dir) {
     ..originalPath = f.path
     ..imageAspect = 900 / 1600;
   return b;
-}
-
-Future<void> _fonts() async {
-  // Direkt aus den Dateien (fasan_ui neben diesem Repo, FASAN_UI überschreibt), damit kein Bundle-Fehler stumm bleibt.
-  final ui = Platform.environment['FASAN_UI'] ?? '../../fasan_ui';
-  Future<void> load(String family, List<String> files) async {
-    final l = FontLoader(family);
-    for (final f in files) {
-      l.addFont(Future.value(ByteData.sublistView(File(f).readAsBytesSync())));
-    }
-    await l.load();
-  }
-
-  await load('packages/fasan_ui/FasanInter', [for (final w in [400, 500, 600, 700]) '$ui/fonts/Inter-$w.ttf']);
-  await load('packages/fasan_ui/FasanGeistMono', ['$ui/fonts/GeistMono-Regular.ttf']);
-  await load('FasanEmoji', ['assets/fonts/FasanEmoji.ttf']);
-  await load('MaterialIcons', ['${Platform.environment['FLUTTER_ROOT']}/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf']);
 }
 
 /// Real receipt (FASAN_ECHT=Pfad zum JPG aus fasan-diagnose/tests/echt): the real recognition runs once, like on the phone.
@@ -251,7 +234,7 @@ void main() {
       final tag = '${dark ? 'dunkel' : 'hell'}-${land ? 'quer' : 'hoch'}';
       for (final e in screens.entries) {
         testWidgets('$tag ${e.key}', (tester) async {
-          await tester.runAsync(_fonts);
+          await tester.runAsync(loadTestFonts);
           tester.view.physicalSize = land ? const Size(2400, 1080) : const Size(1080, 2400);
           tester.view.devicePixelRatio = 2.75;
           addTearDown(tester.view.reset);

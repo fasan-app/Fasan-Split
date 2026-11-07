@@ -139,7 +139,7 @@ Future<void> groupPlusAction(BuildContext context, {ScanQueue? queue}) async {
   final choice = await showModalBottomSheet<String>(
     context: context,
     builder: (ctx) => SafeArea(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
+      child: ListView(shrinkWrap: true, children: [
         ListTile(leading: const Icon(Icons.wifi_tethering_rounded), title: Text(t.newGroupLive), subtitle: Text(t.collabShareText), onTap: () => Navigator.pop(ctx, 'live')),
         ListTile(leading: const Icon(Icons.folder_outlined), title: Text(t.newGroupLocal), onTap: () => Navigator.pop(ctx, 'local')),
         ListTile(leading: const Icon(Icons.link_rounded), title: Text(t.joinGroup), subtitle: Text(t.joinText), onTap: () => Navigator.pop(ctx, 'join')),

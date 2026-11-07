@@ -377,7 +377,7 @@ class TitleHelp extends StatelessWidget {
             builder: (ctx) => SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, FasanSpace.l),
-                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                child: ListView(shrinkWrap: true, children: [
                   Text(title, style: Theme.of(ctx).textTheme.titleMedium),
                   const SizedBox(height: FasanSpace.s),
                   Text(help, style: Theme.of(ctx).textTheme.bodyMedium),
