@@ -496,7 +496,7 @@ Nutzer die vollständige Vorschlags- und Fragenliste (`docs/VORSCHLAEGE-06-11.md
   (wer an wen). Zahler unbekannt → mein Anteil als „schulde ich, Empfänger offen“; habe ich bezahlt (eigener Schalter „Ich habe bezahlt“, auch am halbfertigen
   Bon) → die zugeordneten Anteile der anderen als „bekomme ich“. Anzeige: Profil-Plakette und Gruppe zeigen fest + vorläufig, vorläufiger Teil gestrichelt/blasser
   mit „davon vorläufig … aus n offenen Bons“; Ausgleichsvorschläge („wer zahlt wem“) und „bezahlt eintragen“ nur aus festen Bons (sonst Geld an die falsche
-  Person). **Frage an den Nutzer:** Hauptzahl einschließlich vorläufig (Empfehlung) oder nur fest mit vorläufig darunter?
+  Person). **ENTSCHIEDEN (Nutzer 07.11. 09:58): Hauptzahl = fest + vorläufig zusammen**, vorläufiger Teil darunter/blasser ausgewiesen. Umsetzung nach „Web = App“ und Leistung.
 - Foto oder Protokoll des Esplanada-Bons (13 Croissants) schicken, damit der ganze Bon ins Erkennungs-Tor kommt.
 - **Lese-Geheimnis `FASAN_DIAGNOSE_TOKEN` anlegen** (Anleitung mit vorausgefülltem Link: `docs/ERKENNUNGS-TOR.md`). Ohne es scheitert das
   Erkennungs-Tor und es wird nichts veröffentlicht (gewollt).
