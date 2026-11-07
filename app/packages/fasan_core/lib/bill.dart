@@ -172,6 +172,52 @@ class BillItem {
     return (amount * c / qty).round();
   }
 
+  /// Pieces nobody has yet (pieces mode).
+  double get remainingUnits => perUnit ? (qty - coveredUnits).clamp(0, qty).toDouble() : 0;
+
+  /// Switches an item from plain weights to pieces without changing any amount (3 pieces, weights 1:1 → 1,5 each).
+  void toPieces() {
+    if (perUnit || qty <= 1 || fixed.isNotEmpty || !assigned || proportional) return;
+    final sum = shares.values.where((w) => w > 0).fold<double>(0, (a, w) => a + w);
+    shares = {for (final e in shares.entries) if (e.value > 0) e.key: qty * e.value / sum};
+    perUnit = true;
+  }
+
+  /// A person taps their chip: remove them, or give them one piece (or what is left of it). Items with one piece
+  /// behave as before.
+  void togglePerson(int i) {
+    if ((shares[i] ?? 0) > 0) {
+      shares.remove(i);
+      if (shares.isEmpty) perUnit = false;
+      return;
+    }
+    if (qty <= 1 || fixed.isNotEmpty) {
+      shares[i] = 1;
+      return;
+    }
+    toPieces();
+    final left = remainingUnits;
+    shares[i] = perUnit && left > 1e-9 ? (left < 1 ? left : 1) : 1;
+    perUnit = true;
+  }
+
+  /// Only this person had the item (all pieces).
+  void setOnly(int i) {
+    shares = {i: qty > 1 ? qty.toDouble() : 1};
+    perUnit = qty > 1;
+  }
+
+  /// Everybody shared the item equally (all pieces).
+  void setEveryone(int people) {
+    shares = {for (var i = 0; i < people; i++) i: qty > 1 && people > 0 ? qty / people : 1};
+    perUnit = qty > 1;
+  }
+
+  void clearShares() {
+    shares = {};
+    perUnit = false;
+  }
+
   /// Assignment state for the frame colour: nothing / some pieces / everything. Items from before 07.11. with several
   /// pieces and exactly one person count as „partial“ so that the user checks them (Nutzer 07.11.).
   ItemFill get fill {

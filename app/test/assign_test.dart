@@ -74,7 +74,54 @@ void main() {
     await t.pump(const Duration(milliseconds: 600));
     await t.tap(find.text('Nur diese Person'));
     await t.pumpAndSettle(const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 3));
-    expect(b.its[0].shares, {1: 1});
+    // only this person had it: all pieces of the item (07.11.: 3 × Cola for one person is complete only on purpose)
+    expect(b.its[0].shares, {1: b.its[0].qty.toDouble()});
+    expect(b.its[0].fill, ItemFill.complete);
+  });
+
+  testWidgets('3 × Cola: eine Person antippen = 1 Stück, Posten teilweise; Plus bis alle 3 verteilt = komplett (Nutzer 07.11.)', (t) async {
+    final s = BillStore.memory([]);
+    final b = bill();
+    await show(t, s, b);
+    await t.tap(find.text('Andi').first);
+    await t.pump(const Duration(milliseconds: 300));
+    final cola = b.its[0];
+    expect(cola.shares, {1: 1.0});
+    expect(cola.fill, ItemFill.partial, reason: 'ein Antippen darf nicht alle drei Stück zuteilen');
+    expect(find.text('Noch 2 Stück offen'), findsOneWidget);
+    expect(b.perPerson()[1], 320, reason: '1 von 3 Stück von 9,60 €');
+    await t.tap(find.byIcon(Icons.add_circle_outline));
+    await t.pump(const Duration(milliseconds: 200));
+    await t.tap(find.byIcon(Icons.add_circle_outline));
+    await t.pump(const Duration(milliseconds: 200));
+    expect(cola.fill, ItemFill.complete);
+    expect(find.text('Alle 3 Stück sind verteilt.'), findsOneWidget);
+    expect(b.perPerson()[1], 960);
+    expect(b.audit(), isEmpty);
+  });
+
+  testWidgets('Wasserflaschen: 2 für Andi, die dritte teilen Chris und Andi – „Stück teilen“', (t) async {
+    final s = BillStore.memory([]);
+    final b = bill();
+    await show(t, s, b);
+    await t.tap(find.text('Andi').first);
+    await t.pump(const Duration(milliseconds: 300));
+    await t.tap(find.byIcon(Icons.add_circle_outline));
+    await t.pump(const Duration(milliseconds: 200));
+    expect(b.its[0].remainingUnits, 1);
+    await t.tap(find.text('Stück teilen'));
+    await t.pump(const Duration(milliseconds: 300));
+    await t.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Chris')));
+    await t.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Andi')));
+    await t.pump(const Duration(milliseconds: 200));
+    await t.tap(find.descendant(of: find.byType(AlertDialog), matching: find.byType(FilledButton)));
+    await t.pump(const Duration(milliseconds: 300));
+    expect(b.its[0].shares[1], closeTo(2.5, 1e-9));
+    expect(b.its[0].shares[0], closeTo(0.5, 1e-9));
+    expect(b.its[0].fill, ItemFill.complete);
+    expect(b.perPerson()[1], 800);
+    expect(b.perPerson()[0], 160);
+    expect(b.audit(), isEmpty);
   });
 
   test('Person entfernen schiebt Anteile und Zahler nach', () {

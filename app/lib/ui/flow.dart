@@ -161,7 +161,7 @@ class ResultBody extends StatelessWidget {
     final l = FasanLook.of(context);
     final tt = Theme.of(context).textTheme;
     final pp = bill.perPerson();
-    final open = bill.its.where((p) => !p.assigned).toList();
+    final open = bill.its.where((p) => p.fill != ItemFill.complete).toList();
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       FasanLabel(t.result),
       const SizedBox(height: FasanSpace.s),

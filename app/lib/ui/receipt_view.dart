@@ -165,11 +165,7 @@ class _ReceiptAssignState extends State<ReceiptAssign> {
     if (person != null && !widget.readOnly) {
       final p = person!;
       setState(() {
-        if ((it.shares[p] ?? 0) > 0) {
-          it.shares.remove(p);
-        } else {
-          it.shares[p] = 1;
-        }
+        it.togglePerson(p);
       });
       h.tap();
       widget.onChanged();
@@ -552,6 +548,11 @@ class _RowsPainter extends CustomPainter {
           RRect.fromRectAndCorners(Rect.fromLTWH(r.left, r.top, 4, r.height), topLeft: const Radius.circular(6), bottomLeft: const Radius.circular(6)),
           Paint()..color = c,
         );
+        // frame by assignment: amber = some pieces still nobody's, green = complete
+        canvas.drawRRect(rr, Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = it.fill == ItemFill.partial ? 2 : 1
+          ..color = fillColorFor(look.brightness, error, it.fill).withValues(alpha: it.fill == ItemFill.partial ? 0.95 : 0.6));
       } else {
         canvas.drawRRect(rr, Paint()..color = error.withValues(alpha: 0.06));
         canvas.drawRRect(rr, Paint()
@@ -813,6 +814,10 @@ class _PolyRowsPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.2
           ..color = c.withValues(alpha: 0.8));
+        canvas.drawPath(p, Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = it.fill == ItemFill.partial ? 2.4 : 1.2
+          ..color = fillColorFor(look.brightness, error, it.fill).withValues(alpha: it.fill == ItemFill.partial ? 0.95 : 0.6));
       } else {
         canvas.drawPath(p, Paint()..color = error.withValues(alpha: 0.06));
         canvas.drawPath(p, Paint()

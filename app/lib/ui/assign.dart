@@ -7,6 +7,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../l10n/tr.dart';
 import 'scope.dart';
 import 'package:fasan_core/bill.dart';
 import 'package:fasan_core/split_math.dart';
@@ -40,8 +41,9 @@ class _AssignScreenState extends State<AssignScreen> {
   /// Bulk action with a visible label and undo (0.1.2 had an unlabelled icon that silently overwrote everything).
   void _evenly() {
     final before = [for (final it in b.its) Map<int, double>.of(it.shares)];
+    final beforeUnit = [for (final it in b.its) it.perUnit];
     for (final it in b.its) {
-      it.shares = {for (var i = 0; i < b.ps.length; i++) i: 1};
+      it.setEveryone(b.ps.length);
     }
     FasanHaptics.of(context).confirm();
     setState(() {});
@@ -50,7 +52,9 @@ class _AssignScreenState extends State<AssignScreen> {
       if (!mounted) return;
       setState(() {
         for (var k = 0; k < b.its.length && k < before.length; k++) {
-          b.its[k].shares = before[k];
+          b.its[k]
+            ..shares = before[k]
+            ..perUnit = beforeUnit[k];
         }
       });
     });
@@ -64,7 +68,7 @@ class _AssignScreenState extends State<AssignScreen> {
     final extra = StoreScope.of(context).assignExtraModes;
     final modes = [if (hasImage) AssignMode.receipt, AssignMode.list, if (extra) AssignMode.focus, if (extra) AssignMode.cards];
     if (!modes.contains(mode)) mode = modes.first;
-    final open = b.unassigned;
+    final open = b.notComplete;
     final body = switch (mode) {
       AssignMode.focus => FocusAssign(bill: b, onChanged: _changed),
       AssignMode.list => ListAssign(bill: b, onChanged: _changed),
@@ -154,7 +158,7 @@ Future<void> personMenu(BuildContext context, Bill bill, int i, Offset at, {Bill
   if (r == null || !context.mounted) return;
   switch (r) {
     case 'only':
-      item!.shares = {i: 1};
+      item!.setOnly(i);
     case 'not':
       item!.shares.remove(i);
     case 'rename':
@@ -198,7 +202,7 @@ class PeoplePicker extends StatelessWidget {
   Future<void> _add(BuildContext context) async {
     final idx = await (addPerson?.call(context) ?? addPersonDialog(context, bill));
     if (idx == null || !context.mounted) return;
-    item.shares[idx] = 1; // the new person has this item right away – that is why they were added here
+    if ((item.shares[idx] ?? 0) <= 0) item.togglePerson(idx); // the new person has this item right away – that is why they were added here
     onChanged();
   }
 
@@ -219,11 +223,7 @@ class PeoplePicker extends StatelessWidget {
               index: bill.ps[i].color,
               selected: (item.shares[i] ?? 0) > 0,
               onTap: () {
-                if ((item.shares[i] ?? 0) > 0) {
-                  item.shares.remove(i);
-                } else {
-                  item.shares[i] = 1;
-                }
+                item.togglePerson(i);
                 onChanged();
               },
               onLongPress: () {
@@ -238,7 +238,11 @@ class PeoplePicker extends StatelessWidget {
           label: Text(t.everyone),
           selected: all,
           onSelected: (_) {
-            item.shares = all ? {} : {for (var i = 0; i < bill.ps.length; i++) i: 1};
+            if (all) {
+              item.clearShares();
+            } else {
+              item.setEveryone(bill.ps.length);
+            }
             FasanHaptics.of(context).tap();
             onChanged();
             if (!all) onAll?.call();
@@ -255,31 +259,102 @@ class PeoplePicker extends StatelessWidget {
         const SizedBox(height: FasanSpace.m),
         FasanLabel(t.pieces),
         for (final e in item.shares.entries.toList()..sort((a, b) => a.key.compareTo(b.key)))
-          if (e.key < bill.ps.length)
+          if (e.key < bill.ps.length && e.value > 0)
             Row(children: [
               Expanded(child: Text(bill.ps[e.key].name)),
               IconButton(
                 tooltip: '−',
                 icon: const Icon(Icons.remove_circle_outline),
-                onPressed: e.value <= 0.5
-                    ? null
-                    : () {
-                        item.shares[e.key] = e.value - 0.5;
-                        onChanged();
-                      },
-              ),
-              SizedBox(width: 56, child: Text(_pieces(item, e.key), textAlign: TextAlign.center)),
-              IconButton(
-                tooltip: '+',
-                icon: const Icon(Icons.add_circle_outline),
                 onPressed: () {
-                  item.shares[e.key] = e.value + 0.5;
+                  item.toPieces();
+                  final v = item.shares[e.key] ?? 0;
+                  if (v <= 1 + 1e-9) {
+                    item.shares.remove(e.key);
+                    if (item.shares.isEmpty) item.perUnit = false;
+                  } else {
+                    item.shares[e.key] = v - 1;
+                  }
                   onChanged();
                 },
               ),
+              SizedBox(width: 56, child: Text(item.perUnit ? unitsText(item.shares[e.key] ?? 0) : _pieces(item, e.key), textAlign: TextAlign.center)),
+              IconButton(
+                tooltip: '+',
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: item.perUnit && item.remainingUnits <= 1e-9
+                    ? null
+                    : () {
+                        item.toPieces();
+                        final left = item.remainingUnits;
+                        item.shares[e.key] = (item.shares[e.key] ?? 0) + (left > 1e-9 && left < 1 ? left : 1);
+                        onChanged();
+                      },
+              ),
             ]),
+        const SizedBox(height: FasanSpace.s),
+        // frame colour and this line say the same: how many pieces nobody has yet
+        Row(children: [
+          Icon(fillIcon(item.fill), size: 18, color: fillColor(context, item.fill)),
+          const SizedBox(width: FasanSpace.xs),
+          Expanded(
+            child: Text(
+              item.fill == ItemFill.complete
+                  ? context.trn('pieces.all', item.qty)
+                  : item.perUnit
+                      ? context.tr('pieces.left', [unitsText(item.remainingUnits)])
+                      : context.tr('pieces.check', [bill.ps[item.shares.keys.first].name]),
+            ),
+          ),
+        ]),
+        Wrap(spacing: 8, children: [
+          if (item.perUnit && item.remainingUnits > 1e-9)
+            ActionChip(avatar: const Icon(Icons.call_split_rounded), label: Text(context.tr('pieces.share')), onPressed: () => _sharePiece(context)),
+          if (!item.perUnit && item.fill == ItemFill.partial)
+            ActionChip(
+              avatar: const Icon(Icons.check_rounded),
+              label: Text(context.tr('pieces.confirm')),
+              onPressed: () {
+                item.toPieces();
+                onChanged();
+              },
+            ),
+        ]),
       ],
     ]);
+  }
+
+  /// One piece (or what is left of it) is shared equally by the people the user picks („Wasserflasche am Tisch“).
+  Future<void> _sharePiece(BuildContext context) async {
+    item.toPieces();
+    final picked = <int>{};
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: Text(ctx.tr('pieces.shareTitle')),
+          content: Wrap(spacing: 8, runSpacing: 8, children: [
+            for (var i = 0; i < bill.ps.length; i++)
+              FasanPersonChip(
+                name: bill.ps[i].name,
+                index: bill.ps[i].color,
+                selected: picked.contains(i),
+                onTap: () => setS(() => picked.contains(i) ? picked.remove(i) : picked.add(i)),
+              ),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel)),
+            FilledButton(onPressed: picked.isEmpty ? null : () => Navigator.pop(ctx, true), child: Text(ctx.tr('pieces.shareOk'))),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || picked.isEmpty) return;
+    final left = item.remainingUnits;
+    final piece = left > 1e-9 && left < 1 ? left : 1.0;
+    for (final i in picked) {
+      item.shares[i] = (item.shares[i] ?? 0) + piece / picked.length;
+    }
+    onChanged();
   }
 
   /// Exact fraction of the pieces, e.g. 3/2 → „1,5“, 1/3 → „⅓“-style „1/3“.
@@ -346,7 +421,7 @@ class _FocusAssignState extends State<FocusAssign> {
   @override
   void initState() {
     super.initState();
-    final first = widget.bill.its.indexWhere((p) => !p.assigned);
+    final first = widget.bill.its.indexWhere((p) => p.fill != ItemFill.complete);
     i = first < 0 ? 0 : first;
   }
 

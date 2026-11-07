@@ -149,7 +149,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       return;
     }
     FasanHaptics.of(context).confirm();
-    setState(() => it.shares = _everyone(it) ? {} : {for (var i = 0; i < b.ps.length; i++) i: 1});
+    setState(() => _everyone(it) ? it.clearShares() : it.setEveryone(b.ps.length));
   }
 
   /// Long press on a person: paid, all open items, remove.
@@ -177,7 +177,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           b.payer = i;
         case 'open':
           for (final it in b.its.where((x) => !x.assigned)) {
-            it.shares[i] = 1;
+            it.setOnly(i);
           }
         case 'remove':
           removePersonFrom(b, i);
@@ -228,11 +228,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     }
     FasanHaptics.of(context).tap();
     setState(() {
-      if ((it.shares[a] ?? 0) > 0) {
-        it.shares.remove(a);
-      } else {
-        it.shares[a] = 1;
-      }
+      it.togglePerson(a);
     });
   }
 
@@ -240,8 +236,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   void _evenly() {
     final before = [for (final it in b.its) Map<int, double>.of(it.shares)];
+    final beforeUnit = [for (final it in b.its) it.perUnit];
     for (final it in b.its) {
-      it.shares = {for (var i = 0; i < b.ps.length; i++) i: 1};
+      it.setEveryone(b.ps.length);
     }
     FasanHaptics.of(context).confirm();
     setState(() {});
@@ -249,7 +246,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
       if (!mounted) return;
       setState(() {
         for (var k = 0; k < b.its.length && k < before.length; k++) {
-          b.its[k].shares = before[k];
+          b.its[k]
+            ..shares = before[k]
+            ..perUnit = beforeUnit[k];
         }
       });
     });
@@ -329,8 +328,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
       problem = context.tr('bill.needItems');
     } else if (b.ps.length < 2) {
       problem = context.tr('bill.needPeople');
-    } else if (b.unassigned > 0) {
-      problem = context.trn('bill.openItems', b.unassigned);
+    } else if (b.notComplete > 0) {
+      problem = context.trn('bill.openItems', b.notComplete);
     } else if (b.payer == null) {
       problem = context.tr('bill.needPayer');
     }
@@ -350,7 +349,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final store = StoreScope.read(context);
     final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     final de = context.langCode == 'de', sign = billSign(context, b);
-    final open = b.unassigned;
+    final open = b.notComplete;
     final suggestions = _suggestions();
     final diff = b.difference;
     final showDiff = b.total != null && diff != 0 && !b.needsSignQuestion;
@@ -639,7 +638,8 @@ class _ItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = FasanLook.of(context), tt = Theme.of(context).textTheme;
-    final unassigned = bill.ps.length >= 2 && !item.assigned;
+    final framed = bill.ps.length >= 2;
+    final fill = item.fill, fillCol = fillColor(context, fill);
     final mine = active != null && (item.shares[active] ?? 0) > 0;
     return Material(
       color: mine ? l.accent.withValues(alpha: 0.14) : l.surfaceAlt,
@@ -651,7 +651,7 @@ class _ItemTile extends StatelessWidget {
         child: Container(
           constraints: BoxConstraints(minHeight: l.minTap),
           padding: const EdgeInsets.fromLTRB(FasanSpace.m, 8, FasanSpace.m, 8),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(l.radius * 0.5), border: unassigned ? Border.all(color: l.accent.withValues(alpha: 0.5)) : null),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(l.radius * 0.5), border: framed ? Border.all(color: fillCol.withValues(alpha: fill == ItemFill.complete ? 0.55 : 0.9), width: fill == ItemFill.partial ? 2 : 1.2) : null),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Row(children: [
               Expanded(child: ItemTitle(item, maxLines: 1)),
@@ -660,6 +660,7 @@ class _ItemTile extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 6),
                   child: Icon(Icons.help_outline, size: 18, color: Theme.of(context).colorScheme.error),
                 ),
+              if (framed) Padding(padding: const EdgeInsets.only(right: 6), child: Icon(fillIcon(fill), size: 16, color: fillCol, semanticLabel: context.tr('fill.${fill.name}'))),
               const SizedBox(width: FasanSpace.xs),
               // many people or a huge amount shrink to fit; the name gives way first (it has an ellipsis)
               Flexible(child: FittedBox(fit: BoxFit.scaleDown, child: ShareAvatars(bill: bill, item: item))),

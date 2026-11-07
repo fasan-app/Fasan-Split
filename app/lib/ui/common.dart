@@ -405,3 +405,39 @@ bool isBillOrigin(Route<dynamic> r) => r.isFirst || (billOrigin != null && ident
 
 /// Leaves the bill flow (all its steps, a nested ResumeFlow too) back to where it was opened.
 void closeBillFlow(BuildContext context) => Navigator.of(context, rootNavigator: true).popUntil(isBillOrigin);
+
+
+/// Pieces in pieces mode as text: 2, 1,5, 1/3, 2 1/3 (nothing is rounded to a wrong value: other fractions show 2 decimals).
+String unitsText(double v) {
+  final r = v.roundToDouble();
+  if ((v - r).abs() < 1e-6) return '${r.toInt()}';
+  for (final d in const [2, 3, 4, 5, 6, 8]) {
+    final n = (v * d).roundToDouble();
+    if ((v * d - n).abs() < 1e-6) {
+      final whole = n ~/ d, rest = n.toInt() - whole * d;
+      if (d == 2) return '$whole,5';
+      return whole == 0 ? '$rest/$d' : '$whole $rest/$d';
+    }
+  }
+  return v.toStringAsFixed(2).replaceAll('.', ',');
+}
+
+/// Frame colour of an item by assignment (Nutzer 07.11.): open = error colour, partial = amber, complete = green.
+/// fasan_ui has no success/warning colours; these two are new here, bright in the dark theme for contrast. Always paired
+/// with an icon ([fillIcon]) so colour is never the only signal.
+Color fillColor(BuildContext context, ItemFill f) => fillColorFor(Theme.of(context).brightness, Theme.of(context).colorScheme.error, f);
+
+Color fillColorFor(Brightness b, Color error, ItemFill f) {
+  final dark = b == Brightness.dark;
+  return switch (f) {
+    ItemFill.open => error,
+    ItemFill.partial => dark ? const Color(0xFFFFC53D) : const Color(0xFFB26A00),
+    ItemFill.complete => dark ? const Color(0xFF5BD08A) : const Color(0xFF1E7B45),
+  };
+}
+
+IconData fillIcon(ItemFill f) => switch (f) {
+      ItemFill.open => Icons.radio_button_unchecked,
+      ItemFill.partial => Icons.timelapse_rounded,
+      ItemFill.complete => Icons.check_circle_outline_rounded,
+    };
