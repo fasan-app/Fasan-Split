@@ -27,8 +27,6 @@ List<Line> L(List<Object> rows) => [
                 ((rows[i] as List).length > 2 ? ((rows[i] as List)[2] as num).toDouble() : 0))
     ];
 
-String _js(num? v) => v == null ? 'null' : (v == v.roundToDouble() ? v.toInt().toString() : v.toString());
-
 
 void main() {
   test('Menge vor Einzelpreis wird nicht als Tausender gelesen („2 140.00 280.00“)', () {
