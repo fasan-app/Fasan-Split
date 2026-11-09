@@ -75,7 +75,13 @@ void main() {
     expect(find.text('2 Bons'), findsOneWidget);
     expect(find.text('30,00 €'), findsOneWidget, reason: 'Summe der Bons im Kopf');
     // one open + one partial item = 2 open; bill b has no payer
-    expect(find.text('2 offene Posten · 1 ohne Zahler'), findsOneWidget);
+    expect(find.byKey(const ValueKey('chip-nopayer')), findsOneWidget, reason: 'Bon b hat keinen Zahler');
+    // the open button filters the flat list to open items, tapping again switches it off
+    await tester.tap(find.byKey(const ValueKey('chip-open')));
+    await tester.pumpAndSettle();
+    expect(find.text('Bon-a'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('chip-open')));
+    await tester.pumpAndSettle();
     // switch to the flat item list
     await tester.tap(find.text('Posten').first);
     await tester.pumpAndSettle();

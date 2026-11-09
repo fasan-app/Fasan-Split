@@ -54,13 +54,9 @@ Future<void> _pick(WidgetTester tester, String label) async {
   await _settle(tester);
 }
 
-/// Filter window: switch to Posten.
+/// The switch Rechnungen | Posten is on the page itself (Nutzer 09.11.).
 Future<void> _showItems(WidgetTester tester) async {
-  await tester.tap(find.byIcon(Icons.filter_list_rounded));
-  await _settle(tester);
-  await tester.tap(find.text('Posten').last);
-  await _settle(tester);
-  await tester.tapAt(const Offset(20, 20)); // barrier closes the sheet
+  await tester.tap(find.text('Posten').first);
   await _settle(tester);
 }
 
@@ -80,10 +76,12 @@ void main() {
     for (final n in ['Kneipe', 'Fähre', 'Taxi', 'Bäcker']) {
       expect(find.text(n), findsOneWidget, reason: 'Alle zeigt $n');
     }
-    expect(find.byType(GroupHeader), findsNothing, reason: 'Alle hat keinen Gruppenkopf');
+    expect(find.byType(GroupHeader), findsOneWidget, reason: 'der Rahmen steht auch bei Alle Gruppen');
+    expect(find.text('4 Bons'), findsOneWidget);
     await _pick(tester, 'Ohne Gruppe');
     expect(find.text('Taxi'), findsOneWidget);
     expect(find.text('Kneipe'), findsNothing);
+    expect(find.text('1 Bon'), findsOneWidget, reason: 'Rahmen auch bei Ohne Gruppe');
     await _pick(tester, 'Urlaub');
     expect(find.text('Kneipe'), findsOneWidget);
     expect(find.text('Fähre'), findsOneWidget);
@@ -91,7 +89,7 @@ void main() {
     expect(find.text('Bäcker'), findsNothing);
     expect(find.byType(GroupHeader), findsOneWidget);
     expect(find.text('2 Bons'), findsOneWidget);
-    expect(find.textContaining('1 ohne Zahler'), findsOneWidget, reason: 'Fähre hat keinen Zahler');
+    expect(find.byKey(const ValueKey('chip-nopayer')), findsOneWidget, reason: 'Fähre hat keinen Zahler');
   });
 
   testWidgets('Rechnungen | Posten: Posten der gewählten Gruppe, nur dort', (tester) async {
@@ -143,7 +141,6 @@ void main() {
     expect(find.text('Filtern und sortieren'), findsOneWidget);
     expect(find.text('Nur offene Posten'), findsOneWidget);
     expect(find.text('Sortieren nach'), findsOneWidget);
-    expect(find.text('Rechnungen'), findsWidgets);
   });
 
   testWidgets('Kopfzeile: Fasan-Symbol links, kein Titeltext, Einstellungen nur im Profil', (tester) async {
@@ -155,5 +152,53 @@ void main() {
     await _settle(tester);
     expect(find.byIcon(Icons.settings_outlined), findsOneWidget, reason: 'Einstellungen oben rechts im Profil');
     expect(find.byKey(const ValueKey('profile-standin')), findsOneWidget, reason: 'Stellvertretung im Profil sichtbar');
+  });
+
+  testWidgets('Statusknöpfe filtern Posten an/aus; Rechnungen | Posten ist sichtbar; keine doppelte Gruppenzeile', (tester) async {
+    await _app(tester, store);
+    await _pick(tester, 'Urlaub');
+    expect(find.text('Rechnungen'), findsOneWidget, reason: 'Umschalter sichtbar auf der Seite');
+    expect(find.text('2 · 20,00 €'), findsNothing, reason: 'Gruppenname, Anzahl und Summe stehen nur im Rahmen');
+    expect(find.byKey(const ValueKey('chip-done')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('chip-open')));
+    await _settle(tester);
+    // Kneipe and Fähre are complete: open filter leaves nothing
+    expect(find.text('Kneipe'), findsNothing);
+    expect(find.text('Keine Treffer'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('chip-open'))); // off again
+    await tester.tap(find.byKey(const ValueKey('chip-done')));
+    await _settle(tester);
+    expect(find.text('Kneipe'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('chip-nopayer')));
+    await _settle(tester);
+    expect(find.text('Fähre'), findsOneWidget, reason: 'nur Bons ohne Zahler');
+    expect(find.text('Kneipe'), findsNothing);
+  });
+
+  testWidgets('Suche: Name, Betrag; leere Suche zeigt wieder alles', (tester) async {
+    await _app(tester, store);
+    await tester.tap(find.byTooltip('Suche'));
+    await _settle(tester);
+    await tester.enterText(find.byKey(const ValueKey('search-field')), 'kneip');
+    await _settle(tester);
+    expect(find.text('Kneipe'), findsOneWidget);
+    expect(find.text('Taxi'), findsNothing);
+    await tester.enterText(find.byKey(const ValueKey('search-field')), '');
+    await _settle(tester);
+    expect(find.text('Taxi'), findsOneWidget);
+  });
+
+  testWidgets('Einstellungen: ruhige Liste, jede Gruppe eine Unterseite', (tester) async {
+    await _app(tester, store);
+    await tester.tap(find.byType(MyBalanceBadge));
+    await _settle(tester);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await _settle(tester);
+    for (var i = 0; i < 11; i++) {
+      expect(find.byKey(ValueKey('settings-$i')), findsOneWidget, reason: 'Zeile $i');
+    }
+    await tester.tap(find.byKey(const ValueKey('settings-0')));
+    await _settle(tester);
+    expect(find.text('Deutsch'), findsOneWidget, reason: 'Sprache liegt auf ihrer Unterseite');
   });
 }

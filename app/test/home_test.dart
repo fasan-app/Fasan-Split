@@ -206,11 +206,16 @@ void main() {
       await app(tester, store, idle(store));
       expect(find.text('Frühstück'), findsOneWidget);
       expect(find.text('Taxi'), findsNothing);
+      // Offen / Archiv / Papierkorb live in a pull-down of the context row (Nutzer 09.11.)
+      await tester.tap(find.byKey(const ValueKey('view-menu')));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Archiv'));
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
       expect(find.text('Taxi'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('view-menu')));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Papierkorb'));
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));

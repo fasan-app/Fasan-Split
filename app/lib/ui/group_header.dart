@@ -171,43 +171,126 @@ class _FramePainter extends CustomPainter {
 }
 
 /// One line under the header with the three counts and their icons, plus what is missing (shown only when something is).
+/// True when [b] passes the status buttons: some item with a chosen state ([fills] empty = no filter), and, when [noPayer] is on,
+/// only bills nobody paid yet (Nutzer 09.11.: the numbers are filters).
+bool billMatches(Bill b, Set<ItemFill> fills, bool noPayer) {
+  if (noPayer && !(!b.isTransfer && b.its.isNotEmpty && b.payer == null && !b.multiPay)) return false;
+  if (fills.isEmpty) return true;
+  return b.its.any((i) => fills.contains(i.fill));
+}
+
+/// The row under the frame: three state buttons (done, in progress, open) with their counts, the „no payer“ button and a „?“.
+/// Every button is a switch (Nutzer 09.11.): filled and coloured = on, outlined = off; the counts always show the whole scope, so
+/// they stay put while filtering. Symbols and numbers only, so no text shifts the row in another language; the explanation sits
+/// behind the „?“ (docs/KONZEPT-STARTBILDSCHIRM.md).
 class GroupCountsLine extends StatelessWidget {
-  const GroupCountsLine({super.key, required this.bills, required this.onOpenItems});
+  const GroupCountsLine({super.key, required this.bills, required this.fills, required this.noPayer, required this.onFills, required this.onNoPayer});
 
   final List<Bill> bills;
-  final VoidCallback onOpenItems;
+  final Set<ItemFill> fills;
+  final bool noPayer;
+  final ValueChanged<Set<ItemFill>> onFills;
+  final ValueChanged<bool> onNoPayer;
 
   @override
   Widget build(BuildContext context) {
-    final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    final t = S.of(context), l = FasanLook.of(context);
     final lang = t.de ? 'de' : 'en';
     final c = itemCounts(bills);
-    final noPayer = billsWithoutPayer(bills);
-    Widget chip(ItemFill f, int n) => Padding(
-          padding: const EdgeInsets.only(right: FasanSpace.m),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(fillIcon(f), size: 16, color: fillColor(context, f)),
-            const SizedBox(width: 4),
-            Text('$n', style: tt.labelLarge!.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
-          ]),
+    final np = billsWithoutPayer(bills);
+    Widget chip(String key, IconData icon, Color color, int n, bool on, VoidCallback onTap, String label) => Padding(
+          padding: const EdgeInsets.only(right: FasanSpace.s),
+          child: StateChip(key: ValueKey('chip-$key'), icon: icon, color: color, count: n, on: on, onTap: onTap, label: label),
         );
-    final missing = [
-      if (c.open + c.partial > 0) trLang(lang, 'grp.openItems', ['${c.open + c.partial}']),
-      if (noPayer > 0) trLang(lang, 'grp.noPayer', ['$noPayer']),
-    ];
-    return Padding(
-      padding: const EdgeInsets.only(top: FasanSpace.s),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [chip(ItemFill.complete, c.done), chip(ItemFill.partial, c.partial), chip(ItemFill.open, c.open)]),
-        if (missing.isNotEmpty)
-          InkWell(
-            onTap: onOpenItems,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: FasanSpace.xs),
-              child: Text(missing.join(' · '), style: tt.bodySmall!.copyWith(color: l.textMuted)),
+    void toggle(ItemFill f) => onFills(fills.contains(f) ? ({...fills}..remove(f)) : {...fills, f});
+    return SizedBox(
+      height: 48,
+      child: Row(children: [
+        chip('done', fillIcon(ItemFill.complete), fillColor(context, ItemFill.complete), c.done, fills.contains(ItemFill.complete), () => toggle(ItemFill.complete), trLang(lang, 'grp.fDone')),
+        chip('partial', fillIcon(ItemFill.partial), fillColor(context, ItemFill.partial), c.partial, fills.contains(ItemFill.partial), () => toggle(ItemFill.partial), trLang(lang, 'grp.fPartial')),
+        chip('open', fillIcon(ItemFill.open), fillColor(context, ItemFill.open), c.open, fills.contains(ItemFill.open), () => toggle(ItemFill.open), trLang(lang, 'grp.fOpen')),
+        const Spacer(),
+        if (np > 0) chip('nopayer', Icons.account_balance_wallet_outlined, l.accent, np, noPayer, () => onNoPayer(!noPayer), trLang(lang, 'grp.fNoPayer')),
+        HelpButton(title: trLang(lang, 'grp.helpTitle'), body: trLang(lang, 'grp.helpBody')),
+      ]),
+    );
+  }
+}
+
+/// A state button: pill with symbol and number. On = filled in its colour with a visible edge, off = hairline edge.
+class StateChip extends StatelessWidget {
+  const StateChip({super.key, required this.icon, required this.color, required this.count, required this.on, required this.onTap, required this.label});
+
+  final IconData icon;
+  final Color color;
+  final int count;
+  final bool on;
+  final VoidCallback onTap;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      toggled: on,
+      label: '$label: $count',
+      excludeSemantics: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+          child: Center(
+            child: AnimatedContainer(
+              duration: FasanMotion.of(context).short,
+              height: 34,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: on ? color.withValues(alpha: 0.22) : Colors.transparent,
+                borderRadius: BorderRadius.circular(17),
+                border: Border.all(color: on ? color : l.hairline, width: on ? 2 : 1),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 4),
+                Text('$count', style: tt.labelLarge!.copyWith(fontWeight: on ? FontWeight.w800 : FontWeight.w600, fontFeatures: const [FontFeature.tabularFigures()])),
+              ]),
             ),
           ),
-      ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// The „?“ next to a title or a row: opens a sheet with the explanation (Nutzer 09.11.: short titles, long text on request).
+class HelpButton extends StatelessWidget {
+  const HelpButton({super.key, required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context);
+    return IconButton(
+      tooltip: title,
+      icon: Icon(Icons.help_outline_rounded, size: 20, color: l.textMuted),
+      onPressed: () => showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.l),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: FasanSpace.s),
+              Text(body, style: Theme.of(ctx).textTheme.bodyMedium),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -248,11 +331,11 @@ class GroupItemRow extends StatelessWidget {
 }
 
 /// Entries of the flat list: a bill heading ([item] null) followed by its visible items.
-List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOpen}) {
+List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOpen, Set<ItemFill> fills = const {}}) {
   final out = <(Bill, BillItem?)>[];
   for (final b in bills) {
     if (b.isTransfer) continue;
-    final its = onlyOpen ? b.its.where((i) => i.fill != ItemFill.complete).toList() : b.its;
+    final its = (onlyOpen || fills.isNotEmpty) ? b.its.where((i) => (!onlyOpen || i.fill != ItemFill.complete) && (fills.isEmpty || fills.contains(i.fill))).toList() : b.its;
     if (its.isEmpty) continue;
     out.add((b, null));
     for (final i in its) {

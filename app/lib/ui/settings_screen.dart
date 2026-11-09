@@ -129,18 +129,19 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  /// The settings as sections (Apple-style: a calm list, each row opens one page; Nutzer 09.11.). Built again by every page, so the
+  /// pages follow the store.
+  List<_Sec> _sections(BuildContext context) {
     final t = S.of(context);
     final store = StoreScope.of(context);
     final l = FasanLook.of(context);
     final withLog = [for (final b in store.bills) if (b.logPath != null) b]..sort((a, b) => b.updated.compareTo(a.updated));
+    // ignore: unused_local_variable
     Widget head(String s) => Padding(padding: const EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.l, FasanSpace.l, FasanSpace.xs), child: FasanLabel(s));
-    return Scaffold(
-      appBar: AppBar(title: Text(t.settings)),
-      body: ListView(padding: EdgeInsets.only(bottom: FasanSpace.xxl + MediaQuery.paddingOf(context).bottom), children: [
+    return [
+      _Sec(Icons.translate_rounded, 'Sprache · Language', [
+
         // always in both languages, so it can be found when the app is in the wrong one
-        head('Sprache · Language'),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l),
           child: SegmentedButton<String>(
@@ -154,7 +155,8 @@ class SettingsScreen extends StatelessWidget {
             onSelectionChanged: (s) => store.language = s.first,
           ),
         ),
-        head(t.setBill),
+      ]),
+      _Sec(Icons.receipt_long_outlined, t.setBill, [
         FasanSwitchTile(
           padded: true,
           secondary: const Icon(Icons.translate_rounded),
@@ -183,7 +185,8 @@ class SettingsScreen extends StatelessWidget {
           value: store.assignExtraModes,
           onChanged: (v) => store.assignExtraModes = v,
         ),
-        head(t.setPeople),
+      ]),
+      _Sec(Icons.people_outline_rounded, t.setPeople, [
         ListTile(
           leading: const Icon(Icons.person_outline_rounded),
           title: Text(t.meTitle),
@@ -209,12 +212,15 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(t.accountOpen),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AccountScreen())),
         ),
-        head(trLang(t.de ? 'de' : 'en', 'settings_screen.currency')),
+      ]),
+      _Sec(Icons.euro_rounded, trLang(t.de ? 'de' : 'en', 'settings_screen.currency'), [
         ...currencyTiles(context),
-        head(trLang(t.de ? 'de' : 'en', 'settings_screen.backup')),
+      ]),
+      _Sec(Icons.cloud_upload_outlined, trLang(t.de ? 'de' : 'en', 'settings_screen.backup'), [
         ...backupTiles(context),
         // one place for notifications (Nutzer 04.11.: no contradicting settings hidden in sub menus)
-        head(trLang(t.de ? 'de' : 'en', 'settings_screen.notifications')),
+      ]),
+      _Sec(Icons.notifications_none_rounded, trLang(t.de ? 'de' : 'en', 'settings_screen.notifications'), [
         if (deviceNotifier != null) const _DeviceNotifyTile(),
         if (proxySupported) const _TorTile(),
         SwitchListTile(
@@ -238,7 +244,8 @@ class SettingsScreen extends StatelessWidget {
             value: CollabScope.of(context).notifies(k),
             onChanged: (v) => CollabScope.read(context).setNotifies(k, v),
           ),
-        head(t.setLook),
+      ]),
+      _Sec(Icons.palette_outlined, t.setLook, [
         ListTile(
           leading: const Icon(Icons.palette_outlined),
           title: Text(t.appearance),
@@ -285,7 +292,8 @@ class SettingsScreen extends StatelessWidget {
           trailing: const Icon(Icons.chevron_right_rounded),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TutorialScreen())),
         ),
-        head(t.setData),
+      ]),
+      _Sec(Icons.storage_outlined, t.setData, [
         ListTile(
           leading: const Icon(Icons.auto_delete_outlined),
           title: Text(t.setTrash),
@@ -327,7 +335,8 @@ class SettingsScreen extends StatelessWidget {
             }
           },
         ),
-        head(t.setDiagnose),
+      ]),
+      _Sec(Icons.speed_rounded, t.setDiagnose, [
         ListTile(
           leading: const Icon(Icons.bug_report_outlined),
           title: Text(t.shareLog),
@@ -341,7 +350,8 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(trLang(t.de ? 'de' : 'en', 'perf.testSub')),
           onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const PerfTestScreen())),
         ),
-        head(t.setUpdates),
+      ]),
+      _Sec(Icons.system_update_alt_rounded, t.setUpdates, [
         FutureBuilder<String>(
           future: Updates.currentVersion(),
           builder: (context, v) => ListTile(
@@ -378,7 +388,8 @@ class SettingsScreen extends StatelessWidget {
           value: store.autoUpdate,
           onChanged: (v) => store.autoUpdate = v,
         ),
-        head(t.about),
+      ]),
+      _Sec(Icons.info_outline, t.about, [
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('Fasan Split'),
@@ -389,11 +400,78 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(FasanSpace.l),
           child: Text(t.setFewNote, style: Theme.of(context).textTheme.bodySmall!.copyWith(color: l.textMuted)),
         ),
+
+      ]),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = S.of(context), l = FasanLook.of(context);
+    final secs = _sections(context);
+    // blocks like the system settings: look and bill, then data, then the rest
+    const blocks = [[6, 0, 1, 2, 3], [5, 4, 7], [8, 9, 10]];
+    return Scaffold(
+      appBar: AppBar(title: Text(t.settings)),
+      body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, FasanSpace.xxl + MediaQuery.paddingOf(context).bottom), children: [
+        for (final blk in blocks) ...[
+          Material(
+            color: l.surfaceAlt,
+            borderRadius: BorderRadius.circular(l.radius * 0.7),
+            clipBehavior: Clip.antiAlias,
+            child: Column(children: [
+              for (var k = 0; k < blk.length; k++) ...[
+                if (k > 0) Divider(height: 1, indent: 56, color: l.hairline),
+                SizedBox(
+                  height: 52,
+                  child: InkWell(
+                    key: ValueKey('settings-${blk[k]}'),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => _SectionPage(owner: this, index: blk[k]))),
+                    child: Row(children: [
+                      const SizedBox(width: FasanSpace.m),
+                      Icon(secs[blk[k]].icon, color: l.accent, size: 22),
+                      const SizedBox(width: FasanSpace.m),
+                      Expanded(child: Text(secs[blk[k]].title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyLarge)),
+                      Icon(Icons.chevron_right_rounded, color: l.textMuted),
+                      const SizedBox(width: FasanSpace.s),
+                    ]),
+                  ),
+                ),
+              ],
+            ]),
+          ),
+          const SizedBox(height: FasanSpace.l),
+        ],
       ]),
     );
   }
 }
 
+/// One section of the settings: symbol, title, the rows.
+class _Sec {
+  const _Sec(this.icon, this.title, this.children);
+
+  final IconData icon;
+  final String title;
+  final List<Widget> children;
+}
+
+/// The page of one section; it asks the owner for its rows on every build, so a changed setting shows at once.
+class _SectionPage extends StatelessWidget {
+  const _SectionPage({required this.owner, required this.index});
+
+  final SettingsScreen owner;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final sec = owner._sections(context)[index];
+    return Scaffold(
+      appBar: AppBar(title: Text(sec.title)),
+      body: ListView(padding: EdgeInsets.only(top: FasanSpace.s, bottom: FasanSpace.xxl + MediaQuery.paddingOf(context).bottom), children: sec.children),
+    );
+  }
+}
 
 /// „Auf dem Handy anzeigen“: asks for the permission only here (Android 13+, browsers).
 class _DeviceNotifyTile extends StatefulWidget {

@@ -122,8 +122,8 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('h02-einstellungen', async () => { await p.getByRole('button', { name: /Einstellungen|Settings/ }).first().click(); });
     await step('h03-zurueck', async () => { await back(); });
     const tap = async (re, ms = 800) => { const l = p.getByRole('tab', { name: re }).or(p.getByRole('button', { name: re })).or(p.getByRole('checkbox', { name: re })).or(p.getByText(re)).first(); await l.click({ timeout: 8000 }); await p.waitForTimeout(ms); };
-    await step('h04-archiv', async () => { await tap(/^Archiv/); });
-    await step('h05-papierkorb', async () => { await tap(/^Papierkorb/); });
+    await step('h04-archiv', async () => { await tap(/^(Offen|Archiv|Papierkorb)$/); await tap(/^Archiv$/); });
+    await step('h05-papierkorb', async () => { await tap(/^(Offen|Archiv|Papierkorb)$/); await tap(/^Papierkorb$/); });
     await step('h06-gruppen', async () => { await tap(/^Abrechnung/); });
     // Option A (09.11.): the chip of the group picker picks the group, the tab Abrechnung then shows its people directly
     await step('h07-gruppe-offen', async () => { await tap(/^Alle Gruppen/); await p.waitForTimeout(500); await p.getByText(/^Beispielstadt$/).last().click({ timeout: 8000 }); await p.waitForTimeout(800); });

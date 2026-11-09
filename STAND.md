@@ -4,6 +4,18 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 09.11. 14:00 Web 0.1.89: Rückmeldung 13:05 umgesetzt (Sitzung B)
+
+Umgesetzt, Analyse sauber, Widget-Tests grün (Volllauf bis auf einen Lastausfall `photo_sync_test`, einzeln grün), Bildschirmfotos der App gesehen:
+Rahmen auch für Alle/Ohne Gruppe, doppelte Gruppenzeile weg, Statusknöpfe (erledigt/in Arbeit/offen/ohne Zahler) als Filter an/aus mit „?“,
+Rechnungen|Posten sichtbar auf der Seite, Offen/Archiv/Papierkorb als Menü rechts in der Kontextzeile, Leiste endet über der unteren Leiste
+(extendBody aus), Nachbarseite vorgebaut (allowImplicitScrolling), Profil kompakt mit „?“, Stellvertretung als Zeile, Einstellungen Apple-Stil
+(11 Unterseiten in 3 Blöcken), Suche (Name, Person, Posten, Betrag) in der Kontextzeile.
+**Nicht geprüft:** Browser auf dem S23 (Sprung beim Blättern, Leistung mit vorgebauter Nachbarseite), Bildschirmvergleich Browser (`screens.js`
+h04/h05 angepasst, nicht gelaufen), „Eigene Reihenfolge“ in der Posten-Ansicht (Posten folgen der Bon-Reihenfolge; Ziehen zum Umordnen nur in der Bon-Ansicht),
+Suche in der Posten-Ansicht filtert Bons, nicht einzelne Posten. **Offen:** Betrag mit Wort in der Kopfzeile, Zahlenknöpfe mit „offene Posten“ als eigener Text
+entfallen bewusst (◔+○ ergeben ihn), Seite „Gruppe“ (`GroupScreen`) hat noch den alten Hinweiskasten, Plus-Knopf überdeckt Beträge am Zeilenende.
+
 ## 09.11. 10:10 Web 0.1.88: Startbildschirm, Profil, Menü (Nutzer 09:22, Sitzung B; Konzept `docs/KONZEPT-STARTBILDSCHIRM.md`)
 
 Umgesetzt und getestet (Analyse sauber, alle Tests grün; Bildschirmfotos der App für Gruppe/Abrechnung/Freunde angesehen, Handybreite):

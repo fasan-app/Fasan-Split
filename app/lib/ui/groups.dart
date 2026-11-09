@@ -180,6 +180,8 @@ class GroupScreen extends StatefulWidget {
 }
 
 class _GroupScreenState extends State<GroupScreen> {
+  Set<ItemFill> _fills = {};
+  bool _noPayer = false;
   int _view = 0; // 0 bills, 1 all items of the group (Nutzer 08.11. 04:16)
 
   String get name => widget.name;
@@ -207,11 +209,11 @@ class _GroupScreenState extends State<GroupScreen> {
     final lang = t.de ? 'de' : 'en';
     final store = StoreScope.of(context);
     final all = store.inGroup(name);
-    final bills = store.onlyOpen ? all.where((b) => b.fill != ItemFill.complete).toList() : all;
+    final bills = (store.onlyOpen ? all.where((b) => b.fill != ItemFill.complete).toList() : all).where((b) => billMatches(b, _fills, _noPayer)).toList();
     final live = CollabScope.of(context).groupByLocalName(name);
     final l = FasanLook.of(context);
     final people = CollabScope.of(context).peopleOf(name).length;
-    final flat = _view == 1 ? flattenItems(bills, onlyOpen: store.onlyOpen) : const <(Bill, BillItem?)>[];
+    final flat = _view == 1 ? flattenItems(bills, onlyOpen: store.onlyOpen, fills: _fills) : const <(Bill, BillItem?)>[];
     return Scaffold(
       // the plus inside the group (Nutzer 07.11.): a bill started here is put into this group
       floatingActionButton: FasanDepth(
@@ -251,7 +253,7 @@ class _GroupScreenState extends State<GroupScreen> {
                 onPrice: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupBreakdownScreen(name: name))),
                 onPeople: () => _showPeople(context),
               ),
-              GroupCountsLine(bills: bills, onOpenItems: () => setState(() => _view = 1)),
+              GroupCountsLine(bills: all, fills: _fills, noPayer: _noPayer, onFills: (v) => setState(() => _fills = v), onNoPayer: (v) => setState(() => _noPayer = v)),
               const SizedBox(height: FasanSpace.s),
               FasanSegmented<int>(
                 values: const [0, 1],

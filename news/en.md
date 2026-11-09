@@ -1,3 +1,11 @@
+## 0.1.89
+- New: The frame with bills, total and people also shows for “All groups” and “No group”. The duplicate group line below it is gone.
+- New: Below the frame, done, in progress, open and “no payer” are buttons. Tap one to show only those; tap again to switch it off.
+- New: “Bills | Items” is visible on the page again.
+- New: Choose Open, Archive and Trash with the symbol at the top right next to the filter.
+- New: The question marks hold the explanations. The profile is more compact, “Stand-in” is one row with a switch.
+- Better: The page ends above the bottom bar, the frames no longer touch. The neighbouring page is built before you swipe, so nothing pops in afterwards.
+
 ## 0.1.88
 - New: The top bar is the same on all three pages: the Fasan symbol on the left, news and your profile on the right. Nothing jumps between pages.
 - New: You pick the group with the switch at the top left (“All groups”, “No group” or a name). The window has a search for many groups.

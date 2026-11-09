@@ -61,6 +61,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final _pager = PageController();
   int _page = 0; // 0 open, 1 archive, 2 trash (tab Gruppe), 3 Abrechnung, 4 friends
   String _scope = kScopeAll; // what the group picker shows: Alle, Ohne Gruppe or one group (Option A, Nutzer 08.11.)
+  Set<ItemFill> _fills = {}; // status buttons under the frame (Nutzer 09.11.): which items to show
+  bool _noPayer = false; // only bills nobody paid yet
+  bool _searching = false; // search field in the context row (Nutzer 09.11.)
+  String _query = '';
   bool _itemsView = false; // Gruppe tab: false = bills, true = all items of the scope
 
   /// The picked scope; „Alle“ when the picked group is gone (deleted, left).
@@ -338,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
       child: Scaffold(
-        extendBody: true,
+        extendBody: false, // the list ends above the bar: no frames biting each other (Nutzer 09.11.)
         appBar: selecting
             ? AppBar(
                 leading: IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: _exitSelect),
@@ -395,45 +399,25 @@ class _HomeScreenState extends State<HomeScreen> {
             child: SizedBox(
               height: FasanLook.of(context).minTap,
               child: Row(children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: _page <= 3
-                        ? ScopeSwitch(
-                            groups: store0.allGroups,
-                            selected: _scopeOf(store0),
-                            onSelect: (v) => setState(() => _scope = v),
-                            onNew: () => _newGroup(context),
-                          )
-                        : Padding(padding: const EdgeInsets.only(left: FasanSpace.s), child: Text(t.friendsTab, style: Theme.of(context).textTheme.titleMedium)),
-                  ),
-                ),
+                Expanded(child: _contextLeft(context, store0, t)),
+                if (_page <= 2 && !_searching)
+                  IconButton(tooltip: trLang(t.de ? 'de' : 'en', 'search.tip'), icon: Icon(Icons.search_rounded, color: _query.isEmpty ? null : FasanLook.of(context).accent), onPressed: () => setState(() => _searching = true)),
+                if (_page <= 2) _viewMenu(context),
                 if (list != null && list != BillList.trash && _hasAny(store, list))
                   IconButton(
                     tooltip: trLang(t.de ? 'de' : 'en', 'home.sortAndFilter'),
-                    icon: Badge(isLabelVisible: _catFilter != null || store.sortMode != BillSort.status || store.onlyOpen || _itemsView, smallSize: 8, child: const Icon(Icons.filter_list_rounded)),
-                    onPressed: () => sortSheet(context, filter: _catFilter, onFilter: (f) => setState(() => _catFilter = f), itemsView: _itemsView, onItemsView: (v) => setState(() => _itemsView = v)),
+                    icon: Badge(isLabelVisible: _catFilter != null || store.sortMode != BillSort.status || store.onlyOpen, smallSize: 8, child: const Icon(Icons.filter_list_rounded)),
+                    onPressed: () => sortSheet(context, filter: _catFilter, onFilter: (f) => setState(() => _catFilter = f)),
                   ),
                 _moreMenu(context, store, list),
               ]),
             ),
           ),
-          // the three views of the bill list; inside the Gruppe tab only
-          FasanReveal(
-            show: _page <= 2,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s),
-              child: FasanSegmented<int>(
-                values: const [0, 1, 2],
-                selected: _page.clamp(0, 2),
-                label: (i) => [t.listOpen, t.listArchive, t.listTrash][i],
-                onChanged: _goTo,
-              ),
-            ),
-          ),
           Expanded(
             child: PageView(
           controller: _pager,
+          // the neighbour page is built before the swipe starts: its top does not pop in afterwards (Nutzer 09.11.)
+          allowImplicitScrolling: true,
           onPageChanged: (p) {
             FasanHaptics.of(context).tap();
             setState(() {
@@ -512,6 +496,64 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// What a search looks at: purpose, place, people, item names and the amount as written (Karte-Recherche: Suche über Zweck, Zahler und Betrag).
+  String _searchText(Bill b, bool de) => [
+        b.purpose,
+        for (final p in b.ps) p.name,
+        for (final i in b.its) i.name,
+        money(b.effectiveTotal, de: de),
+      ].join(' ').toLowerCase();
+
+  Widget _contextLeft(BuildContext context, BillStore store0, S t) {
+    if (_page <= 2 && _searching) {
+      return TextField(
+        key: const ValueKey('search-field'),
+        autofocus: true,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: trLang(t.de ? 'de' : 'en', 'search.hint'),
+          prefixIcon: const Icon(Icons.search_rounded),
+          border: InputBorder.none,
+          suffixIcon: IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: () => setState(() {
+                _searching = false;
+                _query = '';
+              })),
+        ),
+        onChanged: (v) => setState(() => _query = v),
+      );
+    }
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: _page <= 3
+          ? ScopeSwitch(
+              groups: store0.allGroups,
+              selected: _scopeOf(store0),
+              onSelect: (v) => setState(() => _scope = v),
+              onNew: () => _newGroup(context),
+            )
+          : Padding(padding: const EdgeInsets.only(left: FasanSpace.s), child: Text(t.friendsTab, style: Theme.of(context).textTheme.titleMedium)),
+    );
+  }
+
+  /// Offen / Archiv / Papierkorb as a pull-down in the context row (Nutzer 09.11.): the symbol shows the current view; a tint marks
+  /// that it is not „Offen“. A swipe between the pages still works.
+  Widget _viewMenu(BuildContext context) {
+    final t = S.of(context), l = FasanLook.of(context);
+    final names = [t.listOpen, t.listArchive, t.listTrash];
+    const icons = [Icons.inbox_outlined, Icons.inventory_2_outlined, Icons.delete_outline_rounded];
+    final cur = _page.clamp(0, 2);
+    return PopupMenuButton<int>(
+      key: const ValueKey('view-menu'),
+      tooltip: names[cur],
+      initialValue: cur,
+      onSelected: _goTo,
+      icon: Icon(icons[cur], color: cur == 0 ? null : l.accent),
+      itemBuilder: (_) => [
+        for (var i = 0; i < 3; i++) CheckedPopupMenuItem<int>(value: i, checked: i == cur, child: Text(names[i])),
+      ],
+    );
+  }
+
   bool _hasAny(BillStore s, BillList l) => switch (l) {
         BillList.open => s.drafts.isNotEmpty,
         BillList.archive => s.finished.isNotEmpty,
@@ -524,19 +566,28 @@ class _HomeScreenState extends State<HomeScreen> {
     final t = S.of(context), l = FasanLook.of(context);
     final store = StoreScope.of(context);
     final tt = Theme.of(context).textTheme;
-    final bottom = 200 + MediaQuery.paddingOf(context).bottom; // the last card scrolls fully above the plus button and the bar
+    final bottom = 96.0; // the last card scrolls fully above the plus button
     if (mode == BillList.trash) return _trashPage(context, store, bottom);
     final done = mode == BillList.archive;
     // sort and category filter (Nutzer 04.11.), category_ui.dart
     final sort = store.sortMode;
     final scope = _scopeOf(store);
+    final q = _query.trim().toLowerCase();
+    bool keep(Bill b) => billMatches(b, _fills, _noPayer) && (q.isEmpty || _searchText(b, t.de).contains(q));
     final groups = [
       for (final g in store.groups)
-        if (scope == kScopeAll || scope == g) (g, arrange(store.inGroup(g, archived: done), sort, _catFilter, onlyOpen: store.onlyOpen))
+        if (scope == kScopeAll || scope == g) (g, arrange(store.inGroup(g, archived: done), sort, _catFilter, onlyOpen: store.onlyOpen).where(keep).toList())
     ].where((e) => e.$2.isNotEmpty).toList();
-    final loose = scope == kScopeAll || scope == kScopeLoose ? arrange(store.inGroup(null, archived: done), sort, _catFilter, onlyOpen: store.onlyOpen) : <Bill>[];
+    final loose = scope == kScopeAll || scope == kScopeLoose ? arrange(store.inGroup(null, archived: done), sort, _catFilter, onlyOpen: store.onlyOpen).where(keep).toList() : <Bill>[];
     final shown = [for (final e in groups) ...e.$2, ...loose];
-    final empty = groups.isEmpty && loose.isEmpty;
+    // nothing at all in this view (not: nothing that passes the buttons)
+    final anyHere = [for (final g in store.groups) if (scope == kScopeAll || scope == g) ...store.inGroup(g, archived: done), if (scope == kScopeAll || scope == kScopeLoose) ...store.inGroup(null, archived: done)].isNotEmpty;
+    final empty = !anyHere;
+    // the whole scope for the frame and the counts, whatever the buttons say
+    final scopeBills = scopeIsGroup(scope)
+        ? store.inGroup(scope)
+        : [if (scope == kScopeAll) for (final g in store.groups) ...store.inGroup(g), ...store.inGroup(null)];
+    final peopleCount = scopeIsGroup(scope) ? CollabScope.of(context).peopleOf(scope).length : {for (final b in scopeBills) for (final p in b.ps) p.name.trim().toLowerCase()}.length;
     // one banner at a time, most important first: update, backup due, home-screen tip (iPhone browser)
     final Widget? banner = done
         ? null
@@ -588,27 +639,39 @@ class _HomeScreenState extends State<HomeScreen> {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 if (banner != null) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: banner),
-                if (!done) ...[const SizedBox(height: FasanSpace.s), const StorageWarningCard(), const OpenInviteCard(), const PendingJoinCards()],
-                if (!done) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: HintCard(id: 'swipe', text: t.hintSwipe, icon: Icons.swipe_rounded)),
-                // the group's frame: bills, price, people; for Alle and Ohne Gruppe only the counts line
-                if (scopeIsGroup(scope))
-                  Padding(
-                    padding: const EdgeInsets.only(top: FasanSpace.s),
-                    child: GroupHeader(
-                      bills: store.inGroup(scope),
-                      people: CollabScope.of(context).peopleOf(scope).length,
-                      onPrice: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupBreakdownScreen(name: scope))),
-                      onPeople: () => _goTo(3),
-                    ),
+                if (!done) ...[const StorageWarningCard(), const OpenInviteCard(), const PendingJoinCards()],
+                // the frame: bills, price, people - for a group, Alle Gruppen and Ohne Gruppe alike (Nutzer 09.11.)
+                Padding(
+                  padding: const EdgeInsets.only(top: FasanSpace.s),
+                  child: GroupHeader(
+                    bills: scopeBills,
+                    people: peopleCount,
+                    onPrice: () => scopeIsGroup(scope) ? Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupBreakdownScreen(name: scope))) : _goTo(3),
+                    onPeople: () => _goTo(3),
                   ),
-                GroupCountsLine(bills: scopeIsGroup(scope) ? store.inGroup(scope) : shown, onOpenItems: () => setState(() => _itemsView = true)),
+                ),
+                GroupCountsLine(
+                  bills: scopeBills,
+                  fills: _fills,
+                  noPayer: _noPayer,
+                  onFills: (v) => setState(() => _fills = v),
+                  onNoPayer: (v) => setState(() => _noPayer = v),
+                ),
+                // always visible (Nutzer 09.11.): bills or items
+                FasanSegmented<int>(
+                  values: const [0, 1],
+                  selected: _itemsView ? 1 : 0,
+                  label: (i) => trLang(t.de ? 'de' : 'en', i == 0 ? 'grp.bills' : 'grp.items'),
+                  onChanged: (v) => setState(() => _itemsView = v == 1),
+                ),
+                if (shown.isEmpty) Padding(padding: const EdgeInsets.all(FasanSpace.l), child: Text(trLang(t.de ? 'de' : 'en', 'filter.none'), style: tt.bodyMedium, textAlign: TextAlign.center)),
               ]),
             ),
           ),
           if (_itemsView)
-            ..._itemSlivers(context, flattenItems(shown, onlyOpen: store.onlyOpen))
+            ..._itemSlivers(context, flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills))
           else ...[
-            for (final (g, bills) in groups) _section(context, store, mode, g, g, bills),
+            for (final (g, bills) in groups) _section(context, store, mode, g, g, bills, showHeading: !scopeIsGroup(scope)),
             _section(context, store, mode, null, null, loose, title: done ? t.finished : t.drafts),
           ],
           SliverToBoxAdapter(child: SizedBox(height: bottom)),
@@ -654,7 +717,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// One block of the list as a sliver: the heading accepts bills that are dragged onto it (group blocks and the block without
   /// group); every bill row accepts them as well (moveBefore takes over the group of the row). The rows are built only when they are
   /// near the screen (SliverList.builder).
-  Widget _section(BuildContext context, BillStore store, BillList mode, String? group, String? groupName, List<Bill> list, {String? title}) {
+  Widget _section(BuildContext context, BillStore store, BillList mode, String? group, String? groupName, List<Bill> list, {String? title, bool showHeading = true}) {
     if (list.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
     final t = S.of(context), l = FasanLook.of(context);
     final heading = groupName ?? title ?? '';
@@ -684,7 +747,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l),
       sliver: SliverMainAxisGroup(slivers: [
-        SliverToBoxAdapter(child: header),
+        if (showHeading) SliverToBoxAdapter(child: header),
         SliverList.builder(
           itemCount: list.length,
           itemBuilder: (context, i) => Padding(padding: const EdgeInsets.only(bottom: FasanSpace.xs + 2), child: _row(context, store, mode, list[i])),

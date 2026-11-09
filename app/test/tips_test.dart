@@ -53,6 +53,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Einstellungen'));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('settings-6'))); // Aussehen und Hinweise: a page of its own (Nutzer 09.11.)
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Tipps zeigen'), 300, scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(find.text('Tipps zeigen'));
     await tester.pumpAndSettle();

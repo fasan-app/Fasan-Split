@@ -1,3 +1,11 @@
+## 0.1.89
+- Neu: Der Rahmen mit Bons, Summe und Personen steht auch bei „Alle Gruppen“ und „Ohne Gruppe“. Die doppelte Gruppenzeile darunter ist weg.
+- Neu: Unter dem Rahmen sind erledigt, in Arbeit, offen und „ohne Zahler“ Knöpfe. Tippe einen an, um nur diese zu zeigen; noch einmal tippen schaltet ihn aus.
+- Neu: „Rechnungen | Posten“ steht wieder sichtbar auf der Seite.
+- Neu: Offen, Archiv und Papierkorb wählst du über ein Symbol oben rechts neben dem Filter.
+- Neu: Hinter den Fragezeichen stehen die Erklärungen. Das Profil ist kompakter, „Stellvertretung“ ist eine Zeile mit Schalter.
+- Besser: Die Seite endet über der unteren Leiste, die Rahmen stoßen nicht mehr aneinander. Die Nachbarseite wird vor dem Wischen aufgebaut, dadurch springt nichts nach.
+
 ## 0.1.88
 - Neu: Die Kopfzeile ist auf allen drei Seiten gleich: links das Fasan-Symbol, rechts Neuigkeiten und dein Profil. Nichts springt mehr zwischen den Seiten.
 - Neu: Die Gruppe wählst du über den Schalter oben links („Alle Gruppen“, „Ohne Gruppe“ oder ein Name). Das Fenster hat eine Suche für viele Gruppen.

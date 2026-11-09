@@ -293,10 +293,14 @@ void main() {
       await t.pump(const Duration(milliseconds: 800));
     },
     'h04-archiv': (t) async {
+      await t.tap(find.byKey(const ValueKey('view-menu')));
+      await t.pumpAndSettle();
       await t.tap(find.text('Archiv'));
       await t.pump(const Duration(milliseconds: 500));
     },
     'h05-papierkorb': (t) async {
+      await t.tap(find.byKey(const ValueKey('view-menu')));
+      await t.pumpAndSettle();
       await t.tap(find.text('Papierkorb'));
       await t.pump(const Duration(milliseconds: 500));
     },

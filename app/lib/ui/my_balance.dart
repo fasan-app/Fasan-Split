@@ -17,6 +17,7 @@ import 'backup_ui.dart';
 import 'balance_breakdown.dart';
 import 'collab_ui.dart';
 import 'common.dart';
+import 'group_header.dart' show HelpButton;
 import 'groups.dart';
 import 'history.dart';
 import 'pairing_ui.dart';
@@ -226,13 +227,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final total = myTotal(context);
     Color c(int v) => v > 0 ? Colors.green.shade600 : (v < 0 ? Colors.red.shade600 : l.textMuted);
     void open(Widget w) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => w));
-    Widget tile(IconData i, String title, String? sub, VoidCallback onTap) => ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(i, color: l.accent),
-          title: Text(title),
-          subtitle: sub == null ? null : Text(sub),
-          trailing: Icon(Icons.chevron_right_rounded, color: l.textMuted),
-          onTap: onTap,
+    // compact rows (Nutzer 09.11.): symbol, short title, state or chevron; the longer text sits behind the „?“ and never moves the row
+    Widget tile(IconData i, String title, String? sub, VoidCallback onTap) => SizedBox(
+          height: 52,
+          child: InkWell(
+            onTap: onTap,
+            child: Row(children: [
+              Icon(i, color: l.accent, size: 22),
+              const SizedBox(width: FasanSpace.m),
+              Expanded(child: Text(title, style: tt.bodyLarge, maxLines: 1, overflow: TextOverflow.ellipsis)),
+              if (sub != null) HelpButton(title: title, body: sub),
+              Icon(Icons.chevron_right_rounded, color: l.textMuted),
+            ]),
+          ),
         );
     return Scaffold(
       appBar: AppBar(
@@ -249,7 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               controller: _name,
               textCapitalization: TextCapitalization.words,
               style: tt.titleLarge,
-              decoration: InputDecoration(labelText: trLang(de ? 'de' : 'en', 'my_balance.yourName'), helperText: trLang(de ? 'de' : 'en', 'my_balance.usedEverywhereReceiptsGroups')),
+              decoration: InputDecoration(labelText: trLang(de ? 'de' : 'en', 'my_balance.yourName')),
               onChanged: (_) {
                 _timer?.cancel();
                 _timer = Timer(const Duration(milliseconds: 600), _save);
@@ -281,17 +288,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: FasanSpace.s),
         // stand-in (Nutzer 09.11.): may others change and enter things for me? On by default; off = their changes about me wait for me
-        Material(
-          color: l.surfaceAlt,
-          borderRadius: BorderRadius.circular(l.radius * 0.7),
-          child: SwitchListTile(
-            key: const ValueKey('profile-standin'),
-            secondary: Icon(Icons.group_add_outlined, color: l.accent),
-            title: Text(trLang(de ? 'de' : 'en', 'profile.standIn')),
-            subtitle: Text(trLang(de ? 'de' : 'en', collab.confirmAll ? 'profile.standInOff' : 'profile.standInOn')),
-            value: !collab.confirmAll,
-            onChanged: (v) => CollabScope.read(context).confirmAll = !v,
-          ),
+        SizedBox(
+          key: const ValueKey('profile-standin'),
+          height: 52,
+          child: Row(children: [
+            Icon(Icons.group_add_outlined, color: l.accent, size: 22),
+            const SizedBox(width: FasanSpace.m),
+            Expanded(child: Text(trLang(de ? 'de' : 'en', 'profile.standIn'), style: tt.bodyLarge, maxLines: 1, overflow: TextOverflow.ellipsis)),
+            HelpButton(title: trLang(de ? 'de' : 'en', 'profile.standIn'), body: trLang(de ? 'de' : 'en', 'profile.standInHelp')),
+            Switch(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, value: !collab.confirmAll, onChanged: (v) => CollabScope.read(context).confirmAll = !v),
+          ]),
         ),
         const SizedBox(height: FasanSpace.s),
         tile(Icons.history_rounded, trLang(de ? 'de' : 'en', 'history.title'), trLang(de ? 'de' : 'en', 'history.profileSub'), () => open(const HistoryScreen.all())),
