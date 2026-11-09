@@ -22,7 +22,7 @@ import '../l10n_groups.dart';
 import 'scope.dart';
 import '../flows/scan_queue.dart';
 import 'bill_tile.dart';
-import 'common.dart' show TitleHelp, showNote;
+import 'common.dart' show showNote;
 import 'package:fasan_core/bill.dart' show money;
 import 'groups.dart';
 import 'pairing_ui.dart';
@@ -1344,14 +1344,6 @@ class _AccountScreenState extends State<AccountScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(t.collabTitle)),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
-        // trust (Nutzer 04.11.): default everyone; switch on to confirm changes of others about me
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          secondary: const Icon(Icons.verified_user_outlined),
-          title: TitleHelp(t.confirmAllTitle, t.trustAboutMeSub),
-          value: CollabScope.of(context).confirmAll,
-          onChanged: (v) => CollabScope.read(context).confirmAll = v,
-        ),
         TextField(
           controller: _name,
           textCapitalization: TextCapitalization.words,

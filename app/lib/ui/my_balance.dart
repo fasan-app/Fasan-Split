@@ -235,7 +235,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onTap: onTap,
         );
     return Scaffold(
-      appBar: AppBar(title: Text(trLang(de ? 'de' : 'en', 'my_balance.profile2'))),
+      appBar: AppBar(
+        title: Text(trLang(de ? 'de' : 'en', 'my_balance.profile2')),
+        // settings live inside the profile, top right (Nutzer 09.11.)
+        actions: [IconButton(tooltip: trLang(de ? 'de' : 'en', 'my_balance.settings'), icon: const Icon(Icons.settings_outlined), onPressed: () => open(const SettingsScreen()))],
+      ),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Row(children: [
           ListenableBuilder(listenable: _name, builder: (context, _) => FasanAvatar(name: _name.text.trim().isEmpty ? '?' : _name.text.trim(), index: 0, size: 64)),
@@ -276,6 +280,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         const SizedBox(height: FasanSpace.s),
+        // stand-in (Nutzer 09.11.): may others change and enter things for me? On by default; off = their changes about me wait for me
+        Material(
+          color: l.surfaceAlt,
+          borderRadius: BorderRadius.circular(l.radius * 0.7),
+          child: SwitchListTile(
+            key: const ValueKey('profile-standin'),
+            secondary: Icon(Icons.group_add_outlined, color: l.accent),
+            title: Text(trLang(de ? 'de' : 'en', 'profile.standIn')),
+            subtitle: Text(trLang(de ? 'de' : 'en', collab.confirmAll ? 'profile.standInOff' : 'profile.standInOn')),
+            value: !collab.confirmAll,
+            onChanged: (v) => CollabScope.read(context).confirmAll = !v,
+          ),
+        ),
+        const SizedBox(height: FasanSpace.s),
         tile(Icons.history_rounded, trLang(de ? 'de' : 'en', 'history.title'), trLang(de ? 'de' : 'en', 'history.profileSub'), () => open(const HistoryScreen.all())),
         const SizedBox(height: FasanSpace.l),
         FasanLabel(trLang(de ? 'de' : 'en', 'my_balance.friends')),
@@ -289,7 +307,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         tile(Icons.save_alt_rounded, trLang(de ? 'de' : 'en', 'my_balance.saveABackup'), trLang(de ? 'de' : 'en', 'my_balance.withAPasswordE'), () => saveBackupFlow(context)),
         tile(Icons.key_rounded, trLang(de ? 'de' : 'en', 'my_balance.wordsKeyTrust'), trLang(de ? 'de' : 'en', 'my_balance.wordsToRestore'), () => open(const AccountScreen())),
         const SizedBox(height: FasanSpace.m),
-        tile(Icons.tune_rounded, trLang(de ? 'de' : 'en', 'my_balance.settings'), null, () => open(const SettingsScreen())),
         const SizedBox(height: FasanSpace.xl),
         if (collab.identity != null)
           ListTile(

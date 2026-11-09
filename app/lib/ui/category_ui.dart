@@ -109,15 +109,38 @@ extension _Let<T> on T {
 }
 
 /// Sort order and category filter for the lists. Returns the chosen filter ('' = all) or null when closed.
-Future<void> sortSheet(BuildContext context, {required String? filter, required ValueChanged<String?> onFilter}) async {
+Future<void> sortSheet(BuildContext context, {required String? filter, required ValueChanged<String?> onFilter, bool? itemsView, ValueChanged<bool>? onItemsView}) async {
   final t = S.of(context), store = StoreScope.read(context), l = FasanLook.of(context);
+  var iv = itemsView ?? false;
   final used = <String>{for (final b in store.bills) if (b.category != null && b.trashedAt == null) b.category!};
   await showModalBottomSheet<void>(
     context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, set) => SafeArea(
         child: ListView(shrinkWrap: true, padding: const EdgeInsets.only(bottom: FasanSpace.l), children: [
-          ListTile(title: Text(trLang(t.de ? 'de' : 'en', 'category_ui.sort'), style: Theme.of(ctx).textTheme.titleMedium)),
+          // one window for everything that changes the list (Nutzer 09.11.): what is shown, only open, sort order, category
+          ListTile(title: Text(trLang(t.de ? 'de' : 'en', 'filter.title'), style: Theme.of(ctx).textTheme.titleMedium)),
+          if (itemsView != null && onItemsView != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s),
+              child: FasanSegmented<int>(
+                values: const [0, 1],
+                selected: iv ? 1 : 0,
+                label: (i) => trLang(t.de ? 'de' : 'en', i == 0 ? 'grp.bills' : 'grp.items'),
+                onChanged: (v) => set(() {
+                  iv = v == 1;
+                  onItemsView(iv);
+                }),
+              ),
+            ),
+          SwitchListTile(
+            title: Text(trLang(t.de ? 'de' : 'en', 'filter.onlyOpen')),
+            value: store.onlyOpen,
+            onChanged: (v) => set(() => store.onlyOpen = v),
+          ),
+          ListTile(title: Text(trLang(t.de ? 'de' : 'en', 'filter.sortBy'), style: Theme.of(ctx).textTheme.titleSmall)),
           RadioGroup<BillSort>(
             groupValue: store.sortMode,
             onChanged: (v) => set(() => store.sortMode = v ?? BillSort.status),

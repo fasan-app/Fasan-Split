@@ -301,7 +301,7 @@ void main() {
       await t.pump(const Duration(milliseconds: 500));
     },
     'h06-gruppen': (t) async {
-      await t.tap(find.text('Gruppen'));
+      await t.tap(find.text('Abrechnung').last);
       await t.pump(const Duration(milliseconds: 500));
     },
     'h13-freunde': (t) async {

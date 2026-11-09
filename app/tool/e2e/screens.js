@@ -126,7 +126,7 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('h05-papierkorb', async () => { await tap(/^Papierkorb/); });
     await step('h06-gruppen', async () => { await tap(/^Abrechnung/); });
     // Option A (09.11.): the chip of the group picker picks the group, the tab Abrechnung then shows its people directly
-    await step('h07-gruppe-offen', async () => { await p.getByRole('button', { name: /^Beispielstadt$/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(800); });
+    await step('h07-gruppe-offen', async () => { await tap(/^Alle Gruppen/); await p.waitForTimeout(500); await p.getByText(/^Beispielstadt$/).last().click({ timeout: 8000 }); await p.waitForTimeout(800); });
     await step('h08-personen', async () => { await p.waitForTimeout(300); });
     await step('h08b-bezahlt-frage', async () => { await tap(/Als bezahlt eintragen/); });
     // a part first (06.11.: Teilbetrag), same names as the app walk (test/screens_test.dart h08d/h08e), then the rest

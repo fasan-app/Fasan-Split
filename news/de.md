@@ -1,3 +1,10 @@
+## 0.1.88
+- Neu: Die Kopfzeile ist auf allen drei Seiten gleich: links das Fasan-Symbol, rechts Neuigkeiten und dein Profil. Nichts springt mehr zwischen den Seiten.
+- Neu: Die Gruppe wählst du über den Schalter oben links („Alle Gruppen“, „Ohne Gruppe“ oder ein Name). Das Fenster hat eine Suche für viele Gruppen.
+- Neu: Ein Filter-Fenster rechts oben mit Rechnungen/Posten, „Nur offene Posten“, Sortierung und Kategorie. Das Sortier-Symbol und das Auswahl-Symbol sind aus der Kopfzeile verschwunden; „Auswählen“ steht im ⋮-Menü.
+- Neu: Einstellungen öffnest du im Profil oben rechts. Im Profil steht jetzt direkt, ob andere für dich eintragen dürfen.
+- Geändert: Bei Freunden steht keine Zahl mehr. Die Hinweiszeile oben ist aus.
+
 ## 0.1.87
 - Besser: Im Browser misst der Leistungstest das Scrollen gegen 60 Bilder pro Sekunde, weil Android und der Browser die Rate von Webseiten festlegen. Der Bericht nennt die Zielrate.
 - Neu: Menü umgebaut. Unten: Gruppe | Abrechnung | Freunde. In „Gruppe“ wählst du oben „Alle“, „Ohne Gruppe“ oder eine Gruppe; darunter „Rechnungen | Posten“. „Abrechnung“ zeigt die Personen und den Ausgleich der gewählten Gruppe, ohne Wahl alle Gruppen mit Salden.

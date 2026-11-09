@@ -9,6 +9,7 @@ import 'package:fasan_split/ui/tips.dart';
 import 'package:fasan_split/ui/tutorial.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:fasan_split/ui/my_balance.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Set<String> keysOf(AppLanguage l, String prefix) => {for (final k in l.strings.keys) if (k.startsWith(prefix)) k};
@@ -44,19 +45,12 @@ void main() {
     final ctl = FasanController(settings: FasanSettings(reduceMotion: true));
     await tester.pumpWidget(SplitApp(store: store, ui: ctl, home: const HomeScreen()));
     await tester.pump(const Duration(milliseconds: 300));
-    final first = trLang('de', 'tip.${tipIds[0]}');
-    expect(find.text(first), findsOneWidget);
-    expect(store.tipNext, 1, reason: 'beim nächsten Start kommt der nächste Tipp');
-    // a page switch and a rebuild do not change it
-    await tester.tap(find.text('Abrechnung').last);
-    await tester.pumpAndSettle();
-    expect(find.text(first), findsOneWidget);
-    // closing hides it for this start only
-    await tester.tap(find.byTooltip('Tipp schließen'));
-    await tester.pumpAndSettle();
-    expect(find.text(first), findsNothing);
-    expect(store.showTips, isTrue);
+    // the tip line is off on the start page for now (Nutzer 09.11.: it costs too much room); the setting stays
+    expect(find.text(trLang('de', 'tip.${tipIds[0]}')), findsNothing);
+    expect(find.byTooltip('Tipp schließen'), findsNothing);
     // settings: the switch turns the tips off; the guide opens with all steps
+    await tester.tap(find.byType(MyBalanceBadge)); // settings live in the profile, top right (Nutzer 09.11.)
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Einstellungen'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Tipps zeigen'), 300, scrollable: find.byType(Scrollable).first);

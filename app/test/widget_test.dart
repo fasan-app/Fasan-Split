@@ -108,7 +108,7 @@ void main() {
     expect(store.drafts.single.id, 'demo');
     expect(store.drafts.single.step, 1);
     expect(store.drafts.single.ps.single.name, 'Anna');
-    expect(find.text('No group'), findsNWidgets(2), reason: 'Chip im Gruppenwähler und Überschrift');
+    expect(find.text('No group'), findsOneWidget, reason: 'Überschrift (der Gruppenschalter zeigt All groups)');
     await tester.tap(find.text('Abendessen'));
     await tester.pumpAndSettle();
     expect(find.byType(ReviewScreen), findsOneWidget);

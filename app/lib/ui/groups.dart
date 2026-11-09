@@ -112,7 +112,7 @@ class GroupsPage extends StatelessWidget {
 
 /// Invite, filter and menu (history, leave, delete) of one group: the app bar of the group screen and of the Gruppe tab with a
 /// group picked. [onDeleted] runs after the group was deleted (screen: close it, tab: fall back to „Alle“).
-List<Widget> groupActions(BuildContext context, String name, {required VoidCallback onDeleted, bool compact = false}) {
+List<Widget> groupActions(BuildContext context, String name, {required VoidCallback onDeleted, bool compact = false, VoidCallback? onSelect}) {
   final t = S.of(context);
   final lang = t.de ? 'de' : 'en';
   final store = StoreScope.of(context);
@@ -136,6 +136,10 @@ List<Widget> groupActions(BuildContext context, String name, {required VoidCallb
           ),
           PopupMenuButton<String>(
             onSelected: (v) async {
+              if (v == 'select') {
+                onSelect?.call();
+                return;
+              }
               if (v == 'invite') {
                 await invite();
                 return;
@@ -154,6 +158,7 @@ List<Widget> groupActions(BuildContext context, String name, {required VoidCallb
               }
             },
             itemBuilder: (_) => [
+              if (onSelect != null) PopupMenuItem(value: 'select', child: Text(t.select)),
               if (compact) PopupMenuItem(value: 'invite', child: Text(t.invite)),
               PopupMenuItem(value: 'history', child: Text(trLang(lang, 'history.title'))),
               if (live != null) PopupMenuItem(value: 'leave', child: Text(t.leaveGroup)),
@@ -662,8 +667,7 @@ class FriendsPage extends StatelessWidget {
                     decoration: BoxDecoration(color: l.accent, borderRadius: BorderRadius.circular(10)),
                     child: Text(f.unread > 99 ? '99+' : '${f.unread}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                   )
-                else if (f.bills > 0 && f.last == null)
-                  Text('${money(f.sum, de: de)} ${signOf(context)}', style: tt.titleSmall),
+                // no bare amount here (Nutzer 09.11.: debt or credit was not clear); the balance lives in Abrechnung and the profile
               ]),
               if (hasChat && !bold && f.last == null) ...[const SizedBox(width: 4), Icon(Icons.chat_bubble_outline_rounded, size: 20, color: l.accent)],
             ]),

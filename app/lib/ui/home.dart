@@ -26,13 +26,13 @@ import 'category_ui.dart';
 import 'common.dart';
 import 'my_balance.dart';
 import 'swipe.dart';
-import 'tips.dart';
+import 'brand_mark.dart';
+import 'scope_sheet.dart';
 import 'groups.dart';
 import 'balance_breakdown.dart' show GroupBreakdownScreen;
 import 'group_header.dart';
 import 'group_picker.dart';
 import 'onboarding.dart';
-import 'settings_screen.dart';
 import 'update_ui.dart';
 import '../state/images.dart';
 
@@ -381,88 +381,54 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               )
             : AppBar(
-                title: Text(_page <= 2 ? t.appName : (_page == 3 ? t.groupsTab : t.friendsTab)),
-                actions: [
-                  // my balance on every main page (Nutzer 04.11.)
-                  const MyBalanceBadge(),
-                  const ActivityBell(),
-                  if (_page <= 2 && scopeIsGroup(_scopeOf(store))) ...groupActions(context, _scopeOf(store), compact: true, onDeleted: () => setState(() => _scope = kScopeAll)),
-                  if (list != null && list != BillList.trash && _hasAny(store, list))
-                    IconButton(
-                      tooltip: trLang(t.de ? 'de' : 'en', 'home.sortAndFilter'),
-                      icon: Badge(isLabelVisible: _catFilter != null || store.sortMode != BillSort.status, smallSize: 8, child: const Icon(Icons.sort_rounded)),
-                      onPressed: () => sortSheet(context, filter: _catFilter, onFilter: (f) => setState(() => _catFilter = f)),
-                    ),
-                  if (list != null && _hasAny(store, list))
-                    IconButton(tooltip: t.select, icon: const Icon(Icons.checklist_rounded), onPressed: () => setState(() => _selecting = true)),
-                  IconButton(
-                    tooltip: t.settings,
-                    icon: const Icon(Icons.tune_rounded),
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
-                  ),
-                ],
+                // the same on every main page (Nutzer 09.11.): Fasan symbol left, news and my profile right; nothing else up here
+                leadingWidth: 56,
+                leading: const Padding(padding: EdgeInsets.only(left: FasanSpace.l), child: Center(child: FasanMark())),
+                title: const SizedBox.shrink(),
+                actions: const [ActivityBell(), MyBalanceBadge(), SizedBox(width: FasanSpace.s)],
               ),
         body: Column(children: [
-          // one short tip per start (Nutzer 07.11.), off in the settings
-          const TipLine(),
-          // the three views of Rechnungen: they appear and disappear smoothly when the page changes
-          // stays while selecting (04.11.: hiding it made the list jump); while dragging its parts take the bills
+          // context row, the same height on every main page so nothing jumps (Nutzer 09.11.): the group switch on the left,
+          // filter and the more menu on the right; room for the search to come (docs/KONZEPT-STARTBILDSCHIRM.md)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.s, 0),
+            child: SizedBox(
+              height: FasanLook.of(context).minTap,
+              child: Row(children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _page <= 3
+                        ? ScopeSwitch(
+                            groups: store0.allGroups,
+                            selected: _scopeOf(store0),
+                            onSelect: (v) => setState(() => _scope = v),
+                            onNew: () => _newGroup(context),
+                          )
+                        : Padding(padding: const EdgeInsets.only(left: FasanSpace.s), child: Text(t.friendsTab, style: Theme.of(context).textTheme.titleMedium)),
+                  ),
+                ),
+                if (list != null && list != BillList.trash && _hasAny(store, list))
+                  IconButton(
+                    tooltip: trLang(t.de ? 'de' : 'en', 'home.sortAndFilter'),
+                    icon: Badge(isLabelVisible: _catFilter != null || store.sortMode != BillSort.status || store.onlyOpen || _itemsView, smallSize: 8, child: const Icon(Icons.filter_list_rounded)),
+                    onPressed: () => sortSheet(context, filter: _catFilter, onFilter: (f) => setState(() => _catFilter = f), itemsView: _itemsView, onItemsView: (v) => setState(() => _itemsView = v)),
+                  ),
+                _moreMenu(context, store, list),
+              ]),
+            ),
+          ),
+          // the three views of the bill list; inside the Gruppe tab only
           FasanReveal(
             show: _page <= 2,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s),
-              child: Stack(children: [
-                FasanSegmented<int>(
-                  values: const [0, 1, 2],
-                  selected: _page.clamp(0, 2),
-                  label: (i) => [t.listOpen, t.listArchive, t.listTrash][i],
-                  onChanged: _goTo,
-                ),
-              ]),
-            ),
-          ),
-          // group picker (Option A): same row on Gruppe and Abrechnung; the chips take lifted bills
-          FasanReveal(
-            show: _page <= 3,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: FasanSpace.s),
-              child: GroupPicker(
-                groups: store0.allGroups,
-                selected: _scopeOf(store0),
-                onSelect: (v) => setState(() => _scope = v),
-                onNew: () => _newGroup(context),
-                onDrop: (bills, g) {
-                  store0.setGroup(bills, g);
-                  FasanHaptics.of(context).snap();
-                  _exitSelect();
-                },
+              child: FasanSegmented<int>(
+                values: const [0, 1, 2],
+                selected: _page.clamp(0, 2),
+                label: (i) => [t.listOpen, t.listArchive, t.listTrash][i],
+                onChanged: _goTo,
               ),
-            ),
-          ),
-          // bills | items of the scope (Nutzer 08.11. 04:16) and „only open items“ (Nutzer 07.11.) in ONE row: the screen of a phone
-          // is short, every extra row costs list space (docs/recherche/2026-11-09-reale-und-gefuehlte-leistung.md, Daumenzone)
-          FasanReveal(
-            show: _page <= 1,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.s, FasanSpace.s),
-              child: Row(children: [
-                Expanded(
-                  child: FasanSegmented<int>(
-                    values: const [0, 1],
-                    selected: _itemsView ? 1 : 0,
-                    label: (i) => trLang(t.de ? 'de' : 'en', i == 0 ? 'grp.bills' : 'grp.items'),
-                    onChanged: (v) => setState(() => _itemsView = v == 1),
-                  ),
-                ),
-                if (_hasAny(store0, BillList.open))
-                  IconButton(
-                    tooltip: trLang(t.de ? 'de' : 'en', store0.onlyOpen ? 'filter.allItems' : 'filter.onlyOpen'),
-                    isSelected: store0.onlyOpen,
-                    icon: const Icon(Icons.filter_alt_outlined),
-                    selectedIcon: const Icon(Icons.filter_alt_rounded),
-                    onPressed: () => store0.onlyOpen = !store0.onlyOpen,
-                  ),
-              ]),
             ),
           ),
           Expanded(
@@ -522,6 +488,27 @@ class _HomeScreenState extends State<HomeScreen> {
           onDropGroup: null,
         ),
       ),
+    );
+  }
+
+  /// The ⋮ menu of the context row (Nutzer 09.11.): select (formerly its own icon), and the group actions when a group is chosen.
+  /// Entries stay and are greyed out when they cannot act (docs/recherche: never hide menu entries).
+  Widget _moreMenu(BuildContext context, BillStore store, BillList? list) {
+    final t = S.of(context);
+    final canSelect = list != null && _hasAny(store, list);
+    if (_page <= 2 && scopeIsGroup(_scopeOf(store))) {
+      return Row(mainAxisSize: MainAxisSize.min, children: groupActions(context, _scopeOf(store), compact: true, onDeleted: () => setState(() => _scope = kScopeAll), onSelect: canSelect ? () => setState(() => _selecting = true) : null));
+    }
+    if (_page > 2) {
+      return PopupMenuButton<String>(
+        tooltip: t.settings,
+        onSelected: (_) => FriendsPage.inviteFriend(context),
+        itemBuilder: (_) => [PopupMenuItem(value: 'invite', child: Text(trLang(t.de ? 'de' : 'en', 'groups.inviteAFriend')))],
+      );
+    }
+    return PopupMenuButton<String>(
+      onSelected: (_) => setState(() => _selecting = true),
+      itemBuilder: (_) => [PopupMenuItem(value: 'select', enabled: canSelect, child: Text(t.select))],
     );
   }
 
@@ -864,7 +851,7 @@ class _NavBar extends StatelessWidget {
     final t = S.of(context), l = FasanLook.of(context);
     final items = [
       (Icons.receipt_long_outlined, Icons.receipt_long_rounded, t.billsTab),
-      (Icons.folder_copy_outlined, Icons.folder_copy_rounded, t.groupsTab),
+      (Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, t.groupsTab),
       (Icons.people_outline_rounded, Icons.people_rounded, t.friendsTab),
     ];
     return Padding(
@@ -872,7 +859,7 @@ class _NavBar extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s + MediaQuery.paddingOf(context).bottom),
       // fixed height: the glass fills the space it is given, and the Scaffold gives its bottom bar all the height there is
       child: SizedBox(
-        height: l.minTap + 32,
+        height: l.minTap + 24, // slimmer (Nutzer 09.11.), still symbol and word
         child: FasanGlass(
         padding: const EdgeInsets.all(4),
         child: Row(children: [
@@ -891,7 +878,7 @@ class _NavBar extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: FasanMotion.of(context).short,
                     curve: FasanCurves.short,
-                    constraints: BoxConstraints(minHeight: l.minTap + 8),
+                    constraints: BoxConstraints(minHeight: l.minTap),
                     decoration: BoxDecoration(
                         color: cand.isNotEmpty
                             ? l.accent.withValues(alpha: 0.3)
@@ -899,7 +886,7 @@ class _NavBar extends StatelessWidget {
                                 ? l.accent.withValues(alpha: 0.14)
                                 : Colors.transparent,
                         borderRadius: BorderRadius.circular(l.radius * 0.7)),
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Badge(
                         isLabelVisible: badges[i] > 0,

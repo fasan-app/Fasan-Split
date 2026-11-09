@@ -62,7 +62,9 @@ void main() {
     testWidgets('auswählen, gruppieren: Kopfzeile der Gruppe mit Anzahl', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen'), _bill('c', 'Taxi', done: true)]);
       await app(tester, store, idle(store));
-      await tester.tap(find.byTooltip('Auswählen'));
+      await tester.tap(find.byType(PopupMenuButton<String>)); // select lives in the ⋮ menu (Nutzer 09.11.)
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Auswählen'));
       await tester.pump(const Duration(milliseconds: 200));
       await tester.tap(find.text('Frühstück'));
       await tester.tap(find.text('Abendessen'));
@@ -75,7 +77,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(store.groups, ['Beispielstadt']);
       expect(store.inGroup('Beispielstadt').map((b) => b.id).toSet(), {'a', 'b'});
-      expect(find.text('Beispielstadt'), findsNWidgets(2), reason: 'Chip im Gruppenwähler und Überschrift der Gruppe');
+      expect(find.text('Beispielstadt'), findsWidgets, reason: 'Überschrift der Gruppe (und ggf. der Gruppenschalter)');
       expect(find.text('2 · 20,00 €'), findsOneWidget);
       expect(store.inGroup(null).map((b) => b.id), ['c']);
     });
@@ -135,7 +137,9 @@ void main() {
     testWidgets('Auswahlmodus bleibt auch ohne Auswahl und endet mit dem X', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen')]);
       await app(tester, store, idle(store));
-      await tester.tap(find.byTooltip('Auswählen'));
+      await tester.tap(find.byType(PopupMenuButton<String>)); // select lives in the ⋮ menu (Nutzer 09.11.)
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Auswählen'));
       await tester.pump(const Duration(milliseconds: 200));
       expect(find.text('Bons auswählen'), findsOneWidget);
       await tester.tap(find.text('Frühstück'));
@@ -145,7 +149,7 @@ void main() {
       await tester.tap(find.byTooltip('Abbrechen'));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Bons auswählen'), findsNothing);
-      expect(find.byTooltip('Auswählen'), findsOneWidget);
+      expect(find.byType(PopupMenuButton<String>), findsOneWidget);
     });
 
     testWidgets('Wischen nach rechts: eingetragener Bon wird ausgeglichen (Archiv), Rückgängig holt zurück', (tester) async {
@@ -228,7 +232,7 @@ void main() {
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
-      expect(find.text('Urlaub'), findsNWidgets(2), reason: 'Chip im Gruppenwähler und Karte der Abrechnung');
+      expect(find.text('Urlaub'), findsOneWidget, reason: 'Karte der Abrechnung (der Gruppenschalter zeigt „Alle Gruppen“)');
       expect(find.text('1 Bon'), findsOneWidget);
       await tester.tap(find.text('Freunde').last);
       for (var i = 0; i < 20; i++) {

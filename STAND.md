@@ -4,6 +4,17 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 09.11. 10:10 Web 0.1.88: Startbildschirm, Profil, Menü (Nutzer 09:22, Sitzung B; Konzept `docs/KONZEPT-STARTBILDSCHIRM.md`)
+
+Umgesetzt und getestet (Analyse sauber, alle Tests grün; Bildschirmfotos der App für Gruppe/Abrechnung/Freunde angesehen, Handybreite):
+Kopfzeile gleich auf allen Tabs (Fasan-Symbol, Glocke, Profil), Gruppenschalter mit Fenster und Suche ab 8 Gruppen, Filter-Fenster
+(Anzeigen, nur offene Posten, Sortierung, Kategorie), ⋮ mit „Auswählen“, Einstellungen im Profil oben rechts, Stellvertretung im
+Profil, Freunde ohne Zahl, Hinweiszeile aus, untere Leiste schlanker.
+**Nicht geprüft:** Browser-Bildschirmvergleich (`tool/e2e/screens.js` h07 angepasst, nicht gelaufen), Leistung der neuen Kopfzeile im
+Browser auf dem S23, Bild der Posten-Ansicht im neuen Filterfenster, Ziehen eines Bons auf eine Gruppe (Chips entfallen; Ziel unten bleibt).
+**Offen:** Einstellungen neu gliedern (Apple-Stil, höchstens 2 Ebenen), Suche, Rechnungsfarben, eigener Betrag mit Wort („bekommt/schuldet“)
+in der Kopfzeile, Tab-Symbole mit dem Nutzer prüfen (Vorschlag Geldbeutel für Abrechnung), Erklärung des Laufs 08:39 „schlecht“.
+
 ## Beschlüsse 06.11. (Nutzer, nach Fehlern in 0.2: 13 Croissants, Web-Menü, Web langsam)
 
 1. **Eine Codebasis** für APK und Browser (Flutter). Browser muss in allem 1:1 der APK gleichen (Menü, Knöpfe, Layout,

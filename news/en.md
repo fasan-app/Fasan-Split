@@ -1,3 +1,10 @@
+## 0.1.88
+- New: The top bar is the same on all three pages: the Fasan symbol on the left, news and your profile on the right. Nothing jumps between pages.
+- New: You pick the group with the switch at the top left (“All groups”, “No group” or a name). The window has a search for many groups.
+- New: A filter window at the top right with Bills/Items, “Only open items”, sorting and category. The sort and select icons left the top bar; “Select” is in the ⋮ menu.
+- New: Open the settings in the profile, top right. The profile now says directly whether others may enter things for you.
+- Changed: Friends show no number any more. The tip line at the top is off.
+
 ## 0.1.87
 - Better: In the browser the performance test measures scrolling against 60 frames per second, because Android and the browser set the rate of web pages. The report names the target rate.
 - New: Menu rebuilt. Bottom: Group | Settlement | Friends. In “Group” pick “All”, “No group” or a group at the top; below it “Bills | Items”. “Settlement” shows the people and balances of the picked group, or all groups with balances if none is picked.

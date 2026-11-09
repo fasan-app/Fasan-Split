@@ -7,6 +7,7 @@ import 'package:fasan_split/main.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/group_header.dart';
 import 'package:fasan_split/ui/home.dart';
+import 'package:fasan_split/ui/my_balance.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -45,6 +46,24 @@ Future<void> _settle(WidgetTester tester) async {
   }
 }
 
+/// Opens the group switch and picks [label] (the group switch replaced the chips, Nutzer 09.11.).
+Future<void> _pick(WidgetTester tester, String label) async {
+  await tester.tap(find.byKey(const ValueKey('scope-switch')));
+  await _settle(tester);
+  await tester.tap(find.widgetWithText(ListTile, label));
+  await _settle(tester);
+}
+
+/// Filter window: switch to Posten.
+Future<void> _showItems(WidgetTester tester) async {
+  await tester.tap(find.byIcon(Icons.filter_list_rounded));
+  await _settle(tester);
+  await tester.tap(find.text('Posten').last);
+  await _settle(tester);
+  await tester.tapAt(const Offset(20, 20)); // barrier closes the sheet
+  await _settle(tester);
+}
+
 void main() {
   late BillStore store;
   setUp(() {
@@ -62,12 +81,10 @@ void main() {
       expect(find.text(n), findsOneWidget, reason: 'Alle zeigt $n');
     }
     expect(find.byType(GroupHeader), findsNothing, reason: 'Alle hat keinen Gruppenkopf');
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Ohne Gruppe'));
-    await _settle(tester);
+    await _pick(tester, 'Ohne Gruppe');
     expect(find.text('Taxi'), findsOneWidget);
     expect(find.text('Kneipe'), findsNothing);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Urlaub'));
-    await _settle(tester);
+    await _pick(tester, 'Urlaub');
     expect(find.text('Kneipe'), findsOneWidget);
     expect(find.text('Fähre'), findsOneWidget);
     expect(find.text('Taxi'), findsNothing);
@@ -79,10 +96,8 @@ void main() {
 
   testWidgets('Rechnungen | Posten: Posten der gewählten Gruppe, nur dort', (tester) async {
     await _app(tester, store);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Urlaub'));
-    await _settle(tester);
-    await tester.tap(find.text('Posten').first);
-    await _settle(tester);
+    await _pick(tester, 'Urlaub');
+    await _showItems(tester);
     final names = tester.widgetList<GroupItemRow>(find.byType(GroupItemRow)).map((r) => r.item.name).toSet();
     expect(names, {'Pizza', 'Salat'}, reason: 'nur die Posten der Gruppe Urlaub');
     expect(find.byType(GroupItemRow), findsNWidgets(2));
@@ -93,23 +108,52 @@ void main() {
     await tester.tap(find.text('Abrechnung').last);
     await _settle(tester);
     expect(find.text('WG'), findsWidgets);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Urlaub'));
-    await _settle(tester);
+    await _pick(tester, 'Urlaub');
     expect(find.text('Anna'), findsWidgets, reason: 'Personen der Gruppe Urlaub');
     expect(find.text('Bäcker'), findsNothing);
   });
 
   testWidgets('Gelöschte Gruppe: der Wähler fällt auf Alle zurück', (tester) async {
     await _app(tester, store);
-    // the picker scrolls sideways and builds only the chips on screen
-    await tester.dragUntilVisible(find.widgetWithText(ChoiceChip, 'WG'), find.byKey(const ValueKey('group-picker')), const Offset(-100, 0));
-    await tester.drag(find.byKey(const ValueKey('group-picker')), const Offset(-150, 0)); // fully on screen, not at the edge
-    await tester.pump();
-    await tester.tap(find.widgetWithText(ChoiceChip, 'WG'));
-    await _settle(tester);
+    await _pick(tester, 'WG');
     expect(find.text('Taxi'), findsNothing);
     store.deleteGroup('WG');
     await _settle(tester);
     expect(find.text('Taxi'), findsOneWidget, reason: 'zurück auf Alle');
+  });
+
+  testWidgets('Gruppenwahl skaliert: ab 8 Gruppen eine Suche im Fenster, sie filtert die Liste', (tester) async {
+    final many = BillStore.memory([for (var i = 0; i < 9; i++) _bill(i < 4 ? 'abcd'[i] : 'e$i', 'Bon$i', group: 'Gruppe$i')])..onboarded = true;
+    await _app(tester, many);
+    await tester.tap(find.byKey(const ValueKey('scope-switch')));
+    await _settle(tester);
+    expect(find.byType(TextField), findsOneWidget, reason: 'Suchfeld ab 8 Gruppen');
+    await tester.enterText(find.byType(TextField), 'Gruppe7');
+    await _settle(tester);
+    expect(find.widgetWithText(ListTile, 'Gruppe7'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, 'Gruppe3'), findsNothing);
+  });
+
+  testWidgets('Filterfenster enthält Sortierung, nur offene Posten und Anzeigen; die Kopfzeile hat kein Sortiersymbol mehr', (tester) async {
+    await _app(tester, store);
+    expect(find.byIcon(Icons.sort_rounded), findsNothing);
+    expect(find.byIcon(Icons.checklist_rounded), findsNothing, reason: 'Auswählen steht im ⋮-Menü');
+    await tester.tap(find.byIcon(Icons.filter_list_rounded));
+    await _settle(tester);
+    expect(find.text('Filtern und sortieren'), findsOneWidget);
+    expect(find.text('Nur offene Posten'), findsOneWidget);
+    expect(find.text('Sortieren nach'), findsOneWidget);
+    expect(find.text('Rechnungen'), findsWidgets);
+  });
+
+  testWidgets('Kopfzeile: Fasan-Symbol links, kein Titeltext, Einstellungen nur im Profil', (tester) async {
+    await _app(tester, store);
+    expect(find.bySemanticsLabel('Fasan'), findsOneWidget);
+    expect(find.byIcon(Icons.tune_rounded), findsNothing);
+    expect(find.byIcon(Icons.settings_outlined), findsNothing);
+    await tester.tap(find.byType(MyBalanceBadge));
+    await _settle(tester);
+    expect(find.byIcon(Icons.settings_outlined), findsOneWidget, reason: 'Einstellungen oben rechts im Profil');
+    expect(find.byKey(const ValueKey('profile-standin')), findsOneWidget, reason: 'Stellvertretung im Profil sichtbar');
   });
 }

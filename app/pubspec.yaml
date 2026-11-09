@@ -64,4 +64,5 @@ flutter:
   assets:
     # PaddleOCR PP-OCRv5 (Apache-2.0), aus Fasan-Karte/site/vendor/paddle (siehe assets/models/DATEIEN.txt)
     - assets/models/
+    - assets/icon/ic_launcher-xhdpi.png
     - assets/fonts/FasanEmoji-OFL.txt
