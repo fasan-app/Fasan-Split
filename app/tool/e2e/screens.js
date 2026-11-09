@@ -49,9 +49,9 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await click(/^(Verstanden, teilen|Understood, share)$/);
     await shot('j03-beigetreten');
     await click(/^(Zur Gruppe|Go to the group)$/);
-    for (let i = 0; i < 60 && (await p.getByText('Foto-Test').count()) === 0; i++) await p.waitForTimeout(1000);
+    for (let i = 0; i < 60 && (await p.getByText('Foto-Test').or(p.getByLabel('Foto-Test')).count()) === 0; i++) await p.waitForTimeout(1000);
     await shot('1-gruppe');
-    await p.getByText('Foto-Test').first().click({ timeout: 20000 });
+    await p.getByText('Foto-Test').or(p.getByLabel('Foto-Test')).first().click({ timeout: 20000 });
     await p.waitForTimeout(2500);
     await shot('2-bon-frisch');
     // the photo comes in pieces: wait until the menu entries are enabled (line pictures and receipt need the scan)

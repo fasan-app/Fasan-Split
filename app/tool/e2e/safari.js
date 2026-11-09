@@ -72,7 +72,7 @@ const stats = (a) => {
       await mark('scroll-gruppe');
       for (let i = 0; i < 6; i++) { await p.mouse.move(195, 600); await p.mouse.wheel(0, i % 2 ? -500 : 500); await p.waitForTimeout(500); }
       await mark('open-bon');
-      const bon = process.env.NOSEM ? { count: async () => 1, click: async () => { await p.mouse.click(195, 450); } } : p.getByText(/Restaurante Nr\. \d+/).first();
+      const bon = process.env.NOSEM ? { count: async () => 1, click: async () => { await p.mouse.click(195, 450); } } : p.getByText(/Restaurante Nr\. \d+/).or(p.getByLabel(/Restaurante Nr\. \d+/)).first();
       if (await bon.count()) { const t = Date.now(); await bon.click({ timeout: 20000 }).catch(() => {}); await p.waitForTimeout(3000); res.openBillMs = Date.now() - t; await p.screenshot({ path: `${dir}/safari-00c-bon.png` }); }
       await mark('im-bon'); await p.waitForTimeout(3000);
     }
