@@ -25,7 +25,7 @@ import 'onboarding.dart';
 import 'tutorial.dart';
 import 'update_ui.dart';
 import '../flows/update.dart';
-import '../platform/web_platform.dart' show isBrowserApp, reloadPage, webBuildShort, webUpdateCheck;
+import '../platform/web_platform.dart' show isBrowserApp, reloadPage, webBuildDate, webBuildShort, webNewsText, webUpdateCheck, webVersion;
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -65,6 +65,49 @@ class SettingsScreen extends StatelessWidget {
       store.me = v;
       if (context.mounted) CollabScope.read(context).setName(v); // one name everywhere (04.11.)
     }
+  }
+
+  /// "Version 0.1.84 · 09.11.2026 02:10 · Stand f49f346" (browser). Parts that a local build does not know are left out.
+  String _webVersionLine(String lang) {
+    final parts = <String>[];
+    final v = webVersion();
+    if (v != null) parts.add(trLang(lang, 's.webVersion', [v]));
+    final d = webBuildDate()?.toLocal();
+    if (d != null) {
+      String two(int n) => n.toString().padLeft(2, '0');
+      parts.add('${two(d.day)}.${two(d.month)}.${d.year} ${two(d.hour)}:${two(d.minute)}');
+    }
+    parts.add(trLang(lang, 's.webBuild', [webBuildShort() ?? trLang(lang, 's.webBuildLocal')]));
+    return parts.join(' · ');
+  }
+
+  /// Sheet with the curated news of the last versions (browser; the APK shows them in its update sheet).
+  Future<void> _showNews(BuildContext context, String lang) async {
+    final text = await webNewsText(lang);
+    if (!context.mounted) return;
+    if (text == null) {
+      showNote(context, trLang(lang, 's.noConnectionWeb'));
+      return;
+    }
+    final sections = Updates.newsSections(text);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          shrinkWrap: true,
+          children: [
+            Text(trLang(lang, 's.whatsNew'), style: Theme.of(ctx).textTheme.titleLarge),
+            for (final (version, items) in sections) ...[
+              Padding(padding: const EdgeInsets.only(top: 16, bottom: 4), child: Text(trLang(lang, 's.webVersion', [version]), style: Theme.of(ctx).textTheme.titleSmall)),
+              for (final i in items) Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Text('• $i')),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   /// Browser: asks the server for the newest build; a newer one is loaded at once (location.reload keeps localStorage and IndexedDB,
@@ -304,7 +347,7 @@ class SettingsScreen extends StatelessWidget {
           builder: (context, v) => ListTile(
             leading: const Icon(Icons.system_update_rounded),
             title: Text(t.checkNow),
-            subtitle: Text(isBrowserApp ? trLang(t.de ? 'de' : 'en', 's.webBuild', [webBuildShort() ?? trLang(t.de ? 'de' : 'en', 's.webBuildLocal')]) : t.version(v.data ?? '…')),
+            subtitle: Text(isBrowserApp ? _webVersionLine(t.de ? 'de' : 'en') : t.version(v.data ?? '…')),
             onTap: isBrowserApp
                 ? () => _webCheck(context, t)
                 : () async {
@@ -321,6 +364,13 @@ class SettingsScreen extends StatelessWidget {
                   },
           ),
         ),
+        if (isBrowserApp)
+          ListTile(
+            leading: const Icon(Icons.new_releases_outlined),
+            title: Text(trLang(t.de ? 'de' : 'en', 's.whatsNew')),
+            subtitle: Text(trLang(t.de ? 'de' : 'en', 's.whatsNewSub')),
+            onTap: () => _showNews(context, t.de ? 'de' : 'en'),
+          ),
         FasanSwitchTile(
           padded: true,
           secondary: const Icon(Icons.update_rounded),

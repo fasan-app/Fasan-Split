@@ -1,7 +1,9 @@
+## 0.1.85
+- Neu: In den Einstellungen siehst du im Browser Version, Datum und Stand deiner Seite. Der neue Eintrag „Was ist neu“ zeigt die letzten Änderungen.
+- Neu: Der Leistungsbericht enthält viel mehr zu Gerät und Browser (Akku, Speicher, Netz, Systemeinstellungen, Anzeige-Hz, Bauart).
 ## 0.1.84
 - Behoben: Der Leistungstest zeigt keine Namen aus echten Rechnungen mehr, nur noch erfundene.
 - Neu: Der Bericht nennt die Effektstufe der App. Der Test erinnert an Akku über 50 % ohne Energiesparmodus.
-- Neu: Der Bericht enthält jetzt viel mehr zu Gerät und Browser (Akku, Speicher, Netz, Systemeinstellungen, Anzeige-Hz, Bauart). Keine Namen, keine Rechnungen.
 ## 0.1.83
 - Besser: Der Leistungstest trennt seine Vorbereitung vom Messen und beurteilt das Scrollen nach der Bildrate deines Bildschirms (120 Hz).
 - Neu: Drei Gegenproben im Test zeigen, ob Schatten, Vorschaubilder oder die Zeile selbst das Scrollen bremsen. Der Test dauert etwa drei Minuten.

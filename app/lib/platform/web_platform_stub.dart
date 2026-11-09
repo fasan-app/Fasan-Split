@@ -13,6 +13,9 @@ Future<bool> webUpdateAvailable() async => false;
 /// Phone and tests: not the browser app.
 const bool isBrowserApp = false;
 String? webBuildShort() => null;
+String? webVersion() => null;
+DateTime? webBuildDate() => null;
+Future<String?> webNewsText(String lang) async => null;
 Future<bool?> webUpdateCheck() async => null;
 
 /// Loads the page again (newer web build).

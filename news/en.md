@@ -1,7 +1,9 @@
+## 0.1.85
+- New: In the browser, settings show the version, date and build of your page. The new entry "What's new" lists the latest changes.
+- New: The performance report holds much more about device and browser (battery, memory, network, system settings, display Hz, build type).
 ## 0.1.84
 - Fixed: The performance test no longer shows names from real bills, only invented ones.
 - New: The report states the app's effect level. The test reminds you to use battery above 50 % with battery saver off.
-- New: The report now includes much more about the device and browser (battery, memory, network, system settings, display Hz, build type). No names, no bills.
 ## 0.1.83
 - Better: The performance test keeps its preparation apart from the measurement and judges scrolling against your screen's frame rate (120 Hz).
 - New: Three counter-samples show whether shadows, thumbnails or the row itself slow scrolling. The test takes about three minutes.
