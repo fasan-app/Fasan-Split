@@ -1002,5 +1002,9 @@ Reihenfolge (jeweils ganz fertig; Paket „Verlauf“ zuerst auf main):
 ## 09.11. Umbau Schritt 1 (Gruppenbildschirm) – Stand
 - Fertig im Code: `group_header.dart` (Kopf mit Rahmen, Zähllinie, Posten-Zeile, Überschrift), `GroupScreen` mit Umschalter Rechnungen|Posten (lazy). Tests: `group_header_test.dart` neu, groups/give/screens angepasst, volle Reihe grün (+425).
 - Leistungstest nutzt jetzt `GroupItemRow` (echte Zeile). News 0.1.86, Hinweistext angepasst.
-- Offen: Messung nach CI im Browser (Akku >50 %); e2e `screens.js` Zeile ~129 `tap(/Personen/)` prüfen; Bildschirmvergleich b…/h… für Posten-Ansicht ergänzen; Tutorial-Eintrag zum Kopf.
+- Offen: Messung nach CI im Browser (Akku >50 %); e2e `screens.js` Zeile ~129 `tap(/Personen/)` prüfen; Tutorial-Eintrag zum Kopf. Bildschirmvergleich Browser/App für Posten-Ansicht: **bewusst zurückgestellt** (Nutzer 09.11. 03:20, App auf Eis).
 - Nächstes: Schritt 2 (Menü Option A in home.dart).
+
+## 09.11. 03:20 – BESCHLUSS: APK auf Eis, nur noch Web (Nutzer)
+- Keine APK-Updates mehr, kein APK-Bau bei Push: `android.yml` läuft nur noch per `workflow_dispatch`. Release `neueste` bleibt auf dem letzten Stand (0.1.85-Lauf; der Lauf zu e9de8d9 wurde abgebrochen).
+- Alle Arbeit zielt auf die Web-Version. Vergleich Browser gegen App (Bildschirmvergleich, `b…`/`h…`) und APK-Themen (Krypto in Isolate, iOS/Android-Messung) ruhen, bis der Nutzer die App wieder freigibt. Browser = APK 1:1 gilt als Codebasis-Regel weiter, wird aber nicht mehr je Paket nachgewiesen.

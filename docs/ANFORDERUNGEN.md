@@ -152,3 +152,5 @@ der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. 
 - 09.11. 02:29 – BESCHLUSS Nutzer: Maximale Performance (Schatten und Effekte aus, wenn sie kosten: „Performance geht vor Optik, Design später“; Fundament muss performant sein). Aufräum-Workflow durfte gepusht werden. Stand: Schatten sind seit 08.11. standardmäßig aus; Messung mit Effektstufe steht aus.
 - 09.11. 02:44 – FEHLER/WUNSCH Nutzer: Im Browser fehlen Version, Datum und letzte Änderungen. Stand: erledigt in 0.1.85 (Einstellungen → Updates: Version · Datum · Stand, „Was ist neu“); auf dem Handy noch nicht gesehen.
 - 09.11. 02:49–02:55 – AUFTRAG Nutzer: Roadmap nennen; den großen Umbau (Gruppe, Menü Option A) selbstständig diese Nacht bauen, morgen früh fertig; vorher ausführliche wissenschaftliche Studien, Peer-Reviews, Statistiken zu realer und gefühlter Leistung heranziehen. Fragen nur, wenn nötig. Stand: Recherche begonnen.
+
+- 09.11. 03:20 (Nutzer): App/APK auf Eis, keinerlei APK-Updates mehr; volle Konzentration auf die Web-Version. Bildschirmvergleich Browser/App jetzt nicht umsetzen. Grund: Fundament zuerst im Web. Stand: umgesetzt (android.yml nur manuell).

@@ -2,9 +2,9 @@
 # Nur der FOSS-Weg: Flutter, Gradle, ONNX Runtime (MIT) aus Maven Central, keine Google-Dienste, kein FCM.
 # Die Logs jedes Laufs landen im Branch `ci-logs`, damit sie ohne die Actions-Oberfläche lesbar sind.
 name: Android-APK
+# APK AUF EIS (Nutzer 09.11. 03:20): kein Bau und keine Veröffentlichung mehr bei Push, nur Web. Wieder einschalten:
+# `push: branches: [main]` zurück in `on:` (Beschluss in STAND.md, „Web zuerst“).
 on:
-  push:
-    branches: [main]
   workflow_dispatch: {}
 permissions:
   contents: write
