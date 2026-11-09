@@ -395,7 +395,7 @@ class GroupPeople extends StatelessWidget {
           child: TextButton.icon(
             icon: const Icon(Icons.swap_horiz_rounded),
             label: Text(trLang(t.de ? 'de' : 'en', 'groups.give')),
-            onPressed: () => _giveFlow(context, name, people),
+            onPressed: () => giveFlow(context, name, people),
           ),
         ),
       if (anyDone) ...[
@@ -851,14 +851,14 @@ void _closeSheet(BuildContext context) {
 }
 
 /// Interim payment or lent money: asks who gave whom how much and books it like a settlement payment (store.recordPayment).
-Future<void> _giveFlow(BuildContext context, String group, List<String> people) async {
+Future<void> giveFlow(BuildContext context, String group, List<String> people) async {
   final lang = S.of(context).de ? 'de' : 'en';
-  final r = await showDialog<({bool loan, String from, String to, int cents})>(context: context, builder: (_) => _GiveDialog(lang: lang, people: people));
+  final r = await showDialog<({bool loan, String from, String to, int cents, String subject})>(context: context, builder: (_) => _GiveDialog(lang: lang, people: people));
   if (r == null || !context.mounted) return;
   final store = StoreScope.read(context);
   final shown = '${money(r.cents, de: lang == 'de')} ${signOf(context)}';
   final b = store.recordPayment(group, r.from, r.to, r.cents,
-      purpose: trLang(lang, r.loan ? 'groups.loanPurpose' : 'groups.paymentPurpose', [r.from, r.to]), item: trLang(lang, r.loan ? 'groups.loanItem' : 'groups.paymentItem'));
+      purpose: r.subject.isNotEmpty ? r.subject : trLang(lang, r.loan ? 'groups.loanPurpose' : 'groups.paymentPurpose', [r.from, r.to]), item: trLang(lang, r.loan ? 'groups.loanItem' : 'groups.paymentItem'));
   showNote(context, trLang(lang, r.loan ? 'groups.loanDone' : 'groups.markPaidDone', [r.from, r.to, shown]), actionLabel: context.tr('bill.undo'), onAction: () => store.remove(b));
   _closeSheet(context);
 }
@@ -875,12 +875,14 @@ class _GiveDialog extends StatefulWidget {
 
 class _GiveDialogState extends State<_GiveDialog> {
   final _field = TextEditingController();
+  final _subject = TextEditingController();
   bool _loan = false;
   String? _from, _to;
 
   @override
   void dispose() {
     _field.dispose();
+    _subject.dispose();
     super.dispose();
   }
 
@@ -916,12 +918,19 @@ class _GiveDialogState extends State<_GiveDialog> {
             decoration: InputDecoration(labelText: trLang(lang, 'groups.markPaidAmount'), suffixText: signOf(context)),
             onChanged: (_) => setState(() {}),
           ),
+          const SizedBox(height: FasanSpace.s),
+          TextField(
+            key: const ValueKey('give-subject'),
+            controller: _subject,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(labelText: trLang(lang, 'groups.giveSubject')),
+          ),
         ]),
         ),
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text(t.cancel)),
-        FilledButton(onPressed: valid ? () => Navigator.pop(context, (loan: _loan, from: _from!, to: _to!, cents: v)) : null, child: Text(t.ok)),
+        FilledButton(onPressed: valid ? () => Navigator.pop(context, (loan: _loan, from: _from!, to: _to!, cents: v, subject: _subject.text.trim())) : null, child: Text(t.ok)),
       ],
     );
   }

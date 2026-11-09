@@ -1,3 +1,8 @@
+## 0.1.93
+- Neu: Beim Plus steht jetzt auch „Zahlung (Bargeld)“: von wem an wen, wie viel, mit Betreff. Das gibt es in jeder Gruppe.
+- Neu: Bei „Alle Gruppen“ bietet das Plus zusätzlich: neue Gruppe live, neue Gruppe nur hier, beitreten. Dort steht auch, dass der Bon in „Ohne Gruppe“ landet.
+- Geändert: Das Wischen an Bons ist weg (damit du zur Abrechnung wischen kannst). Ausgleichen, Papierkorb und Wiederherstellen findest du im ⋮ an jedem Bon.
+
 ## 0.1.92
 - Neu: In der Ansicht „Posten“ sieht jeder Posten aus wie im Bon, mit dem Ausschnitt vom Bon. Tippe ihn an, dann änderst du ihn gleich dort, ohne den Bon zu öffnen.
 - Neu: Zu jedem Bon steht in der Posten-Ansicht auch „Rest zur Summe“ (Service, Trinkgeld), wenn die Summe vom Bon höher ist als die Posten.

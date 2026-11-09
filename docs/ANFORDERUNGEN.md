@@ -214,3 +214,4 @@ Wünsche:
 19. Benachrichtigungen: Nutzer hält sie für essenziell, standardmäßig an, in den Einstellungen abschaltbar; Frage nach Community-Sicht.
 20. Posten verschicken: Auswahl in der Rechnung, über den Filter oder im geöffneten Posten.
 21. Frage: Hashtag # einführen, oder ist alles (Personen, Notizen) über die Suche auffindbar?
+22. (09.11. 22:48–22:50) Wischen erzeugt noch „ausgleichen/löschen“; Posten sehen noch nicht aus wie im Bon (mit Miniatur); „Was stimmt noch alles nicht, du hast nichts geprüft.“ Ursache: Nutzer hatte 0.1.91 (CI von 0.1.92 hing). Stand: Wischen in 0.1.93; Prüfung per Bildschirmfoto läuft. Stand: in Arbeit.

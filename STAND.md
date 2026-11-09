@@ -4,6 +4,12 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 09.11. 23:50 Web 0.1.93: Paket D (Plus-Menü, Wischen raus, ⋮ je Bon)
+- Plus: „Zahlung (Bargeld)“ (Wer, an wen, Betrag, Betreff) in jeder Gruppe mit ≥ 2 Personen; bei „Alle Gruppen“ Hinweis „landet in Ohne Gruppe“ und Gruppen-Einträge (live, nur hier, beitreten). Test `plus_menu_test.dart`.
+- Wischen an Bons raus, ⋮ je Zeile (Ausgleichen/Papierkorb/Wiederherstellen). Texte in Tutorial und Hinweisen angepasst. Offen: Freunde-Karte und Zuordnung im Bon wischen noch (andere Zwecke).
+- **Fehler der Sitzung (Nutzer 22:50):** Der Nutzer hatte 0.1.91, weil der CI-Lauf von 0.1.92 über 90 Minuten im Job „erkennung / tor“ hing und `deploy` auf ihn wartet (normal ~36 min). Ich hatte nicht geprüft, ob die Version live war, und die Posten-Ansicht nicht als Bildschirmfoto angesehen. Regel: nach jedem Push `gh run list` bis `deploy` grün ist; erst dann „live“ melden; Version dem Nutzer nennen.
+- Noch offen: „Bons/Posten schicken“-Menü neu (Auswahl im Bon, über Filter, im Posten); Abstände Kopfzone; Pakete E und F.
+
 ## 09.11. 23:10 Web 0.1.92: Paket C (Posten wie im Bon) – Teil 1
 
 Umgesetzt, Analyse sauber, Volllauf bis auf einen Textregel-Test grün (danach behoben, einzeln grün; kein zweiter Volllauf): Posten-Ansicht nutzt dieselbe Kachel wie der Bon (`ItemTile`, mit Bon-Ausschnitt, gleiche Rundung/Abstand), Tipp öffnet das Posten-Blatt direkt (`_editItem`, bei fremder Sperre der Bon); Zeile „Rest zur Summe“ (Service/Trinkgeld, `kDifferenceRow`); Suchtreffer in einem Posten öffnet den Bon dort (`focusItem`), mittig und ein Puls (`PulseOnFocus`, gemeinsamer Baustein auch für E); Tutorial ergänzt.

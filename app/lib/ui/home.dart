@@ -25,7 +25,6 @@ import 'backup_ui.dart';
 import 'category_ui.dart';
 import 'common.dart';
 import 'my_balance.dart';
-import 'swipe.dart';
 import 'brand_mark.dart';
 import 'scope_sheet.dart';
 import 'groups.dart';
@@ -196,11 +195,21 @@ class _HomeScreenState extends State<HomeScreen> {
         ScaffoldMessenger.of(this.context).showSnackBar(_msg(this.context, S.of(this.context).queuedN(n)));
       });
 
-  Future<void> _addSheet(BuildContext context) => addBillSheet(context, queue, group: scopeGroup(_scopeOf(StoreScope.read(context))), onQueued: (n) {
-        if (!mounted) return;
-        if (_page != 0) _goTo(0);
-        ScaffoldMessenger.of(this.context).showSnackBar(_msg(this.context, S.of(this.context).queuedN(n)));
-      });
+  Future<void> _addSheet(BuildContext context) {
+    final scope = _scopeOf(StoreScope.read(context));
+    final g = scopeGroup(scope);
+    return addBillSheet(context, queue,
+        group: g,
+        people: g == null ? const [] : CollabScope.read(context).peopleOf(g),
+        groupMenu: g == null,
+        onQueued: _queuedMsg);
+  }
+
+  void _queuedMsg(int n) {
+    if (!mounted) return;
+    if (_page != 0) _goTo(0);
+    ScaffoldMessenger.of(context).showSnackBar(_msg(context, S.of(context).queuedN(n)));
+  }
 
   Future<void> _plus(BuildContext context) async {
     StoreScope.read(context).hintDismiss('plus');
@@ -505,6 +514,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
     return PopupMenuButton<String>(
+      key: const ValueKey('more-menu'),
       onSelected: (_) => setState(() => _selecting = true),
       itemBuilder: (_) => [PopupMenuItem(value: 'select', enabled: canSelect, child: Text(t.select))],
     );
@@ -881,33 +891,11 @@ class _HomeScreenState extends State<HomeScreen> {
   /// same in both modes, so the drag survives the switch into the selection.
   Widget _row(BuildContext context, BillStore store, BillList mode, Bill b) {
     final t = S.of(context), l = FasanLook.of(context);
-    final tile = BillTile(bill: b, queue: queue, selecting: _selecting, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () => _retry(b), focusItem: _searching ? _hitItem(b, _query.trim().toLowerCase(), t.de) : null);
+    final tile = BillTile(bill: b, queue: queue, selecting: _selecting, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () => _retry(b), focusItem: _searching ? _hitItem(b, _query.trim().toLowerCase(), t.de) : null, trailing: _selecting ? null : _rowMenu(context, store, mode, b));
     final moving = _selecting && _selected.contains(b.id) ? _picked(store) : [b];
-    final archive = mode == BillList.archive;
-    return SwipeActions(
+    // no swipe on the rows (Nutzer 09.11. 18:44): a swipe on a row would block the swipe to Abrechnung; the actions are in the ⋮ menu
+    return KeyedSubtree(
       key: ValueKey('bill-${mode.name}-${b.id}'),
-      id: '${mode.name}-${b.id}',
-      enabled: !_selecting,
-      start: b.read == BillRead.ok ? SwipeSide(archive ? Icons.unarchive_outlined : Icons.task_alt_rounded, archive ? t.markOpen : t.markDone, archive ? l.accent : Colors.green.shade600) : null,
-      end: SwipeSide(Icons.delete_outline_rounded, t.delete, Colors.red.shade700),
-      // A swipe that would change nothing is refused before the card slides away: a card that was dismissed but stays in the list
-      // is an error of the framework („A dismissed Dismissible widget is still part of the tree“). Unfinished bills cannot go
-      // to the archive: the card springs back and says why.
-      confirmDismiss: (dir) async {
-        if (dir == DismissDirection.startToEnd && !archive && !b.done) {
-          showNote(context, trLang(t.de ? 'de' : 'en', 'home.enterItFirstAll2'));
-          return false;
-        }
-        return true;
-      },
-      onDismissed: (dir) {
-        if (dir == DismissDirection.startToEnd) {
-          _toArchive(context, [b], !archive);
-        } else {
-          _toTrash(context, [b]);
-        }
-        FasanHaptics.of(context).snap();
-      },
       child: DragTarget<List<Bill>>(
         onWillAcceptWithDetails: (d) => !d.data.any((x) => x.id == b.id),
         onAcceptWithDetails: (d) {
@@ -944,6 +932,71 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// The ⋮ of a bill row: what the swipes did (to the archive and back, to the trash) plus „Auswählen“. What cannot be done now is
+  /// shown grey with its reason, not hidden (research: hidden entries make people search).
+  Widget _rowMenu(BuildContext context, BillStore store, BillList mode, Bill b) {
+    final t = S.of(context), lang = t.de ? 'de' : 'en', archive = mode == BillList.archive;
+    final canArchive = b.read == BillRead.ok && (archive || b.done);
+    return PopupMenuButton<String>(
+      key: ValueKey('more-${b.id}'),
+      padding: EdgeInsets.zero,
+      iconSize: 22,
+      icon: const Icon(Icons.more_vert_rounded),
+      onSelected: (v) {
+        FasanHaptics.of(context).tap();
+        switch (v) {
+          case 'archive':
+            _toArchive(context, [b], !archive);
+          case 'select':
+            setState(() {
+              _selecting = true;
+              _selected.add(b.id);
+            });
+          case 'delete':
+            _toTrash(context, [b]);
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'archive',
+          enabled: canArchive,
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(archive ? Icons.unarchive_outlined : Icons.task_alt_rounded),
+            title: Text(archive ? t.markOpen : t.markDone),
+            subtitle: canArchive ? null : Text(trLang(lang, 'home.enterItFirstAll2')),
+          ),
+        ),
+        PopupMenuItem(value: 'select', child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.checklist_rounded), title: Text(t.select))),
+        PopupMenuItem(value: 'delete', child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.delete_outline_rounded, color: Colors.red.shade700), title: Text(t.delete))),
+      ],
+    );
+  }
+
+  /// Trash row: bring it back, or delete it for good (asks first).
+  Widget _trashMenu(BuildContext context, BillStore store, Bill b) {
+    final t = S.of(context);
+    return PopupMenuButton<String>(
+      key: ValueKey('more-${b.id}'),
+      padding: EdgeInsets.zero,
+      iconSize: 22,
+      icon: const Icon(Icons.more_vert_rounded),
+      onSelected: (v) async {
+        if (v == 'restore') {
+          store.untrash([b]);
+        } else if (await _confirmForever(context, 1) && context.mounted) {
+          store.deleteForever([b]);
+        }
+        if (context.mounted) FasanHaptics.of(context).snap();
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(value: 'restore', child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.restore_from_trash_rounded), title: Text(t.restore))),
+        PopupMenuItem(value: 'forever', child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.delete_forever_outlined, color: Colors.red.shade700), title: Text(t.deleteForever))),
+      ],
     );
   }
 
@@ -985,21 +1038,9 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.only(bottom: FasanSpace.s),
           child: _selecting
               ? BillTile(bill: b, queue: queue, selecting: true, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () {}, subtitle: _trashSub(t, store, b))
-              : SwipeActions(
+              : KeyedSubtree(
                   key: ValueKey('trash-${b.id}'),
-                  id: 'trash-${b.id}',
-                  start: SwipeSide(Icons.restore_from_trash_rounded, t.restore, l.accent),
-                  end: SwipeSide(Icons.delete_forever_outlined, t.deleteForever, Colors.red.shade700),
-                  confirmDismiss: (dir) async => dir == DismissDirection.startToEnd || await _confirmForever(context, 1),
-                  onDismissed: (dir) {
-                    if (dir == DismissDirection.startToEnd) {
-                      store.untrash([b]);
-                    } else {
-                      store.deleteForever([b]);
-                    }
-                    FasanHaptics.of(context).snap();
-                  },
-                  child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {}, subtitle: _trashSub(t, store, b), openable: false),
+                  child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {}, subtitle: _trashSub(t, store, b), openable: false, trailing: _trashMenu(context, store, b)),
                 ),
         ),
     ]);

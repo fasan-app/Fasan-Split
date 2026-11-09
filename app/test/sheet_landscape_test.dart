@@ -29,7 +29,7 @@ void main() {
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 80));
     }
-    expect(find.byType(ListTile), findsNWidgets(3)); // Kamera, Galerie / Datei, Ohne Bon
+    expect(find.byType(ListTile), findsNWidgets(6)); // Kamera, Galerie / Datei, Ohne Bon + live, nur hier, beitreten (Alle Gruppen)
     expect(tester.takeException(), isNull);
   });
 }

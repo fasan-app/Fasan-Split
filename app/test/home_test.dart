@@ -62,7 +62,7 @@ void main() {
     testWidgets('auswählen, gruppieren: Kopfzeile der Gruppe mit Anzahl', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen'), _bill('c', 'Taxi', done: true)]);
       await app(tester, store, idle(store));
-      await tester.tap(find.byType(PopupMenuButton<String>)); // select lives in the ⋮ menu (Nutzer 09.11.)
+      await tester.tap(find.byKey(const ValueKey('more-menu'))); // select lives in the ⋮ menu (Nutzer 09.11.)
       await tester.pumpAndSettle();
       await tester.tap(find.text('Auswählen'));
       await tester.pump(const Duration(milliseconds: 200));
@@ -137,7 +137,7 @@ void main() {
     testWidgets('Auswahlmodus bleibt auch ohne Auswahl und endet mit dem X', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen')]);
       await app(tester, store, idle(store));
-      await tester.tap(find.byType(PopupMenuButton<String>)); // select lives in the ⋮ menu (Nutzer 09.11.)
+      await tester.tap(find.byKey(const ValueKey('more-menu'))); // select lives in the ⋮ menu (Nutzer 09.11.)
       await tester.pumpAndSettle();
       await tester.tap(find.text('Auswählen'));
       await tester.pump(const Duration(milliseconds: 200));
@@ -149,16 +149,22 @@ void main() {
       await tester.tap(find.byTooltip('Abbrechen'));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Bons auswählen'), findsNothing);
-      expect(find.byType(PopupMenuButton<String>), findsOneWidget);
+      expect(find.byKey(const ValueKey('more-menu')), findsOneWidget);
     });
 
-    testWidgets('Wischen nach rechts: eingetragener Bon wird ausgeglichen (Archiv), Rückgängig holt zurück', (tester) async {
-      final store = BillStore.memory([_bill('a', 'Frühstück', done: true)]);
-      await app(tester, store, idle(store));
-      await tester.drag(find.byKey(const ValueKey('bill-open-a')), const Offset(500, 0));
+    Future<void> rowMenu(WidgetTester tester, String id, String label) async {
+      await tester.tap(find.byKey(ValueKey('more-$id')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label).last);
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
+    }
+
+    testWidgets('⋮ der Zeile: eingetragener Bon wird ausgeglichen (Archiv), Rückgängig holt zurück', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück', done: true)]);
+      await app(tester, store, idle(store));
+      await rowMenu(tester, 'a', 'Ausgleichen (bezahlt)');
       expect(store.bills.single.settled, isTrue);
       expect(find.text('Ausgeglichen, im Archiv'), findsOneWidget);
       await tester.tap(find.text('Rückgängig'));
@@ -167,28 +173,21 @@ void main() {
       expect(store.bills.single.done, isTrue, reason: 'bleibt eingetragen');
     });
 
-    testWidgets('Wischen nach rechts: angefangener Bon kommt nicht ins Archiv, Hinweis', (tester) async {
+    testWidgets('⋮ der Zeile: angefangener Bon kommt nicht ins Archiv, der Eintrag ist grau und nennt den Grund', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück')]);
       await app(tester, store, idle(store));
-      await tester.drag(find.byKey(const ValueKey('bill-open-a')), const Offset(500, 0));
-      for (var i = 0; i < 20; i++) {
-        await tester.pump(const Duration(milliseconds: 50));
-      }
+      await tester.tap(find.byKey(const ValueKey('more-a')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Erst eintragen'), findsOneWidget, reason: 'the reason stands in the entry, nothing is hidden');
+      await tester.tap(find.text('Ausgleichen (bezahlt)'), warnIfMissed: false);
+      await tester.pumpAndSettle();
       expect(store.bills.single.settled, isFalse);
-      expect(find.textContaining('Erst eintragen'), findsOneWidget);
-      expect(find.byKey(const ValueKey('bill-open-a')), findsOneWidget, reason: 'the card is still there and visible again');
-      expect(tester.takeException(), isNull);
-      // the card must be back in place (not half way out)
-      expect(tester.getTopLeft(find.byKey(const ValueKey('bill-open-a'))).dx, lessThan(40));
     });
 
-    testWidgets('Wischen nach links: Papierkorb mit Rückgängig; der Bon bleibt gespeichert', (tester) async {
+    testWidgets('⋮ der Zeile: Papierkorb mit Rückgängig; der Bon bleibt gespeichert', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Taxi')]);
       await app(tester, store, idle(store));
-      await tester.drag(find.byKey(const ValueKey('bill-open-a')), const Offset(-600, 0));
-      for (var i = 0; i < 20; i++) {
-        await tester.pump(const Duration(milliseconds: 50));
-      }
+      await rowMenu(tester, 'a', 'Löschen');
       expect(find.text('Bon im Papierkorb'), findsOneWidget);
       expect(store.drafts.map((b) => b.id), ['b']);
       expect(store.trashed.map((b) => b.id), ['a']);
@@ -197,6 +196,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(store.trashed, isEmpty);
       expect(store.drafts.map((b) => b.id).toSet(), {'a', 'b'});
+    });
+
+    testWidgets('Ein Wisch über eine Zeile führt zur Abrechnung und ändert den Bon nicht (kein Wisch-Menü mehr)', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück', done: true)]);
+      await app(tester, store, idle(store));
+      await tester.drag(find.text('Frühstück'), const Offset(-700, 0));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.byKey(const ValueKey('view-menu')), findsNothing, reason: 'now on Abrechnung');
+      expect(store.bills.single.settled, isFalse);
+      expect(store.trashed, isEmpty);
     });
 
     testWidgets('Reiter: Archiv und Papierkorb zeigen ihre Bons, Wiederherstellen und Leeren', (tester) async {
@@ -222,10 +233,7 @@ void main() {
       }
       expect(find.text('Kino'), findsOneWidget);
       expect(find.textContaining('noch 28 Tage'), findsOneWidget);
-      await tester.drag(find.byKey(const ValueKey('trash-t')), const Offset(500, 0));
-      for (var i = 0; i < 20; i++) {
-        await tester.pump(const Duration(milliseconds: 50));
-      }
+      await rowMenu(tester, 't', 'Wiederherstellen');
       expect(store.trashed, isEmpty);
       expect(store.bills.firstWhere((b) => b.id == 't').trashedAt, isNull);
     });

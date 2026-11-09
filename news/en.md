@@ -1,3 +1,8 @@
+## 0.1.93
+- New: The plus now also offers “Payment (cash)”: from whom to whom, how much, with a subject. Available in every group.
+- New: With “All groups” the plus also offers: new live group, new group only here, join. It also says that the bill goes to “No group”.
+- Changed: Swiping on bills is gone (so you can swipe to Settle). Settle, trash and restore are in the ⋮ on each bill.
+
 ## 0.1.92
 - New: In the “Items” view every item looks like in the bill, with the snippet from the receipt. Tap it to change it right there, without opening the bill.
 - New: The Items view also shows “Rest to the total” (service, tip) for a bill when the receipt total is higher than the items.

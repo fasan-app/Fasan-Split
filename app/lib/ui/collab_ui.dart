@@ -136,9 +136,9 @@ Future<bool> confirmDialog(BuildContext context, String title, String text, Stri
 }
 
 /// The + on the groups page: a new live group, a new group only on this phone, or joining one.
-Future<void> groupPlusAction(BuildContext context, {ScanQueue? queue}) async {
+Future<void> groupPlusAction(BuildContext context, {ScanQueue? queue, String? preset}) async {
   final t = S.of(context);
-  final choice = await showModalBottomSheet<String>(
+  final choice = preset ?? await showModalBottomSheet<String>(
     context: context,
     builder: (ctx) => SafeArea(
       child: ListView(shrinkWrap: true, children: [
