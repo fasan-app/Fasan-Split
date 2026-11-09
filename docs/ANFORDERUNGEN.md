@@ -185,3 +185,23 @@ Anlass: Bildschirmfotos der Web-App 0.1.88 auf dem S23.
 10. Beim Blättern zwischen Seiten baut sich der zweite Kopf nachträglich auf, Inhalte springen. Überall flüssig, wie Apple.
 11. „Andere dürfen für mich eintragen“ und andere Elemente zu groß; Text lässt beim Umschalten springen (Sprachen!). Vorschlag Nutzer: nur Titel, klare Symbole, Indikatoren und ein Fragezeichen mit Erklärung auf Wunsch (Frage: richtig?).
 12. Alles nach Apple-Art sortiert, gegliedert, aufgeräumt, nur sichtbar wenn nötig.
+
+## 09.11. 18:44 – Rückmeldung zu Web 0.1.89 (Stand: neu, Plan in STAND.md)
+
+Fehler/Mängel (gesehen auf dem S23):
+1. Beim Blättern erscheinen Artefakte aus älterer Version; Ursache laut Nutzer: Archiv und Papierkorb sind versteckte Seiten im selben PageView und werden mitgeblättert.
+2. Suche: Treffer-Bon öffnen springt in den Bon zum Suchbegriff, mittig, kurz leicht pulsierend (nur wenn ohne Leistungskosten). Suche in der Posten-Ansicht zeigt alle Posten (Fehler). Suche aktualisiert nicht live beim Tippen (Fehler). Kein „meintest du“ bei Tippfehlern. Letzte Suchen (einzeln per x entfernbar) fehlen.
+3. Bon-Ansicht ist noch nicht umgebaut. Filter „erledigte Posten“ zeigt nichts (Fehler). Posten sollen wie im Bon aussehen (echter Bon-Ausschnitt), direkt editierbar; Service und selbst hinzugefügte Posten müssen erscheinen.
+4. Abstände/Rahmen/Rundungen uneinheitlich (Posten-Rahmen verschieden groß, verschiedene Rundungen).
+5. Nach kurzem App-Wechsel ist die Seite manchmal komplett weiß, Neuladen nötig (Fehler).
+6. Ausgeglichener Saldo immer mit 0 anzeigen; Frage: wie sieht der Kopf mit Saldo aus.
+Wünsche:
+7. Web fragt Geräteberechtigungen ab (Benachrichtigungen).
+8. „Alle Gruppen“ + Plus: wo landet der Bon? Dort zuerst Gruppenmenü (neue Gruppe live, beitreten).
+9. In der Gruppe + Plus: direkt Bargeldzahlung (von A zu B, Summe, Betreff) wählbar, auch ohne Bon, intuitiver.
+10. Wischmenü in der Gruppe (ausgleichen/löschen) fraglich: Nutzer wollen zur Abrechnung wischen.
+11. „Bons schicken“-Menü grafisch schlecht; vielleicht nur Posten schicken.
+12. Notizen überall (Bon, Posten, generell), auf Wunsch sichtbar anpinnbar; @Person in Notizen löst Benachrichtigung aus.
+13. Benachrichtigung/Glocke führt genau zum Ziel (ggf. mittig), kurz pulsierend; Aufmerksamkeitslenkung nach Apple-Vorgaben.
+14. Stellvertreter einzeln wählbar (optional), die für mich eintragen dürfen.
+15. Sitzung soll proaktiv melden, Fragen stellen, eigene Verbesserungen vorschlagen, nicht nur Änderungswünsche abarbeiten.
