@@ -429,9 +429,9 @@ void main() {
   }
 }
 
-/// Opens the folded „Personen“ section of the group page (same step as the browser walk).
+/// Opens the members behind the person symbol in the group header (same step as the browser walk).
 Future<void> _openPeople(WidgetTester t) async {
-  await t.tap(find.textContaining('Personen').first);
+  await t.tap(find.byIcon(Icons.group_outlined).first);
   await _frames(t);
 }
 

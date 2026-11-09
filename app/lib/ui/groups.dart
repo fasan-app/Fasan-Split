@@ -21,6 +21,7 @@ import 'common.dart';
 import 'add_bill.dart';
 import 'balance_breakdown.dart';
 import 'category_ui.dart';
+import 'group_header.dart';
 import 'hints.dart';
 import 'history.dart';
 import 'my_balance.dart';
@@ -109,23 +110,50 @@ class GroupsPage extends StatelessWidget {
   }
 }
 
-/// One group: its bills (open and finished), the sum, the live part (when shared) and the invitation (admin).
-class GroupScreen extends StatelessWidget {
+/// One group: framed header (bills · price · people), switch Rechnungen | Posten, the live part (when shared) and the invitation (admin).
+class GroupScreen extends StatefulWidget {
   const GroupScreen({super.key, required this.name, required this.queue});
 
   final String name;
   final ScanQueue queue;
 
   @override
+  State<GroupScreen> createState() => _GroupScreenState();
+}
+
+class _GroupScreenState extends State<GroupScreen> {
+  int _view = 0; // 0 bills, 1 all items of the group (Nutzer 08.11. 04:16)
+
+  String get name => widget.name;
+  ScanQueue get queue => widget.queue;
+
+  /// The members, formerly folded at the end of the list: now behind the person symbol in the header (Nutzer 08.11. 04:09).
+  void _showPeople(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.xl),
+          children: [GroupPeople(name: name)],
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = S.of(context), tt = Theme.of(context).textTheme;
+    final lang = t.de ? 'de' : 'en';
     final store = StoreScope.of(context);
     final all = store.inGroup(name);
     final bills = store.onlyOpen ? all.where((b) => b.fill != ItemFill.complete).toList() : all;
-    final spend = bills.where((b) => !b.isTransfer).toList(); // settlement payments are no spending
-    final sum = spend.fold<int>(0, (a, b) => a + b.effectiveTotal);
     final live = CollabScope.of(context).groupByLocalName(name);
     final l = FasanLook.of(context);
+    final people = CollabScope.of(context).peopleOf(name).length;
+    final flat = _view == 1 ? flattenItems(bills, onlyOpen: store.onlyOpen) : const <(Bill, BillItem?)>[];
     return Scaffold(
       // the plus inside the group (Nutzer 07.11.): a bill started here is put into this group
       floatingActionButton: FasanDepth(
@@ -160,7 +188,7 @@ class GroupScreen extends StatelessWidget {
             },
           ),
           IconButton(
-            tooltip: trLang(t.de ? 'de' : 'en', store.onlyOpen ? 'filter.allItems' : 'filter.onlyOpen'),
+            tooltip: trLang(lang, store.onlyOpen ? 'filter.allItems' : 'filter.onlyOpen'),
             isSelected: store.onlyOpen,
             icon: const Icon(Icons.filter_alt_outlined),
             selectedIcon: const Icon(Icons.filter_alt_rounded),
@@ -182,54 +210,69 @@ class GroupScreen extends StatelessWidget {
               }
             },
             itemBuilder: (_) => [
-              PopupMenuItem(value: 'history', child: Text(trLang(t.de ? 'de' : 'en', 'history.title'))),
+              PopupMenuItem(value: 'history', child: Text(trLang(lang, 'history.title'))),
               if (live != null) PopupMenuItem(value: 'leave', child: Text(t.leaveGroup)),
               if (live == null) PopupMenuItem(value: 'delete', child: Text(t.deleteGroup)),
             ],
           ),
         ],
       ),
-      body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 96 + MediaQuery.paddingOf(context).bottom), children: [
-        Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text('${t.billsCount(spend.length)} · ${money(sum, de: t.de)} ${signOf(context)}', style: tt.bodyMedium)),
-        HintCard(id: 'group_flow', text: trLang(t.de ? 'de' : 'en', 'hint.groupFlow'), icon: Icons.route_outlined),
-        if (live != null) HintCard(id: 'group_everyone', text: trLang(t.de ? 'de' : 'en', 'hint.everyone'), icon: Icons.groups_2_outlined),
-        if (live != null) CollabGroupPanel(group: live),
-        if (live == null) _ShareButton(name: name),
-        // receipts first (Nutzer 06.11.: the people block pushed the receipts off the screen), people in one folded section below
-        if (bills.isEmpty) Text(t.groupEmpty, style: tt.bodyMedium),
-        for (final b in bills)
-          Padding(padding: const EdgeInsets.only(bottom: FasanSpace.s), child: BillTile(bill: b, queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {})),
-        const SizedBox(height: FasanSpace.m),
-        // keyed: a new receipt above (e.g. a settlement booking) must not fold the section the user just opened
-        _PeopleSection(key: ValueKey('people-$name'), name: name),
-      ]),
-    );
-  }
-}
-
-/// „Personen“ – the one place for everyone in the group (in the app or not), folded by default; balances and settling inside.
-class _PeopleSection extends StatelessWidget {
-  const _PeopleSection({super.key, required this.name});
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = S.of(context), l = FasanLook.of(context), tt = Theme.of(context).textTheme;
-    final n = CollabScope.of(context).peopleOf(name).length;
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: Container(
-        decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
-        child: ExpansionTile(
-          shape: const Border(),
-          collapsedShape: const Border(),
-          leading: Icon(Icons.group_outlined, color: l.accent),
-          title: Text('${t.groupPeople} · $n', style: tt.titleMedium),
-          childrenPadding: const EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, FasanSpace.m),
-          children: [GroupPeople(name: name)],
+      // lazy lists (SliverList): only the visible rows are built, also with hundreds of items (docs/recherche/2026-11-09-…)
+      body: CustomScrollView(slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 0),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              GroupHeader(
+                bills: bills,
+                people: people,
+                onPrice: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupBreakdownScreen(name: name))),
+                onPeople: () => _showPeople(context),
+              ),
+              GroupCountsLine(bills: bills, onOpenItems: () => setState(() => _view = 1)),
+              const SizedBox(height: FasanSpace.s),
+              FasanSegmented<int>(
+                values: const [0, 1],
+                selected: _view,
+                label: (i) => trLang(lang, i == 0 ? 'grp.bills' : 'grp.items'),
+                onChanged: (v) => setState(() => _view = v),
+              ),
+              const SizedBox(height: FasanSpace.m),
+              HintCard(id: 'group_flow', text: trLang(lang, 'hint.groupFlow'), icon: Icons.route_outlined),
+              if (live != null) HintCard(id: 'group_everyone', text: trLang(lang, 'hint.everyone'), icon: Icons.groups_2_outlined),
+              if (live != null) CollabGroupPanel(group: live),
+              if (live == null) _ShareButton(name: name),
+              if (_view == 0 && bills.isEmpty) Text(t.groupEmpty, style: tt.bodyMedium),
+              if (_view == 1 && flat.isEmpty) Text(trLang(lang, 'grp.noItems'), style: tt.bodyMedium),
+            ]),
+          ),
         ),
-      ),
+        if (_view == 0)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l),
+            sliver: SliverList.builder(
+              itemCount: bills.length,
+              itemBuilder: (_, i) => Padding(
+                padding: const EdgeInsets.only(bottom: FasanSpace.s),
+                child: BillTile(key: ValueKey(bills[i].id), bill: bills[i], queue: queue, selecting: false, selected: false, onToggle: () {}, onRetry: () {}),
+              ),
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l),
+            sliver: SliverList.builder(
+              itemCount: flat.length,
+              itemBuilder: (_, i) {
+                final (b, it) = flat[i];
+                return it == null
+                    ? GroupBillHeading(key: ValueKey('h-${b.id}'), bill: b, onTap: () => openBill(context, b))
+                    : GroupItemRow(key: ValueKey('${b.id}/${b.its.indexOf(it)}'), bill: b, item: it, onTap: () => openBill(context, b));
+              },
+            ),
+          ),
+        SliverToBoxAdapter(child: SizedBox(height: 96 + MediaQuery.paddingOf(context).bottom)),
+      ]),
     );
   }
 }
@@ -777,6 +820,12 @@ Future<void> friendActions(BuildContext context, String name) async {
   }
 }
 
+/// The payment flows are used inside the people sheet of the group: after booking, the sheet closes so the note with „Rückgängig“
+/// below it can be tapped (a modal sheet would cover it).
+void _closeSheet(BuildContext context) {
+  if (context.mounted && ModalRoute.of(context) is PopupRoute) Navigator.of(context).pop();
+}
+
 /// Interim payment or lent money: asks who gave whom how much and books it like a settlement payment (store.recordPayment).
 Future<void> _giveFlow(BuildContext context, String group, List<String> people) async {
   final lang = S.of(context).de ? 'de' : 'en';
@@ -787,6 +836,7 @@ Future<void> _giveFlow(BuildContext context, String group, List<String> people) 
   final b = store.recordPayment(group, r.from, r.to, r.cents,
       purpose: trLang(lang, r.loan ? 'groups.loanPurpose' : 'groups.paymentPurpose', [r.from, r.to]), item: trLang(lang, r.loan ? 'groups.loanItem' : 'groups.paymentItem'));
   showNote(context, trLang(lang, r.loan ? 'groups.loanDone' : 'groups.markPaidDone', [r.from, r.to, shown]), actionLabel: context.tr('bill.undo'), onAction: () => store.remove(b));
+  _closeSheet(context);
 }
 
 class _GiveDialog extends StatefulWidget {
@@ -865,6 +915,7 @@ Future<void> _markPaidIn(BuildContext context, String group, String from, String
   final shown = '${money(paid, de: t.de)} ${signOf(context)}';
   final b = store.recordPayment(group, from, to, paid, purpose: trLang(lang, 'groups.paymentPurpose', [from, to]), item: trLang(lang, 'groups.paymentItem'));
   showNote(context, trLang(lang, 'groups.markPaidDone', [from, to, shown]), actionLabel: context.tr('bill.undo'), onAction: () => store.remove(b));
+  _closeSheet(context);
 }
 
 /// Amount for „paid“: the open amount, editable down to a part. Owns its text controller and frees it with the dialog (06.11.: before,

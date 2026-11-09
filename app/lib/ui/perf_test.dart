@@ -28,7 +28,7 @@ import '../perf/timeline.dart';
 import '../platform/web_platform.dart' show deviceFacts, readBatteryOnce;
 import '../state/store.dart';
 import 'bill_tile.dart';
-import 'common.dart';
+import 'group_header.dart' show GroupItemRow;
 import 'diagnose.dart' show exportDocument;
 import 'scope.dart';
 
@@ -434,7 +434,7 @@ class _PerfTestScreenState extends State<PerfTestScreen> with SingleTickerProvid
           padding: const EdgeInsets.symmetric(horizontal: FasanSpace.l),
           itemCount: b.its.length,
           itemBuilder: (_, i) {
-            return _itemRow(context, b, b.its[i]);
+            return GroupItemRow(bill: b, item: b.its[i]);
           },
         );
       case 'posten':
@@ -445,7 +445,7 @@ class _PerfTestScreenState extends State<PerfTestScreen> with SingleTickerProvid
           itemCount: _flat.length,
           itemBuilder: (_, i) {
             final (b, it) = _flat[i];
-            if (it != null) return _itemRow(context, b, it);
+            if (it != null) return GroupItemRow(bill: b, item: it);
             return SizedBox(
               height: 40,
               child: Align(
@@ -459,16 +459,4 @@ class _PerfTestScreenState extends State<PerfTestScreen> with SingleTickerProvid
         return const Center(child: Icon(Icons.speed_rounded, size: 64));
     }
   }
-
-  Widget _itemRow(BuildContext context, Bill b, BillItem it) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: 8),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(FasanLook.of(context).radius * 0.5), border: Border.fromBorderSide(fillSide(context, it.fill))),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(children: [Expanded(child: ItemTitle(it, maxLines: 1)), const SizedBox(width: FasanSpace.m), Money(it.amount)]),
-            Padding(padding: const EdgeInsets.only(top: 2), child: Row(children: [Icon(fillIcon(it.fill), size: 16, color: fillColor(context, it.fill)), const SizedBox(width: 6), ShareAvatars(bill: b, item: it)])),
-          ]),
-        ),
-      );
 }

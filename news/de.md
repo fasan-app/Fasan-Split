@@ -1,3 +1,8 @@
+## 0.1.86
+- Neu: Die Gruppe hat oben eine Kopfzeile mit Anzahl der Rechnungen, Summe und Personen. Der Rahmen zeigt, wie viele Posten erledigt, in Arbeit oder offen sind. Tippe auf die Summe für die Aufteilung, auf das Personen-Symbol für Salden.
+- Neu: Umschalter „Rechnungen | Posten“. Die Posten-Ansicht listet alle Posten der Gruppe, nach Rechnung gruppiert, und lädt nur, was du siehst.
+- Neu: Eine Zeile nennt offene Posten und Rechnungen ohne Zahler.
+
 ## 0.1.85
 - Neu: In den Einstellungen siehst du im Browser Version, Datum und Stand deiner Seite. Der neue Eintrag „Was ist neu“ zeigt die letzten Änderungen.
 - Neu: Der Leistungsbericht enthält viel mehr zu Gerät und Browser (Akku, Speicher, Netz, Systemeinstellungen, Anzeige-Hz, Bauart).

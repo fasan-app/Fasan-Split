@@ -23,7 +23,7 @@ void main() {
     final ctl = FasanController(settings: FasanSettings(reduceMotion: true));
     await tester.pumpWidget(SplitApp(store: store, ui: ctl, home: GroupScreen(name: 'WG', queue: q)));
     await tester.pump(const Duration(milliseconds: 100));
-    await tester.tap(find.text('Personen · 2'));
+    await tester.tap(find.byIcon(Icons.group_outlined).first);
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Zahlung oder Leihgabe eintragen'));
     await tester.tap(find.text('Zahlung oder Leihgabe eintragen'));

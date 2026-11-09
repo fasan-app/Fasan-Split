@@ -1,3 +1,8 @@
+## 0.1.86
+- New: The group has a header with the number of bills, total and people. The frame shows how many items are done, in progress or open. Tap the total for the breakdown, the people icon for balances.
+- New: Switch “Bills | Items”. The items view lists every item of the group, grouped by bill, and only loads what you see.
+- New: One line names open items and bills without a payer.
+
 ## 0.1.85
 - New: In the browser, settings show the version, date and build of your page. The new entry "What's new" lists the latest changes.
 - New: The performance report holds much more about device and browser (battery, memory, network, system settings, display Hz, build type).

@@ -93,12 +93,11 @@ void main() {
     final ctl = FasanController(settings: FasanSettings(reduceMotion: true));
     await tester.pumpWidget(SplitApp(store: store, ui: ctl, home: GroupScreen(name: 'WG', queue: q)));
     await tester.pump(const Duration(milliseconds: 100));
-    // receipts first, people folded in one section „Personen“ below them (Nutzer 06.11.)
+    // header with the person symbol and the count; the members open behind it (Nutzer 08.11. 04:09)
     expect(find.text('Pizza'), findsOneWidget);
-    expect(find.text('Personen · 4'), findsOneWidget);
-    expect(find.text('Dora'), findsNothing, reason: 'eingeklappt');
-    expect(tester.getTopLeft(find.text('Pizza')).dy, lessThan(tester.getTopLeft(find.text('Personen · 4')).dy));
-    await tester.tap(find.text('Personen · 4'));
+    expect(find.text('4'), findsWidgets, reason: 'Personenzahl im Kopf');
+    expect(find.text('Dora'), findsNothing, reason: 'erst nach dem Tippen auf das Personensymbol');
+    await tester.tap(find.byIcon(Icons.group_outlined).first);
     await tester.pumpAndSettle();
     expect(find.text('Dora'), findsOneWidget);
     expect(find.text('Ohne App'), findsNothing, reason: 'nur Gruppen mit Live-Teilen zeigen den Status');
