@@ -170,3 +170,18 @@ Anlass: Bildschirmfotos der Web-App 0.1.87 auf dem S23. Leistungsbericht 08:43 i
 11. Auswahlknopf: Funktionen ins ⋮-Menü der Rechnungen.
 12. Alle / Ohne Gruppe / Gruppen besser über die Filteroption wählbar? Viele Gruppen werden unübersichtlich; Alternative: beschrifteter Schalter oben, der die Gruppenwahl öffnet.
 13. Recherche zu den Vorschlägen und vorhandene Recherchen lesen. Geplantes (Rechnungsfarben, Sortierung, Suche) mitdenken: oben immer Platz für den eigenen Betrag und für die Suche.
+
+## 09.11. 13:05 Nutzer: Rückmeldung zu Web 0.1.88 (Stand: neu, Umsetzung läuft)
+Anlass: Bildschirmfotos der Web-App 0.1.88 auf dem S23.
+1. „Eigene Reihenfolge“ muss mit Rechnungen UND Posten funktionieren.
+2. Umschalter Rechnungen | Posten muss sichtbar sein (nicht nur im Filterfenster).
+3. Unter dem Kopfrahmen steht Gruppenname, Anzahl Bons, Summe noch einmal: doppelt, weg.
+4. „18 offene Posten · 9 ohne Zahler“ wird sichtbarer Knopf in der Zeile mit 44 / 2 / 16; die Zahlen werden Filter (an/aus). Knöpfe als Knöpfe erkennbar, Zustand sichtbar.
+5. Kopfrahmen (Bons, Summe, Mitglieder) auch für „Alle Gruppen“ und „Ohne Gruppe“.
+6. Offen / Archiv / Papierkorb anders lösen: Untermenü oder Symbole in der Kopfzeile.
+7. Massive Lücken im Layout entfernen.
+8. Beißende Elemente: Rahmen der Gruppe stößt am Rahmen der unteren Leiste.
+9. Die zuvor genannten offenen Punkte umsetzen (Einstellungen gliedern, Betrag mit Wort, Suche).
+10. Beim Blättern zwischen Seiten baut sich der zweite Kopf nachträglich auf, Inhalte springen. Überall flüssig, wie Apple.
+11. „Andere dürfen für mich eintragen“ und andere Elemente zu groß; Text lässt beim Umschalten springen (Sprachen!). Vorschlag Nutzer: nur Titel, klare Symbole, Indikatoren und ein Fragezeichen mit Erklärung auf Wunsch (Frage: richtig?).
+12. Alles nach Apple-Art sortiert, gegliedert, aufgeräumt, nur sichtbar wenn nötig.
