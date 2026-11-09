@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: MPL-2.0
+// Fasan Split – English texts of the guide (see tutorial_de.dart). MPL-2.0
+const Map<String, String> tutorialEn = {
+  'tutorial.title': 'Guide',
+  'tutorial.intro': 'How to split bills with Fasan Split: scan a receipt, add people, assign items, settle up.',
+  'tutorial.idea.title': 'The idea',
+  'tutorial.idea.body': 'You photograph the receipt, say who was there and tap who had what. The app calculates everything automatically. There is no account; everything stays on your device until you share it.',
+  'tutorial.scan.title': 'Scan a receipt',
+  'tutorial.scan.body': 'Tap the plus at the bottom right. Photograph the receipt with the camera, pick a photo or file from the gallery (several at once is fine) or choose “Without receipt” to enter it by hand. The app reads items and total itself.',
+  'tutorial.check.title': 'Check',
+  'tutorial.check.body': 'Compare total and items with the receipt. The receipt icon at the top shows the photo. Tap an item that is wrong to change it. Everything is saved right away; “Continue later” only closes the bill. The frame of items and bills shows how much is assigned: red open, amber partial, green complete. “Only open items” shows only what is still missing. The list is sorted by status, newest first within it; other sorts and filters are under the sort icon at the top.',
+  'tutorial.assign.title': 'Who was there, who had what',
+  'tutorial.assign.body': 'Add the people under “Who was there?”. Pick a person and tap the items they had. If several share an item, assign it to several people. The app works out the shares.',
+  'tutorial.paid.title': 'Who paid',
+  'tutorial.paid.body': 'Set “Paid by” to the person who laid out the money. That decides who owes whom how much.',
+  'tutorial.group.title': 'Create a group',
+  'tutorial.group.body': 'Switch to “Groups” at the bottom and tap the plus to name a group, for example for a trip or a flat share. Inside the group the plus starts a new bill that lands right there. You can also press and hold a bill and drag it onto “Groups”.',
+  'tutorial.invite.title': 'Invite people',
+  'tutorial.invite.body': 'Open the group and tap the person icon at the top. Share the link or the code. Whoever opens it is in the group and sees the bills. With “Share live” everyone stays in sync.',
+  'tutorial.together.title': 'Enter together',
+  'tutorial.together.body': 'In a group anyone can enter for anyone. The app keeps calculating automatically. Under “People” you already see who owes whom while you are still entering. You settle up once all bills are entered. To protect something, lock it with the padlock: an item in the item sheet, a whole bill in the menu (⋮). Then only you and the group admin can change it; notes still work.',
+  'tutorial.history.title': 'Balance and history',
+  'tutorial.history.body': 'In the profile, “How your balance adds up” shows every bill with plus and minus. In the menu (⋮) of a bill, a group and in the profile you find the history: who changed what and how your balance moved. If someone changed a bill, a counter on its thumbnail shows how much, and the bill lists “New since your last visit”. If a shared bill got mixed up, “Bring back an earlier state” at the top of the bill history restores a member\'s last state.',
+  'tutorial.settle.title': 'Settle up',
+  'tutorial.settle.body': 'Once all bills are in, “People” shows who pays whom how much. Swipe a bill right or tap “Settle” when it is paid. Settled bills go to the archive. Paid something in between or lent money? Under “People” enter it with “Enter a payment or loan”; the balance changes at once.',
+  'tutorial.settings.title': 'Settings and backup',
+  'tutorial.settings.body': 'In the settings you find appearance, language, performance and this guide. If the app stutters, the “Performance test” under Diagnostics runs a measurement with made-up data and makes a report to share. You can turn off the small tips on the start page there. In the profile you back up your data with “Save a backup”. In the browser, „Check for updates now“ shows the build of your page and reloads it when a newer one exists; your login stays.',
+};

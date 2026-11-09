@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: MPL-2.0
+// Fasan Split – English texts of the tip line (see tips_de.dart). MPL-2.0
+const Map<String, String> tipsEn = {
+  'tip.setTitle': 'Show tips',
+  'tip.setSub': 'Small help at the top of the start page',
+  'tip.open': 'Open the guide',
+  'tip.close': 'Close tip',
+  'tip.plus': 'Tap the plus: photograph a receipt, pick one from the gallery or enter it without a photo.',
+  'tip.swipe': 'Swipe a card right to settle the bill (paid), and left to delete it. Deleted first goes to the trash.',
+  'tip.drag': 'Press and hold a bill and drag it onto “Groups” to put it into a group.',
+  'tip.invite': 'In a group, invite friends with the person icon at the top. They only need the link.',
+  'tip.everyone': 'In a group, anyone can enter for anyone. The history shows who entered what.',
+  'tip.lock': 'The padlock locks an item (in the item) or a whole bill (in the menu ⋮). Then only you and the group admin can change it.',
+  'tip.give': 'Lent money or paid something in between? In the group under “People” you find “Enter a payment or loan”.',
+  'tip.colors': 'The frame shows how much is assigned: red open, amber partial, green complete. “Only open items” shows only what is still missing.',
+  'tip.people': 'In the group, “People” already shows who owes whom while you are still entering.',
+  'tip.autosave': 'You never have to save: everything is saved right away. “Continue later” only closes the bill.',
+  'tip.history': 'In the menu (⋮) of a bill, a group and in the profile you find the history: who changed what. A bill mixed up? At the top of its history you can bring back an earlier state.',
+  'tip.balance': 'In the profile, “How your balance adds up” shows every bill with plus and minus at a glance.',
+  'tip.backup': 'Back up your data in the profile with “Save a backup”. With a password the file may go to the cloud.',
+  'tip.local': 'Everything stays on your device. There is no account and no telemetry. Only what you share is shared.',
+  'tip.perf': 'App sluggish on your device? In the settings you can adjust the effects under “Performance”.',
+  'tip.tutorial': 'You find a step-by-step guide in the settings under “Guide”.',
+  'tip.off': 'You can turn these tips off in the settings under “Show tips”.',
+};

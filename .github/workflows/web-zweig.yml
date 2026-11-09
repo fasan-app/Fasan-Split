@@ -1,0 +1,86 @@
+# Probelauf der Browser-Ende-zu-Ende-Prüfungen auf dem Arbeitszweig (06.11.): gleiche Schritte wie der Job e2e in web.yml, aber ohne
+# Veröffentlichung und ohne die gemeinsame Gruppe „pages“ (ein Zweig-Lauf darf keinen Lauf auf main abbrechen).
+name: Web-Zweig
+on:
+  push:
+    branches: ['mitarbeit/**']
+    paths: ['app/lib/**', 'app/packages/**', 'app/test/e2e_web_*', 'app/test/support/synthetic_receipt.dart', 'app/tool/e2e/**', '.github/workflows/web-zweig.yml']
+permissions:
+  contents: read
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Modelle holen (Prüfsummen)
+        working-directory: app
+        run: bash tool/fetch_models.sh
+
+      # Erkennung im Browser (Web Worker + ONNX Runtime Web, wie in web.yml): ohne sie liest die Probe nie einen Bon im Browser
+      - name: ONNX Runtime Web holen
+        run: |
+          mkdir -p "$RUNNER_TEMP/ort" && cd "$RUNNER_TEMP/ort"
+          npm pack onnxruntime-web@1.22.0 --silent
+          tar xzf onnxruntime-web-1.22.0.tgz
+
+      - name: Web für den Test bauen (Relay ws://127.0.0.1:7777)
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter create --org app.fasan --project-name fasan_split --platforms web .
+          sed -i 's#<script src="flutter_bootstrap.js" async></script>#<script src="coi-serviceworker.js"></script>\n  <script src="flutter_bootstrap.js" async></script>#' web/index.html
+          cp web_template/flutter_bootstrap.js web/flutter_bootstrap.js
+          flutter build web --release --wasm --base-href /Fasan-Split/ --no-web-resources-cdn --dart-define=FASAN_RELAYS=ws://127.0.0.1:7777
+          cp -r web_extra/. build/web/
+          dart compile js -O2 -o build/web/recognition_worker.js lib/recognition/web_worker.dart
+          mkdir -p build/web/ort
+          cp "$RUNNER_TEMP/ort/package/dist/"{ort.wasm.min.js,ort-wasm-simd-threaded.wasm,ort-wasm-simd-threaded.mjs} build/web/ort/
+          mkdir -p "$RUNNER_TEMP/srv" && cp -r build/web "$RUNNER_TEMP/srv/Fasan-Split"
+
+      - name: Relay, Server, Browser
+        run: |
+          pip install websockets==13.1
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw" && npm init -y >/dev/null && npm install playwright@1.48.2 --silent
+          npx playwright install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+          nohup python3 "$GITHUB_WORKSPACE/app/tool/e2e/relay.py" 7777 > "$RUNNER_TEMP/relay.log" 2>&1 &
+          cd "$RUNNER_TEMP/srv" && nohup python3 -m http.server 8765 > "$RUNNER_TEMP/http.log" 2>&1 &
+
+      - name: Einladung Ende zu Ende
+        working-directory: app
+        env:
+          E2E_DIR: ${{ runner.temp }}/e2e
+        run: bash tool/e2e/run.sh
+
+      - name: Bonfoto für die Gruppe Ende zu Ende (Scan, Original, Ausschnitte im Browser)
+        working-directory: app
+        env:
+          E2E_DIR: ${{ runner.temp }}/e2e-photo
+        run: bash tool/e2e/run-photo.sh
+
+      - name: Bon im Browser lesen (Scan-Bildschirme, erfundener Bon)
+        working-directory: app
+        env:
+          E2E_DIR: ${{ runner.temp }}/e2e-scan
+        run: |
+          mkdir -p "$E2E_DIR"
+          dart run test/support/synthetic_receipt.dart "$E2E_DIR"
+          FASAN_FILE="$E2E_DIR/bon.png" FASAN_BAD="$E2E_DIR/leer.png" node tool/e2e/scan-walk.js
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-bilder
+          path: |
+            ${{ runner.temp }}/e2e
+            ${{ runner.temp }}/e2e-photo
+            ${{ runner.temp }}/e2e-scan
+          retention-days: 7

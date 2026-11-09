@@ -1,0 +1,148 @@
+# Anforderungen des Nutzers (Register)
+
+Stand 06.11. (erste Fassung, Punkt 0a). Quelle: Nachrichten ab 04.11. 23:36 (Rohtext privat in `../fasan/nutzer/split-nachrichten.md`),
+Beschlüsse oben in `STAND.md`, `docs/VORSCHLAEGE-06-11.md`. Ältere Wünsche stehen in `STAND.md` (Soll-Liste, Verlauf) und
+`../fasan-karte/docs/ENTSCHEIDUNGEN.md` (Soll-Umfang) und gelten weiter. **Stand je Zeile nach Doku/Erinnerung der Sitzung; bei jedem Paket
+am Code nachprüfen und hier berichtigen.** Stand: ✅ umgesetzt und nachgewiesen · ◐ teilweise / ungeprüft · ❌ fehlt · ⚠ Widerspruch.
+
+## Arbeitsweise (gilt für jede Sitzung)
+| Datum | Anforderung (sinngemäß) | Grund | Stand | Ort |
+|---|---|---|---|---|
+| 05.11. | Alles, was die Sitzung prüfen kann, selbst prüfen und stresstesten; nichts dem Nutzer überlassen | „du überlässt mir ständig zu viel“ | ◐ | CLAUDE.md PFLICHT |
+| 05.11. | Proaktiv recherchieren, welche Bedienung Nutzer erwarten, und einbauen | „baust mir das nicht proaktiv genug ein“ | ❌ (Recherchen nie angewendet) | Prüfliste, Punkt 0b |
+| 06.11. | Alle Anweisungen prüfen, ob sie in den Projektdaten stecken; Iterationen vergleichen; Recherchen anwenden; selbstkritisch | wiederholt halbfertige Lösungen | ◐ (dieses Register) | hier |
+| 06.11. | Fragen und Vorschläge vor der Arbeit klären | Kurs-Abweichungen | ✅ (3 Befragungen) | VORSCHLAEGE-06-11 |
+| 06.11. | Zusagen, Lehren, Vorschläge sofort festschreiben, ohne Erinnerung | „dass ich dich daran erinnern muss“ | ✅ Regel | CLAUDE.md |
+| 06.11. | Bis kurz vor Kontingent-Ende arbeiten, Rest für Notizen; Kontingent im Blick | Wochenlimit | ◐ | STAND „Kontingent“ |
+| 06.11. | Stabile Bereiche einfrieren, Änderungen mit wenig Token-Aufwand; Industriestandard 2026 recherchieren | Zukunftssicherheit | ❌ | Plan Punkt 6 (Neuschreiben) |
+
+## Erkennung
+| Datum | Anforderung | Grund | Stand | Ort |
+|---|---|---|---|---|
+| 05.11. | Pastelaria Modelo-Bon korrekt lesen, Algorithmus stresstesten, keine neue Version vorher | „völlige Katastrophe“ | ◐ (Korrektur da, Tor fehlt) | reader.dart, pipeline.dart |
+| 05.11., 06.11. | Viel mehr echte, weltweite Bons/Rechnungen in die Tests (7-Eleven Japan, Miete Italien); alle auffindbaren, auch vereinzelte; ~100 selbst beschrieben | „13 Bons sind keine Grundlage“ | ❌ → in Arbeit (Korpus) | fasan-diagnose/tests/welt, CI |
+| 06.11. | „13 Croissants“: zuvor gut laufender, kritischer Teil darf nie schlechter werden | Regression | ◐ (Ursache gefunden, ungeprüft im Zweig) | reader.dart (Steuersatz als Menge) |
+| 06.11. | Tor in der CI über privates fasan-diagnose, stoppt Veröffentlichung | nie wieder unbemerkt | ❌ | Punkt 2 |
+| 06.11. | Weltweite Schriften: erst Latein perfekt, dann Modelle in die APK | Beschluss 02.11. offline | ❌ | Punkt 7 |
+
+## Bon-Bildschirm und Bedienung
+| Datum | Anforderung | Grund | Stand | Ort |
+|---|---|---|---|---|
+| 05.11. | Mehrere Zahler mit unterschiedlichen Anteilen direkt im ersten Schritt | Alltag | ◐ (Blatt da, ungeprüft am Gerät) | ui/payers.dart |
+| 05.11. | Negative Beträge (Gutschriften) ohne falsche Riesen-Meldung | 396 €/−198 € | ◐ | model alignSigns |
+| 05.11. | Ein Bildschirm: Personen, Zahler, Zuordnen im ersten Schritt; Posten bearbeiten **und** zuweisen; Schritt 2 entfällt | Doppelarbeit | ◐ (gebaut ohne Recherchen) | ui/bill_screen.dart |
+| 05.11. | Gruppenmitglieder vorschlagen; Person hinzufügen mit Live-Filter über Freunde und Gruppe | Sinn | ◐ | ui/person_picker.dart |
+| 05.11. | Freund außerhalb der Gruppe einladen ohne Bestätigung, zurückziehbar | Bequemlichkeit | ◐ | collab/service.dart |
+| 05.11. | Prüfen auf Wunsch per Knopf oben | Ruhe | ◐ | bill_screen |
+| 05.11. | Lange Namen ausfaden und langsam federnd scrollen statt hart abschneiden | Lesbarkeit | ◐ (im Sparmodus aus, Beschluss 05.11. abends) | ui/marquee_text.dart |
+| 05.11. | Wischmenüs auf Posten wie bei Rechnungen | Gewohnheit | ◐ | bill_screen |
+| 06.11. | Bon-Ausschnitte unter den Posten **standardmäßig** sichtbar (kompakt) | einzig krisensicherer Beleg | ❌ (05.11. entfernt – ⚠ zu „zu groß/unruhig“ 05.11.: kompakt statt weg) | Punkt 5 |
+| 06.11. | Gruppe „Bons zuerst“; ein Begriff „Personen“ | zu viel Platz, verwirrend | ❌ | Punkt 5 |
+
+## Browser = App
+| Datum | Anforderung | Grund | Stand | Ort |
+|---|---|---|---|---|
+| 05.11. | Browser und APK gleich in Funktion und Layout, soweit der Browser kann (Ton, Original-Bild, Menü oben rechts) | Freunde nutzen Browser | ❌ (⋮-Menü leer, Original fehlt: Fotos nicht im Abgleich, Startladen aller Fotos) | Punkt 3/4 |
+| 05.11. | Kacheln mit Bons oben auch im Browser | fehlte | ◐ | home.dart |
+| 06.11. | 1:1 in allem, künftige Änderungen gelten für beide; eine Codebasis | Beschluss | ◐ Regel | CLAUDE.md |
+| 06.11. | Fotos/Ausschnitte für alle in der Gruppe: Relays + Blossom, Standard, ohne Verlust an Sicherheit/Leistung | 2. Gerät sieht nichts | ❌ | Punkt 4 |
+
+## Leistung
+| Datum | Anforderung | Grund | Stand | Ort |
+|---|---|---|---|---|
+| 05.11. | Leistungstest beim Sitzungsstart, Effekte danach reduzieren | Browser langsam | ✅ gebaut (Regler), ◐ gemessen nur teilweise | perf/perf_governor.dart |
+| 05.11. | Grundeinstellung maximale Leistung, Effekte zuschaltbar | sofort | ✅ (Standard „Sparsam“) | perf_governor |
+| 06.11. | Browser schnell selbst auf 10 Jahre alten Geräten; S23 „unterirdisch“ | Nutzung | ❌ (Ursachen gefunden, nicht behoben) | Punkt 5 (Leistung) |
+
+## Einladung, Konto, Gruppe
+| Datum | Anforderung | Grund | Stand | Ort |
+|---|---|---|---|---|
+| 05.11. | Einladungslink vollständig erkannt (iPhone/Samsung), ein Link genügt | Freunde landeten leer | ◐ (Link v2 + E2E grün; echtes iPhone nicht) | collab/group.dart, join/ |
+| 05.11. | Beitrittsbildschirm selbsterklärend; Hinweis auf Konto, Sicherung, Wiederherstellung präsent | „was, wenn ich den Browser schließe?“ | ◐ | ui/join_screen.dart |
+| 05.11. | Sagen, was der Browser grundsätzlich nicht kann | Klarheit | ✅ | docs/WEB-GRENZEN.md |
+
+## Sprache
+| Datum | Anforderung | Grund | Stand | Ort |
+|---|---|---|---|---|
+| 05.11. | Umschalter Deutsch/Englisch, App komplett englisch | weltweit | ◐ (alte Texte teils noch im Code) | lib/l10n |
+| 05.11. | Alle Texte getrennt vom Code in Sprachdateien, ohne den ganzen Code zu lesen | viele Sprachen | ◐ | lib/l10n, docs/SPRACHEN.md |
+
+## Umfang dieser einen Veröffentlichung (Befragung 2 und 3, 06.11.)
+Rückgängig/Wiederholen; Ausgaben ohne Bon; Aufteilen gleich/fest/Anteile/Posten; exakter Ausgleich + „bezahlt“; dazu alle vier Bereiche
+der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. wie dort.
+| 06.11. | Selbstständig weiterarbeiten, ohne dass der Nutzer jedes Mal bestätigen muss | Nutzer arbeitet vom Handy | ✔ gilt ab sofort (Zwischenberichte kurz, kein Warten auf „weiter“) | STAND.md |
+
+- 06.11. abends (Nutzer): Als Nächstes Vergleich Bildschirm für Bildschirm zwischen App und Browser; nach Kontextverlust nichts übergehen oder vergessen. Grund: „Web 1:1“ war behauptet, nicht verglichen. Stand: in Arbeit.
+
+- 06.11. nachts (Nutzer, Frage): Warum Code nicht direkt als Browser-Version, machen andere alles doppelt? Antwort gegeben (eine Codebasis, dünne Adapter, Grenzen des Browsers); Aussage zu anderen Diensten nicht geprüft. Stand: beantwortet.
+
+- 06.11. nachts (Nutzer, Frage): Wenn Flutter denselben Code nutzt, warum waren Web und App so verschieden und die Anpassung so kompliziert? Antwort gegeben (Daten nicht geteilt, Schrift, Speicher, Erkennung, kein früherer Vergleich); Stand: beantwortet.
+
+- 06.11. nachts (Nutzer, Frage): Muss die Web-Anpassung jedes Mal gemacht werden, greift der modulare Aufbau auch im Web (App-Änderung → Web)? Antwort + Regel in CLAUDE.md; Stand: beantwortet, modularer Neubau offen.
+
+- 06.11. nachts (Nutzer, Kritik/Frage): Warum gab es Unterschiede Web/App; arbeitest du am Neuaufbau vom Fundament (letzte Nacht beauftragt), was ist der Plan? Stand: Neuaufbau NICHT begonnen (ehrlich gemeldet); Schritt 1 Bestandsaufnahme + Plan in docs/ARCHITEKTUR.md; Umsetzung als Nächstes.
+
+- 06.11. 23:35 (Nutzer an Sitzung B): B übernimmt parallel zu A; selbstständig arbeiten ohne Rückfragen je Schritt; Repos wie CLAUDE.md Schritt 0 (Fasan nur lesend);
+  Vorschlag für B: Bereich „Erkennung“, vorher in `docs/ZUSAMMENARBEIT.md` belegen; eine Veröffentlichung auf main am Ende nach vollem Tor; jede Zusage/Nachricht/
+  jeden Beschluss sofort in Dateien. Stand: angenommen, belegt 06.11. 23:50 (Zweig `mitarbeit/B-erkennung`). Rohtext: nicht in `../fasan/nutzer/` (B nur lesend).
+
+- 06.11. 23:48 (Nutzer an B): Was Sitzung A zuletzt begonnen und wegen Kontingent nicht abgeschlossen hat, ist wichtiger als die Erkennung zu verbessern. Stand: angenommen; Erkennung pausiert (817d52f), B übernimmt A's Rest (ZUSAMMENARBEIT). Rohtext: nicht in `../fasan/nutzer/` (B nur lesend).
+- 06.11. 23:50 (Nutzer): Selbstständig erkennen, ob zuletzt angefangene Aufgaben (eigene oder von Sitzung A) offen sind; die zuerst abschließen, statt parallel neue Baustellen zu öffnen. Stand: Regel in CLAUDE.md und ZUSAMMENARBEIT; Reihenfolge B: Teilzahlung (A) → übriger A-Rest → eigene Erkennung 817d52f → erst dann Neues.
+- 06.11. 23:54 (Nutzer, Wunsch + Frage): **Vorläufiger Saldo**, sobald Posten vergeben sind – beim Profil und in Gruppen sichtbar, auch wenn noch unklar ist, wer bezahlt hat, und der Bon nicht fertig ist. Grund: Bons werden oft erst spät von allen ausgefüllt; man weiß nur, ob man selbst bezahlt hat, will aber Ausgaben und Schulden früh sehen. Stand: **neu**, Vorschlag gemacht (STAND „Offene Fragen“), Umsetzung nach dem angefangenen Rest (Regel „Angefangenes zuerst“). Heute zählt `fasan_core/settle.dart` nur fertige Bons mit Zahler.
+- 06.11. 23:57/23:58 (Nutzer): Roadmap nicht aus dem Auge verlieren; direkt nach dem Angefangenen Priorität 1: Web und App komplett gleich, 2: maximale Leistung (Browser ruckelt extrem, wenig reaktiv); erst dann andere Aufgaben. Stand: Rangfolge in STAND.md.
+- 06.11. 23:59 / 07.11. 00:00 / 00:02 (Nutzer): regelmäßig aufschreiben, was getan wird und was fehlt (Kontingent, Zusammenarbeit); effektiv und token-sparsam; Rechen-/Wartezeit egal, Gründlichkeit, sauberer schneller Code, Genauigkeit, Fehlerfreiheit zählen. Stand: Regeln in CLAUDE.md, Protokoll in ZUSAMMENARBEIT.
+
+- 07.11. 09:58 (Nutzer): Vorläufiger Saldo – Hauptzahl zählt fest und vorläufig zusammen (Vorschlag Sitzung B übernommen). Außerdem Wunsch, dass B Schreibrecht auf die privaten Repos `Fasan` und `fasan-diagnose` bekommt (Rohtexte, Bestwerte im Tor). Stand: neu; Umsetzung nach „Web = App“ und Leistung.
+
+- 07.11. 15:33 (Nutzer, Rückmeldung aus der Praxis): **Posten mit Menge > 1 (z. B. 3 × Cola) sauber zuteilen.** Problem: Wird eine Person eingetragen, gilt der ganze Posten mit allen 3 Stück als erledigt für diese eine Person. Wunsch: (1) der Rahmen um den Posten zeigt standardmäßig farbig, ob er komplett zugeteilt, komplett offen oder teilweise zugeteilt ist; (2) im Posten lässt sich angeben, dass eine Person nur 1, mehrere oder alle Stück hatte. Beispiel: 3 Wasserflaschen, eine Person trank 2 allein, die dritte teilten mehrere. Außerdem: wichtigste Änderungen sollen noch heute Abend veröffentlicht sein (Zeitdruck). Stand: neu; Prioritäten werden mit dem Nutzer geklärt.
+- 07.11. 15:45 (Nutzer, Antworten auf Prioritätsfragen): Heute Abend veröffentlichen: **Mengen-Posten + Rahmenfarbe** und **vorläufiger Saldo** (Wasm-Build und Web-=-App-Reste danach, nicht heute Abend). Bedienung: **Stückzähler je Person zuerst, Einzelzuteilung je Stück als Ausklapper danach** („beides, Zähler zuerst“). Altdaten: bestehende Mengen-Posten mit einer Person werden als **„teilweise“ markiert** (nicht still als komplett). Rahmen: vorhandene Farben aus fasan_ui (offen neutral, teilweise Warnfarbe, komplett Erfolgsfarbe), zusätzlich Symbol. Stand: umgesetzt auf `mitarbeit/B-mengen-posten` (07.11. 16:20), noch nicht auf main.
+- 07.11. 19:01 (Nutzer, Fehlerbericht mit Protokolldatei und Bon-Foto, Restaurant in Beispielstadt): (1) **Speichern dauert sehr lange und wirkt, als hänge die App**; (2) bei diesem Bon hat das Rahmen-Update (offen/teilweise/komplett) nicht ganz gegriffen. Stand: neu, wird nach Abschluss des Browser-Vergleichs untersucht (Protokoll liegt privat, nicht im Repo).
+
+- 07.11. 20:05 (Nutzer): Bon Strandbar Erfunden: „nur 2 Mal Sprudel erkannt“ (Bon zeigt 3 × 3,50). Befund: Erkennung liefert 3 Stück / 10,50 (lokal und im Protokoll); Ursache liegt vermutlich in Zuteilung/Anzeige, nicht belegt. Stand: neu, offen.
+
+- 07.11. 20:45 (Nutzer, Foto der „Neuigkeiten“): **Verlauf überall.** (1) Neuigkeiten sagen nur „Hugo hat ‚Restaurante Das Beispiel‘ geändert“, nicht **was** (eingetragen? Wert korrigiert?). Gewünscht: Verlauf im Profil, in der Gruppe und im Bon mit konkreter Änderung (wer, Posten, vorher → nachher, Zuteilung). (2) **Kosten-Verlauf im Saldo**: wenn etwas hinzukommt oder wegfällt, global und je Gruppe. (3) Fehler: bei „ist ‚Stadt 26‘ beigetreten“ war der **Name leer**. Stand: neu, offen; Plan siehe STAND.md.
+
+- 07.11. 20:57 (Nutzer): **(1) Rahmenfarben der Posten (offen/teilweise/komplett) genauso für die Rechnungen** (Rechnungsliste, Gruppen). **(2) Rechnungsliste sortierbar**: Standard nach Status, innerhalb des Status nach Datum; weitere Sortierungen und Filter auf Wunsch. **(3) Suche in der App**: Lupe oben immer präsent, beim Tippen klappt weich ein Eingabefeld im oberen Bereich auf; Performance beachten. Sucht nach Posten, Restaurant, Datum usw. („letzte Woche hatte ich ein Bier“). In den Ergebnissen weiter filtern, Vorschläge bei Tippfehlern („Meintest du …“), auch bei Sprachwechsel (beer statt Bier). **Unklar beschriftete Posten** (OCR las „Saft“ statt „Bier“) erscheinen weiter unten in den Ergebnissen. **Offene Posten zuerst.** **(4) Knopf „nur offene Posten“** global, in einer Gruppe und in einer Rechnung. (5) Frage an Sitzung: weitere Ideen? Stand: neu, offen; Plan siehe STAND.md.
+
+- 07.11. 21:53 (Nutzer): **Saldo nachvollziehbar.** Im Profil soll man sehen, wie sich der Saldo ergibt: alle positiven und negativen Posten als Rechnung (Aufstellung), auf einen Blick. Dazu die **Umrechnung, wer wem wie viel schuldet**, auch in der Gruppe für alle nachvollziehbar. Stand: neu, offen.
+- 07.11. 21:56 (Nutzer): **Suche – Zeitangabe als Datumsbereich wählbar** (statt Sprachanalyse). **Synonyme in mehreren Sprachen gut; muss auf alle künftigen Sprachen und Länder erweiterbar sein: modular und erweiterbar im Code.** **Tippfehler-Vorschläge ja.** **Alle weiteren Ideen von Sitzung B umsetzen** (Suche nach Betrag/Person, Ergebnisse nach Posten gruppiert mit Summen, gespeicherte Filter als Chips, unklare Posten im Bon markieren mit „Meintest du …“, Verlauf mit Rückgängig für Änderungen). Stand: beschlossen, offen; Plan in STAND.md.
+
+- 07.11. 22:14 (Nutzer): **(1) Vorhängeschloss**: Posten, Rechnungen und Gruppen komplett gegen Änderungen sperren können. **(2) Deutlicher zeigen, dass jeder für jeden eintragen kann**, solange der Nutzer nicht sperrt. **(3) Speichern-Knopf**: „hat keine Funktion, oder?“ – es wird doch immer sofort gespeichert; Nutzer wurden gefragt, wie es nach dem Eintragen weitergeht (Verwirrung). **(4) Ablauf klar machen**: das System rechnet automatisch, zwischendrin sieht man schon, wer wem was schuldet, sind alle Rechnungen fertig eingetragen, wird abgerechnet. **(5) Zwischendrin Teilzahlungen** in App und Gruppe, und **geliehenes Geld eintragen**. **(6) Plus-Knopf direkt in der Gruppe** (neue Rechnung nur unter Hauptmenü „Rechnungen“ möglich). **(7) Komplettes Tutorial** (Gruppe erstellen, Leute einladen, Kassenzettel scannen, …), mit jedem Update aktuell zu halten. **(8) Tipp-Zeile** unter dem Hauptmenü bei jedem Start von App und Browser (im Browser genau klären, wie: nicht nach jedem Klick), als Hilfe/Ratgeber (Bedienung, Konto, Einstellungen …, nicht immer „Wusstest du schon“), in den Einstellungen abschaltbar. **(9) Alle Texte sprachgetrennt** ablegen, damit weitere Sprachpakete funktionieren. Stand: neu, offen; Plan in STAND.md.
+
+- 08.11. 00:13 – Vorhängeschloss: Gründer/Admin darf Sperren anderer immer ändern und aufheben (bestätigt). Grund: sonst bliebe eine Sperre für immer bestehen. Stand: umgesetzt für Posten und Rechnung; Gruppe offen; Bon-Bildschirm soll bei Fremdsperre schreibgeschützt aussehen (neu).
+- 08.11. 00:16 – Konto-Sicherung zusätzlich per Handynummer (SMS) oder E-Mail statt nur 12 Wörter. Stand: neu, Bewertung in STAND.md (Server nötig, Empfehlung Mail-Knopf für Sicherungsdatei).
+- 08.11. 00:15 – Signaturprüfung für später vormerken; als „Sicherheitsprüfung“ in STAND.md (niedrige Priorität).
+- 08.11. 00:22 – Relay-Sicherung gut; Wunsch: auf Geräten ein-/ausloggen, auch mit Passkey, auf Wunsch 2FA/Authentifizierungscode. Stand: neu, Einordnung und Reihenfolge in STAND.md („Konto und Anmeldung").
+- 08.11. 00:32 – „Was ist neu“-Fenster beim Update: der gewöhnliche Nutzer kann mit Commit-Zeilen nichts anfangen. Soll die wichtigsten Fakten in verständlicher Sprache nennen und einen klickbaren Link zum öffentlichen Repo (ausführlich, Roadmap) enthalten. Stand: umgesetzt 08.11. (`news/`, Update-Fenster, Test; Handy-/CI-Prüfung offen).
+- 08.11. 00:34 – das Update-Fenster muss wie alle Texte mit allen Sprachen funktionieren (Texte je Sprache getrennt). Stand: umgesetzt 08.11. (news/de.md, news/en.md, Test auf gleiche Abschnitte).
+- 08.11. 00:32 – Recherche: App kostenlos + Bezahlversion mit Premium-Funktionen, oder alles öffentlich mit Bitte um Spenden; was ist der bessere Weg für die Community; grobe Einschätzung zu den Rechten der verwendeten Codes; was ist auf unserer Idee gewachsen und rechtlich schützbar. Stand: neu (Recherche, Ergebnis unter docs/recht/).
+- 08.11. 00:33 – Eigener Bereich im Repo für Rechte, Lizenzen, Finanzierung, Veröffentlichungsmodelle (`docs/recht/`). Stand: angelegt 08.11. (README, LIZENZEN, FINANZIERUNG, SCHUTZ); Entscheidungen beim Nutzer.
+- 08.11. 01:31 – Vier Entscheidungen zu Finanzierung/Recht für später vormerken (Vergütung, Play-Store, Urheberrechts-Inhaber, Stil der Spendenbitte). Grund: Nutzer will zuerst weiterarbeiten lassen. Stand: vorgemerkt in STAND.md.
+- 08.11. 03:28 – Update-Fenster-Text immer noch nicht nutzerfreundlich (Handy zeigte Commit-Liste): recherchieren, wie solche Texte aussehen sollen, danach weitermachen. Recherche: Store-Richtlinien und Release-Notes-Leitfäden – Nutzen zuerst, 3–5 kurze Zeilen, Klartext, Etiketten „Neu/Besser/Behoben“. Stand: umgesetzt 08.11. (news/ gekürzt; CI schreibt für ältere Builds dieselben Zeilen statt Commits); Handy zeigt es erst nach Installation des neuen Builds.
+- 08.11. 04:09 – Großer Gestaltungsauftrag (Rechnungsliste/Bon/Gruppe/Menü), Stand: neu, Recherche + Vorschläge zuerst: (1) Platz besser nutzen, obere Lücke weg, untere Leiste kleiner und farblich klarer; (2) Bon-Zeile: Personen kompakt, alle auf einen Blick, Dabei-Sein farbig, Preis rechtsbündig, kein Haken der Text verdrängt, Stil Ivy/Bauhaus/Rams; (3) Filterschalter wechselt Text „Nur offene Posten“ ↔ „Alle Posten“; (4) Gruppenkopf mit Rahmen: links Anzahl Rechnungen, Mitte tippbarer Gesamtpreis (öffnet vorläufige Abrechnung mit Aufteilung, offenen Beträgen, Filter je Person, Sprung zu offenen Posten), rechts tippbares Personensymbol + Zahl (öffnet das bisherige Mitgliedermenü vom Gruppenende); Rahmen in Anteilen je Postenzustand (erledigt grün | in Arbeit gelb | offen rot, von links nach rechts, Breite nach Anzahl); (5) Zahlung/Leihgabe in den Rechnungsbereich, nicht in die Mitgliederverwaltung, Unterschied verständlich machen; (6) Gruppe in den Fokus, Rechnungen und Gruppen evtl. verschmelzen, untere Leiste neu denken, ohne Funktionsverlust; Querverweise überall; UI-Größen dynamisch.
+- 08.11. 04:16 – In der Gruppe: alle Posten aus allen Rechnungen auf einmal sehen und bearbeiten; dazu eine Sicht auf alle offenen Posten und noch nicht eingetragene Bezahlungen, ohne sich durch die Bons zu klicken. Recherche, wie das hilft ohne die Oberfläche zu stören (Ivy/Rams/Bauhaus). Stand: neu, Recherche läuft; hängt am Gruppenkopf-Auftrag vom 04:09.
+- 08.11. 04:22 – Zur vorgeschlagenen Menü-Verschmelzung (Rechnungen+Gruppen, zwei statt drei Einträge): Nutzer versteht den Rest, nicht diese Abweichung. Auftrag: ausgiebig recherchieren (auch Studien/Paper zu Navigation, Tab-Leisten, Informationsarchitektur), danach ausführlich mit ihm besprechen, nicht vorher bauen. Stand: Recherche läuft.
+- 08.11. 11:06 – FEHLER vom Nutzer gemeldet (Protokolldatei + Fotos): Im Verlauf stehen Änderungen dreifach (Du, Du, Rosa, alle 10:56), Posten wurden umbenannt („Coca Cola“ → „z Coca cola 23 e“) und Mengen auf 1 gesetzt (Pizza 2→1, Cola 3→1), obwohl der Bon 2 Pizza und 3 Cola zeigt und die Erkennung korrekt war. Stand: neu, wird zuerst untersucht (vor allem anderen).
+- 08.11. 11:09 – Fehler: Update-Fenster zeigt gar keine Änderungen (Build ohne eigenen News-Abschnitt → Liste leer) und das Update bricht mit DOWNLOAD_ERROR ab (Datei auf GitHub geprüft: lädt vollständig, Prüfsumme stimmt → Fehler liegt im Download auf dem Handy). Stand: Änderungsliste und Browser-Ausweg umgesetzt 08.11. (Zweig), Ursache des Handy-Downloads nicht bewiesen.
+- 08.11. 11:25 – Angaben zum Fehler 11:06: App um 10:56 gestartet, sofort kamen die Benachrichtigungen; Rosa nutzt die Browser-Version, ihre Uhrzeit stimmt womöglich nicht. Stand: Hinweis für die Ursachensuche (Start-Sync, Browser-Stand, Uhrzeit).
+- 08.11. 11:25 – WUNSCH: Tippt man bei einer Änderung auf „Update“, soll man direkt in die zuständige Übersicht springen, alten und neuen Stand sehen und vergleichen, bestätigen, verändern/rückgängig machen oder dazu eine Nachricht schreiben. Stand: neu.
+- 08.11. 11:25 – WUNSCH: Jede Änderung wird immer und überall protokolliert und ist komplett als Liste nachlesbar. Stand: neu (heute: Verlauf je Gerät, begrenzt – Lücke prüfen).
+- 08.11. 11:25 – WUNSCH: Notizen innerhalb von Rechnungen und Posten; Nachrichten verfassen, die mit allem verlinkt sind (Rechnung, Posten, Änderung, Person). Stand: neu (Notizen je Rechnung gibt es schon, `n/`-Einträge).
+- 08.11. 11:31 – ANFORDERUNG: Man kann nicht davon ausgehen, dass Nutzer wissen, wann die Webseite neu geladen werden muss. Die Web-App muss selbst erkennen, dass sie veraltet ist, und sich aktualisieren (oder klar und mit einem Knopf anbieten); ein veralteter Stand darf nie in gemeinsame Dokumente schreiben. Stand: neu, wird geprüft.
+- 08.11. 11:34 – FEHLER/ANFORDERUNG: Rechnungen werden grün markiert, obwohl der Zahler fehlt. „Wer hat bezahlt“ muss dieselbe visuelle Dringlichkeit haben wie die Posten (offen = nicht grün, gleiche Farbsprache Grün/Gelb/Rot). Stand: Zweig umgesetzt (Bill.payFill, Rahmen aus Posten UND Zahler, Zahler-Knopf in Statusfarbe), Test bill_fill_test; Ansicht auf dem Handy nicht gesehen.
+- 08.11. 12:08 – GROSSES PROBLEM iPhone (Lena, Bildschirmfotos 11:53/12:08): iPhone zeigt eine alte Web-Version („Speichern“, keine Statusrahmen/Personenzeile; „Später weiter“ gibt es seit 07.11. 22:41), Stände weichen von Android ab („bei Nora anders“, Posten mit mehreren Stück auf Personen verteilt), App hängt, „verschiebt sich immer mal was“. Stand: Ursache alte Web-Version [Likely]; Maßnahme Service Worker lädt offene alte Tabs beim nächsten Deploy neu (ungeprüft im Browser), Selbstprüfung alle 10 min. Offen: Altstand darf nicht mehr ins gemeinsame Dokument schreiben; Hängen/Verschieben auf iPhone nicht untersucht.
+- 08.11. 12:09 – Hinweis Lena: Belege in chronologischer Reihenfolge wäre gut (Sortierung der Belege nach Belegdatum). Stand: neu.
+- 08.11. 12:10 – Nutzer: Den falschen Kaffee hat er heute morgen von Hand korrigiert; im Abgleich zwischen Geräten gibt es massive Probleme. Stand: wird mit der Versionsfrage untersucht (alte Geräte schreiben ganze Posten-Einträge ohne neuere Felder wie `pu` zurück).
+- 08.11. 12:31 – FEHLER iPhone (Nora, Bildschirmfoto): Posten „Sprudel“ Menge 3, Tilda 3 Stück + Hugo 1 = 4 von 3, dennoch „Alle 3 Stück sind verteilt“, Plus gesperrt. Nutzer: „darf nicht passieren, bei mir nie so angezeigt“, Verdacht Updates nicht komplett übernommen. Stand: Überhang jetzt sichtbar (`overUnits`, Posten gelb statt vollständig, Text „1 Stück zu viel“), Test; Ursache des Überhangs [Likely]: zwei Telefone verteilen gleichzeitig Stücke (je Person ein Eintrag, nach dem Mischen bleibt beides) oder Menge nachträglich gesenkt; nicht am Gerät nachgestellt.
+- 08.11. 12:33 – ANFORDERUNG/KRITIK: Browser, vor allem iPhone/Safari, wurde nie geprüft, ist aber ein großer Teil der Nutzer; die Bedienleistung dort ist sehr schlecht. Stand: neu. Pflicht ab jetzt: Web-Prüfung mit WebKit (Safari-Engine) und iPhone-Geräteprofil, Leistungsmessung im echten Ablauf; wo das nicht geht, vorher sagen.
+- 08.11. 12:50 – BESCHLUSS Nutzer: Alle teuren Effekte standardmäßig AUS (alles, was Rechenlast erzeugt und keine echte Funktion erfüllt); Effekte nur noch zuschaltbar, wenn die Leistung es zulässt/gebietet. Leistung auf Apple-Geräten muss exakt so schnell sein wie auf Android oder PC. Stand: wird umgesetzt (08.11.). Spannung zur Lehre vom 05./06.11. („Effekte abgeschaltet statt Ursachen gesucht“): beides – Standard aus UND Ursache der Last im WebKit-Leerlauf messen.
+- 08.11. 14:40 – FEHLER/KRITIK (Bildschirmfotos Verlauf „Café Muster“ und Liste): Der Kassenzettel ist komplett zerschossen (Posten wieder roh benannt, Tilda und Hugo entfernt, Zuteilungen ausgetragen, Schritt 1/4, rote Rahmen). Dazu: Performance auch auf seinem Samsung im Firefox-Browser „absolut unterirdisch“, Apple zu langsam, selbst die App ruckelt gelegentlich. Auftrag: Performance und die Ursache dieses Fehlers haben jetzt OBERSTE Priorität. Stand: Ursache des Überschreibens gefunden und im Test nachgestellt (test/stale_store_test.dart); Performance: Firefox-Messung mit gefülltem Bestand, Befund unten in STAND.md.
+- 08.11. 19:45 – Vier Finanz-/Rechtsentscheidungen getroffen: nur Kosten decken; auch Play-Store; Inhaber = eigener Name (Wortlaut offen); Spendenbitte auch nach der Abrechnung. Stand: entschieden, Umsetzung offen.
+- 08.11. 21:06 – BESCHLUSS Nutzer: Menü Option A (Gruppe | Abrechnung | Freunde), mit meinem Zusatz („Ohne Gruppe“ als eigene Gruppe, „Alle“ im Gruppenwähler). Performance ist absolut kritisch: vor dem Bau mit Hunderten Posten messen. Offen: Lesart „nicht eingetragene Bezahlungen“ (a/b/c); sein Wortlaut vom 08.11. 04:16 nennt nur „nicht eingetragenen bezahlen“ ohne Erklärung. Stand: Menü entschieden, Umsetzung offen.
+- 08.11. 21:15 – BESCHLUSS Nutzer: „nicht eingetragene Bezahlungen“ = Lesart a (Rechnung ohne Zahler) muss in der Gruppen-Übersicht angezeigt werden. Ausgleichszahlungen gehören nicht in jede Rechnung, sondern sind global (Gruppenebene, Abrechnung). Pflicht ab jetzt: Leistungsmessung immer für Android UND iOS. Stand: entschieden, Umsetzung offen.
+- 08.11. 21:25 – FEHLER/KRITIK: Im Browser steht immer „Version 0.1.0“; man erkennt nicht, ob man die aktuelle Version hat. Soll: echten Stand anzeigen (Version + Build/Commit). Stand: neu, nach der laufenden Leistungsmessung.
+- 08.11. 21:27 – WUNSCH: „Nach Updates suchen“ im Browser soll die Seite komplett neu einlesen (neuer Stand), ohne dass der Login (Konto/Schlüssel) verloren geht. Stand: neu; Machbarkeit wird geprüft.
+- 08.11. 22:00 – FEHLER/KRITIK (Leistungsbericht Samsung/Firefox, Build 73aaf2f = 0.1.80, Adreno 650, WebGL2 vorhanden): (1) Browser zeigt noch „Version 0.1.0“, „Nach Updates suchen“ tut nichts (alter Build, 0.1.81 war noch nicht ausgeliefert). (2) Leistung weiter schlecht, obwohl der Test „gut“ meldet: Test ist zu leicht und unrealistisch. (3) Der Test darf nicht mit den Originaldaten geschehen. (4) Soll: ausführlicher und realistischer (Verlauf nach dem Start, echte Abläufe). (5) Beobachtung: ruckelt stark, legt sich erst langsam nach längerer Zeit, wird nie richtig flüssig. Stand: neu.
+- 08.11. 22:55 – RÜCKMELDUNG Nutzer: Leistungsbericht 0.1.82 (Samsung/Firefox). Krypto-Hänger weg, Scrollen weiter bei 50–55 Bilder/s. Stand: in Arbeit (0.1.83: Gegenproben Schatten/Bilder/Zeile, 120-Hz-Schwelle). 
+- 08.11. 23:04 – RANDBEDINGUNG Nutzer: Gerade kein iPhone verfügbar; zunächst nur mit seinem Android-Handy messen. Die Regel „Leistung immer für Android und iOS messen“ bleibt; iOS-Bericht steht aus (STAND.md).
+- 08.11. 23:58 – FEHLER/VERBOT Nutzer: Der Leistungstest darf keine Originaldaten und keine echten Namen verwenden oder zeigen. Es standen echte Beispielstadt-Namen darin. Stand: in 0.1.84 behoben; Rest im Repo (Tests/Kommentare/Doku) offen, Rückfrage.

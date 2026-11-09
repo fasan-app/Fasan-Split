@@ -1,0 +1,13 @@
+# Probelauf des Erkennungs-Tors auf dem Arbeitszweig (06.11.): nur das Tor, keine APK, keine Veröffentlichung.
+# Prüft, dass das Geheimnis FASAN_DIAGNOSE_TOKEN wirkt und das Tor in der CI dasselbe misst wie lokal.
+name: Tor-Zweig
+on:
+  push:
+    branches: ['mitarbeit/**']
+    paths: ['STAND.md', '.github/workflows/erkennung.yml', '.github/workflows/tor-zweig.yml', 'app/lib/recognition/**', 'app/packages/**', 'app/test/gate_test.dart', 'app/test/support/**']
+permissions:
+  contents: read
+jobs:
+  erkennung:
+    uses: ./.github/workflows/erkennung.yml
+    secrets: inherit

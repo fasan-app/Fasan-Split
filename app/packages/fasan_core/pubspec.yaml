@@ -1,0 +1,12 @@
+name: fasan_core
+description: Fasan Split – the core without any framework - items, people, amounts, splitting, settling, item names. MPL-2.0
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.5
+
+resolution: workspace
+
+# no dependencies at all, not even for tests: its tests run in the app (test/split_math_test.dart, bill_test.dart …) so the lock file of the
+# app is not touched by test-only packages

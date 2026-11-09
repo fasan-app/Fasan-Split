@@ -1,0 +1,98 @@
+# Erkennungs-Tor (Nutzer 06.11.): vor jeder Veröffentlichung läuft die Erkennung über alle echten Bons (privates fasan-diagnose)
+# und die synthetischen Bons; jede Verschlechterung (falscher Betrag, falsche Menge, falscher Name, falsche Summe, falsches „geprüft“)
+# lässt den Lauf scheitern und stoppt damit APK und Web-App. Fehlt das Geheimnis FASAN_DIAGNOSE_TOKEN, scheitert das Tor sichtbar:
+# ohne Prüfung keine Veröffentlichung. Das Token braucht nur Lesezugriff auf den Inhalt von fasan-app/fasan-diagnose.
+name: Erkennungs-Tor
+on:
+  workflow_call:
+    secrets:
+      FASAN_DIAGNOSE_TOKEN:
+        required: false
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  tor:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # to compare with the last published version
+
+      # Nutzer 08.11.: Das Tor läuft nur, wenn sich seit der letzten VERÖFFENTLICHTEN Version etwas geändert hat, das die Erkennung
+      # berührt (Erkennungscode, Pakete, Modelle, Tor-Test, Abhängigkeiten, dieses Tor). Die letzte Veröffentlichung steht im Text der
+      # Release „neueste“ („Testversion aus <sha>“). Jede veröffentlichte Version hat das Tor bestanden oder die Erkennung nicht
+      # verändert; ein gescheiterter Stand wird nie veröffentlicht und nie Vergleichsstand. Unklar (kein Stand, Stand nicht im
+      # Verlauf, manueller Start): das Tor läuft.
+      - name: Erkennung berührt?
+        id: chg
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pruefen=true
+          if [ "${{ github.event_name }}" != workflow_dispatch ]; then
+            base=$(gh api "repos/${{ github.repository }}/releases/tags/neueste" -q .body 2>/dev/null | grep -o 'Testversion aus [0-9a-f]\{7\}' | head -1 | awk '{print $3}')
+            if [ -n "$base" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
+              if git diff --quiet "$base" HEAD -- app/lib/recognition app/packages app/test/gate_test.dart app/test/support app/tool/fetch_models.sh app/pubspec.yaml app/pubspec.lock .github/workflows/erkennung.yml; then
+                pruefen=false
+                echo "TOR übersprungen: die Erkennung ist seit $base (letzte Veröffentlichung) unverändert." | tee -a "$GITHUB_STEP_SUMMARY"
+              fi
+            else
+              echo "Kein brauchbarer Vergleichsstand ($base): das Tor läuft."
+            fi
+          fi
+          echo "pruefen=$pruefen" >> "$GITHUB_OUTPUT"
+
+      - name: Geheimnis vorhanden?
+        env:
+          TOKEN: ${{ secrets.FASAN_DIAGNOSE_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::FASAN_DIAGNOSE_TOKEN fehlt – ohne die echten Bons keine Prüfung, also keine Veröffentlichung (Anleitung: docs/ERKENNUNGS-TOR.md)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+        if: steps.chg.outputs.pruefen == 'true'
+        with:
+          repository: fasan-app/fasan-diagnose
+          token: ${{ secrets.FASAN_DIAGNOSE_TOKEN }}
+          path: diag
+
+      - uses: subosito/flutter-action@v2
+        if: steps.chg.outputs.pruefen == 'true'
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Modelle und ONNX Runtime
+        if: steps.chg.outputs.pruefen == 'true'
+        working-directory: app
+        run: |
+          bash tool/fetch_models.sh
+          # Der Download lieferte mehrfach keine gzip-Datei (08.11., drei Läufe rot): fehlgeschlagene Antworten (-f), Wiederholung,
+          # Dateiprüfung vor dem Entpacken.
+          ok=0
+          for i in 1 2 3 4 5; do
+            if curl -fsSL --retry 3 --retry-delay 5 -o "$RUNNER_TEMP/ort.tgz" https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-linux-x64-1.22.0.tgz && gzip -t "$RUNNER_TEMP/ort.tgz"; then ok=1; break; fi
+            echo "ONNX Runtime: Versuch $i fehlgeschlagen ($(wc -c < "$RUNNER_TEMP/ort.tgz" 2>/dev/null) Bytes)"; sleep $((i * 10))
+          done
+          [ "$ok" = 1 ] || { echo "::error::ONNX Runtime nicht ladbar"; exit 1; }
+          tar xzf "$RUNNER_TEMP/ort.tgz" -C "$RUNNER_TEMP"
+
+      - name: Tor
+        if: steps.chg.outputs.pruefen == 'true'
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter pub get
+          export LD_LIBRARY_PATH="$RUNNER_TEMP/onnxruntime-linux-x64-1.22.0/lib"
+          export FASAN_BONORDNER="$GITHUB_WORKSPACE/diag/tests/echt:$GITHUB_WORKSPACE/diag/tests/bons"
+          export FASAN_THREADS=4
+          # Stufe B (06.11.): Weltkorpus (Einzelfunde mit Wahrheit je Posten) darf nicht schlechter werden als der Bestwert
+          export FASAN_KORPUS="$GITHUB_WORKSPACE/diag/tests/welt:$GITHUB_WORKSPACE/diag/tests/welt-schrift"
+          export FASAN_KORPUS_MIN="$GITHUB_WORKSPACE/diag/tests/korpus-min.json"
+          flutter test test/gate_test.dart --reporter expanded 2>&1 | tee "$RUNNER_TEMP/tor.log"
+          grep -E '^(OK|FEHLER|BEKANNT|KORPUS|TOR)' "$RUNNER_TEMP/tor.log" >> "$GITHUB_STEP_SUMMARY" || true

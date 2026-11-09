@@ -1,0 +1,12 @@
+name: fasan_reader
+description: Fasan Split – reads a receipt from text lines with positions (items, quantities, prices, total, place). Pure Dart; the image and OCR engine stay in the app. MPL-2.0
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.5
+
+resolution: workspace
+
+dependencies:
+  fasan_core: ^0.1.0
