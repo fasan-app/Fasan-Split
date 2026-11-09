@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: MPL-2.0
+// Fasan Split – German texts of the tip line under the main menu (Nutzer 07.11.). One text per id in `tipIds` (ui/tips.dart),
+// key `tip.<id>`. Plain help, no „Wusstest du schon“. Every new language copies this file (docs/SPRACHEN.md). MPL-2.0
+const Map<String, String> tipsDe = {
+  'tip.setTitle': 'Tipps zeigen',
+  'tip.setSub': 'Kleine Hilfe oben auf der Startseite',
+  'tip.open': 'Zur Anleitung',
+  'tip.close': 'Tipp schließen',
+  'tip.plus': 'Tippe auf das Plus: Bon fotografieren, aus der Galerie wählen oder ohne Foto eintragen.',
+  'tip.swipe': 'Wische eine Karte nach rechts, um den Bon auszugleichen (bezahlt), und nach links zum Löschen. Gelöscht heißt erst einmal Papierkorb.',
+  'tip.drag': 'Halte einen Bon gedrückt und ziehe ihn auf „Gruppen“, dann liegt er in der Gruppe.',
+  'tip.invite': 'In einer Gruppe lädst du mit dem Personen-Symbol oben Freunde ein. Sie brauchen dafür nur den Link.',
+  'tip.everyone': 'In einer Gruppe kann jeder für jeden eintragen. Wer was eingetragen hat, steht im Verlauf.',
+  'tip.lock': 'Das Schloss sperrt einen Posten (im Posten) oder eine ganze Rechnung (im Menü ⋮). Dann ändern nur du und der Gruppen-Admin.',
+  'tip.give': 'Geld geliehen oder zwischendurch gezahlt? In der Gruppe unter „Personen“ gibt es „Zahlung oder Leihgabe eintragen“.',
+  'tip.colors': 'Der Rahmen zeigt, wie viel zugeordnet ist: rot offen, gelb teilweise, grün vollständig. „Nur offene Posten“ zeigt nur, was noch fehlt.',
+  'tip.people': 'In der Gruppe siehst du unter „Personen“ schon zwischendurch, wer wem was schuldet.',
+  'tip.autosave': 'Du musst nichts speichern: Alles wird sofort gespeichert. „Später weiter“ schließt den Bon nur.',
+  'tip.history': 'Im Menü (⋮) eines Bons, einer Gruppe und im Profil findest du den Verlauf: wer hat was geändert. Ein Bon durcheinander? Oben im Verlauf holst du einen früheren Stand zurück.',
+  'tip.balance': 'Im Profil zeigt „So ergibt sich dein Stand“ jede Rechnung mit Plus und Minus auf einen Blick.',
+  'tip.backup': 'Sichere deine Daten im Profil mit „Sicherung speichern“. Mit Passwort darf die Datei auch in die Cloud.',
+  'tip.local': 'Alles bleibt auf deinem Gerät. Es gibt kein Konto und keine Telemetrie. Geteilt wird nur, was du teilst.',
+  'tip.perf': 'Läuft die App auf deinem Gerät zäh? In den Einstellungen kannst du die Effekte unter „Leistung“ anpassen.',
+  'tip.tutorial': 'Eine Schritt-für-Schritt-Anleitung findest du in den Einstellungen unter „Anleitung“.',
+  'tip.off': 'Diese Tipps lassen sich in den Einstellungen unter „Tipps zeigen“ abschalten.',
+};

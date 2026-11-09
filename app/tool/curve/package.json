@@ -1,0 +1,10 @@
+{
+  "name": "fasan-curve",
+  "version": "1.0.0",
+  "description": "Bundle source for web_extra/fasan-curve.js",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "@noble/curves": "2.4.0"
+  },
+  "private": true
+}

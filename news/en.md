@@ -1,0 +1,42 @@
+## 0.1.84
+- Fixed: The performance test no longer shows names from real bills, only invented ones.
+- New: The report states the app's effect level. The test reminds you to use battery above 50 % with battery saver off.
+- New: The report now includes much more about the device and browser (battery, memory, network, system settings, display Hz, build type). No names, no bills.
+## 0.1.83
+- Better: The performance test keeps its preparation apart from the measurement and judges scrolling against your screen's frame rate (120 Hz).
+- New: Three counter-samples show whether shadows, thumbnails or the row itself slow scrolling. The test takes about three minutes.
+## 0.1.82
+- Better: In the browser, group messages are checked and signed about 100 times faster. This was the likely cause of the stutter.
+- Better: Each message is checked once, not again on every reconnect.
+- New: The performance test takes about two minutes, uses thumbnails, group checks and finger-speed swipes, shows the time since start and gives a verdict.
+## 0.1.81
+- Fixed: In the browser “Check for updates now” really looks for a new build and reloads the page. Your login stays.
+- Better: In the browser it shows the real build (“Build abc1234”) instead of “Version 0.1.0”.
+- New: The performance test also measures a list of 500 items.
+## 0.1.80
+- New: “Performance test” in the settings under Diagnostics measures stutter with made-up data and makes a report to share.
+- New: A counter on the thumbnail shows how much others changed. The bill lists “New since your last visit” with name and change.
+- Better: Bills show only icon, date and people in the second line. The name has more room.
+- Better: Items show people and icons in their own line.
+- Better: Frames of bill, items and payer are the same.
+## 0.1.79
+- New: In a bill's history, “Bring back an earlier state” restores a member's last state.
+## 0.1.78
+- Fixed: The shared bill wins over the local copy at start. Old states no longer overwrite it.
+- Better: The bill list only builds visible tiles and stutters less.
+- New: The history shows the time and app version of the writer.
+- New: Without WebGL in the browser the app shows a hint.
+## 0.1.77
+- New: "About" lists the licences of all bundled parts.
+- Better: The web page reloads itself when a new version is out.
+- Better: The app is smoother, costly effects are now off.
+- New: A bill is no longer green without a payer.
+- New: Too many pieces handed out show the item in yellow.
+## 0.1.76
+- New: The filter reads "All items" while it is switched on.
+## 0.1.73
+- New: A coloured frame shows whether an item is still open.
+- New: "Only open items" hides what is already done.
+- New: Lock items and bills with the padlock.
+- New: Enter payments and loans in the group.
+- New: Find the guide and tips in Settings.

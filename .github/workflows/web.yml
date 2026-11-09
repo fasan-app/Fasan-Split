@@ -1,0 +1,153 @@
+# Baut bei jedem Push auf main die Web-App (alles wie die App, Bon-Lesen im Web Worker) und veröffentlicht sie
+# auf GitHub Pages: https://fasan-app.github.io/Fasan-Split/ . Einladungen: …/Fasan-Split/join/#<code> (docs/WEB.md).
+# Einmalig nötig: Settings → Pages → Source „GitHub Actions“.
+name: Web-App
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Modelle holen (Prüfsummen)
+        working-directory: app
+        run: bash tool/fetch_models.sh
+
+      # ONNX Runtime Web (MIT) aus der npm-Registry, gleiche Version wie auf Android (1.22.0); liegt mit auf der Seite.
+      - name: ONNX Runtime Web holen
+        run: |
+          mkdir -p "$RUNNER_TEMP/ort" && cd "$RUNNER_TEMP/ort"
+          npm pack onnxruntime-web@1.22.0 --silent
+          tar xzf onnxruntime-web-1.22.0.tgz
+
+      - name: Kurven-Bündel gegen die offiziellen Vektoren prüfen
+        working-directory: app
+        run: node tool/curve/check.js
+      - name: Web bauen
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter create --org app.fasan --project-name fasan_split --platforms web .
+          sed -i 's#<title>.*</title>#<title>Fasan Split</title>#' web/index.html
+          # Cross-origin isolation for several ONNX threads: GitHub Pages sets no COOP/COEP headers, coi-serviceworker (MIT,
+          # web_extra/) adds them in a service worker and reloads once on the first visit. Must come before flutter_bootstrap.
+          sed -i 's#<script src="flutter_bootstrap.js" async></script>#<script src="coi-serviceworker.js"></script>\n  <script src="flutter_bootstrap.js" async></script>#' web/index.html
+          grep -q coi-serviceworker web/index.html
+          cp web_template/flutter_bootstrap.js web/flutter_bootstrap.js   # no Flutter service worker (it fought coi)
+          sed -i 's#"name": "fasan_split"#"name": "Fasan Split"#; s#"short_name": "fasan_split"#"short_name": "Fasan Split"#' web/manifest.json
+          # CanvasKit liegt mit auf der Seite statt beim Google-CDN.
+          flutter build web --release --wasm --base-href /Fasan-Split/ --no-web-resources-cdn --dart-define=FASAN_BUILD=${{ github.sha }}
+          cp -r web_extra/. build/web/
+          sed -i "s#FASAN_SW_BUILD=dev#FASAN_SW_BUILD=${{ github.sha }}#" build/web/coi-serviceworker.js   # file differs per deploy: open old tabs reload (08.11.)
+          grep -q "FASAN_SW_BUILD=${{ github.sha }}" build/web/coi-serviceworker.js
+          # Erkennung als Web Worker (lib/recognition/web_worker.dart), ONNX Runtime Web daneben unter ort/
+          dart compile js -O2 -o build/web/recognition_worker.js lib/recognition/web_worker.dart
+          mkdir -p build/web/ort
+          cp "$RUNNER_TEMP/ort/package/dist/"{ort.wasm.min.js,ort-wasm-simd-threaded.wasm,ort-wasm-simd-threaded.mjs} build/web/ort/
+          echo "${{ github.sha }}" > build/web/build.txt   # update check (lib/platform/web_platform_web.dart)
+          touch build/web/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: app/build/web
+
+  # Einladung im Browser Ende zu Ende (Nutzer 04.11.: „muss unter allen Bedingungen funktionieren“): lokales Relay und
+  # lokaler Server im Runner, nichts geht an fremde Dienste. Admin geht offline, drei Browser treten bei (normal, ohne
+  # Service Worker wie In-App-Browser, ohne Speicher wie privates Fenster). Ohne grünes Ergebnis keine Veröffentlichung.
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Modelle holen (Prüfsummen)
+        working-directory: app
+        run: bash tool/fetch_models.sh
+
+      - name: Web für den Test bauen (Relay ws://127.0.0.1:7777)
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter create --org app.fasan --project-name fasan_split --platforms web .
+          sed -i 's#<script src="flutter_bootstrap.js" async></script>#<script src="coi-serviceworker.js"></script>\n  <script src="flutter_bootstrap.js" async></script>#' web/index.html
+          cp web_template/flutter_bootstrap.js web/flutter_bootstrap.js
+          flutter build web --release --wasm --base-href /Fasan-Split/ --no-web-resources-cdn --dart-define=FASAN_RELAYS=ws://127.0.0.1:7777
+          cp -r web_extra/. build/web/
+          mkdir -p "$RUNNER_TEMP/srv" && cp -r build/web "$RUNNER_TEMP/srv/Fasan-Split"
+
+      - name: Relay, Server, Browser
+        run: |
+          pip install websockets==13.1
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw" && npm init -y >/dev/null && npm install playwright@1.48.2 --silent
+          npx playwright install --with-deps chromium webkit
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+          nohup python3 "$GITHUB_WORKSPACE/app/tool/e2e/relay.py" 7777 > "$RUNNER_TEMP/relay.log" 2>&1 &
+          cd "$RUNNER_TEMP/srv" && nohup python3 -m http.server 8765 > "$RUNNER_TEMP/http.log" 2>&1 &
+
+      - name: Einladung Ende zu Ende
+        working-directory: app
+        env:
+          E2E_DIR: ${{ runner.temp }}/e2e
+        run: bash tool/e2e/run.sh
+
+      # Safari-Engine (WebKit) mit iPhone-Profil (Nutzer 08.11.): startet die App, welcher Build läuft (wasm oder JavaScript), Bildzeiten
+      # im Leerlauf und beim Tippen. Nur Messung, kein Tor: Playwright-WebKit ist kein iOS (Zahlen nur zum Vergleichen).
+      - name: Safari-Engine (WebKit, iPhone-Profil) starten und messen
+        working-directory: app
+        continue-on-error: true
+        env:
+          E2E_DIR: ${{ runner.temp }}/e2e-safari
+        run: node tool/e2e/safari.js
+
+      - name: Bonfoto für die Gruppe Ende zu Ende (Scan, Original, Ausschnitte im Browser)
+        working-directory: app
+        env:
+          E2E_DIR: ${{ runner.temp }}/e2e-photo
+        run: bash tool/e2e/run-photo.sh
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-bilder
+          path: |
+            ${{ runner.temp }}/e2e
+            ${{ runner.temp }}/e2e-photo
+            ${{ runner.temp }}/e2e-safari
+          retention-days: 7
+
+  # Erkennungs-Tor: ohne Bestehen keine Veröffentlichung der Web-App (Nutzer 06.11.)
+  erkennung:
+    uses: ./.github/workflows/erkennung.yml
+    secrets: inherit
+  deploy:
+    needs: [build, e2e, erkennung]
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

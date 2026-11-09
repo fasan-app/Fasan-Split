@@ -1,0 +1,67 @@
+name: fasan_split
+description: Fasan Split – Rechnungen in der Gruppe teilen. Freie App der Fasan-Familie (MPL-2.0).
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.5
+  flutter: '>=3.47.0'
+
+# Pub workspace (docs/ARCHITEKTUR.md): the app is the root, the building blocks are packages beside it.
+workspace:
+  - packages/fasan_core
+  - packages/fasan_reader
+
+dependencies:
+  flutter:
+    sdk: flutter
+  fasan_core: ^0.1.0          # own package: model, splitting, names (packages/fasan_core)
+  fasan_reader: ^0.1.0        # own package: reading a receipt from text lines (packages/fasan_reader)
+  flutter_localizations:
+    sdk: flutter
+  # Designpaket der Familie (MPL-2.0). Lokal über pubspec_overrides.yaml als Pfad ../../fasan_ui.
+  fasan_ui:
+    git:
+      url: https://github.com/fasan-app/fasan_ui.git
+      ref: main
+  # ONNX Runtime über dart:ffi (MIT); Android-Teil lädt com.microsoft.onnxruntime:onnxruntime-android (MIT).
+  onnxruntime_v2: 1.23.2+2
+  ffi: ^2.1.5               # BSD-3, native Puffer für ONNX-Tensoren
+  image: ^4.12.0            # MIT, Bilder dekodieren, skalieren, entzerren
+  zxing2: ^0.2.4            # BSD-3, QR-Codes auf Bons (Portugal: ATCUD)
+  image_picker: ^1.2.4      # BSD-3/Apache-2.0, Foto aus Galerie oder System-Kamera
+  shared_preferences: ^2.5.6 # BSD-3, Einstellungen und gespeicherte Rechnungen
+  share_plus: ^13.3.1       # BSD-3, CSV und Protokoll teilen
+  path_provider: ^2.1.6     # BSD-3
+  url_launcher: ^6.3.3
+  ota_update: ^7.1.0
+  flutter_local_notifications: ^22.3.3 # BSD-3, Benachrichtigungen auf dem Gerät (Nutzer 04.11.), ohne Google-Push
+  package_info_plus: ^10.2.2
+  file_picker: ^13.3.2
+  pointycastle: ^3.9.1
+  bip39: ^1.0.6
+  web_socket_channel: ^3.0.3
+  flutter_secure_storage: ^11.2.0
+  http: ^1.6.0              # BSD-3 (Dart team), EZB-Wechselkurse lesen (nur GET, state/rates.dart)
+  web: ^1.1.1               # BSD-3 (Dart team), nur im Web-Build: sessionStorage für den Einladungslink
+  app_links: ^6.4.1         # BSD-3, Einladungslinks fasansplit://join öffnen die App
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: false
+  # Symbols in front of item names (speisen.dart) the same in app and browser (06.11.: in the browser they were empty boxes,
+  # Flutter web would load emoji fonts from fonts.gstatic.com). Subset of Noto Color Emoji (SIL OFL 1.1, google/fonts
+  # ofl/notocoloremoji, COLRv1) with only the symbols the app uses: tool/make_emoji_font.sh, licence assets/fonts/FasanEmoji-OFL.txt.
+  fonts:
+    - family: FasanEmoji
+      fonts:
+        - asset: assets/fonts/FasanEmoji.ttf
+  assets:
+    # PaddleOCR PP-OCRv5 (Apache-2.0), aus Fasan-Karte/site/vendor/paddle (siehe assets/models/DATEIEN.txt)
+    - assets/models/
+    - assets/fonts/FasanEmoji-OFL.txt
