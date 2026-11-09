@@ -17,6 +17,7 @@ import 'receipt_view.dart';
 import 'flow.dart';
 import 'hints.dart';
 import '../state/images.dart';
+import 'shape_tokens.dart';
 
 enum AssignMode { focus, list, receipt, cards }
 
@@ -475,11 +476,11 @@ class _FocusAssignState extends State<FocusAssign> {
             ),
             child: FasanDepth(
               key: ValueKey(i),
-              radius: l.radius,
+              radius: l.rCard,
               level: 2,
               child: Container(
               padding: const EdgeInsets.all(FasanSpace.l),
-              decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.radius), border: Border.all(color: l.hairline)),
+              decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.rCard), border: Border.all(color: l.hairline)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 if (it.snippet != null) Snippet(it.snippet, height: 52),
                 const SizedBox(height: FasanSpace.m),
@@ -628,11 +629,11 @@ class _CardsAssignState extends State<CardsAssign> {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: FasanSpace.s),
               child: FasanDepth(
-                radius: l.radius,
+                radius: l.rCard,
                 level: 2,
                 child: Container(
                 padding: const EdgeInsets.all(FasanSpace.l),
-                decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.radius), border: Border.all(color: it.assigned ? l.accent.withValues(alpha: 0.5) : l.hairline)),
+                decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.rCard), border: Border.all(color: it.assigned ? l.accent.withValues(alpha: 0.5) : l.hairline)),
                 child: SingleChildScrollView(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     FasanLabel('${i + 1} / ${b.its.length}'),

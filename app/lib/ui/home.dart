@@ -35,6 +35,7 @@ import 'group_picker.dart';
 import 'onboarding.dart';
 import 'update_ui.dart';
 import '../state/images.dart';
+import 'shape_tokens.dart';
 
 /// Which list of bills a page shows.
 enum BillList { open, archive, trash }
@@ -60,6 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final Set<String> _selected = {};
   final _pager = PageController();
   int _page = 0; // 0 open, 1 archive, 2 trash (tab Gruppe), 3 Abrechnung, 4 friends
+  // Which of the three bill lists the Gruppe page shows. Archive and trash are views of that ONE page, not pages of the pager:
+  // swiping only moves between Gruppe, Abrechnung and Freunde (Nutzer 09.11. 18:44: pages of the hidden lists scrolled by).
+  int _view = 0;
   String _scope = kScopeAll; // what the group picker shows: Alle, Ohne Gruppe or one group (Option A, Nutzer 08.11.)
   Set<ItemFill> _fills = {}; // status buttons under the frame (Nutzer 09.11.): which items to show
   bool _noPayer = false; // only bills nobody paid yet
@@ -153,10 +157,18 @@ class _HomeScreenState extends State<HomeScreen> {
     FasanHaptics.of(context).tap();
     if (_selecting) _exitSelect();
     final m = FasanMotion.of(context);
+    final target = page <= 2 ? 0 : page - 2; // pager index
+    if (page <= 2) {
+      setState(() {
+        _view = page;
+        _page = page;
+      });
+    }
+    if (!_pager.hasClients || (_pager.page ?? 0).round() == target) return;
     if (m.enabled) {
-      _pager.animateToPage(page, duration: m.medium, curve: FasanCurves.medium);
+      _pager.animateToPage(target, duration: m.medium, curve: FasanCurves.medium);
     } else {
-      _pager.jumpToPage(page);
+      _pager.jumpToPage(target);
     }
   }
 
@@ -421,15 +433,13 @@ class _HomeScreenState extends State<HomeScreen> {
           onPageChanged: (p) {
             FasanHaptics.of(context).tap();
             setState(() {
-              _page = p;
+              _page = p == 0 ? _view : p + 2;
               _selecting = false;
               _selected.clear();
             });
           },
           children: [
-            _listPage(context, BillList.open),
-            _listPage(context, BillList.archive),
-            _listPage(context, BillList.trash),
+            KeyedSubtree(key: ValueKey('list-$_view'), child: _listPage(context, BillList.values[_view])),
             _settlePage(context),
             const FriendsPage(),
           ],
@@ -442,7 +452,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 active: store0.bills.isEmpty && !store0.hintDone('plus'),
                 // same radius and shadow as the cards, solid accent (04.11.: glow and tinted halo looked off)
                 child: FasanDepth(
-                  radius: FasanLook.of(context).radius * 0.7,
+                  radius: FasanLook.of(context).rCard,
                   level: 2,
                   child: FloatingActionButton(
                     elevation: 0,
@@ -451,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     highlightElevation: 0,
                     backgroundColor: FasanLook.of(context).accent,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(FasanLook.of(context).radius * 0.7)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(FasanLook.of(context).rCard)),
                     tooltip: _page <= 2 ? t.newBill : (_page == 3 ? t.newGroup : t.newFriend),
                     onPressed: () => _plus(context),
                     child: const Icon(Icons.add_rounded, size: 28),
@@ -467,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
             : _NavBar(
           badges: [0, CollabScope.of(context).unreadGroups, CollabScope.of(context).unreadDirects],
           selected: _page <= 2 ? 0 : _page - 2,
-          onSelect: (i) => _goTo(i == 0 ? (_page <= 2 ? _page : 0) : i + 2),
+          onSelect: (i) => _goTo(i == 0 ? (_page <= 2 ? _page : _view) : i + 2),
           // bills dropped on „Gruppen“: choose a group or name a new one (same dialog as the button)
           onDropGroup: null,
         ),
@@ -504,12 +514,20 @@ class _HomeScreenState extends State<HomeScreen> {
         money(b.effectiveTotal, de: de),
       ].join(' ').toLowerCase();
 
+  /// Search in the items view: the bill head (name, people) matching shows all its items; otherwise only items whose name or
+  /// amount match.
+  bool _itemMatches(Bill b, BillItem i, String q, bool de) =>
+      b.purpose.toLowerCase().contains(q) || b.ps.any((p) => p.name.toLowerCase().contains(q)) || i.name.toLowerCase().contains(q) || money(i.amount, de: de).contains(q);
+
   Widget _contextLeft(BuildContext context, BillStore store0, S t) {
     if (_page <= 2 && _searching) {
       return TextField(
         key: const ValueKey('search-field'),
         autofocus: true,
         textInputAction: TextInputAction.search,
+        // the keyboard's own suggestions and autocorrect hold back text while composing (Android): the list must follow each letter
+        autocorrect: false,
+        enableSuggestions: false,
         decoration: InputDecoration(
           hintText: trLang(t.de ? 'de' : 'en', 'search.hint'),
           prefixIcon: const Icon(Icons.search_rounded),
@@ -536,7 +554,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Offen / Archiv / Papierkorb as a pull-down in the context row (Nutzer 09.11.): the symbol shows the current view; a tint marks
-  /// that it is not „Offen“. A swipe between the pages still works.
+  /// that it is not „Offen“. The views are not swipe pages.
   Widget _viewMenu(BuildContext context) {
     final t = S.of(context), l = FasanLook.of(context);
     final names = [t.listOpen, t.listArchive, t.listTrash];
@@ -669,7 +687,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           if (_itemsView)
-            ..._itemSlivers(context, flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills))
+            ..._itemSlivers(context, flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => _itemMatches(b, i, q, t.de)))
           else ...[
             for (final (g, bills) in groups) _section(context, store, mode, g, g, bills, showHeading: !scopeIsGroup(scope)),
             _section(context, store, mode, null, null, loose, title: done ? t.finished : t.drafts),
@@ -936,7 +954,7 @@ class _NavBar extends StatelessWidget {
                   onWillAcceptWithDetails: (_) => i == 1 && onDropGroup != null,
                   onAcceptWithDetails: (d) => onDropGroup?.call(d.data),
                   builder: (context, cand, _) => InkWell(
-                  borderRadius: BorderRadius.circular(l.radius * 0.7),
+                  borderRadius: BorderRadius.circular(l.rCard),
                   onTap: () => onSelect(i),
                   child: AnimatedContainer(
                     duration: FasanMotion.of(context).short,
@@ -948,7 +966,7 @@ class _NavBar extends StatelessWidget {
                             : i == selected || (i == 1 && onDropGroup != null)
                                 ? l.accent.withValues(alpha: 0.14)
                                 : Colors.transparent,
-                        borderRadius: BorderRadius.circular(l.radius * 0.7)),
+                        borderRadius: BorderRadius.circular(l.rCard)),
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Badge(
@@ -1066,7 +1084,7 @@ class _DropDock extends StatelessWidget {
                         curve: FasanCurves.short,
                         decoration: BoxDecoration(
                           color: over ? color : color.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(l.radius * 0.7),
+                          borderRadius: BorderRadius.circular(l.rCard),
                           border: Border.all(color: color.withValues(alpha: over ? 1 : 0.5), width: 1.5),
                         ),
                         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [

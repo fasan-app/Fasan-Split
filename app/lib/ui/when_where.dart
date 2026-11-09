@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n.dart';
 import 'package:fasan_core/bill.dart';
 import 'common.dart';
+import 'shape_tokens.dart';
 
 class WhenWhere extends StatelessWidget {
   const WhenWhere({super.key, required this.bill, required this.onChanged, this.compact = false});
@@ -63,7 +64,7 @@ class WhenWhere extends StatelessWidget {
     final date = '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
     Widget row(IconData icon, String label, String value, VoidCallback onTap, {Widget? trailing, bool muted = false}) => InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(l.radius * 0.5),
+          borderRadius: BorderRadius.circular(l.rInner),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: l.minTap),
             child: Row(children: [
@@ -101,7 +102,7 @@ class WhenWhere extends StatelessWidget {
       ]);
     }
     return DecoratedBox(
-      decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
+      decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.rInner)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.xs),
         child: Column(children: [

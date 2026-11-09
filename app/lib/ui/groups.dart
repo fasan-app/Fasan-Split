@@ -28,6 +28,7 @@ import 'my_balance.dart';
 import 'pay_ui.dart';
 import 'swipe.dart';
 import 'marquee_text.dart';
+import 'shape_tokens.dart';
 
 /// All groups with their number of bills and sum; tap opens the group. Pending join requests are shown on top.
 class GroupsPage extends StatelessWidget {
@@ -66,9 +67,9 @@ class GroupsPage extends StatelessWidget {
             final last = lg == null ? null : CollabScope.of(context).lastMessage(lg);
             return Material(
               color: l.surfaceAlt,
-              borderRadius: BorderRadius.circular(l.radius * 0.7),
+              borderRadius: BorderRadius.circular(l.rCard),
               child: InkWell(
-                borderRadius: BorderRadius.circular(l.radius * 0.7),
+                borderRadius: BorderRadius.circular(l.rCard),
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupScreen(name: g, queue: queue))),
                 child: Padding(
                   padding: const EdgeInsets.all(FasanSpace.m),
@@ -217,7 +218,7 @@ class _GroupScreenState extends State<GroupScreen> {
     return Scaffold(
       // the plus inside the group (Nutzer 07.11.): a bill started here is put into this group
       floatingActionButton: FasanDepth(
-        radius: l.radius * 0.7,
+        radius: l.rCard,
         level: 2,
         child: FloatingActionButton(
           heroTag: 'group-plus-$name',
@@ -227,7 +228,7 @@ class _GroupScreenState extends State<GroupScreen> {
           highlightElevation: 0,
           backgroundColor: l.accent,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(l.radius * 0.7)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(l.rCard)),
           tooltip: t.newBill,
           onPressed: () => addBillSheet(context, queue, group: name, onQueued: (n) {
             if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.queuedN(n))));
@@ -632,9 +633,9 @@ class FriendsPage extends StatelessWidget {
             ].join(' · ');
       final card = Material(
         color: l.surfaceAlt,
-        borderRadius: BorderRadius.circular(l.radius * 0.7),
+        borderRadius: BorderRadius.circular(l.rCard),
         child: InkWell(
-          borderRadius: BorderRadius.circular(l.radius * 0.7),
+          borderRadius: BorderRadius.circular(l.rCard),
           // with the app: tap writes (like a messenger), long press shows everything else; only in bills: the actions;
           // a deleted account: offer to remove it from the list
           onTap: f.deleted ? () => _removeDeleted(context, f.name, f.pub!) : (hasChat ? () => openChat(f) : () => friendActions(context, f.name)),

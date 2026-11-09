@@ -1,3 +1,11 @@
+## 0.1.90
+- Better: Archive and trash are no longer pages you swipe to. Swiping only moves between Group, Settle and Friends; pick Open, Archive or Trash with the symbol at the top right. No stale leftovers appear while paging.
+- Fixed: The “done” button showed nothing when “Only open items” was on. The button wins now.
+- Fixed: Search in the “Items” view shows only matching items. If the bill name or a person matches, you see its items.
+- Fixed: Your balance at the top also shows 0.00 when settled.
+- Better: All frames use only two roundings, outer for cards and inner for rows inside them.
+- Better: With the page in the background, a new version loads it only when you come back. This should stop the white page after switching apps (cause not proven).
+
 ## 0.1.89
 - New: The frame with bills, total and people also shows for “All groups” and “No group”. The duplicate group line below it is gone.
 - New: Below the frame, done, in progress, open and “no payer” are buttons. Tap one to show only those; tap again to switch it off.

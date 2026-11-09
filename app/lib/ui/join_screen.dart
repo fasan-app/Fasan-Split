@@ -20,6 +20,7 @@ import '../platform/web_platform.dart';
 import 'backup_ui.dart';
 import 'collab_ui.dart' show AccountScreen, ChatScreen, ensureConsent, pendingInviteLink;
 import 'groups.dart' show GroupScreen;
+import 'shape_tokens.dart';
 
 /// Opens an invitation link (typed, pasted or from the link that started the app).
 class JoinScreen extends StatefulWidget {
@@ -150,7 +151,7 @@ class _JoinScreenState extends State<JoinScreen> {
       // who invites to what
       Container(
         padding: const EdgeInsets.all(FasanSpace.l),
-        decoration: BoxDecoration(color: l.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(l.radius * 0.8)),
+        decoration: BoxDecoration(color: l.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(l.rCard)),
         child: Row(children: [
           Icon(direct ? Icons.person_add_alt_1_rounded : Icons.group_add_rounded, size: 36, color: l.accent),
           const SizedBox(width: FasanSpace.m),
@@ -172,7 +173,7 @@ class _JoinScreenState extends State<JoinScreen> {
       if (problem.isNotEmpty) ...[
         Container(
           padding: const EdgeInsets.all(FasanSpace.m),
-          decoration: BoxDecoration(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(l.radius * 0.6)),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(l.rInner)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Icon(Icons.link_off_rounded, color: Theme.of(context).colorScheme.error),
@@ -256,7 +257,7 @@ class _JoinScreenState extends State<JoinScreen> {
       Container(
         key: const ValueKey('join-status'),
         padding: const EdgeInsets.all(FasanSpace.m),
-        decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
+        decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.rInner)),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           connected ? Icon(Icons.check_rounded, color: l.accent) : const SizedBox(width: 20, height: 20, child: Padding(padding: EdgeInsets.all(2), child: CircularProgressIndicator(strokeWidth: 2))),
           const SizedBox(width: FasanSpace.m),
@@ -319,7 +320,7 @@ class AccountSafetyCard extends StatelessWidget {
     final l = FasanLook.of(context), tt = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(FasanSpace.m),
-      decoration: BoxDecoration(color: l.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(l.radius * 0.7), border: Border.all(color: l.accent.withValues(alpha: 0.5))),
+      decoration: BoxDecoration(color: l.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(l.rCard), border: Border.all(color: l.accent.withValues(alpha: 0.5))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Icon(Icons.shield_outlined, color: l.accent),

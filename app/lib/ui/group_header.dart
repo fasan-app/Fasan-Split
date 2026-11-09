@@ -19,6 +19,7 @@ import 'common.dart';
 import 'flow.dart' show ResultScreen;
 import 'resume.dart' show ResumeFlow;
 import 'scope.dart';
+import 'shape_tokens.dart';
 
 /// Opens a bill the way the tile does: finished bills show the result, unfinished ones continue where the user left.
 void openBill(BuildContext context, Bill bill) {
@@ -64,7 +65,7 @@ class GroupHeader extends StatelessWidget {
     final spend = bills.where((b) => !b.isTransfer).toList();
     final sum = spend.fold<int>(0, (a, b) => a + b.effectiveTotal);
     final c = itemCounts(bills);
-    final r = l.radius * 0.7;
+    final r = l.rCard;
     final tap = math.max(l.minTap, 48.0);
     return Semantics(
       container: true,
@@ -307,7 +308,7 @@ class GroupItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = FasanLook.of(context);
-    final r = BorderRadius.circular(l.radius * 0.5);
+    final r = BorderRadius.circular(l.rInner);
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: InkWell(
@@ -331,11 +332,16 @@ class GroupItemRow extends StatelessWidget {
 }
 
 /// Entries of the flat list: a bill heading ([item] null) followed by its visible items.
-List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOpen, Set<ItemFill> fills = const {}}) {
+/// [fills] (the status buttons) wins over [onlyOpen]: with „erledigt“ switched on, the items that are done must show even when
+/// „Nur offene Posten“ is on (Nutzer 09.11. 18:44: the button showed nothing). [itemMatch] narrows the items to the search.
+List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOpen, Set<ItemFill> fills = const {}, bool Function(Bill, BillItem)? itemMatch}) {
   final out = <(Bill, BillItem?)>[];
   for (final b in bills) {
     if (b.isTransfer) continue;
-    final its = (onlyOpen || fills.isNotEmpty) ? b.its.where((i) => (!onlyOpen || i.fill != ItemFill.complete) && (fills.isEmpty || fills.contains(i.fill))).toList() : b.its;
+    final its = b.its
+        .where((i) => fills.isNotEmpty ? fills.contains(i.fill) : (!onlyOpen || i.fill != ItemFill.complete))
+        .where((i) => itemMatch == null || itemMatch(b, i))
+        .toList();
     if (its.isEmpty) continue;
     out.add((b, null));
     for (final i in its) {

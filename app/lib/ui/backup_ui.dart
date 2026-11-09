@@ -14,6 +14,7 @@ import 'scope.dart';
 import '../flows/backup.dart';
 import 'collab_ui.dart' show askText;
 import 'common.dart';
+import 'shape_tokens.dart';
 
 extension _T on S {
   String get backupSave => trLang(de ? 'de' : 'en', 'backup_ui.saveBackup');
@@ -120,7 +121,7 @@ class BackupReminder extends StatelessWidget {
     final last = store.lastBackup;
     return Material(
       color: l.accent.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(l.radius * 0.6),
+      borderRadius: BorderRadius.circular(l.rCard),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.s, FasanSpace.xs, FasanSpace.s),
         child: Row(children: [
@@ -153,7 +154,7 @@ class HomeScreenHint extends StatelessWidget {
     final t = S.of(context), l = FasanLook.of(context);
     return Material(
       color: l.accent.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(l.radius * 0.6),
+      borderRadius: BorderRadius.circular(l.rCard),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.s, FasanSpace.xs, FasanSpace.s),
         child: Row(children: [

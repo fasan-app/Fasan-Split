@@ -22,6 +22,7 @@ import 'common.dart';
 import 'resume.dart';
 import '../state/images.dart';
 import 'marquee_text.dart';
+import 'shape_tokens.dart';
 
 /// Decoded group preview per bill. `Image.memory(base64Decode(...))` made a NEW byte list at every build, and the image cache
 /// compares byte lists by identity: each build of a tile (every one that scrolls into view, every list rebuild) decoded the
@@ -81,7 +82,7 @@ class BillTile extends StatelessWidget {
     final t = S.of(context);
     final tt = Theme.of(context).textTheme;
     final date = '${bill.date.day}.${bill.date.month}.${bill.date.year}';
-    final r = l.radius * 0.7;
+    final r = l.rCard;
     final waiting = bill.read == BillRead.queued || bill.read == BillRead.reading;
     final failed = bill.read == BillRead.failed;
     String sub;

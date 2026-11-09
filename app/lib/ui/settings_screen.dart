@@ -26,6 +26,7 @@ import 'tutorial.dart';
 import 'update_ui.dart';
 import '../flows/update.dart';
 import '../platform/web_platform.dart' show isBrowserApp, reloadPage, webBuildDate, webBuildShort, webNewsText, webUpdateCheck, webVersion;
+import 'shape_tokens.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -136,8 +137,6 @@ class SettingsScreen extends StatelessWidget {
     final store = StoreScope.of(context);
     final l = FasanLook.of(context);
     final withLog = [for (final b in store.bills) if (b.logPath != null) b]..sort((a, b) => b.updated.compareTo(a.updated));
-    // ignore: unused_local_variable
-    Widget head(String s) => Padding(padding: const EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.l, FasanSpace.l, FasanSpace.xs), child: FasanLabel(s));
     return [
       _Sec(Icons.translate_rounded, 'Sprache · Language', [
 
@@ -417,7 +416,7 @@ class SettingsScreen extends StatelessWidget {
         for (final blk in blocks) ...[
           Material(
             color: l.surfaceAlt,
-            borderRadius: BorderRadius.circular(l.radius * 0.7),
+            borderRadius: BorderRadius.circular(l.rCard),
             clipBehavior: Clip.antiAlias,
             child: Column(children: [
               for (var k = 0; k < blk.length; k++) ...[

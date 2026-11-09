@@ -14,7 +14,21 @@ if (typeof window === 'undefined') {
     self.addEventListener("activate", (event) => event.waitUntil((async () => {
         await self.clients.claim();
         if (!fasanIsUpdate) return;
-        for (const c of await self.clients.matchAll({ type: "window" })) c.navigate(c.url);
+        for (const c of await self.clients.matchAll({ type: "window" })) {
+            // A tab that is hidden (the person is in another app) is not reloaded behind their back: a page that boots while
+            // hidden can come back white (Nutzer 09.11. 18:44, cause not proven). New pages take the message and reload when they
+            // are seen again; an old page does not answer within a second, it is loaded again at once as before.
+            if (c.visibilityState === "hidden") {
+                const answered = await new Promise((resolve) => {
+                    const ch = new MessageChannel();
+                    ch.port1.onmessage = () => resolve(true);
+                    setTimeout(() => resolve(false), 1000);
+                    c.postMessage({ type: "fasan-reload-when-visible" }, [ch.port2]);
+                });
+                if (answered) continue;
+            }
+            c.navigate(c.url);
+        }
     })()));
 
     self.addEventListener("message", (ev) => {
@@ -84,6 +98,27 @@ if (typeof window === 'undefined') {
         };
 
         const n = navigator;
+
+        // Fasan: see the activate handler. Reload when the page is seen again, and nudge the canvas after a long stay in the
+        // background (a lost graphics surface shows white until the next layout: a resize event makes Flutter lay out again).
+        if (n.serviceWorker) {
+            let pendingReload = false;
+            let hiddenAt = 0;
+            n.serviceWorker.addEventListener("message", (ev) => {
+                if (!ev.data || ev.data.type !== "fasan-reload-when-visible") return;
+                if (ev.ports && ev.ports[0]) ev.ports[0].postMessage("ok");
+                if (document.visibilityState === "visible") window.location.reload();
+                else pendingReload = true;
+            });
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "hidden") {
+                    hiddenAt = Date.now();
+                } else {
+                    if (pendingReload) window.location.reload();
+                    else if (hiddenAt && Date.now() - hiddenAt > 5000) window.dispatchEvent(new Event("resize"));
+                }
+            });
+        }
 
         if (n.serviceWorker && n.serviceWorker.controller) {
             n.serviceWorker.controller.postMessage({

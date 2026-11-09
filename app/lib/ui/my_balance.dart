@@ -23,6 +23,7 @@ import 'history.dart';
 import 'pairing_ui.dart';
 import 'pay_ui.dart';
 import 'settings_screen.dart';
+import 'shape_tokens.dart';
 
 class _T {
   const _T(this.de);
@@ -86,10 +87,9 @@ class MyBalanceBadge extends StatelessWidget {
               decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: color, width: 2)),
               child: FasanAvatar(name: store.me.isEmpty ? '?' : store.me, index: 0, size: 28),
             ),
-            if (v != 0) ...[
-              const SizedBox(width: 6),
-              Text('${money(v, de: t.de, sign: true)} ${signOf(context)}', style: Theme.of(context).textTheme.labelLarge!.copyWith(color: color, fontWeight: FontWeight.w700)),
-            ],
+            // a settled balance reads „0,00 €“, never nothing (Nutzer 09.11. 18:44); the sign carries the meaning, colour only adds
+            const SizedBox(width: 6),
+            Text('${money(v, de: t.de, sign: v != 0)} ${signOf(context)}', style: Theme.of(context).textTheme.labelLarge!.copyWith(color: color, fontWeight: FontWeight.w700)),
           ]),
         ),
       ),
@@ -268,9 +268,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: FasanSpace.l),
         Material(
           color: l.surfaceAlt,
-          borderRadius: BorderRadius.circular(l.radius * 0.7),
+          borderRadius: BorderRadius.circular(l.rCard),
           child: InkWell(
-            borderRadius: BorderRadius.circular(l.radius * 0.7),
+            borderRadius: BorderRadius.circular(l.rCard),
             onTap: () => open(const MyBalanceScreen()),
             child: Padding(
               padding: const EdgeInsets.all(FasanSpace.m),

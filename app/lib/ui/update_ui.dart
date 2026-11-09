@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n.dart';
 import '../flows/update.dart';
 import '../platform/web_platform.dart';
+import 'shape_tokens.dart';
 
 /// Banner on the start page when a newer version exists.
 class UpdateBanner extends StatelessWidget {
@@ -23,7 +24,7 @@ class UpdateBanner extends StatelessWidget {
     final l = FasanLook.of(context);
     return Material(
       color: l.accent.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(l.radius * 0.6),
+      borderRadius: BorderRadius.circular(l.rInner),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.s, FasanSpace.xs, FasanSpace.s),
         child: Row(children: [
@@ -50,7 +51,7 @@ class WebUpdateBanner extends StatelessWidget {
     final l = FasanLook.of(context);
     return Material(
       color: l.accent.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(l.radius * 0.6),
+      borderRadius: BorderRadius.circular(l.rInner),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.s, FasanSpace.xs, FasanSpace.s),
         child: Row(children: [

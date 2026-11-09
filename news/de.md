@@ -1,3 +1,11 @@
+## 0.1.90
+- Besser: Archiv und Papierkorb sind keine Seiten mehr zum Wischen. Wischen wechselt nur noch zwischen Gruppe, Abrechnung und Freunde; Offen, Archiv und Papierkorb wählst du über das Symbol oben rechts. Dadurch tauchen beim Blättern keine alten Reste mehr auf.
+- Behoben: Der Knopf „erledigt“ zeigte nichts, wenn „Nur offene Posten“ an war. Jetzt gewinnt der Knopf.
+- Behoben: Die Suche in der Ansicht „Posten“ zeigt nur noch passende Posten. Passt der Name des Bons oder einer Person, siehst du dessen Posten.
+- Behoben: Dein Saldo oben steht auch bei „ausgeglichen“ als 0,00 da.
+- Besser: Alle Rahmen verwenden nur noch zwei Rundungen, außen für Karten und innen für Zeilen darin.
+- Besser: Hast du die Seite im Hintergrund, lädt eine neue Version sie erst, wenn du zurückkommst. Das soll die weiße Seite nach dem App-Wechsel verhindern (Ursache nicht sicher bewiesen).
+
 ## 0.1.89
 - Neu: Der Rahmen mit Bons, Summe und Personen steht auch bei „Alle Gruppen“ und „Ohne Gruppe“. Die doppelte Gruppenzeile darunter ist weg.
 - Neu: Unter dem Rahmen sind erledigt, in Arbeit, offen und „ohne Zahler“ Knöpfe. Tippe einen an, um nur diese zu zeigen; noch einmal tippen schaltet ihn aus.

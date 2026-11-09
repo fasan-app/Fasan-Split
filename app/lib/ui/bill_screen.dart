@@ -29,6 +29,7 @@ import 'payers.dart';
 import 'person_picker.dart';
 import 'swipe.dart';
 import 'when_where.dart';
+import 'shape_tokens.dart';
 
 class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key, required this.bill, this.scan});
@@ -568,7 +569,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             Container(
               margin: const EdgeInsets.only(top: FasanSpace.s),
               padding: const EdgeInsets.only(left: FasanSpace.m),
-              decoration: BoxDecoration(color: l.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(l.radius * 0.5)),
+              decoration: BoxDecoration(color: l.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(l.rInner)),
               child: Row(children: [
                 // a long name wraps and is cut; the button stays short
                 Expanded(child: Text(context.tr('bill.activeHint', [b.ps[active].name]), style: tt.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis)),
@@ -587,7 +588,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     key: const ValueKey('payer'),
                     visualDensity: VisualDensity.compact,
                     side: fillSide(context, b.payFill),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(l.radius * 0.5)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(l.rInner)),
                     avatar: Icon(fillIcon(b.payFill), size: 18, color: fillColor(context, b.payFill)), // same colour language as the items (Nutzer 08.11.)
                     label: MarqueeLabel(payer.isEmpty ? context.tr('bill.paidByNone') : payer, maxWidth: 230, style: (Theme.of(context).chipTheme.labelStyle ?? tt.labelLarge)?.copyWith(color: b.payFill == ItemFill.complete ? null : fillColor(context, b.payFill))),
                     onPressed: () => showPayersSheet(context, b, changed: _changed),
@@ -601,7 +602,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             const SizedBox(height: FasanSpace.s),
             Container(
               padding: const EdgeInsets.all(FasanSpace.m),
-              decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.7), border: Border.all(color: l.accent)),
+              decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.rCard), border: Border.all(color: l.accent)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(t.signTitle, style: tt.titleMedium),
                 const SizedBox(height: FasanSpace.xs),
@@ -717,15 +718,15 @@ class _ItemTile extends StatelessWidget {
     final mine = active != null && (item.shares[active] ?? 0) > 0;
     return Material(
       color: mine ? l.accent.withValues(alpha: 0.14) : l.surfaceAlt,
-      borderRadius: BorderRadius.circular(l.radius * 0.5),
+      borderRadius: BorderRadius.circular(l.rInner),
       child: InkWell(
-        borderRadius: BorderRadius.circular(l.radius * 0.5),
+        borderRadius: BorderRadius.circular(l.rInner),
         onTap: onTap,
         onLongPress: onLongPress,
         child: Container(
           constraints: BoxConstraints(minHeight: l.minTap),
           padding: const EdgeInsets.fromLTRB(FasanSpace.m, 8, FasanSpace.m, 8),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(l.radius * 0.5), border: framed ? Border.fromBorderSide(fillSide(context, fill)) : null),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(l.rInner), border: framed ? Border.fromBorderSide(fillSide(context, fill)) : null),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             // line 1: the name gets the whole width next to the amount; line 2: state marks and people (Nutzer 08.11.: lange Namen
             // wurden von Personen und Symbolen abgeschnitten)

@@ -22,6 +22,7 @@ import 'package:fasan_core/bill.dart';
 import 'assign.dart' show PeoplePicker, addPersonDialog, personMenu;
 import 'common.dart';
 import '../state/images.dart';
+import 'shape_tokens.dart';
 
 enum ReceiptLayer { scan, original, digital }
 
@@ -721,7 +722,7 @@ class DigitalReceipt extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottomBarSpace(context) + 190),
       children: [
         DecoratedBox(
-          decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.radius * 0.6), border: Border.all(color: l.hairline)),
+          decoration: BoxDecoration(color: l.surface, borderRadius: BorderRadius.circular(l.rInner), border: Border.all(color: l.hairline)),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.m, FasanSpace.m, FasanSpace.l),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

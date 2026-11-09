@@ -4,6 +4,7 @@
 // card, Nutzer 04.11.). Icon and label fade and grow in with the swipe distance instead of appearing at once. MPL-2.0
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
+import 'shape_tokens.dart';
 
 /// One side of a swipe: what it does, in which colour.
 class SwipeSide {
@@ -43,7 +44,7 @@ class _SwipeActionsState extends State<SwipeActions> {
   @override
   Widget build(BuildContext context) {
     final l = FasanLook.of(context);
-    final r = BorderRadius.circular(l.radius * 0.7); // same as BillTile
+    final r = BorderRadius.circular(l.rCard); // same as BillTile
     final dir = !widget.enabled
         ? DismissDirection.none
         : widget.start != null && widget.end != null

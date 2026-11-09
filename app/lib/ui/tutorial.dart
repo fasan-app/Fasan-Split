@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import '../l10n/tr.dart';
+import 'shape_tokens.dart';
 
 /// Steps of the guide in order; keys `tutorial.<id>.title` / `.body`. A new function gets its step here and its texts in every language.
 const tutorialIds = <String>['idea', 'scan', 'check', 'assign', 'paid', 'group', 'invite', 'together', 'history', 'settle', 'settings'];
@@ -29,7 +30,7 @@ class TutorialScreen extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: FasanSpace.m),
               child: Container(
                 padding: const EdgeInsets.all(FasanSpace.m),
-                decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.7)),
+                decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.rCard)),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   CircleAvatar(radius: 16, backgroundColor: l.accent, foregroundColor: Colors.white, child: Text('${i + 1}')),
                   const SizedBox(width: FasanSpace.m),

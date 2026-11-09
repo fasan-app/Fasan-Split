@@ -11,6 +11,7 @@ import '../l10n.dart';
 import '../l10n/tr.dart';
 import 'scope.dart';
 import 'tutorial.dart';
+import 'shape_tokens.dart';
 
 /// Ids of all tips; text key `tip.<id>`. A new tip = a new id here and its text in every `tips_<code>.dart` (test: tips_test).
 const tipIds = <String>[
@@ -60,9 +61,9 @@ class _TipLineState extends State<TipLine> {
         padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s),
         child: Material(
           color: Color.alphaBlend(l.accent.withValues(alpha: 0.08), l.surface),
-          borderRadius: BorderRadius.circular(l.radius * 0.6),
+          borderRadius: BorderRadius.circular(l.rInner),
           child: InkWell(
-            borderRadius: BorderRadius.circular(l.radius * 0.6),
+            borderRadius: BorderRadius.circular(l.rInner),
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TutorialScreen())),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.xs, 0, FasanSpace.xs),

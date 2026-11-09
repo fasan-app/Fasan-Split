@@ -11,6 +11,7 @@ import '../l10n.dart';
 import '../l10n/tr.dart' show trLang;
 import 'history.dart';
 import 'scope.dart';
+import 'shape_tokens.dart';
 
 /// Counter (or a plain dot when only the mark is known) at the upper right corner of a thumbnail.
 class ChangeBadge extends StatefulWidget {
@@ -91,9 +92,9 @@ class UnseenChangesBanner extends StatelessWidget {
       padding: const EdgeInsets.only(top: FasanSpace.s, bottom: FasanSpace.s),
       child: Material(
         color: Color.alphaBlend(l.accent.withValues(alpha: 0.10), l.surface),
-        borderRadius: BorderRadius.circular(l.radius * 0.5),
+        borderRadius: BorderRadius.circular(l.rInner),
         child: InkWell(
-          borderRadius: BorderRadius.circular(l.radius * 0.5),
+          borderRadius: BorderRadius.circular(l.rInner),
           onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => HistoryScreen.bill(billId: billId, billTitle: recs.first.title))),
           child: Padding(
             padding: const EdgeInsets.all(FasanSpace.m),

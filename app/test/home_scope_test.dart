@@ -188,6 +188,42 @@ void main() {
     expect(find.text('Taxi'), findsOneWidget);
   });
 
+  testWidgets('Posten-Ansicht: Suche filtert Posten, ein Treffer im Bon-Kopf zeigt dessen Posten', (tester) async {
+    await _app(tester, store);
+    await _showItems(tester);
+    expect(find.text('Salat'), findsOneWidget);
+    await tester.tap(find.byTooltip('Suche'));
+    await _settle(tester);
+    await tester.enterText(find.byKey(const ValueKey('search-field')), 'pizza');
+    await _settle(tester);
+    expect(find.text('Pizza'), findsOneWidget);
+    expect(find.text('Salat'), findsNothing, reason: 'other items are not shown while searching');
+    await tester.enterText(find.byKey(const ValueKey('search-field')), 'fähre');
+    await _settle(tester);
+    expect(find.text('Salat'), findsOneWidget, reason: 'the bill name matches: its items show');
+    expect(find.text('Pizza'), findsNothing);
+  });
+
+  testWidgets('Blättern: Archiv und Papierkorb sind keine Seiten, ein Wisch führt zur Abrechnung und zurück in dieselbe Ansicht', (tester) async {
+    await _app(tester, store);
+    await tester.tap(find.byKey(const ValueKey('view-menu')));
+    await _settle(tester);
+    await tester.tap(find.text('Archiv').last);
+    await _settle(tester);
+    expect(find.byTooltip('Archiv'), findsOneWidget);
+    await tester.drag(find.byType(PageView), const Offset(-700, 0));
+    await _settle(tester);
+    expect(find.byKey(const ValueKey('view-menu')), findsNothing, reason: 'one swipe from Gruppe lands on Abrechnung, not on the trash');
+    await tester.drag(find.byType(PageView), const Offset(700, 0));
+    await _settle(tester);
+    expect(find.byTooltip('Archiv'), findsOneWidget, reason: 'back on the view that was chosen');
+  });
+
+  testWidgets('Kopf: ein ausgeglichener Saldo steht immer als 0,00 da', (tester) async {
+    await _app(tester, store);
+    expect(find.descendant(of: find.byType(MyBalanceBadge), matching: find.textContaining('0,00')), findsOneWidget);
+  });
+
   testWidgets('Einstellungen: ruhige Liste, jede Gruppe eine Unterseite', (tester) async {
     await _app(tester, store);
     await tester.tap(find.byType(MyBalanceBadge));

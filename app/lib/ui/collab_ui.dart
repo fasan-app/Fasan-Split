@@ -28,6 +28,7 @@ import 'groups.dart';
 import 'pairing_ui.dart';
 import 'marquee_text.dart';
 import 'join_screen.dart';
+import 'shape_tokens.dart';
 // The screen an invitation link opens lives in join_screen.dart (exported here for the old imports).
 export 'join_screen.dart' show JoinScreen, AccountSafetyCard;
 
@@ -210,7 +211,7 @@ class StorageWarningCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: FasanSpace.s),
       child: Material(
         color: Colors.orange.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(FasanLook.of(context).radius * 0.7),
+        borderRadius: BorderRadius.circular(FasanLook.of(context).rCard),
         child: Padding(
           padding: const EdgeInsets.all(FasanSpace.m),
           child: Row(children: [
@@ -245,9 +246,9 @@ class OpenInviteCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: FasanSpace.s),
       child: Material(
         color: l.accent.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(l.radius * 0.7),
+        borderRadius: BorderRadius.circular(l.rCard),
         child: InkWell(
-          borderRadius: BorderRadius.circular(l.radius * 0.7),
+          borderRadius: BorderRadius.circular(l.rCard),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => JoinScreen(prefill: code.contains('#') ? code : '${Invite.inviteBase}#$code'))),
           child: Padding(
             padding: const EdgeInsets.all(FasanSpace.m),
@@ -289,7 +290,7 @@ class PendingJoinCards extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: FasanSpace.s),
           child: Container(
             padding: const EdgeInsets.all(FasanSpace.m),
-            decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.7)),
+            decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.rCard)),
             child: Row(children: [
               Icon(Icons.hourglass_top_rounded, color: l.accent),
               const SizedBox(width: FasanSpace.m),
@@ -434,7 +435,7 @@ class _InviteScreenState extends State<InviteScreen> {
           Center(
             child: Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(l.radius * 0.7), border: Border.all(color: l.hairline)),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(l.rCard), border: Border.all(color: l.hairline)),
               child: SizedBox.square(dimension: 180, child: CustomPaint(painter: _QrPainter(Encoder.encode(link, ErrorCorrectionLevel.m)))),
             ),
           ),
@@ -988,7 +989,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Container(
                       margin: const EdgeInsets.only(bottom: FasanSpace.s),
                       padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s),
-                      decoration: BoxDecoration(color: mine ? l.accent.withValues(alpha: 0.18) : l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6), border: m.mentions.contains(me) ? Border.all(color: l.accent, width: 1.5) : null),
+                      decoration: BoxDecoration(color: mine ? l.accent.withValues(alpha: 0.18) : l.surfaceAlt, borderRadius: BorderRadius.circular(l.rInner), border: m.mentions.contains(me) ? Border.all(color: l.accent, width: 1.5) : null),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                         Text(mine ? t.you : widget.group.session.nameOf(m.from), style: tt.labelSmall),
                         // quote of the message this one answers
@@ -1063,7 +1064,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 Container(
                   margin: const EdgeInsets.only(bottom: FasanSpace.s),
                   padding: const EdgeInsets.only(left: FasanSpace.m),
-                  decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.radius * 0.6)),
+                  decoration: BoxDecoration(color: l.surfaceAlt, borderRadius: BorderRadius.circular(l.rInner)),
                   child: Row(children: [
                     Icon(_editing != null ? Icons.edit_outlined : Icons.reply_rounded, size: 18, color: l.accent),
                     const SizedBox(width: FasanSpace.s),
@@ -1129,9 +1130,9 @@ class CollabGroupPanel extends StatelessWidget {
         Widget button(IconData icon, String label, int badge, Widget page) => Expanded(
               child: Material(
                 color: l.surfaceAlt,
-                borderRadius: BorderRadius.circular(l.radius * 0.6),
+                borderRadius: BorderRadius.circular(l.rInner),
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(l.radius * 0.6),
+                  borderRadius: BorderRadius.circular(l.rInner),
                   onTap: () => _open(context, page),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minHeight: l.minTap),
@@ -1268,9 +1269,9 @@ Widget collabTile(BuildContext context, IconData icon, String title, VoidCallbac
     padding: const EdgeInsets.only(bottom: FasanSpace.s),
     child: Material(
       color: l.surfaceAlt,
-      borderRadius: BorderRadius.circular(l.radius * 0.7),
+      borderRadius: BorderRadius.circular(l.rCard),
       child: InkWell(
-        borderRadius: BorderRadius.circular(l.radius * 0.7),
+        borderRadius: BorderRadius.circular(l.rCard),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(FasanSpace.m),

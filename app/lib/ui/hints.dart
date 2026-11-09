@@ -11,6 +11,7 @@ import 'package:fasan_core/bill.dart';
 import '../l10n.dart';
 import '../l10n/tr.dart';
 import 'scope.dart';
+import 'shape_tokens.dart';
 
 /// Inline hint card with an icon, up to two sentences and „Verstanden“. Shows only while [id] is not dismissed.
 class HintCard extends StatelessWidget {
@@ -34,7 +35,7 @@ class HintCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(FasanSpace.m, FasanSpace.m, FasanSpace.s, FasanSpace.s),
           decoration: BoxDecoration(
             color: Color.alphaBlend(l.accent.withValues(alpha: 0.10), l.surface),
-            borderRadius: BorderRadius.circular(l.radius * 0.7),
+            borderRadius: BorderRadius.circular(l.rCard),
             border: Border.all(color: l.accent.withValues(alpha: 0.35)),
           ),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -145,7 +146,7 @@ class LockBanner extends StatelessWidget {
         padding: const EdgeInsets.all(FasanSpace.m),
         decoration: BoxDecoration(
           color: Color.alphaBlend(l.accent.withValues(alpha: 0.10), l.surface),
-          borderRadius: BorderRadius.circular(l.radius * 0.7),
+          borderRadius: BorderRadius.circular(l.rCard),
           border: Border.all(color: l.accent.withValues(alpha: 0.35)),
         ),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [

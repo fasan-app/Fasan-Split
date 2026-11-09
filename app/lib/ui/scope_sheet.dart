@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../l10n/tr.dart' show trLang;
 import 'group_picker.dart';
+import 'shape_tokens.dart';
 
 /// More groups than this get a search field.
 const kScopeSearchFrom = 7;
@@ -42,7 +43,7 @@ class ScopeSwitch extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         key: const ValueKey('scope-switch'),
-        borderRadius: BorderRadius.circular(l.radius * 0.7),
+        borderRadius: BorderRadius.circular(l.rCard),
         onTap: () async {
           final v = await showModalBottomSheet<String>(
             context: context,

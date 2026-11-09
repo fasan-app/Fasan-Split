@@ -13,6 +13,7 @@ import 'package:fasan_core/bill.dart';
 import '../state/store.dart';
 import 'assign.dart';
 import 'collab_ui.dart' show AccountScreen;
+import 'shape_tokens.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -86,7 +87,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Container(
                         width: 112,
                         height: 112,
-                        decoration: BoxDecoration(color: l.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(l.radius)),
+                        decoration: BoxDecoration(color: l.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(l.rCard)),
                         child: Icon(icon, size: 56, color: l.accent),
                       ),
                       const SizedBox(height: FasanSpace.xl),

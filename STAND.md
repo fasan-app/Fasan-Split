@@ -4,6 +4,18 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 09.11. 21:30 Web 0.1.90: Paket A (Fehler) umgesetzt
+
+Tests: Analyse sauber, Volllauf 439 grün. Neu: Archiv/Papierkorb nur noch Ansicht (`_view`), Pager hat 3 Seiten; Statusknopf schlägt „Nur offene“; Posten-Suche (`itemMatch`); Saldo 0,00 immer; zwei Rundungen (`shape_tokens.dart`: rCard/rInner); Service-Worker lädt versteckte Tabs erst beim Zurückkommen und stößt nach >5 s Hintergrund ein resize an.
+**Nicht geprüft:** auf dem S23 (Blättern, weiße Seite – Ursache nur vermutet, Browser-Ende-zu-Ende in der CI), Abstände (nur Rundungen vereinheitlicht, Abstände folgen mit Paket C), „live beim Tippen“ (autocorrect/Vorschläge aus; Ursache nicht reproduziert).
+**Weiter:** Paket B (Suche: letzte Suchen, „meintest du“, Sprung mit Puls), dann C bis F laut Plan 18:45.
+
+## 09.11. 19:08 Beschlüsse des Nutzers (Antworten auf die Fragen)
+
+- Web-Push freigegeben (Nutzer 19:04 „beides“): Benachrichtigungen standardmäßig angeboten, in den Einstellungen abschaltbar; Freigabe für den Push-Dienst des Browsers für genau diesen Zweck, auch Tests. Vorher klären: wer verschlüsselt/sendet (eigener Sendedienst) – eigenes Paket.
+- Stellvertreter in zwei Stufen je Person (trägt ein | schlägt vor); „vllt Name“ nur eine Person; Sichtbarkeit je Rechnung (Alle | Beteiligte | nur Beträge), später Eingeladene sehen nur Neues; braucht Schlüssel je Rechnung/Kreis (eigenes Paket nach F).
+- Kein #; @ für Personen, Suche findet Notizen/Namen/Posten. Plus-Menü, Wischen aus Liste raus, Anpinnen als Zeile: Nutzer „alles klar, leg los“ (19:08).
+
 ## 09.11. 18:45 Plan nach Rückmeldung 18:44 (Anforderungen Nr. 1–15, Stand: Plan, nichts umgesetzt)
 
 Reihenfolge (ein Paket ganz, dann das nächste):

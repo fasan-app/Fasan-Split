@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import 'scope.dart';
 import 'package:fasan_core/bill.dart';
+import 'shape_tokens.dart';
 
 /// Pinned notes as a hint on top of the bill (result and flow steps).
 class PinnedNotes extends StatelessWidget {
@@ -27,7 +28,7 @@ class PinnedNotes extends StatelessWidget {
           width: double.infinity,
           margin: const EdgeInsets.only(bottom: FasanSpace.s),
           padding: const EdgeInsets.all(FasanSpace.m),
-          decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(l.radius * 0.6), border: Border.all(color: Colors.amber.withValues(alpha: 0.5))),
+          decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(l.rInner), border: Border.all(color: Colors.amber.withValues(alpha: 0.5))),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Icon(Icons.push_pin_rounded, size: 18, color: Colors.amber),
             const SizedBox(width: FasanSpace.s),

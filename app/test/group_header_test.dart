@@ -52,6 +52,15 @@ void main() {
     expect(open.last.$2!.name, 'Posten a1');
   });
 
+  test('flattenItems: Statusknopf „erledigt“ gewinnt gegen „Nur offene“ (sonst bleibt die Liste leer); Suche engt Posten ein', () {
+    final a = bill('a', [ItemFill.complete, ItemFill.open]);
+    final done = flattenItems([a], onlyOpen: true, fills: {ItemFill.complete});
+    expect(done.map((e) => e.$2?.name), [null, 'Posten a0']);
+    final found = flattenItems([a], onlyOpen: false, itemMatch: (b, i) => i.name.endsWith('1'));
+    expect(found.map((e) => e.$2?.name), [null, 'Posten a1']);
+    expect(flattenItems([a], onlyOpen: false, itemMatch: (b, i) => false), isEmpty);
+  });
+
   test('billsWithoutPayer: nur Bons mit Posten und ohne Zahler', () {
     expect(billsWithoutPayer([bill('a', [ItemFill.open], paid: false), bill('b', [ItemFill.open])]), 1);
     expect(billsWithoutPayer([bill('c', [], paid: false)]), 0);
