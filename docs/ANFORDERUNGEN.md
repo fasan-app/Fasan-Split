@@ -154,3 +154,19 @@ der Lückenliste (`docs/VORSCHLAEGE-06-11.md` § E2–E5). Stand: alle ❌ bzw. 
 - 09.11. 02:49–02:55 – AUFTRAG Nutzer: Roadmap nennen; den großen Umbau (Gruppe, Menü Option A) selbstständig diese Nacht bauen, morgen früh fertig; vorher ausführliche wissenschaftliche Studien, Peer-Reviews, Statistiken zu realer und gefühlter Leistung heranziehen. Fragen nur, wenn nötig. Stand: Recherche begonnen.
 
 - 09.11. 03:20 (Nutzer): App/APK auf Eis, keinerlei APK-Updates mehr; volle Konzentration auf die Web-Version. Bildschirmvergleich Browser/App jetzt nicht umsetzen. Grund: Fundament zuerst im Web. Stand: umgesetzt (android.yml nur manuell).
+
+## 09.11. 09:22 Nutzer: Gestaltungsauftrag Startbildschirm, Profil, Menü (Stand: neu, Entwurf folgt)
+Anlass: Bildschirmfotos der Web-App 0.1.87 auf dem S23. Leistungsbericht 08:43 ist „gut“ (Browser ~59 Bilder/s, Hz-Einstellung „Adaptiv“); 08:39 war „schlecht“ (Posten 3 Hänger >100 ms) – nicht erklärt.
+1. Bildschirm zu vollgepackt; alle Funktionen bleiben, müssen aber intuitiv und logisch sein nach Bauhaus, Rams, Ive; Apple Look & Feel.
+2. Hinweistext (Tipp-Zeile) vorerst wieder aus (kostet Platz).
+3. Freunde: keine Zahl daneben (unklar: Schulden oder Guthaben?).
+4. Seiten gleich aufgebaut, nichts springt zwischen den Tabs.
+5. Oben links immer das Fasan-Symbol, nicht „Fasan Split“/„Abrechnung“/„Freunde“ (Tabs zeigen das schon, wie Instagram).
+6. Unteres Menü schlanker, mit Text, bessere verständliche Symbole vorschlagen.
+7. Profil von jedem Bildschirm aus sichtbar (Frage: sinnvoll?); Einstellungen im Profil oben rechts.
+8. „Jemand anderes darf für mich Änderungen/Einträge übernehmen“ (Stellvertretung) steht unter Konto/Zusammenarbeit versteckt, muss präsent im Profil stehen.
+9. Menüführung der Einstellungen folgt nicht Bauhaus/Rams/Ive; Apple-Stil gefordert.
+10. Filtersymbol schaltet nicht erkennbar um → Filter bekommt ein Kontextfenster, darin auch Sortieren (verschwindet aus der Kopfzeile).
+11. Auswahlknopf: Funktionen ins ⋮-Menü der Rechnungen.
+12. Alle / Ohne Gruppe / Gruppen besser über die Filteroption wählbar? Viele Gruppen werden unübersichtlich; Alternative: beschrifteter Schalter oben, der die Gruppenwahl öffnet.
+13. Recherche zu den Vorschlägen und vorhandene Recherchen lesen. Geplantes (Rechnungsfarben, Sortierung, Suche) mitdenken: oben immer Platz für den eigenen Betrag und für die Suche.
