@@ -78,6 +78,8 @@ Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete ste
 - **Öffentliches Repo:** Fasan-Split ist öffentlich. Keine Rohtexte von Nutzer-Nachrichten, keine Fotos, keine privaten Daten hier
   ablegen (06.11. hat das Werkzeug genau das zu Recht blockiert). Private Ablage: `fasan-diagnose` (Bons), `Fasan` (privat).
 
+**Selbstständig bis live (Nutzer 10.11. 00:33–00:37, ausdrückliche Erlaubnis):** Nach jedem Push selbst den CI-Lauf beobachten (`gh run list/view`, bei Fehlern `gh run view --log-failed` und die Artefakte `e2e-bilder` laden), Fehler ohne Rückfrage beheben und neu pushen, bis `deploy` grün ist und die Version live ist. Nie auf eine Antwort des Nutzers warten, solange offene Pakete in `STAND.md` stehen: nach jedem Paket sofort das nächste beginnen. Der Nutzer muss nie erinnern müssen. Stillstand ist schlecht. Stehen bleiben nur bei einer Entscheidung, die nicht rückgängig zu machen ist.
+
 **Lehre 07.11.:** Nie `git add -A` über `app` (oder `.`), solange ein Web-Build läuft oder lief: `flutter create` legt `app/web/`, `.metadata`, `analysis_options.yaml` an und `pub get` ändert `pubspec.lock` – das landete so im Commit (Sitzung B, 07.11.). Vor jedem Commit `git status --short` ansehen und nur die gewollten Dateien mit Pfad hinzufügen; Build-Skripte räumen am Ende selbst auf.
 
 **Lehre 09.11.:** Auch bei reinen Textänderungen (l10n, Tutorial, Tipps) vor dem Push `flutter analyze` und die betroffenen Tests laufen lassen: ein Apostroph in einem einfach gequoteten englischen Text ("group's") brach den Build, und der Push ging vorher raus (Sitzung B, 09.11.). Englische Texte ohne Apostroph schreiben oder doppelt quoten.
