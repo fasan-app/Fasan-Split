@@ -12,6 +12,8 @@ import 'package:web/web.dart' as web;
 
 const _key = 'fasan-join';
 const _build = String.fromEnvironment('FASAN_BUILD');
+const _version = String.fromEnvironment('FASAN_VERSION');
+const _builtAt = String.fromEnvironment('FASAN_DATE');
 
 /// Reads the code but keeps it in the tab until the join request is out ([clearJoinCode]): on the very first visit
 /// coi-serviceworker reloads the page once, and a code removed before that reload was lost – the invited person landed
@@ -69,6 +71,25 @@ const bool isBrowserApp = true;
 
 /// Short id of the running build ("abc1234"), null for local builds without the define.
 String? webBuildShort() => _build.isEmpty ? null : _build.substring(0, _build.length < 7 ? _build.length : 7);
+
+/// Release number of the running build ("0.1.84", top section of news/de.md at build time), null for local builds.
+String? webVersion() => _version.isEmpty ? null : _version;
+
+/// Build time of the running build (UTC, written by the workflow), null for local builds.
+DateTime? webBuildDate() => DateTime.tryParse(_builtAt);
+
+/// Curated news text of the newest published build in [lang] (same file the APK update uses, copied next to the page by web.yml).
+/// Null when offline or on a local build.
+Future<String?> webNewsText(String lang) async {
+  try {
+    final r = await web.window.fetch('news-$lang.md?t=${DateTime.now().millisecondsSinceEpoch}'.toJS, web.RequestInit(cache: 'no-store')).toDart;
+    if (!r.ok) return null;
+    final s = (await r.text().toDart).toDart;
+    return s.trim().isEmpty ? null : s;
+  } catch (_) {
+    return null;
+  }
+}
 
 /// Asks the server which build it holds: true = newer than the running one, false = same, null = no answer (offline, local build).
 Future<bool?> webUpdateCheck() async {

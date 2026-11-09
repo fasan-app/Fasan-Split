@@ -53,7 +53,10 @@ jobs:
           cp web_template/flutter_bootstrap.js web/flutter_bootstrap.js   # no Flutter service worker (it fought coi)
           sed -i 's#"name": "fasan_split"#"name": "Fasan Split"#; s#"short_name": "fasan_split"#"short_name": "Fasan Split"#' web/manifest.json
           # CanvasKit liegt mit auf der Seite statt beim Google-CDN.
-          flutter build web --release --wasm --base-href /Fasan-Split/ --no-web-resources-cdn --dart-define=FASAN_BUILD=${{ github.sha }}
+          # Release number (top section of the curated news) and build time are shown in Einstellungen → Updates.
+          VERSION="$(grep -m1 -oE '^## 0\.1\.[0-9]+' ../news/de.md | cut -c4-)"
+          BUILT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          flutter build web --release --wasm --base-href /Fasan-Split/ --no-web-resources-cdn --dart-define=FASAN_BUILD=${{ github.sha }} --dart-define=FASAN_VERSION="$VERSION" --dart-define=FASAN_DATE="$BUILT"
           cp -r web_extra/. build/web/
           sed -i "s#FASAN_SW_BUILD=dev#FASAN_SW_BUILD=${{ github.sha }}#" build/web/coi-serviceworker.js   # file differs per deploy: open old tabs reload (08.11.)
           grep -q "FASAN_SW_BUILD=${{ github.sha }}" build/web/coi-serviceworker.js
@@ -61,6 +64,7 @@ jobs:
           dart compile js -O2 -o build/web/recognition_worker.js lib/recognition/web_worker.dart
           mkdir -p build/web/ort
           cp "$RUNNER_TEMP/ort/package/dist/"{ort.wasm.min.js,ort-wasm-simd-threaded.wasm,ort-wasm-simd-threaded.mjs} build/web/ort/
+          cp ../news/de.md build/web/news-de.md; cp ../news/en.md build/web/news-en.md   # „Was ist neu“ in the settings
           echo "${{ github.sha }}" > build/web/build.txt   # update check (lib/platform/web_platform_web.dart)
           touch build/web/.nojekyll
 

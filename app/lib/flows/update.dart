@@ -118,6 +118,22 @@ class Updates {
     return out;
   }
 
+  /// Whole news file as sections: ("0.1.84", ["item", …]), newest first, at most [maxSections].
+  static List<(String, List<String>)> newsSections(String text, {int maxSections = 6}) {
+    final out = <(String, List<String>)>[];
+    for (final line in text.split('\n')) {
+      final h = RegExp(r'^##\s+(0\.1\.\d+)\s*$').firstMatch(line.trim());
+      if (h != null) {
+        if (out.length >= maxSections) break;
+        out.add((h[1]!, <String>[]));
+        continue;
+      }
+      final item = RegExp(r'^[-*]\s+(.+)$').firstMatch(line.trim());
+      if (item != null && out.isNotEmpty) out.last.$2.add(item[1]!.trim());
+    }
+    return out;
+  }
+
   /// Newer than the installed one?
   static Future<UpdateInfo?> available() async {
     final cur = await currentRun();
