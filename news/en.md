@@ -1,3 +1,7 @@
+## 0.1.87
+- New: Menu rebuilt. Bottom: Group | Settlement | Friends. In “Group” pick “All”, “No group” or a group at the top; below it “Bills | Items”. “Settlement” shows the people and balances of the picked group, or all groups with balances if none is picked.
+- New: Press and hold a bill and drag it onto a group name to move it there.
+
 ## 0.1.86
 - New: The group has a header with the number of bills, total and people. The frame shows how many items are done, in progress or open. Tap the total for the breakdown, the people icon for balances.
 - New: Switch “Bills | Items”. The items view lists every item of the group, grouped by bill, and only loads what you see.

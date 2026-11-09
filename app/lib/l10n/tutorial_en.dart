@@ -14,7 +14,7 @@ const Map<String, String> tutorialEn = {
   'tutorial.paid.title': 'Who paid',
   'tutorial.paid.body': 'Set “Paid by” to the person who laid out the money. That decides who owes whom how much.',
   'tutorial.group.title': 'Create a group',
-  'tutorial.group.body': 'Switch to “Groups” at the bottom and tap the plus to name a group, for example for a trip or a flat share. Inside the group the plus starts a new bill that lands right there. You can also press and hold a bill and drag it onto “Groups”. At the top of the group you see the number of bills, the total and the people. The frame shows how many items are done, in progress or open; the total opens the breakdown. “Bills | Items” switches between the bills and all items of the group.',
+  'tutorial.group.body': 'Tap the folder icon in the group picker at the top to name a group, for example for a trip or a flat share. With a group picked, the plus starts a new bill that lands right there. You can also press and hold a bill and drag it onto the group's name in the picker. “All” shows everything, “No group” only bills without a group. At the top of the group you see the number of bills, the total and the people. The frame shows how many items are done, in progress or open; the total opens the breakdown. “Bills | Items” switches between the bills and all items of the group.',
   'tutorial.invite.title': 'Invite people',
   'tutorial.invite.body': 'Open the group and tap the person icon at the top. Share the link or the code. Whoever opens it is in the group and sees the bills. With “Share live” everyone stays in sync.',
   'tutorial.together.title': 'Enter together',

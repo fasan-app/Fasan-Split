@@ -110,6 +110,59 @@ class GroupsPage extends StatelessWidget {
   }
 }
 
+/// Invite, filter and menu (history, leave, delete) of one group: the app bar of the group screen and of the Gruppe tab with a
+/// group picked. [onDeleted] runs after the group was deleted (screen: close it, tab: fall back to „Alle“).
+List<Widget> groupActions(BuildContext context, String name, {required VoidCallback onDeleted, bool compact = false}) {
+  final t = S.of(context);
+  final lang = t.de ? 'de' : 'en';
+  final store = StoreScope.of(context);
+  final live = CollabScope.of(context).groupByLocalName(name);
+  // always there (Nutzer 04.11.): a group only on this phone is shared first, then the link is ready
+  Future<void> invite() async {
+    final g = live ?? await shareLive(context, name);
+    if (g != null && context.mounted) Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g)));
+  }
+
+  // [compact]: in the Gruppe tab the app bar is full already; invite moves into the menu and the filter stays a chip on the list
+  return [
+          if (!compact) IconButton(tooltip: t.invite, icon: const Icon(Icons.person_add_alt_1_outlined), onPressed: invite),
+          if (!compact)
+          IconButton(
+            tooltip: trLang(lang, store.onlyOpen ? 'filter.allItems' : 'filter.onlyOpen'),
+            isSelected: store.onlyOpen,
+            icon: const Icon(Icons.filter_alt_outlined),
+            selectedIcon: const Icon(Icons.filter_alt_rounded),
+            onPressed: () => store.onlyOpen = !store.onlyOpen,
+          ),
+          PopupMenuButton<String>(
+            onSelected: (v) async {
+              if (v == 'invite') {
+                await invite();
+                return;
+              }
+              if (v == 'history') {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => HistoryScreen.group(groupTag: live?.secret.tag ?? '', groupName: name)));
+                return;
+              }
+              if (v == 'leave' && live != null) {
+                await leaveGroupFlow(context, live);
+                return;
+              }
+              if (v == 'delete' && await confirmDialog(context, t.deleteGroup, name, t.deleteGroup) && context.mounted) {
+                store.deleteGroup(name);
+                onDeleted();
+              }
+            },
+            itemBuilder: (_) => [
+              if (compact) PopupMenuItem(value: 'invite', child: Text(t.invite)),
+              PopupMenuItem(value: 'history', child: Text(trLang(lang, 'history.title'))),
+              if (live != null) PopupMenuItem(value: 'leave', child: Text(t.leaveGroup)),
+              if (live == null) PopupMenuItem(value: 'delete', child: Text(t.deleteGroup)),
+            ],
+          ),
+  ];
+}
+
 /// One group: framed header (bills · price · people), switch Rechnungen | Posten, the live part (when shared) and the invitation (admin).
 class GroupScreen extends StatefulWidget {
   const GroupScreen({super.key, required this.name, required this.queue});
@@ -178,43 +231,7 @@ class _GroupScreenState extends State<GroupScreen> {
       appBar: AppBar(
         title: Text(name),
         actions: [
-          // always there (Nutzer 04.11.): a group only on this phone is shared first, then the link is ready
-          IconButton(
-            tooltip: t.invite,
-            icon: const Icon(Icons.person_add_alt_1_outlined),
-            onPressed: () async {
-              final g = live ?? await shareLive(context, name);
-              if (g != null && context.mounted) Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g)));
-            },
-          ),
-          IconButton(
-            tooltip: trLang(lang, store.onlyOpen ? 'filter.allItems' : 'filter.onlyOpen'),
-            isSelected: store.onlyOpen,
-            icon: const Icon(Icons.filter_alt_outlined),
-            selectedIcon: const Icon(Icons.filter_alt_rounded),
-            onPressed: () => store.onlyOpen = !store.onlyOpen,
-          ),
-          PopupMenuButton<String>(
-            onSelected: (v) async {
-              if (v == 'history') {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => HistoryScreen.group(groupTag: live?.secret.tag ?? '', groupName: name)));
-                return;
-              }
-              if (v == 'leave' && live != null) {
-                await leaveGroupFlow(context, live);
-                return;
-              }
-              if (v == 'delete' && await confirmDialog(context, t.deleteGroup, name, t.deleteGroup) && context.mounted) {
-                store.deleteGroup(name);
-                Navigator.of(context).pop();
-              }
-            },
-            itemBuilder: (_) => [
-              PopupMenuItem(value: 'history', child: Text(trLang(lang, 'history.title'))),
-              if (live != null) PopupMenuItem(value: 'leave', child: Text(t.leaveGroup)),
-              if (live == null) PopupMenuItem(value: 'delete', child: Text(t.deleteGroup)),
-            ],
-          ),
+          ...groupActions(context, name, onDeleted: () => Navigator.of(context).pop()),
         ],
       ),
       // lazy lists (SliverList): only the visible rows are built, also with hundreds of items (docs/recherche/2026-11-09-…)

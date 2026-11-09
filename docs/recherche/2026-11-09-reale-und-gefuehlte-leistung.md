@@ -55,3 +55,8 @@ Grenze: Volltexte der Studien nicht ganz gelesen, nur Zusammenfassungen und Ausz
 - Faulkner & Olvera (2017): A Bone to Pick with Skeleton Screens, viget.com (kein Peer-Review)
 - Khuc (2024): Feedback combinations on perceived online wait time, Drexel (Masterarbeit)
 - Google: Interaction to Next Paint, web.dev/articles/inp
+
+## Nachtrag 09.11. 03:50 – Tab-Leiste (Originaltexte gelesen)
+- Apple HIG „Tab bars“ (developer.apple.com/design/human-interface-guidelines/tab-bars): Tab-Leiste bleibt überall sichtbar; so wenige Tabs wie nötig (üblich 3–5); Tabs nie ausblenden oder abschalten; nur zum Navigieren, nicht für Aktionen. Dazu Abzeichen sparsam.
+- Material 3 (m3.material.io/components/navigation-bar): Seite braucht JavaScript, mit WebFetch **nicht lesbar**; Flutter-API-Seite `NavigationBar` nennt keine Zahl. Material-Angabe „3–5 Ziele“ daher **nicht geprüft** (nur aus Zweitquellen).
+- Folge für Option A: drei Tabs Gruppe | Abrechnung | Freunde, Tab-Leiste bleibt; Auswahl innerhalb eines Ortes (Alle / Ohne Gruppe / Gruppe) liegt im Inhalt als Gruppenwähler, nicht in der Leiste.

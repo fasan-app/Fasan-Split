@@ -48,7 +48,7 @@ void main() {
     expect(find.text(first), findsOneWidget);
     expect(store.tipNext, 1, reason: 'beim nächsten Start kommt der nächste Tipp');
     // a page switch and a rebuild do not change it
-    await tester.tap(find.text('Gruppen').last);
+    await tester.tap(find.text('Abrechnung').last);
     await tester.pumpAndSettle();
     expect(find.text(first), findsOneWidget);
     // closing hides it for this start only

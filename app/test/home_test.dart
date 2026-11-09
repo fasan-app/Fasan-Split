@@ -75,7 +75,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(store.groups, ['Beispielstadt']);
       expect(store.inGroup('Beispielstadt').map((b) => b.id).toSet(), {'a', 'b'});
-      expect(find.text('Beispielstadt'), findsOneWidget);
+      expect(find.text('Beispielstadt'), findsNWidgets(2), reason: 'Chip im Gruppenwähler und Überschrift der Gruppe');
       expect(find.text('2 · 20,00 €'), findsOneWidget);
       expect(store.inGroup(null).map((b) => b.id), ['c']);
     });
@@ -224,11 +224,11 @@ void main() {
     testWidgets('Untere Leiste: Gruppen und Freunde haben eigene Bildschirme', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück', group: 'Urlaub')]);
       await app(tester, store, idle(store));
-      await tester.tap(find.text('Gruppen').last);
+      await tester.tap(find.text('Abrechnung').last);
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
-      expect(find.text('Urlaub'), findsOneWidget);
+      expect(find.text('Urlaub'), findsNWidgets(2), reason: 'Chip im Gruppenwähler und Karte der Abrechnung');
       expect(find.text('1 Bon'), findsOneWidget);
       await tester.tap(find.text('Freunde').last);
       for (var i = 0; i < 20; i++) {
@@ -240,11 +240,11 @@ void main() {
     testWidgets('Bon aus der Gruppe öffnen und schließen: man bleibt in der Gruppe (Nutzer 04.11.)', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück', group: 'Urlaub', done: true)..payer = 0]);
       await app(tester, store, idle(store));
-      await tester.tap(find.text('Gruppen').last);
+      await tester.tap(find.text('Abrechnung').last);
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
-      await tester.tap(find.text('Urlaub'));
+      await tester.tap(find.text('Urlaub').last); // the card; the first one is the chip of the picker
       await tester.pumpAndSettle();
       await tester.tap(find.text('Frühstück').last);
       await tester.pumpAndSettle();

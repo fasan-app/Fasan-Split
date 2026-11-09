@@ -1,3 +1,7 @@
+## 0.1.87
+- Neu: Menü umgebaut. Unten: Gruppe | Abrechnung | Freunde. In „Gruppe“ wählst du oben „Alle“, „Ohne Gruppe“ oder eine Gruppe; darunter „Rechnungen | Posten“. „Abrechnung“ zeigt die Personen und den Ausgleich der gewählten Gruppe, ohne Wahl alle Gruppen mit Salden.
+- Neu: Einen Bon gedrückt halten und auf den Namen einer Gruppe ziehen verschiebt ihn dorthin.
+
 ## 0.1.86
 - Neu: Die Gruppe hat oben eine Kopfzeile mit Anzahl der Rechnungen, Summe und Personen. Der Rahmen zeigt, wie viele Posten erledigt, in Arbeit oder offen sind. Tippe auf die Summe für die Aufteilung, auf das Personen-Symbol für Salden.
 - Neu: Umschalter „Rechnungen | Posten“. Die Posten-Ansicht listet alle Posten der Gruppe, nach Rechnung gruppiert, und lädt nur, was du siehst.

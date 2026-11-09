@@ -15,7 +15,7 @@ const Map<String, String> tutorialDe = {
   'tutorial.paid.title': 'Wer hat bezahlt',
   'tutorial.paid.body': 'Stelle „Bezahlt von“ auf die Person, die das Geld ausgelegt hat. Daraus ergibt sich, wer wem wie viel schuldet.',
   'tutorial.group.title': 'Gruppe anlegen',
-  'tutorial.group.body': 'Wechsle unten auf „Gruppen“ und tippe auf das Plus, um eine Gruppe zu benennen, zum Beispiel für einen Urlaub oder eine WG. In der Gruppe startet das Plus einen neuen Bon, der gleich dort liegt. Du kannst auch einen Bon gedrückt halten und auf „Gruppen“ ziehen. Oben in der Gruppe siehst du Anzahl, Summe und Personen. Der Rahmen zeigt, wie viele Posten erledigt, in Arbeit oder offen sind; die Summe öffnet die Aufteilung. „Rechnungen | Posten“ schaltet zwischen den Bons und allen Posten der Gruppe um.',
+  'tutorial.group.body': 'Tippe oben im Gruppenwähler auf das Ordner-Symbol, um eine Gruppe zu benennen, zum Beispiel für einen Urlaub oder eine WG. Ist eine Gruppe gewählt, startet das Plus einen neuen Bon, der gleich dort liegt. Du kannst auch einen Bon gedrückt halten und auf den Namen der Gruppe im Wähler ziehen. „Alle“ zeigt alles, „Ohne Gruppe“ nur Bons ohne Gruppe. Oben in der Gruppe siehst du Anzahl, Summe und Personen. Der Rahmen zeigt, wie viele Posten erledigt, in Arbeit oder offen sind; die Summe öffnet die Aufteilung. „Rechnungen | Posten“ schaltet zwischen den Bons und allen Posten der Gruppe um.',
   'tutorial.invite.title': 'Leute einladen',
   'tutorial.invite.body': 'Öffne die Gruppe und tippe oben auf das Personen-Symbol. Teile den Link oder den Code. Wer ihn öffnet, ist in der Gruppe und sieht die Bons. Mit „Live teilen“ halten alle ihren Stand synchron.',
   'tutorial.together.title': 'Zusammen eintragen',

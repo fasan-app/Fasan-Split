@@ -124,9 +124,10 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     const tap = async (re, ms = 800) => { const l = p.getByRole('tab', { name: re }).or(p.getByRole('button', { name: re })).or(p.getByRole('checkbox', { name: re })).or(p.getByText(re)).first(); await l.click({ timeout: 8000 }); await p.waitForTimeout(ms); };
     await step('h04-archiv', async () => { await tap(/^Archiv/); });
     await step('h05-papierkorb', async () => { await tap(/^Papierkorb/); });
-    await step('h06-gruppen', async () => { await tap(/^Gruppen/); });
-    await step('h07-gruppe-offen', async () => { await tap(/Beispielstadt/); });
-    await step('h08-personen', async () => { await tap(/Personen der Gruppe/); });
+    await step('h06-gruppen', async () => { await tap(/^Abrechnung/); });
+    // Option A (09.11.): the chip of the group picker picks the group, the tab Abrechnung then shows its people directly
+    await step('h07-gruppe-offen', async () => { await p.getByRole('button', { name: /^Beispielstadt$/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(800); });
+    await step('h08-personen', async () => { await p.waitForTimeout(300); });
     await step('h08b-bezahlt-frage', async () => { await tap(/Als bezahlt eintragen/); });
     // a part first (06.11.: Teilbetrag), same names as the app walk (test/screens_test.dart h08d/h08e), then the rest
     await step('h08d-teilbetrag', async () => { const f = p.getByRole('textbox').last(); await f.click({ timeout: 8000 }); await p.waitForTimeout(400); await f.fill('4,00'); });
