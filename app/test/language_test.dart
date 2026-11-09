@@ -88,14 +88,25 @@ void main() {
     await tester.pumpWidget(SplitApp(store: store, ui: ui, home: const SettingsScreen()));
     await tester.pumpAndSettle();
     expect(find.text('Einstellungen'), findsOneWidget, reason: 'system language is German');
+    // Language lives on the first settings sub-page (row settings-0).
+    await tester.tap(find.byKey(const ValueKey('settings-0')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('English'));
     await tester.pumpAndSettle();
     expect(store.language, 'en');
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pumpAndSettle();
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Einstellungen'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('settings-0')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Deutsch'));
     await tester.pumpAndSettle();
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pumpAndSettle();
     expect(find.text('Einstellungen'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('settings-0')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('System'));
     await tester.pumpAndSettle();
     expect(store.language, 'system');
