@@ -15,7 +15,7 @@ const Map<String, String> tutorialDe = {
   'tutorial.paid.title': 'Wer hat bezahlt',
   'tutorial.paid.body': 'Stelle „Bezahlt von“ auf die Person, die das Geld ausgelegt hat. Daraus ergibt sich, wer wem wie viel schuldet.',
   'tutorial.group.title': 'Gruppe anlegen',
-  'tutorial.group.body': 'Wechsle unten auf „Gruppen“ und tippe auf das Plus, um eine Gruppe zu benennen, zum Beispiel für einen Urlaub oder eine WG. In der Gruppe startet das Plus einen neuen Bon, der gleich dort liegt. Du kannst auch einen Bon gedrückt halten und auf „Gruppen“ ziehen.',
+  'tutorial.group.body': 'Wechsle unten auf „Gruppen“ und tippe auf das Plus, um eine Gruppe zu benennen, zum Beispiel für einen Urlaub oder eine WG. In der Gruppe startet das Plus einen neuen Bon, der gleich dort liegt. Du kannst auch einen Bon gedrückt halten und auf „Gruppen“ ziehen. Oben in der Gruppe siehst du Anzahl, Summe und Personen. Der Rahmen zeigt, wie viele Posten erledigt, in Arbeit oder offen sind; die Summe öffnet die Aufteilung. „Rechnungen | Posten“ schaltet zwischen den Bons und allen Posten der Gruppe um.',
   'tutorial.invite.title': 'Leute einladen',
   'tutorial.invite.body': 'Öffne die Gruppe und tippe oben auf das Personen-Symbol. Teile den Link oder den Code. Wer ihn öffnet, ist in der Gruppe und sieht die Bons. Mit „Live teilen“ halten alle ihren Stand synchron.',
   'tutorial.together.title': 'Zusammen eintragen',
@@ -23,7 +23,7 @@ const Map<String, String> tutorialDe = {
   'tutorial.history.title': 'Stand und Verlauf',
   'tutorial.history.body': 'Im Profil zeigt „So ergibt sich dein Stand“ jede Rechnung mit Plus und Minus. Im Menü (⋮) eines Bons, einer Gruppe und im Profil findest du den Verlauf: wer hat was geändert und wie sich dein Saldo bewegt hat. Hat jemand einen Bon geändert, zeigt ein Zähler an der Vorschau, wie viel, und im Bon steht „Neu seit deinem letzten Besuch“. Ist ein geteilter Bon durcheinander geraten, holt „Früheren Stand holen“ oben im Verlauf des Bons den letzten Stand eines Mitglieds zurück.',
   'tutorial.settle.title': 'Ausgleichen',
-  'tutorial.settle.body': 'Sind alle Rechnungen drin, zeigt „Personen“, wer wem wie viel zahlt. Wische einen Bon nach rechts oder tippe „Ausgleichen“, wenn bezahlt ist. Ausgeglichene Bons liegen im Archiv. Zwischendurch bezahlt oder Geld geliehen? Unter „Personen“ trägst du es mit „Zahlung oder Leihgabe eintragen“ ein; der Stand ändert sich sofort.',
+  'tutorial.settle.body': 'Sind alle Rechnungen drin, zeigt das Personen-Symbol oben in der Gruppe, wer wem wie viel zahlt. Wische einen Bon nach rechts oder tippe „Ausgleichen“, wenn bezahlt ist. Ausgeglichene Bons liegen im Archiv. Zwischendurch bezahlt oder Geld geliehen? Im Personen-Fenster trägst du es mit „Zahlung oder Leihgabe eintragen“ ein; der Stand ändert sich sofort.',
   'tutorial.settings.title': 'Einstellungen und Sicherung',
   'tutorial.settings.body': 'In den Einstellungen findest du Aussehen, Sprache, Leistung und diese Anleitung. Läuft die App bei dir ruckelig, startet der „Leistungstest“ unter Diagnose eine Messung mit Probedaten und erzeugt einen Bericht zum Teilen. Die kleinen Tipps oben auf der Startseite kannst du dort abschalten. Im Profil sicherst du deine Daten mit „Sicherung speichern“. Im Browser zeigt „Jetzt nach Updates suchen“ den Stand deiner Seite und lädt sie bei einem neueren Stand neu; dein Login bleibt.',
 };

@@ -14,7 +14,7 @@ const Map<String, String> tutorialEn = {
   'tutorial.paid.title': 'Who paid',
   'tutorial.paid.body': 'Set “Paid by” to the person who laid out the money. That decides who owes whom how much.',
   'tutorial.group.title': 'Create a group',
-  'tutorial.group.body': 'Switch to “Groups” at the bottom and tap the plus to name a group, for example for a trip or a flat share. Inside the group the plus starts a new bill that lands right there. You can also press and hold a bill and drag it onto “Groups”.',
+  'tutorial.group.body': 'Switch to “Groups” at the bottom and tap the plus to name a group, for example for a trip or a flat share. Inside the group the plus starts a new bill that lands right there. You can also press and hold a bill and drag it onto “Groups”. At the top of the group you see the number of bills, the total and the people. The frame shows how many items are done, in progress or open; the total opens the breakdown. “Bills | Items” switches between the bills and all items of the group.',
   'tutorial.invite.title': 'Invite people',
   'tutorial.invite.body': 'Open the group and tap the person icon at the top. Share the link or the code. Whoever opens it is in the group and sees the bills. With “Share live” everyone stays in sync.',
   'tutorial.together.title': 'Enter together',
@@ -22,7 +22,7 @@ const Map<String, String> tutorialEn = {
   'tutorial.history.title': 'Balance and history',
   'tutorial.history.body': 'In the profile, “How your balance adds up” shows every bill with plus and minus. In the menu (⋮) of a bill, a group and in the profile you find the history: who changed what and how your balance moved. If someone changed a bill, a counter on its thumbnail shows how much, and the bill lists “New since your last visit”. If a shared bill got mixed up, “Bring back an earlier state” at the top of the bill history restores a member\'s last state.',
   'tutorial.settle.title': 'Settle up',
-  'tutorial.settle.body': 'Once all bills are in, “People” shows who pays whom how much. Swipe a bill right or tap “Settle” when it is paid. Settled bills go to the archive. Paid something in between or lent money? Under “People” enter it with “Enter a payment or loan”; the balance changes at once.',
+  'tutorial.settle.body': 'Once all bills are in, the people icon at the top of the group shows who pays whom how much. Swipe a bill right or tap “Settle” when it is paid. Settled bills go to the archive. Paid something in between or lent money? In the people window enter it with “Enter a payment or loan”; the balance changes at once.',
   'tutorial.settings.title': 'Settings and backup',
   'tutorial.settings.body': 'In the settings you find appearance, language, performance and this guide. If the app stutters, the “Performance test” under Diagnostics runs a measurement with made-up data and makes a report to share. You can turn off the small tips on the start page there. In the profile you back up your data with “Save a backup”. In the browser, „Check for updates now“ shows the build of your page and reloads it when a newer one exists; your login stays.',
 };

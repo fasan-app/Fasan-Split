@@ -126,7 +126,7 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('h05-papierkorb', async () => { await tap(/^Papierkorb/); });
     await step('h06-gruppen', async () => { await tap(/^Gruppen/); });
     await step('h07-gruppe-offen', async () => { await tap(/Beispielstadt/); });
-    await step('h08-personen', async () => { await tap(/Personen/); });
+    await step('h08-personen', async () => { await tap(/Personen der Gruppe/); });
     await step('h08b-bezahlt-frage', async () => { await tap(/Als bezahlt eintragen/); });
     // a part first (06.11.: Teilbetrag), same names as the app walk (test/screens_test.dart h08d/h08e), then the rest
     await step('h08d-teilbetrag', async () => { const f = p.getByRole('textbox').last(); await f.click({ timeout: 8000 }); await p.waitForTimeout(400); await f.fill('4,00'); });
