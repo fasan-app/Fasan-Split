@@ -1,4 +1,5 @@
 ## 0.1.87
+- Better: In the browser the performance test measures scrolling against 60 frames per second, because Android and the browser set the rate of web pages. The report names the target rate.
 - New: Menu rebuilt. Bottom: Group | Settlement | Friends. In “Group” pick “All”, “No group” or a group at the top; below it “Bills | Items”. “Settlement” shows the people and balances of the picked group, or all groups with balances if none is picked.
 - New: Press and hold a bill and drag it onto a group name to move it there.
 

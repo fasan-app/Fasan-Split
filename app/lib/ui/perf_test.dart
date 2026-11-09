@@ -25,7 +25,7 @@ import '../collab/curve.dart' show curveImplementation;
 import '../collab/group.dart' show kindData;
 import '../collab/nostr.dart' show NostrEvent;
 import '../perf/timeline.dart';
-import '../platform/web_platform.dart' show deviceFacts, readBatteryOnce;
+import '../platform/web_platform.dart' show deviceFacts, isBrowserApp, readBatteryOnce;
 import '../state/store.dart';
 import 'bill_tile.dart';
 import 'group_header.dart' show GroupItemRow;
@@ -250,7 +250,9 @@ class _PerfTestScreenState extends State<PerfTestScreen> with SingleTickerProvid
     final p95 = q(0.95);
     // Verdict (Nutzer 08.11.: the test said „good“ while the app stuttered): a frame over 100 ms is never good.
     // Scroll phases use the frame budget of the display (8.3 ms at 120 Hz); the other phases stay at 60 Hz (the system lowers the rate for light animation).
-    final budget = _scrollPhases.contains(name) ? 1000 / _hz : 1000 / 60;
+    // In the browser the goal is a steady 60 (Nutzer 09.11. + docs/recherche/2026-11-09-reale-und-gefuehlte-leistung.md, Nachtrag 04:05): Android and the
+    // browser decide the rate of web content (scrolling stays near 60 on a 120 Hz S23 in Firefox, Chrome and DuckDuckGo), the app cannot raise it.
+    final budget = _scrollPhases.contains(name) && !isBrowserApp ? 1000 / _hz : 1000 / 60;
     final verdict = over100 == 0 && p95 <= budget * 1.2 ? 'good' : (over100 <= 2 && p95 <= budget * 2.05 ? 'mid' : 'bad');
     return {
       'phase': name,
@@ -294,6 +296,7 @@ class _PerfTestScreenState extends State<PerfTestScreen> with SingleTickerProvid
         'urteil': _verdictAll(),
         'sekundenSeitStart': StartTimeline.seconds,
         'anzeigeHz': _hz,
+        'zielBildrate': isBrowserApp ? 60 : _hz, // what the verdict of the scroll phases measures against
         // Power level and effect switches the app ran with (low battery lowers them): runs are only comparable with the same values.
         'effekte': {'stufe': FasanLook.of(context).level.name, 'an': FasanLook.of(context).effects.enabled, 'schatten': FasanLook.of(context).effects.shadows},
         'vorbereitung': {'vonS': _prepFrom, 'bisS': _prepTo, 'testEndeS': _testTo, 'hinweis': 'Abschnitte dieser Zeit zählen nicht ins Start-Urteil: die Phasen werden einzeln beurteilt'},

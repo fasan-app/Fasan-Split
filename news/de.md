@@ -1,4 +1,5 @@
 ## 0.1.87
+- Besser: Im Browser misst der Leistungstest das Scrollen gegen 60 Bilder pro Sekunde, weil Android und der Browser die Rate von Webseiten festlegen. Der Bericht nennt die Zielrate.
 - Neu: Menü umgebaut. Unten: Gruppe | Abrechnung | Freunde. In „Gruppe“ wählst du oben „Alle“, „Ohne Gruppe“ oder eine Gruppe; darunter „Rechnungen | Posten“. „Abrechnung“ zeigt die Personen und den Ausgleich der gewählten Gruppe, ohne Wahl alle Gruppen mit Salden.
 - Neu: Einen Bon gedrückt halten und auf den Namen einer Gruppe ziehen verschiebt ihn dorthin.
 
