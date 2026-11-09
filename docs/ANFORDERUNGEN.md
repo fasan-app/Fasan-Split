@@ -205,3 +205,12 @@ Wünsche:
 13. Benachrichtigung/Glocke führt genau zum Ziel (ggf. mittig), kurz pulsierend; Aufmerksamkeitslenkung nach Apple-Vorgaben.
 14. Stellvertreter einzeln wählbar (optional), die für mich eintragen dürfen.
 15. Sitzung soll proaktiv melden, Fragen stellen, eigene Verbesserungen vorschlagen, nicht nur Änderungswünsche abarbeiten.
+
+## 09.11. 19:04 – Antworten auf die Fragen (Stand: neu, Beschluss ausstehend wo markiert)
+
+16. Stellvertreter in Stufen, je Person wählbar, Rechte innerhalb der Gruppe verteilbar: (a) trägt mich komplett ein, als wäre es offen (Vertrauenspersonen, Paare); (b) schlägt mich nur vor: Name steht im Posten, anders markiert, bis ich zustimme und bestätige.
+17. „Hatte vielleicht“: Eintrag „vllt Name“ im Posten, Posten bleibt offen bis die Person bestätigt; sie bekommt eine Benachrichtigung. Mehrere Kandidaten („Mama oder Papa“) sind ihm zu kompliziert – nur eine Person je Vorschlag.
+18. Datenschutz in der Gruppe: wer später eingeladen wird, sieht nicht automatisch alte Rechnungen/Posten; Optionen: unsichtbar, Posten geschwärzt oder nur Beträge. Rechnungen, bei denen nicht alle dabei waren, auf Wunsch nur für Beteiligte sichtbar. Die Gruppe muss nicht alles sehen.
+19. Benachrichtigungen: Nutzer hält sie für essenziell, standardmäßig an, in den Einstellungen abschaltbar; Frage nach Community-Sicht.
+20. Posten verschicken: Auswahl in der Rechnung, über den Filter oder im geöffneten Posten.
+21. Frage: Hashtag # einführen, oder ist alles (Personen, Notizen) über die Suche auffindbar?
