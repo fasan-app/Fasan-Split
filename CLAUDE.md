@@ -80,6 +80,8 @@ Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete ste
 
 **Lehre 07.11.:** Nie `git add -A` über `app` (oder `.`), solange ein Web-Build läuft oder lief: `flutter create` legt `app/web/`, `.metadata`, `analysis_options.yaml` an und `pub get` ändert `pubspec.lock` – das landete so im Commit (Sitzung B, 07.11.). Vor jedem Commit `git status --short` ansehen und nur die gewollten Dateien mit Pfad hinzufügen; Build-Skripte räumen am Ende selbst auf.
 
+**Lehre 09.11.:** Auch bei reinen Textänderungen (l10n, Tutorial, Tipps) vor dem Push `flutter analyze` und die betroffenen Tests laufen lassen: ein Apostroph in einem einfach gequoteten englischen Text ("group's") brach den Build, und der Push ging vorher raus (Sitzung B, 09.11.). Englische Texte ohne Apostroph schreiben oder doppelt quoten.
+
 **Fehler, die passiert sind und nicht wieder passieren dürfen (05./06.11.; 07.11.: Test lud Schriften von `../../fasan_ui`, in der CI rot – Tests nie auf Nachbarordner verlassen, Pfade über `package_config.json`):** grüne Tests als Beweis ausgegeben, obwohl sie das
 Entscheidende nicht prüften; Bildschirme veröffentlicht, ohne sie mit echtem Bon angesehen zu haben; Web 1:1 behauptet statt Bildschirm
 für Bildschirm verglichen (⋮-Menü kaputt, Original/Digital-Knopf fehlte); Leistung nur am Startbildschirm gemessen und Effekte
