@@ -4,6 +4,11 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 09.11. 22:10 Web 0.1.91: Paket B (Suche) teilweise
+
+Umgesetzt, 444 Tests grün: live Suche ohne Autokorrektur, „Meintest du“ lokal (`search_suggest.dart`, Abstand mit Nachbartausch), letzte Suchen (8, einzeln mit x, nur auf dem Gerät, `store.recentSearches`).
+**Offen aus B:** Treffer öffnet den Bon mit dem Posten mittig und einem Puls – kommt mit Paket C (Bon-Ansicht ist auf `bill_screen.dart`, `ResultScreen`, `ResumeFlow` verteilt; ein gemeinsamer `PulseOnFocus`-Baustein dient auch Paket E, Benachrichtigung/Glocke). Nicht auf dem S23 gesehen.
+
 ## 09.11. 21:30 Web 0.1.90: Paket A (Fehler) umgesetzt
 
 Tests: Analyse sauber, Volllauf 439 grün. Neu: Archiv/Papierkorb nur noch Ansicht (`_view`), Pager hat 3 Seiten; Statusknopf schlägt „Nur offene“; Posten-Suche (`itemMatch`); Saldo 0,00 immer; zwei Rundungen (`shape_tokens.dart`: rCard/rInner); Service-Worker lädt versteckte Tabs erst beim Zurückkommen und stößt nach >5 s Hintergrund ein resize an.

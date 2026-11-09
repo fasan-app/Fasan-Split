@@ -1,3 +1,7 @@
+## 0.1.91
+- New: Search offers “Did you mean …?” while you type when a word looks like a typo of a word in your bills. Tap it to use it.
+- New: Under the empty search field you see your last searches (up to 8). Tap one to search again, the x removes a single one.
+
 ## 0.1.90
 - Better: Archive and trash are no longer pages you swipe to. Swiping only moves between Group, Settle and Friends; pick Open, Archive or Trash with the symbol at the top right. No stale leftovers appear while paging.
 - Fixed: The “done” button showed nothing when “Only open items” was on. The button wins now.

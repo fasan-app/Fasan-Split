@@ -1,3 +1,7 @@
+## 0.1.91
+- Neu: Die Suche bietet beim Tippen „Meintest du …?“ an, wenn ein Wort wie ein Tippfehler zu einem Wort aus deinen Rechnungen aussieht. Ein Tipp übernimmt es.
+- Neu: Unter dem leeren Suchfeld stehen deine letzten Suchen (bis zu 8). Antippen sucht erneut, das x entfernt eine einzelne.
+
 ## 0.1.90
 - Besser: Archiv und Papierkorb sind keine Seiten mehr zum Wischen. Wischen wechselt nur noch zwischen Gruppe, Abrechnung und Freunde; Offen, Archiv und Papierkorb wählst du über das Symbol oben rechts. Dadurch tauchen beim Blättern keine alten Reste mehr auf.
 - Behoben: Der Knopf „erledigt“ zeigte nichts, wenn „Nur offene Posten“ an war. Jetzt gewinnt der Knopf.

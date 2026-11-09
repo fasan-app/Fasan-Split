@@ -35,6 +35,7 @@ import 'group_picker.dart';
 import 'onboarding.dart';
 import 'update_ui.dart';
 import '../state/images.dart';
+import 'search_suggest.dart';
 import 'shape_tokens.dart';
 
 /// Which list of bills a page shows.
@@ -69,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _noPayer = false; // only bills nobody paid yet
   bool _searching = false; // search field in the context row (Nutzer 09.11.)
   String _query = '';
+  final _searchCtl = TextEditingController(); // set from a recent search or a suggestion
   bool _itemsView = false; // Gruppe tab: false = bills, true = all items of the scope
 
   /// The picked scope; „Alle“ when the picked group is gone (deleted, left).
@@ -92,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _webTimer?.cancel();
+    _searchCtl.dispose();
     _pager.dispose();
     super.dispose();
   }
@@ -514,6 +517,63 @@ class _HomeScreenState extends State<HomeScreen> {
         money(b.effectiveTotal, de: de),
       ].join(' ').toLowerCase();
 
+  /// Last searches under the search field: tap one to search it again, the x removes it alone.
+  Widget _recentSearches(BuildContext context, BillStore store) {
+    final l = FasanLook.of(context), lang = S.of(context).de ? 'de' : 'en';
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, key: const ValueKey('recent-searches'), children: [
+      Padding(padding: const EdgeInsets.fromLTRB(4, FasanSpace.s, 4, 0), child: FasanLabel(trLang(lang, 'search.recent'))),
+      for (final r in store.recentSearches)
+        SizedBox(
+          height: l.minTap,
+          child: Row(children: [
+            Expanded(
+              child: InkWell(
+                onTap: () {
+                  _searchCtl.text = r;
+                  _searchCtl.selection = TextSelection.collapsed(offset: r.length);
+                  setState(() => _query = r);
+                },
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.history_rounded, size: 20, color: l.textMuted),
+                    const SizedBox(width: FasanSpace.s),
+                    Flexible(child: Text(r, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  ]),
+                ),
+              ),
+            ),
+            IconButton(key: ValueKey('forget-$r'), tooltip: trLang(lang, 'search.forget'), icon: const Icon(Icons.close_rounded, size: 20), onPressed: () => store.forgetSearch(r)),
+          ]),
+        ),
+    ]);
+  }
+
+  /// „Keine Treffer“, with „Meintest du …?“ when a word looks like a typo of a word in these bills.
+  Widget _noHits(BuildContext context, BillStore store, List<Bill> scopeBills, String q) {
+    final lang = S.of(context).de ? 'de' : 'en', tt = Theme.of(context).textTheme, l = FasanLook.of(context);
+    final fix = q.isEmpty
+        ? null
+        : didYouMean(q, [
+            for (final b in scopeBills) ...[b.purpose, for (final p in b.ps) p.name, for (final i in b.its) i.name]
+          ]);
+    return Column(children: [
+      Padding(padding: const EdgeInsets.all(FasanSpace.l), child: Text(trLang(lang, 'filter.none'), style: tt.bodyMedium, textAlign: TextAlign.center)),
+      if (fix != null)
+        TextButton(
+          key: const ValueKey('did-you-mean'),
+          style: TextButton.styleFrom(minimumSize: Size(l.minTap, l.minTap)),
+          onPressed: () {
+            _searchCtl.text = fix;
+            _searchCtl.selection = TextSelection.collapsed(offset: fix.length);
+            store.rememberSearch(fix);
+            setState(() => _query = fix);
+          },
+          child: Text(trLang(lang, 'search.didYouMean', [fix])),
+        ),
+    ]);
+  }
+
   /// Search in the items view: the bill head (name, people) matching shows all its items; otherwise only items whose name or
   /// amount match.
   bool _itemMatches(Bill b, BillItem i, String q, bool de) =>
@@ -523,6 +583,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_page <= 2 && _searching) {
       return TextField(
         key: const ValueKey('search-field'),
+        controller: _searchCtl,
         autofocus: true,
         textInputAction: TextInputAction.search,
         // the keyboard's own suggestions and autocorrect hold back text while composing (Android): the list must follow each letter
@@ -532,12 +593,17 @@ class _HomeScreenState extends State<HomeScreen> {
           hintText: trLang(t.de ? 'de' : 'en', 'search.hint'),
           prefixIcon: const Icon(Icons.search_rounded),
           border: InputBorder.none,
-          suffixIcon: IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: () => setState(() {
-                _searching = false;
-                _query = '';
-              })),
+          suffixIcon: IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: () {
+            if (_query.trim().length >= 3) store0.rememberSearch(_query);
+            _searchCtl.clear();
+            setState(() {
+              _searching = false;
+              _query = '';
+            });
+          }),
         ),
         onChanged: (v) => setState(() => _query = v),
+        onSubmitted: (v) => store0.rememberSearch(v),
       );
     }
     return Align(
@@ -605,6 +671,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final scopeBills = scopeIsGroup(scope)
         ? store.inGroup(scope)
         : [if (scope == kScopeAll) for (final g in store.groups) ...store.inGroup(g), ...store.inGroup(null)];
+    final flat = _itemsView ? flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => _itemMatches(b, i, q, t.de)) : const <(Bill, BillItem?)>[];
     final peopleCount = scopeIsGroup(scope) ? CollabScope.of(context).peopleOf(scope).length : {for (final b in scopeBills) for (final p in b.ps) p.name.trim().toLowerCase()}.length;
     // one banner at a time, most important first: update, backup due, home-screen tip (iPhone browser)
     final Widget? banner = done
@@ -682,12 +749,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: (i) => trLang(t.de ? 'de' : 'en', i == 0 ? 'grp.bills' : 'grp.items'),
                   onChanged: (v) => setState(() => _itemsView = v == 1),
                 ),
-                if (shown.isEmpty) Padding(padding: const EdgeInsets.all(FasanSpace.l), child: Text(trLang(t.de ? 'de' : 'en', 'filter.none'), style: tt.bodyMedium, textAlign: TextAlign.center)),
+                if (_searching && q.isEmpty && store.recentSearches.isNotEmpty)
+                  _recentSearches(context, store)
+                else if (shown.isEmpty || (_itemsView && flat.isEmpty))
+                  _noHits(context, store, scopeBills, q),
               ]),
             ),
           ),
           if (_itemsView)
-            ..._itemSlivers(context, flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => _itemMatches(b, i, q, t.de)))
+            ..._itemSlivers(context, flat)
           else ...[
             for (final (g, bills) in groups) _section(context, store, mode, g, g, bills, showHeading: !scopeIsGroup(scope)),
             _section(context, store, mode, null, null, loose, title: done ? t.finished : t.drafts),

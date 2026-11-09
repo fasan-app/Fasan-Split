@@ -64,6 +64,18 @@ class BillStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The last searches, newest first (at most [kRecentSearches]); each can be removed alone. Kept on this phone only.
+  static const kRecentSearches = 8;
+  List<String> get recentSearches => ((_app['recents'] as List?) ?? const []).cast<String>();
+  void rememberSearch(String q) {
+    final t = q.trim();
+    if (t.length < 2) return;
+    final l = [t, ...recentSearches.where((e) => e.toLowerCase() != t.toLowerCase())].take(kRecentSearches).toList();
+    _setApp('recents', l);
+  }
+
+  void forgetSearch(String q) => _setApp('recents', recentSearches.where((e) => e != q).toList());
+
   /// Who uses this phone (shown first in „Wer war dabei?“); empty = not set.
   String get me => _app['me'] as String? ?? '';
   set me(String v) => _setApp('me', v.trim());

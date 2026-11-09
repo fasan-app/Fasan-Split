@@ -224,6 +224,46 @@ void main() {
     expect(find.descendant(of: find.byType(MyBalanceBadge), matching: find.textContaining('0,00')), findsOneWidget);
   });
 
+  testWidgets('Suche: Tippfehler bekommt „Meintest du“, ein Tipp übernimmt es', (tester) async {
+    await _app(tester, store);
+    await tester.tap(find.byTooltip('Suche'));
+    await _settle(tester);
+    await tester.enterText(find.byKey(const ValueKey('search-field')), 'pizaz');
+    await _settle(tester);
+    expect(find.text('Keine Treffer'), findsOneWidget);
+    expect(find.byKey(const ValueKey('did-you-mean')), findsOneWidget);
+    expect(find.textContaining('„pizza“'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('did-you-mean')));
+    await _settle(tester);
+    expect(find.text('Keine Treffer'), findsNothing);
+    expect(find.text('Kneipe'), findsOneWidget);
+    expect(find.text('Taxi'), findsNothing);
+  });
+
+  testWidgets('Suche: letzte Suchen erscheinen, antippen sucht erneut, x entfernt einzeln', (tester) async {
+    await _app(tester, store);
+    await tester.tap(find.byTooltip('Suche'));
+    await _settle(tester);
+    expect(find.byKey(const ValueKey('recent-searches')), findsNothing, reason: 'nothing searched yet');
+    await tester.enterText(find.byKey(const ValueKey('search-field')), 'pizza');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await _settle(tester);
+    await tester.enterText(find.byKey(const ValueKey('search-field')), 'fähre');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await _settle(tester);
+    await tester.enterText(find.byKey(const ValueKey('search-field')), '');
+    await _settle(tester);
+    expect(find.byKey(const ValueKey('recent-searches')), findsOneWidget);
+    expect(store.recentSearches, ['fähre', 'pizza'], reason: 'newest first');
+    await tester.tap(find.byKey(const ValueKey('forget-fähre')));
+    await _settle(tester);
+    expect(store.recentSearches, ['pizza']);
+    await tester.tap(find.text('pizza'));
+    await _settle(tester);
+    expect(find.text('Kneipe'), findsOneWidget);
+    expect(find.text('Taxi'), findsNothing);
+  });
+
   testWidgets('Einstellungen: ruhige Liste, jede Gruppe eine Unterseite', (tester) async {
     await _app(tester, store);
     await tester.tap(find.byType(MyBalanceBadge));
