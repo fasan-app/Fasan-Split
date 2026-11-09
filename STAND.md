@@ -4,6 +4,17 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 09.11. 18:45 Plan nach Rückmeldung 18:44 (Anforderungen Nr. 1–15, Stand: Plan, nichts umgesetzt)
+
+Reihenfolge (ein Paket ganz, dann das nächste):
+A. Fehler: Archiv/Papierkorb aus dem PageView (nur Gruppe | Abrechnung | Freunde blättern); Posten-Ansicht filtert nach Suche und „erledigt“; weiße Seite nach App-Wechsel (Ursache suchen); Saldo 0 bei Ausgleich; einheitliche Abstände/Rundungen (ein Token-Satz).
+B. Suche: live beim Tippen, letzte Suchen mit x, „meintest du“ (lokal, Namen/Posten), Treffer öffnet Bon, Posten mittig, ein Puls.
+C. Bon-Ansicht umbauen (Posten wie im Bon mit Ausschnitt, editierbar, Service/eigene Posten sichtbar).
+D. Plus-Menü (Bon | Zahlung A→B | Posten; bei „Alle Gruppen“ erst Gruppenmenü), Senden-Menü neu.
+E. Notizen überall, anpinnbar, @-Erwähnung, Benachrichtigung führt zum Ziel (Puls).
+F. Stellvertreter je Person, Geräteberechtigung/Web-Benachrichtigung (Grenze: Web-Push braucht Push-Dienst des Browsers = Drittdienst; ohne Freigabe nur lokal bei offener Seite).
+Offene Fragen an den Nutzer: Plus-Menü-Aufbau, Wischen aus der Liste entfernen, Stellvertreter-Bedeutung, Web-Push-Grenze, Anpin-Ort.
+
 ## 09.11. 14:00 Web 0.1.89: Rückmeldung 13:05 umgesetzt (Sitzung B)
 
 Umgesetzt, Analyse sauber, Widget-Tests grün (Volllauf bis auf einen Lastausfall `photo_sync_test`, einzeln grün), Bildschirmfotos der App gesehen:
