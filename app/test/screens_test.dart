@@ -259,6 +259,8 @@ void main() {
     'h04-archiv': (_) => const HomeScreen(),
     'h05-papierkorb': (_) => const HomeScreen(),
     'h06-gruppen': (_) => const HomeScreen(),
+    // Posten view of the start page: the same tiles as in the bill, with the receipt snippet (09.11.); browser walk step still to add
+    'h07b-gruppe-posten': (_) => const HomeScreen(),
     'h13-freunde': (_) => const HomeScreen(),
     // group page with the walk receipt (Beispielstadt, Pia paid, Lena owes 10,00): Personen, settle as paid – whole and a part (06.11.)
     for (final k in ['h07-gruppe-offen', 'h08-personen', 'h08b-bezahlt-frage', 'h08d-teilbetrag', 'h08e-rest-offen'])
@@ -291,6 +293,12 @@ void main() {
       final bill = _pushBill!;
       nav.push(MaterialPageRoute<void>(builder: (_) => ReviewScreen(bill: bill)));
       await t.pump(const Duration(milliseconds: 800));
+    },
+    'h07b-gruppe-posten': (t) async {
+      await t.tap(find.text('Posten').first);
+      for (var i = 0; i < 8; i++) {
+        await t.pump(const Duration(milliseconds: 100));
+      }
     },
     'h04-archiv': (t) async {
       await t.tap(find.byKey(const ValueKey('view-menu')));

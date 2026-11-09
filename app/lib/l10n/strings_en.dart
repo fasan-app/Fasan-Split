@@ -444,6 +444,7 @@ const Map<String, String> stringsEn = {
   'grp.items': "Items",
   'grp.openItems': "{0} open items",
   'grp.noPayer': "{0} without payer",
+  'grp.rest': 'Rest to the total (service, tip)',
   'grp.noItems': "No items yet.",
   'grp.progressLabel': "{0} items done, {1} in progress, {2} open",
   'grp.settlementTip': "Open the group settlement",

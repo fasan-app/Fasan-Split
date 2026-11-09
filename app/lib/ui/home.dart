@@ -30,6 +30,7 @@ import 'brand_mark.dart';
 import 'scope_sheet.dart';
 import 'groups.dart';
 import 'balance_breakdown.dart' show GroupBreakdownScreen;
+import 'item_sheet.dart' show showItemSheet;
 import 'group_header.dart';
 import 'group_picker.dart';
 import 'onboarding.dart';
@@ -574,6 +575,13 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
   }
 
+  /// The first item of [b] that the search words hit, or null (the name of the bill or a person matched, or nothing is searched).
+  int? _hitItem(Bill b, String q, bool de) {
+    if (q.isEmpty) return null;
+    final i = b.its.indexWhere((it) => it.name.toLowerCase().contains(q) || money(it.amount, de: de).contains(q));
+    return i < 0 ? null : i;
+  }
+
   /// Search in the items view: the bill head (name, people) matching shows all its items; otherwise only items whose name or
   /// amount match.
   bool _itemMatches(Bill b, BillItem i, String q, bool de) =>
@@ -768,6 +776,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Edit an item right here, in the same sheet as in the bill (Nutzer 09.11. 18:44). A bill locked against me opens as the bill,
+  /// which shows the lock.
+  Future<void> _editItem(BuildContext context, Bill b, BillItem it) async {
+    final store = StoreScope.read(context);
+    if (CollabScope.read(context).lockedAgainstMe(b, b.lockBy)) return openBill(context, b);
+    await showItemSheet(context, b, it, changed: () {
+      b.checked = false;
+      store.upsert(b);
+    }, onDelete: () {
+      final at = b.its.indexOf(it);
+      if (at < 0) return;
+      b.its.removeAt(at);
+      b.checked = false;
+      store.upsert(b);
+      final lang = S.of(this.context).de ? 'de' : 'en';
+      ScaffoldMessenger.of(this.context).showSnackBar(_msg(this.context, trLang(lang, 'bill.removed', [it.title]), action: SnackBarAction(label: trLang(lang, 'bill.undo'), onPressed: () {
+        b.its.insert(at.clamp(0, b.its.length), it);
+        store.upsert(b);
+      })));
+    });
+  }
+
   /// Flat list of items (lazy), a heading per bill; a tap opens the bill.
   List<Widget> _itemSlivers(BuildContext context, List<(Bill, BillItem?)> flat) {
     final lang = S.of(context).de ? 'de' : 'en';
@@ -781,9 +811,9 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: flat.length,
           itemBuilder: (_, i) {
             final (b, it) = flat[i];
-            return it == null
-                ? GroupBillHeading(key: ValueKey('h-${b.id}'), bill: b, onTap: () => openBill(context, b))
-                : GroupItemRow(key: ValueKey('${b.id}/${b.its.indexOf(it)}'), bill: b, item: it, onTap: () => openBill(context, b));
+            if (it == null) return GroupBillHeading(key: ValueKey('h-${b.id}'), bill: b, onTap: () => openBill(context, b));
+            if (identical(it, kDifferenceRow)) return GroupRestRow(key: ValueKey('rest-${b.id}'), bill: b, onTap: () => openBill(context, b));
+            return GroupItemRow(key: ValueKey('${b.id}/${b.its.indexOf(it)}'), bill: b, item: it, onTap: () => _editItem(context, b, it));
           },
         ),
       ),
@@ -851,7 +881,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// same in both modes, so the drag survives the switch into the selection.
   Widget _row(BuildContext context, BillStore store, BillList mode, Bill b) {
     final t = S.of(context), l = FasanLook.of(context);
-    final tile = BillTile(bill: b, queue: queue, selecting: _selecting, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () => _retry(b));
+    final tile = BillTile(bill: b, queue: queue, selecting: _selecting, selected: _selected.contains(b.id), onToggle: () => _toggle(b.id), onRetry: () => _retry(b), focusItem: _searching ? _hitItem(b, _query.trim().toLowerCase(), t.de) : null);
     final moving = _selecting && _selected.contains(b.id) ? _picked(store) : [b];
     final archive = mode == BillList.archive;
     return SwipeActions(

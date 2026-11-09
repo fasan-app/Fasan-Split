@@ -4,6 +4,12 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 09.11. 23:10 Web 0.1.92: Paket C (Posten wie im Bon) – Teil 1
+
+Umgesetzt, Analyse sauber, Volllauf bis auf einen Textregel-Test grün (danach behoben, einzeln grün; kein zweiter Volllauf): Posten-Ansicht nutzt dieselbe Kachel wie der Bon (`ItemTile`, mit Bon-Ausschnitt, gleiche Rundung/Abstand), Tipp öffnet das Posten-Blatt direkt (`_editItem`, bei fremder Sperre der Bon); Zeile „Rest zur Summe“ (Service/Trinkgeld, `kDifferenceRow`); Suchtreffer in einem Posten öffnet den Bon dort (`focusItem`), mittig und ein Puls (`PulseOnFocus`, gemeinsamer Baustein auch für E); Tutorial ergänzt.
+**Nicht geprüft:** auf dem S23; Sprung in der echten Navigation (nur Übergabe der Nummer und der Puls-Baustein einzeln getestet, nicht ReviewScreen mit Fokus); Bildschirmvergleich Browser: Schritt `h07b-gruppe-posten` nur in `screens_test.dart`, in `screens.js` noch nicht (ungelaufenes JS hätte die CI gefährdet) – offen.
+**Offen aus C:** Abstände der Kopfzone/Überschriften, Bon-Ansicht selbst (Kopf, Zeilenabstände) angleichen, Frage Wischen aus Liste (Beschluss: raus, in D).
+
 ## 09.11. 22:10 Web 0.1.91: Paket B (Suche) teilweise
 
 Umgesetzt, 444 Tests grün: live Suche ohne Autokorrektur, „Meintest du“ lokal (`search_suggest.dart`, Abstand mit Nachbartausch), letzte Suchen (8, einzeln mit x, nur auf dem Gerät, `store.recentSearches`).

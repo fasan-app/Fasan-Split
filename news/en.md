@@ -1,3 +1,8 @@
+## 0.1.92
+- New: In the “Items” view every item looks like in the bill, with the snippet from the receipt. Tap it to change it right there, without opening the bill.
+- New: The Items view also shows “Rest to the total” (service, tip) for a bill when the receipt total is higher than the items.
+- New: If search hits an item, the bill opens at that item: scrolled to the middle, with one short pulse. With “Remove animations” it is only marked.
+
 ## 0.1.91
 - New: Search offers “Did you mean …?” while you type when a word looks like a typo of a word in your bills. Tap it to use it.
 - New: Under the empty search field you see your last searches (up to 8). Tap one to search again, the x removes a single one.

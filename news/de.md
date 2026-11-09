@@ -1,3 +1,8 @@
+## 0.1.92
+- Neu: In der Ansicht „Posten“ sieht jeder Posten aus wie im Bon, mit dem Ausschnitt vom Bon. Tippe ihn an, dann änderst du ihn gleich dort, ohne den Bon zu öffnen.
+- Neu: Zu jedem Bon steht in der Posten-Ansicht auch „Rest zur Summe“ (Service, Trinkgeld), wenn die Summe vom Bon höher ist als die Posten.
+- Neu: Findet die Suche etwas in einem Posten, öffnet der Bon bei diesem Posten: in die Mitte gescrollt, mit einem kurzen Puls. Bei „Animationen entfernen“ wird er nur markiert.
+
 ## 0.1.91
 - Neu: Die Suche bietet beim Tippen „Meintest du …?“ an, wenn ein Wort wie ein Tippfehler zu einem Wort aus deinen Rechnungen aussieht. Ein Tipp übernimmt es.
 - Neu: Unter dem leeren Suchfeld stehen deine letzten Suchen (bis zu 8). Antippen sucht erneut, das x entfernt eine einzelne.

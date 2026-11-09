@@ -30,11 +30,15 @@ import 'person_picker.dart';
 import 'swipe.dart';
 import 'when_where.dart';
 import 'shape_tokens.dart';
+import 'pulse_focus.dart';
 
 class ReviewScreen extends StatefulWidget {
-  const ReviewScreen({super.key, required this.bill, this.scan});
+  const ReviewScreen({super.key, required this.bill, this.scan, this.focusItem});
 
   final Bill bill;
+
+  /// Index of the item to lead the eye to (search hit, notification): scrolled to the middle, one pulse.
+  final int? focusItem;
   final ScanResultData? scan;
 
   @override
@@ -659,7 +663,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
             Padding(padding: const EdgeInsets.symmetric(vertical: FasanSpace.m), child: Text(context.tr('filter.allAssigned'), style: tt.bodyMedium)),
           for (var i = 0; i < b.its.length; i++)
             if (!_onlyOpen || b.its[i].fill != ItemFill.complete)
-            Padding(
+            PulseOnFocus(
+              key: ValueKey('pulse-${b.its[i].hashCode}'),
+              active: widget.focusItem == i,
+              child: Padding(
               padding: const EdgeInsets.only(bottom: 6),
               // like the bills on the start page: right = the main action (everyone / nobody), left = delete (with „undo“)
               child: SwipeActions(
@@ -677,7 +684,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   return true;
                 },
                 onDismissed: (_) => _deleteItem(b.its[i]),
-                child: _ItemTile(
+                child: ItemTile(
                   bill: b,
                   item: b.its[i],
                   active: active,
@@ -686,6 +693,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   onLongPress: () => _openItem(b.its[i]),
                 ),
               ),
+            ),
             ),
           Align(
             alignment: Alignment.centerLeft,
@@ -701,8 +709,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
 }
 
 /// One item in the list: name, who has it, price. Tap: change and assign (or, with a person active, toggle that person).
-class _ItemTile extends StatelessWidget {
-  const _ItemTile({required this.bill, required this.item, required this.active, required this.showSnippet, required this.onTap, required this.onLongPress});
+/// Public: the Posten view of the group page uses the very same tile (Nutzer 09.11. 18:44: „genau so wie im Bon“).
+class ItemTile extends StatelessWidget {
+  const ItemTile({super.key, required this.bill, required this.item, required this.active, required this.showSnippet, required this.onTap, required this.onLongPress});
 
   final Bill bill;
   final BillItem item;

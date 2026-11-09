@@ -444,6 +444,7 @@ const Map<String, String> stringsDe = {
   'grp.items': "Posten",
   'grp.openItems': "{0} offene Posten",
   'grp.noPayer': "{0} ohne Zahler",
+  'grp.rest': 'Rest zur Summe (Service, Trinkgeld)',
   'grp.noItems': "Noch keine Posten.",
   'grp.progressLabel': "{0} Posten erledigt, {1} in Arbeit, {2} offen",
   'grp.settlementTip': "Abrechnung der Gruppe öffnen",

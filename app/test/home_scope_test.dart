@@ -6,6 +6,8 @@ import 'package:fasan_split/flows/scan_queue.dart';
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/group_header.dart';
+import 'package:fasan_split/ui/bill_screen.dart' show ItemTile;
+import 'package:fasan_split/ui/bill_tile.dart' show BillTile;
 import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_split/ui/my_balance.dart';
 import 'package:fasan_ui/fasan_ui.dart';
@@ -262,6 +264,39 @@ void main() {
     await _settle(tester);
     expect(find.text('Kneipe'), findsOneWidget);
     expect(find.text('Taxi'), findsNothing);
+  });
+
+  testWidgets('Posten-Ansicht: gleiche Kachel wie im Bon, Tipp öffnet das Posten-Blatt (direkt editierbar), Rest zur Summe steht da', (tester) async {
+    store = BillStore.memory([
+      Bill(
+        id: 'z',
+        created: DateTime(2026, 11, 2),
+        purpose: 'Eck',
+        total: 1200, // 2,00 more than the item: service/tip
+        people: [Person('Anna', 0), Person('Ben', 1)],
+        items: [BillItem(name: 'Pizza', amount: 1000)..shares = {0: 1, 1: 1}],
+        done: true,
+      )..payer = 0,
+    ])..onboarded = true;
+    await _app(tester, store);
+    await _showItems(tester);
+    expect(find.byType(ItemTile), findsOneWidget, reason: 'the item looks like in the bill');
+    expect(find.byKey(const ValueKey('rest-z')), findsOneWidget, reason: 'service/tip is money to split and must show');
+    await tester.tap(find.text('Pizza'));
+    await _settle(tester);
+    expect(find.byType(BottomSheet), findsOneWidget, reason: 'the item sheet opens right here, not the bill');
+  });
+
+  testWidgets('Suche: ein Treffer im Posten übergibt dessen Nummer an den Bon (Sprung, Puls); Treffer im Namen nicht', (tester) async {
+    await _app(tester, store);
+    await tester.tap(find.byTooltip('Suche'));
+    await _settle(tester);
+    await tester.enterText(find.byKey(const ValueKey('search-field')), 'pizza');
+    await _settle(tester);
+    expect(tester.widget<BillTile>(find.byType(BillTile).first).focusItem, 0);
+    await tester.enterText(find.byKey(const ValueKey('search-field')), 'kneip');
+    await _settle(tester);
+    expect(tester.widget<BillTile>(find.byType(BillTile).first).focusItem, isNull, reason: 'the bill name matched, there is no item to point at');
   });
 
   testWidgets('Einstellungen: ruhige Liste, jede Gruppe eine Unterseite', (tester) async {

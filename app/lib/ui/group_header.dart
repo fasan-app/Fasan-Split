@@ -20,12 +20,15 @@ import 'flow.dart' show ResultScreen;
 import 'resume.dart' show ResumeFlow;
 import 'scope.dart';
 import 'shape_tokens.dart';
+import 'bill_screen.dart' show ItemTile, ReviewScreen;
 
 /// Opens a bill the way the tile does: finished bills show the result, unfinished ones continue where the user left.
-void openBill(BuildContext context, Bill bill) {
+void openBill(BuildContext context, Bill bill, {int? focusItem}) {
   CollabScope.read(context).billSeen(bill.id);
   markBillOrigin(context);
-  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => bill.done ? ResultScreen(bill: bill) : ResumeFlow(bill: bill)));
+  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => focusItem != null
+      ? (bill.done ? ReviewScreen(bill: bill, focusItem: focusItem) : ResumeFlow(bill: bill, focusItem: focusItem))
+      : (bill.done ? ResultScreen(bill: bill) : ResumeFlow(bill: bill))));
 }
 
 /// Counts of items by state over [bills] (settlement payments are no spending and have no items to track).
@@ -299,16 +302,30 @@ class HelpButton extends StatelessWidget {
 /// One item as in the bill: name, amount, state icon and who shares it. Same frame colours as the bill list (fillSide).
 /// [onTap] normally opens the bill the item belongs to.
 class GroupItemRow extends StatelessWidget {
-  const GroupItemRow({super.key, required this.bill, required this.item, this.onTap});
+  const GroupItemRow({super.key, required this.bill, required this.item, this.onTap, this.onLongPress});
 
   final Bill bill;
   final BillItem item;
+  final VoidCallback? onTap, onLongPress;
+
+  /// The same tile as in the bill, with the receipt snippet (Nutzer 09.11. 18:44), so an item looks the same wherever it is.
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: ItemTile(bill: bill, item: item, active: null, showSnippet: true, onTap: onTap ?? () {}, onLongPress: onLongPress ?? onTap ?? () {}),
+      );
+}
+
+/// The line „rest to the total“ under the items of a bill in the flat list (service, tip, an unread line).
+class GroupRestRow extends StatelessWidget {
+  const GroupRestRow({super.key, required this.bill, this.onTap});
+
+  final Bill bill;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l = FasanLook.of(context);
-    final r = BorderRadius.circular(l.rInner);
+    final l = FasanLook.of(context), r = BorderRadius.circular(l.rInner);
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: InkWell(
@@ -317,19 +334,23 @@ class GroupItemRow extends StatelessWidget {
         child: Container(
           constraints: BoxConstraints(minHeight: l.minTap),
           padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: 8),
-          decoration: BoxDecoration(borderRadius: r, border: Border.fromBorderSide(fillSide(context, item.fill))),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(children: [Expanded(child: ItemTitle(item, maxLines: 1)), const SizedBox(width: FasanSpace.m), Money(item.amount)]),
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Row(children: [Icon(fillIcon(item.fill), size: 16, color: fillColor(context, item.fill)), const SizedBox(width: 6), ShareAvatars(bill: bill, item: item)]),
-            ),
+          decoration: BoxDecoration(borderRadius: r, border: Border.all(color: l.hairline)),
+          child: Row(children: [
+            Icon(Icons.percent_rounded, size: 18, color: l.textMuted),
+            const SizedBox(width: FasanSpace.s),
+            Expanded(child: Text(trLang(S.of(context).de ? 'de' : 'en', 'grp.rest'), maxLines: 1, overflow: TextOverflow.ellipsis)),
+            const SizedBox(width: FasanSpace.m),
+            Money(bill.difference),
           ]),
         ),
       ),
     );
   }
 }
+
+/// Marks the line „rest to the receipt total“ (service, tip, an unread line) in the flat list: not an item, but money that is split
+/// like the items, so it must show (Nutzer 09.11. 18:44: „Service … müssen erscheinen“). Compare by identity.
+final BillItem kDifferenceRow = BillItem(name: '', amount: 0);
 
 /// Entries of the flat list: a bill heading ([item] null) followed by its visible items.
 /// [fills] (the status buttons) wins over [onlyOpen]: with „erledigt“ switched on, the items that are done must show even when
@@ -342,11 +363,14 @@ List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOp
         .where((i) => fills.isNotEmpty ? fills.contains(i.fill) : (!onlyOpen || i.fill != ItemFill.complete))
         .where((i) => itemMatch == null || itemMatch(b, i))
         .toList();
-    if (its.isEmpty) continue;
+    // the rest to the total shows only in the plain list: not under a status button or a search, not with „Nur offene“
+    final rest = fills.isEmpty && itemMatch == null && !onlyOpen && b.difference != 0 && b.its.isNotEmpty;
+    if (its.isEmpty && !rest) continue;
     out.add((b, null));
     for (final i in its) {
       out.add((b, i));
     }
+    if (rest) out.add((b, kDifferenceRow));
   }
   return out;
 }

@@ -38,7 +38,7 @@ Uint8List _thumbBytes(Bill b) {
 
 /// One bill on the overview: thumbnail, name, state (waiting / reading / failed / date and step) and sum.
 class BillTile extends StatelessWidget {
-  const BillTile({super.key, required this.bill, required this.queue, required this.selecting, required this.selected, required this.onToggle, required this.onRetry, this.subtitle, this.openable = true, this.onLongPress});
+  const BillTile({super.key, required this.bill, required this.queue, required this.selecting, required this.selected, required this.onToggle, required this.onRetry, this.subtitle, this.openable = true, this.onLongPress, this.focusItem});
 
   final Bill bill;
   final ScanQueue queue;
@@ -53,6 +53,9 @@ class BillTile extends StatelessWidget {
 
   /// False: tapping does nothing (bills in the trash).
   final bool openable;
+
+  /// Search hit inside the bill: open it on that item (middle of the screen, one pulse).
+  final int? focusItem;
 
   /// Thumbnail of the photo as taken, at once when it is added. While the bill is read, it plays the scan animation in small
   /// (Nutzer 02.11.): boxes light up, the kinked receipt straightens.
@@ -217,7 +220,9 @@ class BillTile extends StatelessWidget {
     // the user left (Karte 3.9: Schließen verwirft nie).
     return FasanOpenContainer(
       radius: r,
-      openBuilder: (_) => bill.done ? ResultScreen(bill: bill) : ResumeFlow(bill: bill),
+      openBuilder: (_) => focusItem != null
+          ? (bill.done ? ReviewScreen(bill: bill, focusItem: focusItem) : ResumeFlow(bill: bill, focusItem: focusItem))
+          : (bill.done ? ResultScreen(bill: bill) : ResumeFlow(bill: bill)),
       closedBuilder: (context, open) => body(open),
     );
   }
