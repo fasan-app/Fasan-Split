@@ -271,6 +271,7 @@ const Map<String, String> stringsDe = {
   'vis.done': 'Jetzt sehen nur die Beteiligten diese Rechnung.',
   'vis.failed': 'Das ging nicht. Die Rechnung muss in einer geteilten Gruppe liegen.',
   'vis.noSend': 'Posten einer verborgenen Rechnung lassen sich nicht in den Chat schicken.',
+  'home.noteEdit': 'Notiz zum Bon',
   'lock.billOn': 'Rechnung sperren',
   'lock.billOff': 'Sperre aufheben',
   'lock.itemOn': 'Posten gesperrt',

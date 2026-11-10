@@ -10,6 +10,7 @@ Stand 01.11.2026.
 - Fehler gefunden und behoben: ein Bon-Ereignis, das vor dem Schlüssel ankam, wurde verworfen (AEAD-Fehler ist eine `FormatException`, der Zwischenspeicher lag nur im anderen catch). Test `hidden_bill_test` (drei Telefone, Karl liest nichts, dann Karl auf den Bon: bekommt Schlüssel und Bon) fing das.
 - Tests: hidden_bill_test, collab_ui_test (Menü, Frage, Sperre), screens_test `b24-sichtbarkeit` (Bildschirmfoto angesehen, hell/dunkel/quer erzeugt).
 - Nicht geprüft: echtes S23; Browser-Ende-zu-Ende mit verborgenem Bon (kein Schritt in tool/e2e); Gerätewechsel mit Sicherungsdatei (Schlüssel kommen aus dem keys-Dokument per NIP-44 neu, nicht getestet). Metadaten (Kennung, Zeitpunkte, Größe) bleiben für alle Mitglieder sichtbar.
+- Paket H (0.1.100, lokal): „Notiz zum Bon“ im ⋮ der Bon-Karte in der Liste (Blatt mit demselben `BillNotes` wie im Bon, anpinnen → Zeile unter dem Titel). Test home_test. Nicht per Bildschirmfoto angesehen (Blatt nur im Widget-Test), nicht im Browser-E2E.
 - Später: Stufe „nur Beträge“, Standardstufe je Gruppe, Frage „Alte Rechnungen zeigen?“ beim Einladen.
 
 ## 10.11. 03:00 Web 0.1.96 live; 0.1.97 gepusht (CI läuft); 0.1.98 lokal fertig

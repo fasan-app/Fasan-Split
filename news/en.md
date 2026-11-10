@@ -1,3 +1,6 @@
+## 0.1.100
+- New: note on a bill straight from the list: ⋮ on the bill card → “Note on the bill”. Pinned, it shows right under the title.
+
 ## 0.1.99
 - New: bill for people on it only. In the ⋮ menu of a bill: “People on it only”. Then only you and the people on the bill can read it; the others in the group no longer get it. Copies somebody already holds stay there. It cannot be undone.
 - Better: a bill for people on it only cannot be sent to the chat, so nothing slips out.

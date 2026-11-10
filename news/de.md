@@ -1,3 +1,6 @@
+## 0.1.100
+- Neu: Notiz zum Bon direkt aus der Liste: ⋮ an der Bon-Karte → „Notiz zum Bon“. Angepinnt steht sie gleich unter dem Titel.
+
 ## 0.1.99
 - Neu: Rechnung nur für Beteiligte. Im Menü (⋮) eines Bons: „Nur Beteiligte“. Dann lesen sie nur du und die Personen auf dem Bon, die anderen in der Gruppe bekommen sie nicht mehr. Kopien, die jemand schon hat, bleiben dort. Zurücknehmen geht nicht.
 - Besser: Ein Bon, der nur für Beteiligte ist, lässt sich nicht in den Chat schicken, damit nichts nach außen rutscht.

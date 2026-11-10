@@ -23,6 +23,7 @@ import 'hints.dart';
 import 'collab_ui.dart';
 import 'backup_ui.dart';
 import 'category_ui.dart';
+import 'bill_notes.dart' show BillNotes;
 import 'common.dart';
 import 'my_balance.dart';
 import 'brand_mark.dart';
@@ -978,6 +979,8 @@ class _HomeScreenState extends State<HomeScreen> {
               _selecting = true;
               _selected.add(b.id);
             });
+          case 'note':
+            _editNotes(context, b);
           case 'delete':
             _toTrash(context, [b]);
         }
@@ -994,9 +997,24 @@ class _HomeScreenState extends State<HomeScreen> {
             subtitle: canArchive ? null : Text(trLang(lang, 'home.enterItFirstAll2')),
           ),
         ),
+        // note on the bill, from the list (Nutzer 09.11. 19:08): the same notes as in the bill, with „pin“ for the line under the title
+        PopupMenuItem(value: 'note', child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.sticky_note_2_outlined), title: Text(trLang(lang, 'home.noteEdit')))),
         PopupMenuItem(value: 'select', child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.checklist_rounded), title: Text(t.select))),
         PopupMenuItem(value: 'delete', child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.delete_outline_rounded, color: Colors.red.shade700), title: Text(t.delete))),
       ],
+    );
+  }
+
+  /// The notes of [b] in a sheet over the list: read, write, pin. The tile shows the pinned one at once.
+  Future<void> _editNotes(BuildContext context, Bill b) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, MediaQuery.of(ctx).viewInsets.bottom + FasanSpace.l),
+        child: SingleChildScrollView(child: BillNotes(bill: b)),
+      ),
     );
   }
 

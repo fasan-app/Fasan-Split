@@ -59,6 +59,25 @@ void main() {
   ScanQueue idle(BillStore s) => ScanQueue(s, recognize: (_) => const Stream.empty());
 
   group('Übersicht', () {
+    testWidgets('Notiz zum Bon aus der Liste: schreiben, anpinnen, steht sofort unter dem Titel der Kachel', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück')]);
+      await app(tester, store, idle(store));
+      await tester.tap(find.byKey(const ValueKey('more-a')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Notiz zum Bon'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'Karte war defekt, bar bezahlt');
+      await tester.tap(find.byTooltip('Oben anpinnen'));
+      await tester.pump();
+      await tester.tap(find.byTooltip('Notiz speichern'));
+      await tester.pumpAndSettle();
+      expect(store.bills.single.notes.single.text, 'Karte war defekt, bar bezahlt');
+      expect(store.bills.single.notes.single.pinned, isTrue);
+      await tester.tapAt(const Offset(5, 5)); // closes the sheet
+      await tester.pumpAndSettle();
+      expect(find.text('Karte war defekt, bar bezahlt'), findsOneWidget, reason: 'angepinnte Notiz als Zeile unter dem Titel');
+    });
+
     testWidgets('auswählen, gruppieren: Kopfzeile der Gruppe mit Anzahl', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen'), _bill('c', 'Taxi', done: true)]);
       await app(tester, store, idle(store));

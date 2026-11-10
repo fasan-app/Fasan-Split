@@ -271,6 +271,7 @@ const Map<String, String> stringsEn = {
   'vis.done': 'Now only the people on it see this bill.',
   'vis.failed': 'That did not work. The bill must be in a shared group.',
   'vis.noSend': 'Items of a hidden bill cannot be sent to the chat.',
+  'home.noteEdit': 'Note on the bill',
   'lock.billOn': 'Lock bill',
   'lock.billOff': 'Remove lock',
   'lock.itemOn': 'Item locked',
