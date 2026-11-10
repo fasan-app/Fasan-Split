@@ -2,7 +2,7 @@
 // Fasan Split – screens of the collaboration: joining, live sharing with the one-time consent, invitations, members,
 // notes, chat and the account. The screens talk only to CollabService. Public relays are contacted only after the user
 // has agreed in the consent dialog, and tests never reach them (they use MemoryRelay). MPL-2.0
-import '../l10n/tr.dart' show trLang;
+import '../l10n/tr.dart';
 import 'dart:async';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -423,6 +423,25 @@ class _InviteScreenState extends State<InviteScreen> {
           onChanged: inv == null ? (_) {} : _setDays,
         ),
         const SizedBox(height: FasanSpace.l),
+        // old bills for newcomers (Nutzer 09.11. 19:04, Anforderung 18): hide them before sharing the link
+        if (!g.secret.direct && s.hideableBills(g).isNotEmpty) ...[
+          FasanButton(
+            key: const ValueKey('hide-old-bills'),
+            label: context.tr('vis.oldBills', ['${s.hideableBills(g).length}']),
+            icon: Icons.visibility_off_outlined,
+            kind: FasanButtonKind.quiet,
+            expand: true,
+            onPressed: () async {
+              final n = s.hideableBills(g).length;
+              final ok = await confirmDialog(context, context.tr('vis.oldTitle'), context.tr('vis.oldText', ['$n']), context.tr('vis.action'));
+              if (!ok || !context.mounted) return;
+              final done = s.hideAllBills(g);
+              if (context.mounted) showNote(context, context.tr('vis.oldDone', ['$done']));
+              setState(() {});
+            },
+          ),
+          const SizedBox(height: FasanSpace.l),
+        ],
         if (link != null) ...[
           FasanButton(label: trLang(de ? 'de' : 'en', 'collab_ui.shareLink'), icon: Icons.ios_share_rounded, expand: true, onPressed: () => SharePlus.instance.share(ShareParams(text: shareText))),
           const SizedBox(height: FasanSpace.s),

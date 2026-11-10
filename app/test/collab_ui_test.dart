@@ -266,6 +266,29 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
+  testWidgets('Einladung: „Bisherige Rechnungen verbergen“ fragt, verbirgt alle bisherigen, Knopf verschwindet', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    store.me = 'Pia';
+    await svc.setName('Pia');
+    final g = await svc.createGroup('Hütte');
+    for (final id in ['o1', 'o2']) {
+      store.upsert(Bill(id: id, created: DateTime(2026, 11, 2), purpose: 'Alt $id', total: 1000, group: 'Hütte', people: [Person('Pia', 0)], items: [BillItem(name: 'Pizza', amount: 1000)]));
+    }
+    await tester.pumpWidget(host(InviteScreen(group: g)));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Bisherige Rechnungen verbergen (2)'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('hide-old-bills')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('2 Rechnungen sehen dann nur noch'), findsOneWidget);
+    await tester.tap(find.text('Nur Beteiligte'));
+    await tester.pumpAndSettle();
+    expect(store.bills.every((b) => b.hidden), isTrue);
+    expect(find.byKey(const ValueKey('hide-old-bills')), findsNothing);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('Neuigkeiten: ein Tipp auf einen Bon führt in den Bon, auf eine Nachricht in den Chat an genau diese Stelle', (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.75;

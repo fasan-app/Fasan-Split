@@ -1,3 +1,6 @@
+## 0.1.102
+- Neu: Beim Einladen gibt es „Bisherige Rechnungen verbergen“. Dann sehen neue Mitglieder die alten Rechnungen nicht, nur die Personen darauf. Zurücknehmen geht nicht.
+
 ## 0.1.101
 - Besser: Vorgeschlagene Personen („vllt.“) haben jetzt ein „?“ vor dem blassen Kreis, damit sie nicht wie bestätigte aussehen.
 

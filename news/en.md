@@ -1,3 +1,6 @@
+## 0.1.102
+- New: when inviting there is “Hide existing bills”. New members then do not see the old bills, only the people on them. It cannot be undone.
+
 ## 0.1.101
 - Better: suggested people (“maybe”) now have a “?” in front of the pale circle, so they do not look confirmed.
 

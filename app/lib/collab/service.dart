@@ -1356,6 +1356,21 @@ class CollabService extends ChangeNotifier {
     return [for (final pub in [me, ...readers.where((k) => k != me)]) g.session.nameOf(pub)];
   }
 
+  /// Bills of [g] that could still be hidden (not yet hidden, readable, not in the trash).
+  List<Bill> hideableBills(CollabGroup g) => [
+        for (final b in store.bills)
+          if (b.group == g.localName && !b.hidden && b.read == BillRead.ok && canHide(b)) b
+      ];
+
+  /// Hides every bill of [g] that is not hidden yet (before inviting somebody who should not see the old ones). Returns how many.
+  int hideAllBills(CollabGroup g) {
+    var n = 0;
+    for (final b in hideableBills(g)) {
+      if (hideBill(b)) n++;
+    }
+    return n;
+  }
+
   /// Can [b] be made readable for its people only: in a live group, not yet hidden, and I hold the group's identity.
   bool canHide(Bill b) => identity != null && !b.hidden && b.group != null && groupByLocalName(b.group!) != null;
 
