@@ -97,6 +97,7 @@ abstract final class BillSync {
         final w = it.shares[i];
         set('s/${it.uid}/${b.ps[i].uid}', w != null && w > 0 ? w : null);
         set('f/${it.uid}/${b.ps[i].uid}', it.fixed[i]);
+        set('sv/${it.uid}/${b.ps[i].uid}', it.maybe[i]);
       }
       // shares of people that no longer exist
       for (final k in doc.keys('s/${it.uid}/').toList()) {
@@ -105,11 +106,14 @@ abstract final class BillSync {
       for (final k in doc.keys('f/${it.uid}/').toList()) {
         if (!puids.contains(k.split('/').last)) set(k, null);
       }
+      for (final k in doc.keys('sv/${it.uid}/').toList()) {
+        if (!puids.contains(k.split('/').last)) set(k, null);
+      }
     }
     for (final k in doc.keys('i/').toList()) {
       if (!iuids.contains(k.substring(2))) {
         set(k, null); // item removed here
-        for (final s in [...doc.keys('s/${k.substring(2)}/'), ...doc.keys('f/${k.substring(2)}/')]) {
+        for (final s in [...doc.keys('s/${k.substring(2)}/'), ...doc.keys('f/${k.substring(2)}/'), ...doc.keys('sv/${k.substring(2)}/')]) {
           set(s, null);
         }
       }
@@ -166,6 +170,13 @@ abstract final class BillSync {
         if (pi != null && c is num) fixed[pi] = c.toInt();
       }
       it.fixed = fixed;
+      final maybe = <int, String>{};
+      for (final mk in doc.keys('sv/$uid/')) {
+        final pi = index[mk.split('/').last];
+        final who = doc.get(mk);
+        if (pi != null && who is String) maybe[pi] = who;
+      }
+      it.maybe = maybe;
       its.add(((v['pos'] as num?)?.toInt() ?? 0, it));
     }
     its.sort((a, c) => a.$1 != c.$1 ? a.$1.compareTo(c.$1) : a.$2.uid.compareTo(c.$2.uid));

@@ -75,6 +75,7 @@ class DeviceNotifier with WidgetsBindingObserver {
       ActivityKind.joined => 'Neu in der Gruppe',
       ActivityKind.billNew => 'Neuer Bon',
       ActivityKind.billChanged => 'Bon geändert',
+      ActivityKind.proposal => 'Vorschlag für dich',
     };
     try {
       await _plugin.show(

@@ -1437,6 +1437,7 @@ class CollabService extends ChangeNotifier {
   final Map<String, Set<String>> _knownMembers = {};
   final Map<String, Set<String>> _knownMessages = {};
   final Map<String, Set<String>> _knownNotes = {}; // bill doc → note ids seen
+  final Map<String, Set<String>> _knownMaybe = {}; // bill doc → proposal keys (sv/…) seen
 
   /// New since the bell was opened.
   int get unseenActivity {
@@ -1562,6 +1563,24 @@ class CollabService extends ChangeNotifier {
             _note(Activity(ActivityKind.mention, DateTime.now(), g.secret.tag, '${v['f']} hat dich in „${p is String && p.isNotEmpty ? p : 'Bon'}“ erwähnt: ${v['x']}', ref: billId,
                 en: '${v['f']} mentioned you in “${p is String && p.isNotEmpty ? p : 'Receipt'}”: ${v['x']}'));
           }
+        }
+      }
+      // tentative „vllt“ proposals for me (sv/<item>/<person>): the person is me when the name matches mine
+      final svKeys = doc.keys('sv/').toSet();
+      final knownS = _knownMaybe[id];
+      _knownMaybe[id] = svKeys;
+      if (knownS != null && !_quiet(g)) {
+        final myName = (identity?.name ?? store.me).trim().toLowerCase();
+        for (final k in svKeys.difference(knownS)) {
+          final by = doc.get(k), parts = k.split('/');
+          if (by is! String || by == identity?.pub || parts.length < 3 || myName.isEmpty) continue;
+          final person = doc.get('p/${parts.last}');
+          if (person is! Map || '${person['name']}'.trim().toLowerCase() != myName) continue;
+          final item = doc.get('i/${parts[1]}');
+          final it = item is Map ? '${item['name']}' : '';
+          final who = s.nameOf(by);
+          _note(Activity(ActivityKind.proposal, DateTime.now(), g.secret.tag, '$who schlägt vor, dass „$it“ zu dir gehört (vllt.)', ref: '$billId#${parts[1]}',
+              en: '$who suggests “$it” is yours (maybe)'));
         }
       }
       if (last == null || last.author == me || _quiet(g)) return;

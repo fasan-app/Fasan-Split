@@ -4,7 +4,7 @@
 // app shows it behind the bell and counts what is new. MPL-2.0
 import 'dart:convert';
 
-enum ActivityKind { joined, billNew, billChanged, message, mention }
+enum ActivityKind { joined, billNew, billChanged, message, mention, proposal }
 
 /// Language of the app right now (set by the app from the language setting): the list and the device notifications show the
 /// matching text of an entry. Entries keep both, so a language switch changes the old ones too.

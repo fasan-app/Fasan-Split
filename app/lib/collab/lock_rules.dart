@@ -7,10 +7,10 @@
 // (members share one group key). MPL-2.0
 import 'lww.dart';
 
-/// Key of the item an entry belongs to (`i/<uid>`, `s/<uid>/<person>`, `f/<uid>/<person>`), else null.
+/// Key of the item an entry belongs to (`i/<uid>`, `s/<uid>/<person>`, `f/<uid>/<person>`, `sv/<uid>/<person>`), else null.
 String? itemOfKey(String key) {
   if (key.startsWith('i/')) return key.substring(2);
-  if ((key.startsWith('s/') || key.startsWith('f/'))) {
+  if (key.startsWith('s/') || key.startsWith('f/') || key.startsWith('sv/')) {
     final parts = key.split('/');
     if (parts.length >= 3) return parts[1];
   }

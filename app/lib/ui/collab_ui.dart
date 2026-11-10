@@ -1478,6 +1478,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ActivityKind.billChanged => Icons.edit_note_rounded,
           ActivityKind.message => Icons.chat_bubble_rounded,
           ActivityKind.mention => Icons.alternate_email_rounded,
+          ActivityKind.proposal => Icons.help_outline_rounded,
         };
     String when(DateTime d) {
       final m = DateTime.now().difference(d).inMinutes;
@@ -1491,13 +1492,16 @@ class _ActivityScreenState extends State<ActivityScreen> {
       final g = c.groups[a.group];
       if (g == null) return;
       final store = StoreScope.read(context);
-      final bill = a.ref == null ? null : store.bills.where((b) => b.id == a.ref && b.trashedAt == null).firstOrNull;
+      // a proposal leads to the item itself: ref = '<bill id>#<item uid>'
+      final refBill = a.ref?.split('#').first, refItem = a.ref != null && a.ref!.contains('#') ? a.ref!.split('#').last : null;
+      final bill = refBill == null ? null : store.bills.where((b) => b.id == refBill && b.trashedAt == null).firstOrNull;
       if (a.kind == ActivityKind.message || g.secret.direct || a.kind == ActivityKind.mention && c.messages(g).any((m) => m.id == a.ref)) {
         // lead to the exact message: centred, one pulse (Nutzer 09.11. 18:44)
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: g, focusMessage: a.ref)));
-      } else if ((a.kind == ActivityKind.billNew || a.kind == ActivityKind.billChanged || a.kind == ActivityKind.mention) && bill != null) {
-        // straight into the bill the news is about
-        openBill(context, bill);
+      } else if ((a.kind == ActivityKind.billNew || a.kind == ActivityKind.billChanged || a.kind == ActivityKind.mention || a.kind == ActivityKind.proposal) && bill != null) {
+        // straight into the bill the news is about (a proposal: to the item, one pulse)
+        final fi = refItem == null ? -1 : bill.its.indexWhere((x) => x.uid == refItem);
+        openBill(context, bill, focusItem: fi < 0 ? null : fi);
       } else {
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupScreen(name: g.localName, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)))));
       }

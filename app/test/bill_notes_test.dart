@@ -47,4 +47,39 @@ void main() {
     a.dispose();
     b.dispose();
   }, timeout: const Timeout(Duration(minutes: 1)));
+
+  test('vllt: Pias Vorschlag für Lena kommt als Neuigkeit an, führt zum Posten und zählt nicht', () async {
+    final hub = MemoryRelayHub();
+    final storeA = BillStore.memory()..me = 'Pia';
+    final a = CollabService(store: storeA, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    final g = await a.createGroup('Stadt 26');
+    final bill = Bill(id: 'r2', created: DateTime(2026, 11, 10), purpose: 'Café Beispiel', total: 1800, people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Kuchen', amount: 1800, shares: {0: 1}),
+    ])
+      ..group = 'Stadt 26';
+    storeA.upsert(bill);
+    final link = g.invitations!.create().link;
+    await settle(400);
+    final storeB = BillStore.memory()..me = 'Lena';
+    final b = CollabService(store: storeB, vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => MemoryRelay(hub));
+    await b.init();
+    await b.setName('Lena');
+    await b.join(link, 'Lena');
+    await settle(9000);
+
+    bill.its.first.maybe[1] = a.identity!.pub;
+    storeA.upsert(bill);
+    await settle(2000);
+    final got = storeB.bills.firstWhere((x) => x.id == 'r2');
+    expect(got.its.first.maybe.keys, [1]);
+    expect(got.perPerson()[1] ?? 0, 0, reason: 'ein Vorschlag zählt in keiner Summe');
+    final n = b.activity.where((x) => x.kind == ActivityKind.proposal).toList();
+    expect(n, hasLength(1));
+    expect(n.single.text, contains('Kuchen'));
+    expect(n.single.ref, 'r2#${got.its.first.uid}');
+    a.dispose();
+    b.dispose();
+  }, timeout: const Timeout(Duration(minutes: 1)));
 }

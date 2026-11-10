@@ -4,6 +4,11 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 10.11. 07:00 Paket F1 (vllt-Vorschläge) lokal fertig, noch nicht live (wartet auf Deploy 0.1.95)
+- `BillItem.maybe` (Person → Vorschlagender), Sync `sv/<posten>/<person>`, Aufräumen, Sperrregel, `removePerson` verschiebt Indizes. Zählt in keiner Summe.
+- Posten-Blatt: „Für jemanden vorschlagen (vllt.)“, Übernehmen/Ablehnen; Avatare zeigen Vorschläge blass; `ActivityKind.proposal` (Einstellung schaltbar) führt mit Puls zum Posten.
+- Tests: maybe_test, collab_ui_test (Blatt, 360 dp), bill_notes_test (zwei Telefone). Noch offen: F2 (Vertrauensstufen je Person, `_accept` erzwingt „vorschlagen/nein“), Web Push, Sichtbarkeit je Bon.
+
 ## 10.11. 04:00 Web 0.1.95: Notizen, Abstände, Ziel-Sprung (Pakete C-Rest und E teilweise)
 - 0.1.93 und 0.1.94 sind live (CI grün, deploy grün).
 - Notiz am Posten (Feld im Posten-Blatt, synchron über `BillItem.note`), angepinnte Bon-Notiz als Zeile unter dem Titel der Bon-Kachel, Suche findet Notizen (Bon und Posten).

@@ -1,3 +1,7 @@
+## 0.1.96
+- Neu: „vllt.“-Vorschläge. Wer für jemand anderen einträgt, kann einen Posten nur vorschlagen: Posten-Blatt, „Für jemanden vorschlagen (vllt.)“. Der Vorschlag steht blass am Posten und zählt in keiner Summe.
+- Neu: Die vorgeschlagene Person bekommt eine Neuigkeit, die direkt zum Posten führt, und kann dort „Übernehmen“ oder „Ablehnen“. Erst mit „Übernehmen“ zählt der Posten. Die Neuigkeit lässt sich in den Einstellungen ausschalten.
+
 ## 0.1.95
 - Neu: Notizen am Posten: Im Posten-Blatt gibt es ein Feld „Notiz“. Sie steht unter dem Posten und die Suche findet sie.
 - Neu: Eine angepinnte Notiz am Bon steht als eine Zeile unter dem Titel in der Liste. Die Suche findet auch die Notizen am Bon.

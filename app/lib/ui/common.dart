@@ -228,10 +228,20 @@ class ShareAvatars extends StatelessWidget {
       for (final e in item.shares.entries)
         if (e.value > 0 && e.key < bill.ps.length) (bill.ps[e.key].name, bill.ps[e.key].color)
     ];
-    if (people.isEmpty) {
+    // tentative „vllt“ people (BillItem.maybe) are shown faded behind the confirmed ones; they count nowhere
+    final maybe = [
+      for (final i in item.maybe.keys)
+        if (i < bill.ps.length && (item.shares[i] ?? 0) <= 0) (bill.ps[i].name, bill.ps[i].color)
+    ];
+    if (people.isEmpty && maybe.isEmpty) {
       return Icon(Icons.person_add_alt_1_outlined, size: size * 0.9, color: FasanLook.of(context).textMuted);
     }
-    return PeopleStack(people: people, size: size);
+    if (maybe.isEmpty) return PeopleStack(people: people, size: size);
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      if (people.isNotEmpty) PeopleStack(people: people, size: size),
+      if (people.isNotEmpty) const SizedBox(width: FasanSpace.xs),
+      Opacity(opacity: 0.45, child: PeopleStack(people: maybe, size: size)),
+    ]);
   }
 }
 

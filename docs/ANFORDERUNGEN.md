@@ -215,3 +215,4 @@ Wünsche:
 20. Posten verschicken: Auswahl in der Rechnung, über den Filter oder im geöffneten Posten. Stand 10.11.: umgesetzt (0.1.94).
 21. Frage: Hashtag # einführen, oder ist alles (Personen, Notizen) über die Suche auffindbar?
 22. (09.11. 22:48–22:50) Wischen erzeugt noch „ausgleichen/löschen“; Posten sehen noch nicht aus wie im Bon (mit Miniatur); „Was stimmt noch alles nicht, du hast nichts geprüft.“ Ursache: Nutzer hatte 0.1.91 (CI von 0.1.92 hing). Stand: Wischen in 0.1.93; Prüfung per Bildschirmfoto läuft. Stand: in Arbeit.
+23. (10.11. 00:30–00:37) Selbstständig bis live: nach jedem Push die CI beobachten, Fehler ohne Rückfrage beheben und erneut pushen, bis `deploy` grün ist; nie auf Antwort warten, solange Pakete in STAND.md offen sind; „live“ erst melden, wenn Deploy grün ist, mit Versionsnummer. Grund: 0.1.93 war lange nicht live, Nutzer musste erinnern. Regel steht in CLAUDE.md („Selbstständig bis live"). Stand: umgesetzt als Arbeitsweise.

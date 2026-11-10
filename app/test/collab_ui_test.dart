@@ -8,6 +8,7 @@ import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/collab_ui.dart';
+import 'package:fasan_split/ui/item_sheet.dart';
 import 'package:fasan_split/ui/my_balance.dart';
 import 'package:fasan_split/ui/resume.dart';
 import 'package:fasan_split/ui/send_items.dart';
@@ -252,5 +253,27 @@ void main() {
     final chat = tester.widget<ChatScreen>(find.byType(ChatScreen));
     expect(chat.focusMessage, mid);
     await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('vllt: Vorschlag im Posten-Blatt übernehmen oder ablehnen, erst dann zählt er', (tester) async {
+    final b = Bill(id: 'v', created: DateTime(2026, 11, 10), total: 2000, people: [Person('Ana', 0), Person('Ben', 1), Person('Cleo', 2)], items: [
+      BillItem(name: 'Pizza', amount: 2000, shares: {0: 1}, maybe: {1: 'x', 2: 'y'}),
+    ]);
+    tester.view.physicalSize = const Size(1080, 2400); // 360 dp wide like a phone
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(Builder(builder: (c) => Scaffold(body: Center(child: TextButton(
+        onPressed: () => showItemSheet(c, b, b.its.first, changed: () {}, onDelete: () {}), child: const Text('auf')))))));
+    await tester.tap(find.text('auf'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('maybe-accept-1')), findsOneWidget);
+    expect(b.perPerson()[1] ?? 0, 0);
+    await tester.tap(find.byKey(const ValueKey('maybe-accept-1')));
+    await tester.pumpAndSettle();
+    expect(b.its.first.maybe.keys, [2]);
+    expect(b.perPerson()[1], greaterThan(0));
+    await tester.tap(find.byKey(const ValueKey('maybe-decline-2')));
+    await tester.pumpAndSettle();
+    expect(b.its.first.maybe, isEmpty);
+    expect(b.its.first.shares[2] ?? 0, 0);
   });
 }

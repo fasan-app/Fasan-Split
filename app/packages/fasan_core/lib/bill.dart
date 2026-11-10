@@ -82,6 +82,7 @@ class BillItem {
     this.note,
     Map<int, double>? shares,
     Map<int, int>? fixed,
+    Map<int, String>? maybe,
     String? uid,
     this.proportional = false,
     this.perUnit = false,
@@ -89,6 +90,7 @@ class BillItem {
     this.lockBy,
   })  : shares = shares ?? {},
         fixed = fixed ?? {},
+        maybe = maybe ?? {},
         uid = uid ?? newUid();
 
   /// Stable id for merging shared bills.
@@ -121,6 +123,10 @@ class BillItem {
 
   /// Fixed cents per person index (Aufteilen „fest“, Nutzer 06.11.): these people pay exactly this, the rest follows [shares].
   Map<int, int> fixed;
+
+  /// Tentative „vllt“ assignments (Stellvertreter, Nutzer 06.11.): person index → public key of whoever proposed it.
+  /// Not counted in any sum until the person (or the proposer's trust level) confirms; then it moves into [shares].
+  Map<int, String> maybe;
 
   /// Shared like the other items, not by own weights: whoever had more pays more of it (VAT/service without an item
   /// line, Nutzer 04.11.: „jemand der weniger hatte muss auch weniger Steuern zahlen“). [shares] is ignored then.
@@ -263,6 +269,7 @@ class BillItem {
         'note': note,
         'shares': {for (final e in shares.entries) '${e.key}': e.value},
         if (fixed.isNotEmpty) 'fixed': {for (final e in fixed.entries) '${e.key}': e.value},
+        if (maybe.isNotEmpty) 'maybe': {for (final e in maybe.entries) '${e.key}': e.value},
         if (proportional) 'prop': true,
         if (perUnit) 'pu': true,
         if (rec != null) 'rec': rec,
@@ -283,6 +290,7 @@ class BillItem {
         note: j['note'] as String?,
         shares: {for (final e in ((j['shares'] as Map?) ?? const {}).entries) int.parse(e.key as String): (e.value as num).toDouble()},
         fixed: {for (final e in ((j['fixed'] as Map?) ?? const {}).entries) int.parse(e.key as String): (e.value as num).toInt()},
+        maybe: {for (final e in ((j['maybe'] as Map?) ?? const {}).entries) int.parse(e.key as String): e.value as String},
         proportional: j['prop'] == true,
         perUnit: j['pu'] == true,
         lockBy: j['lock'] as String?,
@@ -575,6 +583,10 @@ class Bill {
       };
       it.fixed = {
         for (final e in it.fixed.entries)
+          if (e.key != idx) (e.key > idx ? e.key - 1 : e.key): e.value
+      };
+      it.maybe = {
+        for (final e in it.maybe.entries)
           if (e.key != idx) (e.key > idx ? e.key - 1 : e.key): e.value
       };
     }

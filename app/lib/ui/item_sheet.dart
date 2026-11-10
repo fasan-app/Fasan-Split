@@ -141,6 +141,10 @@ class _ItemSheetState extends State<_ItemSheet> {
               setState(() {});
             },
           ),
+          _MaybeBox(bill: widget.bill, item: it, changed: () {
+            widget.changed();
+            setState(() {});
+          }),
           if (widget.bill.ps.any((p) => (it.shares[widget.bill.ps.indexOf(p)] ?? 0) > 0)) _FixedAmounts(bill: widget.bill, item: it, changed: widget.changed),
           const SizedBox(height: FasanSpace.s),
           Align(
@@ -211,6 +215,79 @@ class _ItemSheetState extends State<_ItemSheet> {
   }
 }
 
+
+/// „vllt“ (Stellvertreter, Nutzer 06.11.): tentative assignments. Whoever enters for somebody else only proposes; the proposal is
+/// not counted in any sum until it is accepted here (docs/KONZEPT-STELLVERTRETER.md). Shown only in a live group.
+class _MaybeBox extends StatelessWidget {
+  const _MaybeBox({required this.bill, required this.item, required this.changed});
+
+  final Bill bill;
+  final BillItem item;
+  final VoidCallback changed;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = CollabScope.of(context), me = c.identity?.pub;
+    final live = me != null && bill.group != null && c.canLock(bill);
+    final pending = [for (final e in item.maybe.entries) if (e.key < bill.ps.length) e];
+    if (!live && pending.isEmpty) return const SizedBox.shrink();
+    final free = [for (var i = 0; i < bill.ps.length; i++) if ((item.shares[i] ?? 0) <= 0 && !item.maybe.containsKey(i)) i];
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      for (final e in pending)
+        Padding(
+          padding: const EdgeInsets.only(top: FasanSpace.s),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(
+              context.tr('maybe.row', [bill.ps[e.key].name, c.lockerName(bill, e.value).isEmpty ? '?' : c.lockerName(bill, e.value)]),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            Wrap(spacing: FasanSpace.s, children: [
+              FasanButton(
+                key: ValueKey('maybe-accept-${e.key}'),
+                label: context.tr('maybe.accept'),
+                kind: FasanButtonKind.quiet,
+                onPressed: () {
+                  item.maybe.remove(e.key);
+                  if ((item.shares[e.key] ?? 0) <= 0) item.togglePerson(e.key);
+                  changed();
+                },
+              ),
+              FasanButton(
+                key: ValueKey('maybe-decline-${e.key}'),
+                label: context.tr('maybe.decline'),
+                kind: FasanButtonKind.quiet,
+                onPressed: () {
+                  item.maybe.remove(e.key);
+                  changed();
+                },
+              ),
+            ]),
+          ]),
+        ),
+      if (live && free.isNotEmpty)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: PopupMenuButton<int>(
+            key: const ValueKey('maybe-propose'),
+            tooltip: context.tr('maybe.propose'),
+            onSelected: (i) {
+              item.maybe[i] = me;
+              changed();
+            },
+            itemBuilder: (_) => [for (final i in free) PopupMenuItem(value: i, child: Text(bill.ps[i].name))],
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.help_outline_rounded, size: 20),
+                const SizedBox(width: FasanSpace.s),
+                Text(context.tr('maybe.propose')),
+              ]),
+            ),
+          ),
+        ),
+    ]);
+  }
+}
 
 /// „Fester Betrag“ (split kind „fest“, Nutzer 06.11.): people on the item can pay an exact amount; the rest of the item follows
 /// the shares of the others (SplitMath.splitFixed). Folded away until needed.
