@@ -1,6 +1,7 @@
 ## 0.1.96
 - Neu: „vllt.“-Vorschläge. Wer für jemand anderen einträgt, kann einen Posten nur vorschlagen: Posten-Blatt, „Für jemanden vorschlagen (vllt.)“. Der Vorschlag steht blass am Posten und zählt in keiner Summe.
 - Neu: Die vorgeschlagene Person bekommt eine Neuigkeit, die direkt zum Posten führt, und kann dort „Übernehmen“ oder „Ablehnen“. Erst mit „Übernehmen“ zählt der Posten. Die Neuigkeit lässt sich in den Einstellungen ausschalten.
+- Neu: Je Mitglied drei Stufen: „Trägt direkt ein“, „Fragt erst“ und „Nicht erlaubt“. Du stellst sie in der Mitgliederliste ein (Mitglied antippen, „Darf meine Anteile ändern“). Bei „Nicht erlaubt“ werden seine Einträge für dich verworfen.
 
 ## 0.1.95
 - Neu: Notizen am Posten: Im Posten-Blatt gibt es ein Feld „Notiz“. Sie steht unter dem Posten und die Suche findet sie.

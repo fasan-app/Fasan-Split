@@ -102,4 +102,34 @@ void main() {
     a.dispose();
     b.dispose();
   });
+
+  test('Vertrauensstufen: „nicht erlaubt“ verwirft Bens Eintrag für Anna, ohne ihn zu halten; „direkt“ nimmt ihn wieder an', () async {
+    final hub = MemoryRelayHub();
+    final (a, sa) = await phone(hub, 'Anna');
+    final (b, sb) = await phone(hub, 'Ben');
+    final ga = await a.createGroup('WG');
+    sa.upsert(Bill(id: 'p2', created: DateTime(2026, 11, 4), purpose: 'Pizza', total: 1000, people: [Person('Anna', 0), Person('Ben', 1)], items: [
+      BillItem(name: 'Pizza', amount: 1000, shares: {0: 1, 1: 1}),
+    ])
+      ..group = 'WG');
+    await invite(a, ga, b, 'Ben');
+    final ben = b.identity!.pub;
+    expect(a.trustOf(ben), TrustLevel.full);
+    a.setTrust(ben, TrustLevel.block);
+    expect(a.trustOf(ben), TrustLevel.block);
+    expect(a.distrusted, isNot(contains(ben)));
+    final billB = sb.bills.single;
+    billB.its.single.shares = {0: 3, 1: 1};
+    sb.upsert(billB);
+    await settle();
+    expect(sa.bills.single.its.single.shares, {0: 1, 1: 1}, reason: 'verworfen');
+    expect(a.held, isEmpty, reason: 'nicht einmal gehalten');
+    a.setTrust(ben, TrustLevel.confirm);
+    expect(a.blocked, isEmpty);
+    expect(a.distrusted, contains(ben));
+    a.setTrust(ben, TrustLevel.full);
+    expect(a.distrusted, isEmpty);
+    a.dispose();
+    b.dispose();
+  });
 }

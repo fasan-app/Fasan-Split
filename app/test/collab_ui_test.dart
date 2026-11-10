@@ -15,6 +15,7 @@ import 'package:fasan_split/ui/send_items.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   late MemoryRelayHub hub;
@@ -275,5 +276,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(b.its.first.maybe, isEmpty);
     expect(b.its.first.shares[2] ?? 0, 0);
+  });
+
+  testWidgets('Mitglied: Stufe „Nicht erlaubt“ im Menü wählen wirkt und steht in der Mitgliederliste', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    svc.dispose();
+    svc = CollabService(store: store, vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => MemoryRelay(hub)); // the level is stored in the preferences
+    await svc.init();
+    final g = await svc.createGroup('WG');
+    final other = 'ab' * 32;
+    tester.view.physicalSize = const Size(1080, 2400);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(Builder(builder: (c) => Scaffold(body: Center(child: TextButton(onPressed: () => memberActions(c, g, other), child: const Text('auf')))))));
+    await tester.tap(find.text('auf'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('member-trust')));
+    await tester.pumpAndSettle();
+    expect(find.text('Trägt direkt ein'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('trust-block')));
+    await tester.pumpAndSettle();
+    expect(svc.trustOf(other), TrustLevel.block);
+    await tester.tap(find.text('auf'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nicht erlaubt'), findsOneWidget, reason: 'die gewählte Stufe steht im Menü');
   });
 }

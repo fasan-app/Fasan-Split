@@ -55,6 +55,9 @@ class CollabGroup {
 }
 
 /// A change by someone else that concerns me and waits for my confirmation (trust settings).
+/// How far another member may enter things that concern me (stand-in levels, Nutzer 09.11.).
+enum TrustLevel { full, confirm, block }
+
 class HeldChange {
   HeldChange(this.group, this.docId, this.entry);
   final CollabGroup group;
@@ -829,6 +832,22 @@ class CollabService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Members who may not enter anything about me at all (level „nein“ of the stand-in levels, Nutzer 09.11.): their changes
+  /// about my person are dropped on this phone. Local, like the held changes. Wins over [confirmAll] and [distrusted].
+  Set<String> get blocked => {...?(_trust['block'] as List?)?.cast<String>()};
+
+  /// full = their entries about me apply at once; confirm = they wait for me; block = they are dropped.
+  TrustLevel trustOf(String pub) => blocked.contains(pub) ? TrustLevel.block : (distrusted.contains(pub) ? TrustLevel.confirm : TrustLevel.full);
+  void setTrust(String pub, TrustLevel level) {
+    final d = distrusted, b = blocked;
+    d.remove(pub);
+    b.remove(pub);
+    if (level == TrustLevel.confirm) d.add(pub);
+    if (level == TrustLevel.block) b.add(pub);
+    prefs?.setString(_kTrust, jsonEncode({..._trust, 'people': d.toList(), 'block': b.toList()}));
+    notifyListeners();
+  }
+
   /// Changes held back for my confirmation.
   final List<HeldChange> held = [];
 
@@ -837,7 +856,7 @@ class CollabService extends ChangeNotifier {
     if (docId.startsWith('bill:') && !lockAllows(g.session.doc(docId), e.key, e.author, adminPub: g.secret.adminPub)) return false;
     final me = identity;
     if (me == null || e.author == me.pub || !docId.startsWith('bill:')) return true;
-    if (!confirmAll && !distrusted.contains(e.author)) return true;
+    if (!confirmAll && !distrusted.contains(e.author) && !blocked.contains(e.author)) return true;
     // which persons of this bill are me: my name or names linked to my key
     final names = {store.me.trim().toLowerCase(), ...g.session.personsOf(me.pub).map((n) => n.toLowerCase())}..remove('');
     final doc = g.session.doc(docId);
@@ -848,6 +867,7 @@ class CollabService extends ChangeNotifier {
     if (mine.isEmpty) return true;
     final concerns = e.key == 'meta/payer' || mine.any((u) => e.key == 'p/$u' || ((e.key.startsWith('s/') || e.key.startsWith('f/')) && e.key.endsWith('/$u')));
     if (!concerns) return true;
+    if (blocked.contains(e.author)) return false; // level „nein“: dropped, not even held
     if (!held.any((h) => h.docId == docId && h.entry.key == e.key && h.entry.ts == e.ts && h.entry.author == e.author)) {
       held.add(HeldChange(g, docId, e));
       scheduleMicrotask(notifyListeners);

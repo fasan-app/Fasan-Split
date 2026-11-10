@@ -566,6 +566,7 @@ class MembersScreen extends StatelessWidget {
                   k == admin ? t.founder : (group.session.admins.contains(k) ? t.admin : k.substring(0, 12)),
                   if (group.session.personsOf(k) case final ps when ps.isNotEmpty) t.linkedTo(ps.join(', ')),
                   if (s.distrusted.contains(k)) t.confirmsAboutMe,
+                  if (s.blocked.contains(k)) trLang(t.de ? 'de' : 'en', 'trust.blockShort'),
                 ].join(' · ')),
                 trailing: k == me ? null : const Icon(Icons.more_vert_rounded),
                 onTap: k == me && !group.isAdmin ? null : () => memberActions(context, group, k),
@@ -1198,7 +1199,7 @@ class CollabGroupPanel extends StatelessWidget {
 Future<void> memberActions(BuildContext context, CollabGroup g, String pub) async {
   final t = S.of(context), s = CollabScope.read(context);
   final me = s.identity?.pub, isFounder = pub == g.secret.adminPub, isAdm = g.session.admins.contains(pub);
-  final trusted = !s.distrusted.contains(pub);
+  final trustLevel = s.trustOf(pub), de = S.of(context).de;
   final choice = await showModalBottomSheet<String>(
     context: context,
     builder: (ctx) => SafeArea(
@@ -1208,12 +1209,12 @@ Future<void> memberActions(BuildContext context, CollabGroup g, String pub) asyn
         if (g.isAdmin && !isFounder && pub != me)
           ListTile(leading: Icon(isAdm ? Icons.remove_moderator_outlined : Icons.add_moderator_outlined), title: Text(isAdm ? t.takeAdmin : t.giveAdmin), onTap: () => Navigator.pop(ctx, 'admin')),
         if (pub != me)
-          SwitchListTile(
-            secondary: const Icon(Icons.verified_user_outlined),
+          ListTile(
+            key: const ValueKey('member-trust'),
+            leading: const Icon(Icons.verified_user_outlined),
             title: Text(t.trustAboutMe),
-            subtitle: Text(t.trustAboutMeSub),
-            value: trusted,
-            onChanged: (v) => Navigator.pop(ctx, v ? 'trust' : 'distrust'),
+            subtitle: Text(trLang(de ? 'de' : 'en', 'trust.${trustLevel.name}')),
+            onTap: () => Navigator.pop(ctx, 'level'),
           ),
         if (g.isAdmin && !isFounder && pub != me)
           ListTile(leading: Icon(Icons.person_remove_outlined, color: Colors.red.shade700), title: Text(t.removeMember), subtitle: Text(t.removeMemberSub), onTap: () => Navigator.pop(ctx, 'remove')),
@@ -1226,8 +1227,27 @@ Future<void> memberActions(BuildContext context, CollabGroup g, String pub) asyn
       await pickPersonFor(context, g, pub);
     case 'admin':
       s.setAdmin(g, pub, !isAdm);
-    case 'trust' || 'distrust':
-      s.setTrusted(pub, choice == 'trust');
+    case 'level':
+      final pick = await showModalBottomSheet<TrustLevel>(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: RadioGroup<TrustLevel>(
+            groupValue: trustLevel,
+            onChanged: (v) => Navigator.pop(ctx, v),
+            child: ListView(shrinkWrap: true, children: [
+              ListTile(title: Text(t.trustAboutMe, style: Theme.of(ctx).textTheme.titleMedium), subtitle: Text(t.trustAboutMeSub)),
+              for (final l in TrustLevel.values)
+                RadioListTile<TrustLevel>(
+                  key: ValueKey('trust-${l.name}'),
+                  value: l,
+                  title: Text(trLang(de ? 'de' : 'en', 'trust.${l.name}')),
+                  subtitle: Text(trLang(de ? 'de' : 'en', 'trust.${l.name}Sub')),
+                ),
+            ]),
+          ),
+        ),
+      );
+      if (pick != null) s.setTrust(pub, pick);
     case 'remove':
       if (await confirmDialog(context, t.removeMember, '${g.session.nameOf(pub)}. ${t.removeMemberSub}', t.removeMember)) {
         await s.removeMember(g, pub);
