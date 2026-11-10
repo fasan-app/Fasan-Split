@@ -57,23 +57,23 @@ abstract final class PhotoSync {
   static PhotoRef refOf(Uint8List bytes) => PhotoRef(hashOf(bytes), (bytes.length + pieceBytes - 1) ~/ pieceBytes, bytes.length);
 
   /// The signed, encrypted events for [bytes]. Throws if the photo is too large for [maxPieces].
-  static List<NostrEvent> events(KeyPair me, GroupSecret s, Uint8List bytes) {
+  static List<NostrEvent> events(KeyPair me, GroupSecret s, Uint8List bytes, {Uint8List? key}) {
     final ref = refOf(bytes);
     if (ref.pieces > maxPieces) throw ArgumentError('photo too large for the relays: ${bytes.length} bytes');
     return [
       for (var i = 0; i < ref.pieces; i++)
         NostrEvent.create(me, kind: kindData, tags: [['d', dOf(s, ref.hash, i)], ['t', tagOf(s, ref.hash)]], content: aeadSealBytes(
           Uint8List.sublistView(bytes, i * pieceBytes, (i + 1) * pieceBytes > bytes.length ? bytes.length : (i + 1) * pieceBytes),
-          s.key,
+          key ?? s.key, // a hidden bill's own key (Sichtbarkeit je Rechnung), else the group key
           dOf(s, ref.hash, i),
         )),
     ];
   }
 
   /// Sends all pieces; true if the relay took every one (a refused piece is sent again by the caller later).
-  static Future<bool> send(Relay relay, KeyPair me, GroupSecret s, Uint8List bytes, {Duration pace = const Duration(milliseconds: 150)}) async {
+  static Future<bool> send(Relay relay, KeyPair me, GroupSecret s, Uint8List bytes, {Duration pace = const Duration(milliseconds: 150), Uint8List? key}) async {
     var all = true;
-    for (final (i, e) in events(me, s, bytes).indexed) {
+    for (final (i, e) in events(me, s, bytes, key: key).indexed) {
       // public relays limit bursts (rate-limited); a short pause between pieces (same reason as GroupSession.publishPace)
       if (i > 0 && pace > Duration.zero) await Future<void>.delayed(pace);
       if (!await relay.publish(e)) all = false;
@@ -84,7 +84,7 @@ abstract final class PhotoSync {
   /// Fetches and checks a photo; null if it did not complete in [timeout] or the pieces do not give the named hash.
   /// Only pieces from [authors] count (group members), so a stranger cannot slip in a wrong picture under a known hash
   /// (it would also fail the hash check).
-  static Future<Uint8List?> fetch(Relay relay, GroupSecret s, PhotoRef ref, {Set<String>? authors, Duration timeout = const Duration(seconds: 25)}) async {
+  static Future<Uint8List?> fetch(Relay relay, GroupSecret s, PhotoRef ref, {Set<String>? authors, Duration timeout = const Duration(seconds: 25), Uint8List? key}) async {
     final parts = <int, Uint8List>{};
     final done = Completer<Uint8List?>();
     late StreamSubscription<NostrEvent> sub;
@@ -96,7 +96,7 @@ abstract final class PhotoSync {
       final i = int.tryParse(d.substring(prefix.length));
       if (i == null || i < 0 || i >= ref.pieces || parts.containsKey(i)) return;
       try {
-        parts[i] = aeadOpenBytes(e.content, s.key, d);
+        parts[i] = aeadOpenBytes(e.content, key ?? s.key, d);
       } catch (_) {
         return; // not for this key or damaged
       }

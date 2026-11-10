@@ -49,6 +49,7 @@ abstract final class BillSync {
     set('meta/thumb', b.thumb);
     set('meta/refund', b.refund);
     set('meta/lock', b.lockBy);
+    if (b.hidden) set('meta/hidden', true);
     set('meta/category', b.category); // shared like the other metadata (04.11.)
     set('meta/currency', b.currency);
     set('meta/rate', b.rate);
@@ -201,6 +202,7 @@ abstract final class BillSync {
     b.refund = doc.get('meta/refund') == true;
     b.category = doc.get('meta/category') as String?;
     b.lockBy = doc.get('meta/lock') as String?;
+    if (doc.get('meta/hidden') == true) b.hidden = true;
     b.currency = doc.get('meta/currency') as String?;
     b.rate = (doc.get('meta/rate') as num?)?.toDouble();
     b.rateDate = switch (doc.get('meta/rateDate')) { final num t => DateTime.fromMillisecondsSinceEpoch(t.toInt()), _ => null };

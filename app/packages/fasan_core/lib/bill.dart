@@ -338,6 +338,7 @@ class Bill {
     this.order,
     this.category,
     this.lockBy,
+    this.hidden = false,
     this.currency,
     this.rate,
     this.rateDate,
@@ -432,6 +433,10 @@ class Bill {
 
   /// Padlock on the whole bill (Nutzer 07.11.): public key of the person who locked it; null = open. Others cannot change it, notes stay open.
   String? lockBy;
+
+  /// Only the people on the bill (and the group admin) can read it: the bill has its own key (docs/KONZEPT-SICHTBARKEIT.md).
+  /// Set once; it stays on for the life of the bill (a key that was given out cannot be taken back).
+  bool hidden;
 
   /// Currency of the receipt (ISO code); null = the home currency (Einstellungen, default EUR). Amounts of the bill stay in
   /// this currency; [rate] (home units per 1 unit of it) turns them into the home currency for balances across bills.
@@ -711,6 +716,7 @@ class Bill {
         if (order != null) 'order': order,
         if (category != null) 'category': category,
         if (lockBy != null) 'lockBy': lockBy,
+        if (hidden) 'hidden': true,
         if (currency != null) 'currency': currency,
         if (rate != null) 'rate': rate,
         if (rateDate != null) 'rateDate': rateDate!.toIso8601String(),
@@ -749,6 +755,7 @@ class Bill {
         order: (j['order'] as num?)?.toDouble(),
         category: j['category'] as String?,
         lockBy: j['lockBy'] as String?,
+        hidden: j['hidden'] == true,
         currency: j['currency'] as String?,
         rate: (j['rate'] as num?)?.toDouble(),
         rateDate: DateTime.tryParse(j['rateDate'] as String? ?? ''),

@@ -20,12 +20,17 @@ dynamic _groupOf(BuildContext context, Bill b) {
 }
 
 /// Whether [b] can be sent to a chat at all (it belongs to a live group).
-bool canSendItems(BuildContext context, Bill b) => _groupOf(context, b) != null;
+/// A hidden bill never goes into the chat: the card would be readable for the whole group (Sichtbarkeit je Rechnung).
+bool canSendItems(BuildContext context, Bill b) => !b.hidden && _groupOf(context, b) != null;
 
 /// Asks which items of [bill] to send ([preselected]: positions in `bill.its`), then sends one chat card. Returns true when sent.
 Future<bool> sendItemsFlow(BuildContext context, Bill bill, {Set<int> preselected = const {}}) async {
   final lang = context.langCode;
   final g = _groupOf(context, bill);
+  if (bill.hidden) {
+    showNote(context, trLang(lang, 'vis.noSend'));
+    return false;
+  }
   if (g == null) {
     showNote(context, trLang(lang, 'send.noGroup'));
     return false;

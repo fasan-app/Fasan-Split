@@ -20,6 +20,7 @@ import 'assign.dart';
 import 'history.dart';
 import 'category_ui.dart';
 import 'change_badge.dart';
+import 'collab_ui.dart' show confirmDialog;
 import 'common.dart';
 import 'hints.dart';
 import 'currency_ui.dart';
@@ -254,6 +255,17 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   // ---- menu and check ----
 
+  /// Asks, then makes the bill readable for the people on it only. Copies others already hold stay with them – the question says so.
+  Future<void> _hideFlow(Bill b) async {
+    final collab = CollabScope.read(context);
+    final names = collab.hiddenReaderNames(b).join(', ');
+    final ok = await confirmDialog(context, context.tr('vis.title'), context.tr('vis.text', [names]), context.tr('vis.action'));
+    if (!ok || !mounted) return;
+    final done = collab.hideBill(b);
+    if (mounted) showNote(context, context.tr(done ? 'vis.done' : 'vis.failed'));
+    setState(() {});
+  }
+
   void _evenly() {
     final before = [for (final it in b.its) Map<int, double>.of(it.shares)];
     final beforeUnit = [for (final it in b.its) it.perUnit];
@@ -408,6 +420,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
               case 'lock':
                 CollabScope.of(context).toggleBillLock(b);
                 setState(() {});
+              case 'visibility':
+                _hideFlow(b);
             }
           },
           // every entry is always there; what cannot work right now is shown disabled with the reason (Prüfliste G1: Apple
@@ -429,8 +443,18 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 child: hasSnippets ? Text(context.tr('bill.snippets')) : ListTile(title: Text(context.tr('bill.snippets')), subtitle: Text(noPhoto), enabled: false),
               ),
               PopupMenuItem(value: 'receipt', enabled: hasScan, child: row(Icons.receipt_long_outlined, context.tr('bill.assignOnReceipt'), hasScan ? null : noPhoto)),
-              PopupMenuItem(value: 'send', enabled: b.its.isNotEmpty && canSendItems(context, b), child: row(Icons.forward_to_inbox_outlined, context.tr('send.item'), canSendItems(context, b) ? null : context.tr('send.noGroup'))),
+              PopupMenuItem(value: 'send', enabled: b.its.isNotEmpty && canSendItems(context, b), child: row(Icons.forward_to_inbox_outlined, context.tr('send.item'), canSendItems(context, b) ? null : context.tr(b.hidden ? 'vis.noSend' : 'send.noGroup'))),
               PopupMenuItem(value: 'history', child: row(Icons.history_rounded, context.tr('history.title'), null)),
+              // who can read the bill (Nutzer 09.11. Sichtbarkeit): everybody in the group, or only the people on it
+              PopupMenuItem(
+                value: 'visibility',
+                enabled: collab.canHide(b),
+                child: row(
+                  b.hidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  context.tr(b.hidden ? 'vis.menuHidden' : 'vis.menuAll'),
+                  b.hidden ? context.tr('vis.menuHiddenWhy') : (collab.canHide(b) ? null : context.tr('lock.needGroup')),
+                ),
+              ),
               // padlock on the whole bill (Nutzer 07.11.); disabled with the reason when it cannot work
               PopupMenuItem(
                 value: 'lock',

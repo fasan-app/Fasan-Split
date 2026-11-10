@@ -24,6 +24,8 @@ import 'package:fasan_split/perf/perf_governor.dart';
 import 'package:fasan_split/state/snippets.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/assign.dart';
+import 'package:fasan_split/l10n/tr.dart';
+import 'package:fasan_split/ui/collab_ui.dart' show confirmDialog;
 import 'package:fasan_split/ui/flow.dart';
 import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_split/ui/join_screen.dart';
@@ -146,6 +148,13 @@ void main() {
     'b04-posten-blatt': (b) => ReviewScreen(bill: b),
     'b04v-posten-vllt': (b) => ReviewScreen(bill: b),
     'b04w-liste-vllt': (b) => ReviewScreen(bill: b),
+    // visibility question (Sichtbarkeit je Rechnung): the dialog over the bill
+    'b24-sichtbarkeit': (b) => Builder(builder: (c) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (c.mounted) confirmDialog(c, c.tr('vis.title'), c.tr('vis.text', ['Lena, Pia']), c.tr('vis.action'));
+          });
+          return ReviewScreen(bill: b);
+        }),
     'b05-posten-blatt-fest': (b) => ReviewScreen(bill: b),
     // pieces (07.11.): item sheet with the piece counter (Pizza: quantity 2, Pia off, Lena on = one of two pieces); same steps in the browser
     'b20-stueck-posten': (b) => ReviewScreen(bill: b),

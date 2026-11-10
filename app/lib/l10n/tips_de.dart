@@ -12,6 +12,7 @@ const Map<String, String> tipsDe = {
   'tip.invite': 'In einer Gruppe lädst du mit dem Personen-Symbol oben Freunde ein. Sie brauchen dafür nur den Link.',
   'tip.everyone': 'In einer Gruppe kann jeder für jeden eintragen. Wer was eingetragen hat, steht im Verlauf.',
   'tip.lock': 'Das Schloss sperrt einen Posten (im Posten) oder eine ganze Rechnung (im Menü ⋮). Dann ändern nur du und der Gruppen-Admin.',
+  'tip.hide': 'Nicht jeder soll einen Bon sehen? Im Menü (⋮) des Bons stellst du „Nur Beteiligte“ ein. Das lässt sich nicht zurücknehmen.',
   'tip.give': 'Geld geliehen oder zwischendurch gezahlt? Im Tab „Abrechnung“ gibt es „Zahlung oder Leihgabe eintragen“.',
   'tip.colors': 'Der Rahmen zeigt, wie viel zugeordnet ist: rot offen, gelb teilweise, grün vollständig. „Nur offene Posten“ zeigt nur, was noch fehlt.',
   'tip.people': 'Im Tab „Abrechnung“ siehst du schon zwischendurch, wer wem was schuldet.',

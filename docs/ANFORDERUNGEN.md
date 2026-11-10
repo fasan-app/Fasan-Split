@@ -210,7 +210,7 @@ Wünsche:
 
 16. Stellvertreter in Stufen, je Person wählbar, Rechte innerhalb der Gruppe verteilbar: (a) trägt mich komplett ein, als wäre es offen (Vertrauenspersonen, Paare); (b) schlägt mich nur vor: Name steht im Posten, anders markiert, bis ich zustimme und bestätige.
 17. „Hatte vielleicht“: Eintrag „vllt Name“ im Posten, Posten bleibt offen bis die Person bestätigt; sie bekommt eine Benachrichtigung. Mehrere Kandidaten („Mama oder Papa“) sind ihm zu kompliziert – nur eine Person je Vorschlag.
-18. Datenschutz in der Gruppe: wer später eingeladen wird, sieht nicht automatisch alte Rechnungen/Posten; Optionen: unsichtbar, Posten geschwärzt oder nur Beträge. Rechnungen, bei denen nicht alle dabei waren, auf Wunsch nur für Beteiligte sichtbar. Die Gruppe muss nicht alles sehen.
+18. Datenschutz in der Gruppe: wer später eingeladen wird, sieht nicht automatisch alte Rechnungen/Posten; Optionen: unsichtbar, Posten geschwärzt oder nur Beträge. Rechnungen, bei denen nicht alle dabei waren, auf Wunsch nur für Beteiligte sichtbar. Die Gruppe muss nicht alles sehen. **Stand 10.11.: Stufe „Beteiligte“ gebaut (0.1.99, Schlüssel je Rechnung); „nur Beträge“, Standardstufe, Einladungsfrage offen.**
 19. Benachrichtigungen: Nutzer hält sie für essenziell, standardmäßig an, in den Einstellungen abschaltbar; Frage nach Community-Sicht.
 20. Posten verschicken: Auswahl in der Rechnung, über den Filter oder im geöffneten Posten. Stand 10.11.: umgesetzt (0.1.94).
 21. Frage: Hashtag # einführen, oder ist alles (Personen, Notizen) über die Suche auffindbar?

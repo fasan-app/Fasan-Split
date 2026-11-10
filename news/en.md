@@ -1,3 +1,7 @@
+## 0.1.99
+- New: bill for people on it only. In the ⋮ menu of a bill: “People on it only”. Then only you and the people on the bill can read it; the others in the group no longer get it. Copies somebody already holds stay there. It cannot be undone.
+- Better: a bill for people on it only cannot be sent to the chat, so nothing slips out.
+
 ## 0.1.98
 - Better: No more swiping on the friends either. “Remove from suggestions” is in the menu (long press the card).
 - New: After you share for the first time, the app asks once whether your device may show notifications (new messages, bills and suggestions, while the app is running). You can turn it off any time in the settings.

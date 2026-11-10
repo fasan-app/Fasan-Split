@@ -8,6 +8,7 @@ import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/state/store.dart';
+import 'package:fasan_split/ui/bill_screen.dart';
 import 'package:fasan_split/ui/collab_ui.dart';
 import 'package:fasan_split/ui/item_sheet.dart';
 import 'package:fasan_split/ui/my_balance.dart';
@@ -230,6 +231,38 @@ void main() {
     expect(find.textContaining('Pizza'), findsWidgets);
     expect(find.textContaining('Wein'), findsWidgets);
     expect(find.text('Salat'), findsNothing, reason: 'nicht geschickt');
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('Sichtbarkeit: ⋮ → „Nur für Beteiligte“ fragt mit Namen, verbirgt den Bon, sperrt „Posten schicken“', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    store.me = 'Pia';
+    await svc.setName('Pia');
+    await svc.createGroup('Hütte');
+    final bill = Bill(id: 'v1', created: DateTime(2026, 11, 10), purpose: 'Bar Beispiel', total: 3000, group: 'Hütte', people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Cocktail', amount: 3000, shares: {0: 1, 1: 1}),
+    ]);
+    store.upsert(bill);
+    await tester.pumpWidget(host(ReviewScreen(bill: bill)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.more_vert_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Sichtbar für alle in der Gruppe'), findsOneWidget);
+    await tester.tap(find.text('Sichtbar für alle in der Gruppe'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nur für Beteiligte?'), findsOneWidget);
+    expect(find.textContaining('Pia'), findsWidgets, reason: 'die Frage nennt, wer sie lesen kann');
+    expect(find.textContaining('Das lässt sich nicht zurücknehmen'), findsOneWidget);
+    await tester.tap(find.text('Nur Beteiligte'));
+    await tester.pumpAndSettle();
+    expect(bill.hidden, isTrue);
+    expect(find.text('Jetzt sehen nur die Beteiligten diese Rechnung.'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.more_vert_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Nur für Beteiligte sichtbar'), findsOneWidget);
+    expect(find.text('Posten einer verborgenen Rechnung lassen sich nicht in den Chat schicken.'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
   });
 

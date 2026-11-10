@@ -11,6 +11,7 @@ const Map<String, String> tipsEn = {
   'tip.invite': 'In a group, invite friends with the person icon at the top. They only need the link.',
   'tip.everyone': 'In a group, anyone can enter for anyone. The history shows who entered what.',
   'tip.lock': 'The padlock locks an item (in the item) or a whole bill (in the menu ⋮). Then only you and the group admin can change it.',
+  'tip.hide': 'Not everyone should see a bill? In the bill’s menu (⋮) choose “People on it only”. This cannot be undone.',
   'tip.give': 'Lent money or paid something in between? In the “Settlement” tab you find “Enter a payment or loan”.',
   'tip.colors': 'The frame shows how much is assigned: red open, amber partial, green complete. “Only open items” shows only what is still missing.',
   'tip.people': 'The “Settlement” tab already shows who owes whom while you are still entering.',

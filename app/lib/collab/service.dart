@@ -1310,6 +1310,12 @@ class CollabService extends ChangeNotifier {
       for (final b in store.bills) {
         // trashed bills go out too: the others move them to their trash (04.11.: they stayed there)
         if (b.group != g.localName || b.read != BillRead.ok) continue;
+        // a hidden bill is never written without its own key (it would go out under the group key and everybody could read it);
+        // with the key, newly eligible readers (a person added to the bill) get it too
+        if (b.hidden) {
+          if (!g.session.hasBillKey(b.id)) continue;
+          g.session.shareBillKey(b.id, billReaders(g, b));
+        }
         final id = GroupSession.bill(b.id);
         final doc = g.session.doc(id);
         final me = identity?.pub;
@@ -1324,6 +1330,45 @@ class CollabService extends ChangeNotifier {
         if (blocked) BillSync.read(doc, id: b.id, into: b);
       }
     }
+  }
+
+  // ---- hidden bills (Sichtbarkeit je Rechnung, docs/KONZEPT-SICHTBARKEIT.md) ----
+
+  /// Members who may read a hidden bill: me and every member whose name or linked person is on the bill. Admins get no
+  /// automatic right: everybody who joined by an open link is an admin (setAdmin in the join path), so „all admins“ would
+  /// be „everybody“ and the hiding would do nothing.
+  Set<String> billReaders(CollabGroup g, Bill b) {
+    final s = g.session;
+    final names = {for (final p in b.ps) p.name.trim().toLowerCase()}..remove('');
+    return {
+      s.me.pub,
+      for (final pub in s.memberKeys)
+        if ({s.nameOf(pub), ...s.personsOf(pub)}.any((n) => names.contains(n.trim().toLowerCase()))) pub,
+    };
+  }
+
+  /// Names of the people who can read [b] (me first), for the question before hiding it.
+  List<String> hiddenReaderNames(Bill b) {
+    final g = b.group == null ? null : groupByLocalName(b.group!);
+    if (g == null) return const [];
+    final me = g.session.me.pub;
+    final readers = billReaders(g, b);
+    return [for (final pub in [me, ...readers.where((k) => k != me)]) g.session.nameOf(pub)];
+  }
+
+  /// Can [b] be made readable for its people only: in a live group, not yet hidden, and I hold the group's identity.
+  bool canHide(Bill b) => identity != null && !b.hidden && b.group != null && groupByLocalName(b.group!) != null;
+
+  /// Makes [b] a hidden bill: own key for it, given to [billReaders]; from now on its document and photos are encrypted with
+  /// it. What other members already hold from before stays with them (the dialog says so). False if it cannot be done.
+  bool hideBill(Bill b) {
+    if (!canHide(b)) return false;
+    final g = groupByLocalName(b.group!)!;
+    g.session.shareBillKey(b.id, billReaders(g, b));
+    b.hidden = true;
+    store.upsert(b);
+    notifyListeners();
+    return true;
   }
 
   // ---- receipt photos for the group (Beschluss 06.11., photo_sync.dart) ----
@@ -1397,13 +1442,17 @@ class CollabService extends ChangeNotifier {
         for (final r in [b.photoRef, b.origRef]) {
           final ref = PhotoRef.fromJson(r);
           final file = ref == null ? null : files[ref.hash];
-          final key = '${g.secret.tag}:${ref?.hash}';
+          // a hidden bill's photo goes out under the bill's own key (again, even if it was sent before it was hidden: the new
+          // event replaces the old one); without the key nothing is sent
+          if (b.hidden && !g.session.hasBillKey(b.id)) continue;
+          final billKey = b.hidden ? g.session.keyFor(GroupSession.bill(b.id)) : null;
+          final key = '${g.secret.tag}:${ref?.hash}${b.hidden ? ':h' : ''}';
           if (ref == null || file == null || sent.contains(key) || !_photoSending.add(key)) continue;
           unawaited(() async {
             try {
               final bytes = await readImage(file);
               if (bytes == null || PhotoSync.hashOf(bytes) != ref.hash) return;
-              if (await PhotoSync.send(g.session.relay, g.session.me, g.secret, bytes)) {
+              if (await PhotoSync.send(g.session.relay, g.session.me, g.secret, bytes, key: billKey)) {
                 prefs?.setStringList(_kPhotoSent, [...{...?prefs?.getStringList(_kPhotoSent), key}]);
               }
             } catch (_) {
@@ -1444,7 +1493,7 @@ class CollabService extends ChangeNotifier {
         final b = store.bills.where((x) => x.id == billId).firstOrNull;
         final ref = PhotoRef.fromJson(orig ? b?.origRef : b?.photoRef);
         if (g == null || b == null || ref == null || imageExists(orig ? b.originalPath : b.imagePath)) continue;
-        final bytes = await PhotoSync.fetch(g.session.relay, g.secret, ref, authors: g.session.memberKeys);
+        final bytes = await PhotoSync.fetch(g.session.relay, g.secret, ref, authors: g.session.memberKeys, key: b.hidden ? g.session.keyFor(GroupSession.bill(b.id)) : null);
         if (bytes == null) {
           _photoFailed[ref.hash] = DateTime.now();
           continue;
@@ -1848,6 +1897,7 @@ class CollabService extends ChangeNotifier {
         g.session.doc(id).merge(LwwDocDecode.decode(raw));
       } catch (_) {}
     }
+    g.session.absorbKeys(); // keys of hidden bills
   }
 
   bool _disposed = false;

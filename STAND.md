@@ -4,6 +4,14 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 10.11. Paket G: Rechnung nur für Beteiligte (0.1.99, lokal fertig, noch nicht gepusht)
+- Gebaut: Schlüssel je Rechnung K_b (`group.dart`: `keysDoc`, `shareBillKey`, `absorbKeys`, `keyFor`; Fotos unter K_b), ⋮-Menü „Sichtbar für alle in der Gruppe“ → Frage mit Namen → „Nur Beteiligte“ (`hideBill`, nicht zurücknehmbar, Kopien bleiben), „Posten schicken“ für verborgene Bons gesperrt.
+- Leserkreis = ich + Mitglieder, deren Name oder verknüpfte Person im Bon steht. **Admins zählen nicht automatisch**: wer per offenem Link beitritt, wird Admin (`setAdmin` im Beitrittsweg), „alle Admins“ wäre „alle“.
+- Fehler gefunden und behoben: ein Bon-Ereignis, das vor dem Schlüssel ankam, wurde verworfen (AEAD-Fehler ist eine `FormatException`, der Zwischenspeicher lag nur im anderen catch). Test `hidden_bill_test` (drei Telefone, Karl liest nichts, dann Karl auf den Bon: bekommt Schlüssel und Bon) fing das.
+- Tests: hidden_bill_test, collab_ui_test (Menü, Frage, Sperre), screens_test `b24-sichtbarkeit` (Bildschirmfoto angesehen, hell/dunkel/quer erzeugt).
+- Nicht geprüft: echtes S23; Browser-Ende-zu-Ende mit verborgenem Bon (kein Schritt in tool/e2e); Gerätewechsel mit Sicherungsdatei (Schlüssel kommen aus dem keys-Dokument per NIP-44 neu, nicht getestet). Metadaten (Kennung, Zeitpunkte, Größe) bleiben für alle Mitglieder sichtbar.
+- Später: Stufe „nur Beträge“, Standardstufe je Gruppe, Frage „Alte Rechnungen zeigen?“ beim Einladen.
+
 ## 10.11. 03:00 Web 0.1.96 live; 0.1.97 gepusht (CI läuft); 0.1.98 lokal fertig
 - Live in 0.1.96: vllt-Vorschläge, drei Stufen je Mitglied (direkt / fragt erst / nicht erlaubt), @Name in Posten-Notizen.
 - 0.1.97 (gepusht 85660d2) und danach lokal: Freunde-Karte ohne Wischen (swipe.dart entfernt); „Fragt erst“ macht neue Anteile für mich zu vllt-Vorschlägen (core_admin_test), Wischgesten an Posten im Bon entfernt (Zwillinge im Posten-Blatt), veralteter Wisch-Tipp korrigiert, Bildschirmschritte `b04v`/`b04w` (Blatt und Liste mit Vorschlag; angesehen, Layout in Ordnung; Namenszusatz „von ?“ entfernt).

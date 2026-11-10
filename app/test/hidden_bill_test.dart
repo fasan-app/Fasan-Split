@@ -1,0 +1,75 @@
+// SPDX-License-Identifier: MPL-2.0
+// Sichtbarkeit je Rechnung (Paket G): a hidden bill has its own key. Members on the bill read it, a member who is not on it
+// cannot, until they are added. Test relay only, invented names. MPL-2.0
+import 'package:fasan_split/collab/group.dart';
+import 'package:fasan_split/collab/keys.dart';
+import 'package:fasan_split/collab/nostr.dart';
+import 'package:fasan_split/collab/service.dart';
+import 'package:fasan_core/bill.dart';
+import 'package:fasan_split/state/store.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+Future<void> settle([int ms = 1200]) => Future<void>.delayed(Duration(milliseconds: ms));
+
+void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  test('Verborgener Bon: Beteiligte lesen ihn, ein Mitglied ohne Eintrag nicht – bis es auf den Bon kommt', () async {
+    final hub = MemoryRelayHub();
+    final storeA = BillStore.memory()..me = 'Pia';
+    final a = CollabService(store: storeA, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    final g = await a.createGroup('Stadt 26');
+    final linkB = g.invitations!.create().link;
+    final linkC = g.invitations!.create().link;
+    await settle(400);
+    final storeB = BillStore.memory()..me = 'Lena';
+    final b = CollabService(store: storeB, vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => MemoryRelay(hub));
+    await b.init();
+    await b.setName('Lena');
+    await b.join(linkB, 'Lena');
+    final storeC = BillStore.memory()..me = 'Karl';
+    final c = CollabService(store: storeC, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await c.init();
+    await c.setName('Karl');
+    await c.join(linkC, 'Karl');
+    await settle(9000);
+
+    final bill = Bill(id: 'h1', created: DateTime(2026, 11, 10), purpose: 'Bar Beispiel', total: 3000, people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Cocktail', amount: 3000, shares: {0: 1, 1: 1}),
+    ])
+      ..group = 'Stadt 26';
+    storeA.upsert(bill);
+    expect(a.hideBill(bill), isTrue);
+    expect(bill.hidden, isTrue);
+    await settle(3000);
+
+    expect(storeB.bills.where((x) => x.id == 'h1'), hasLength(1), reason: 'Lena steht auf dem Bon und liest ihn');
+    expect(storeB.bills.firstWhere((x) => x.id == 'h1').hidden, isTrue);
+    expect(storeC.bills.where((x) => x.id == 'h1'), isEmpty, reason: 'Karl ist nicht auf dem Bon: er bekommt keinen Schlüssel');
+    final gc = c.groups.values.single.session;
+    expect(gc.hasBillKey('h1'), isFalse);
+    expect(gc.doc(GroupSession.bill('h1')).keys('').isEmpty, isTrue, reason: 'der Inhalt blieb für Karl unlesbar');
+
+    // Lena changes something: it reaches Pia; Karl still sees nothing
+    final lb = storeB.bills.firstWhere((x) => x.id == 'h1');
+    lb.its.first.name = 'Cocktail mit Schirm';
+    storeB.upsert(lb);
+    await settle(2500);
+    expect(storeA.bills.firstWhere((x) => x.id == 'h1').its.first.name, 'Cocktail mit Schirm');
+    expect(storeC.bills.where((x) => x.id == 'h1'), isEmpty);
+
+    // Karl is put on the bill: he gets the key and the bill
+    bill.people!.add(Person('Karl', 2));
+    storeA.upsert(bill);
+    await settle(4000);
+    expect(gc.hasBillKey('h1'), isTrue);
+    expect(storeC.bills.where((x) => x.id == 'h1'), hasLength(1));
+    expect(storeC.bills.firstWhere((x) => x.id == 'h1').its.first.name, 'Cocktail mit Schirm');
+    a.dispose();
+    b.dispose();
+    c.dispose();
+  }, timeout: const Timeout(Duration(minutes: 2)));
+}

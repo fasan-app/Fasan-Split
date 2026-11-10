@@ -29,3 +29,11 @@ Datenschutz steht über allem (CLAUDE.md): „versteckt“ muss wirklich unlesba
 1. Standardstufe für neue Rechnungen in Gruppen: **Alle** (heutiges Verhalten).
 2. Beim Einladen: Frage „Alte Rechnungen zeigen?“ nur, wenn es Rechnungen gibt; Standard **ja** (heutiges Verhalten); „nein“ setzt alle bestehenden auf Beteiligte.
 3. Reihenfolge: erst Stufe **Beteiligte** (K_b), dann **nur Beträge**.
+
+## Gebaut (10.11., 0.1.99)
+- Stufe **Beteiligte** wie oben, mit zwei Abweichungen: (1) Berechtigt sind Ersteller + Mitglieder mit Namen/Verknüpfung im Bon, **keine** Admins pauschal
+  (Link-Beitretende sind Admins, sonst wirkungslos). (2) Verteilung über ein Dokument `keys` (`kb/<Rechnung>/<Empfänger>` = NIP-44 des Schlüssels), die
+  Rechnung selbst steht mit `meta/hidden`.
+- Ein Bon-Ereignis, das vor dem Schlüssel ankommt, wird zurückgestellt und nach Ankunft des Schlüssels gelesen.
+- Grenzen (ehrlich): Kopien, die jemand schon hatte, bleiben; nicht zurücknehmbar; Metadaten (Kennung, Zeitpunkte, Größe) sind für alle Mitglieder sichtbar.
+- Posten aus verborgenen Rechnungen lassen sich nicht in den Chat schicken (die Karte läge unter dem Gruppenschlüssel).

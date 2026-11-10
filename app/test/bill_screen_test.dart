@@ -367,7 +367,8 @@ void main() {
     await tester.tap(find.byTooltip('More'));
     await tester.pumpAndSettle();
     expect(find.text('Lock bill'), findsOneWidget);
-    expect(find.text('Only works in a shared group.'), findsOneWidget);
+    expect(find.text('Visible to everyone in the group'), findsOneWidget, reason: 'Sichtbarkeit: da, ohne Gruppe mit Grund');
+    expect(find.text('Only works in a shared group.'), findsNWidgets(2), reason: 'Sperre und Sichtbarkeit nennen denselben Grund');
     await tester.tapAt(const Offset(5, 5)); // closes the menu
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Pizza'));

@@ -1,3 +1,7 @@
+## 0.1.99
+- Neu: Rechnung nur für Beteiligte. Im Menü (⋮) eines Bons: „Nur Beteiligte“. Dann lesen sie nur du und die Personen auf dem Bon, die anderen in der Gruppe bekommen sie nicht mehr. Kopien, die jemand schon hat, bleiben dort. Zurücknehmen geht nicht.
+- Besser: Ein Bon, der nur für Beteiligte ist, lässt sich nicht in den Chat schicken, damit nichts nach außen rutscht.
+
 ## 0.1.98
 - Besser: Auch bei den Freunden gibt es kein Wischen mehr. „Aus Vorschlägen entfernen“ steht im Menü (Karte lang drücken).
 - Neu: Nach dem ersten Teilen fragt die App einmal, ob dein Gerät Benachrichtigungen zeigen darf (bei neuen Nachrichten, Bons und Vorschlägen, solange die App läuft). Abschalten geht jederzeit in den Einstellungen.

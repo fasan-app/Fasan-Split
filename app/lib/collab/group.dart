@@ -470,8 +470,8 @@ class GroupSession {
   /// Filter for entries of others in the bill documents (trust, CollabService). Null = take all.
   bool Function(String docId, Entry e)? acceptEntry;
 
-  /// Fixed document ids.
-  static const members = 'members', chat = 'chat', notes = 'notes';
+  /// Fixed document ids. [keysDoc] carries the keys of hidden bills (Sichtbarkeit je Rechnung, docs/KONZEPT-SICHTBARKEIT.md).
+  static const members = 'members', chat = 'chat', notes = 'notes', keysDoc = 'keys';
   static String bill(String id) => 'bill:$id';
 
   /// Every applied entry of a bill document (docId, replaced entry, new entry) – the service builds the change log from it.
@@ -484,6 +484,71 @@ class GroupSession {
       });
 
   Iterable<String> get docIds => _docs.keys;
+
+  // ---- keys of hidden bills (Sichtbarkeit je Rechnung, 10.11.) ----
+  //
+  // A bill that only its participants may read is encrypted with its own random key instead of the group key. The key is put into
+  // the [keysDoc] once per recipient, encrypted to the recipient's public key (NIP-44), so a member who was not named sees an
+  // opaque entry and cannot read the bill (the events still reach their phone: they only learn that a document exists, its size
+  // and who writes it, not its content). Honest limit: copies a member already holds from before stay with them.
+
+  final Map<String, Uint8List> _docKeys = {}; // doc id → key of a hidden bill
+  final Map<String, NostrEvent> _locked = {}; // 'doc id|author' → newest event that could not be read yet
+
+  /// The key a document is encrypted with: its own when it is a hidden bill, else the group key.
+  Uint8List keyFor(String id) => _docKeys[id] ?? secret.key;
+
+  /// Is [billId] a hidden bill whose key this phone holds?
+  bool hasBillKey(String billId) => _docKeys.containsKey(bill(billId));
+
+  void _setDocKey(String id, Uint8List key) {
+    final old = _docKeys[id];
+    if (old != null && toHex(old) == toHex(key)) return;
+    _docKeys[id] = key;
+    final again = [for (final e in _locked.entries) if (e.key.startsWith('$id|')) e.value];
+    _locked.removeWhere((k, _) => k.startsWith('$id|'));
+    for (final e in again) {
+      rejected--; // counted when it first failed
+      _onEvent(e);
+    }
+  }
+
+  /// Reads every key addressed to me from the keys document (also after a restart, when the document came back from the disk).
+  void absorbKeys() {
+    final kd = doc(keysDoc);
+    final mine = <String, Entry>{};
+    for (final e in kd.entries) {
+      if (e.value == null) continue;
+      final parts = e.key.split('/');
+      if (parts.length == 3 && parts[0] == 'kb' && parts[2] == me.pub) mine[e.key] = e;
+    }
+    for (final e in mine.values) {
+      try {
+        final hex = nip44Decrypt('${e.value}', nip44ConversationKey(me.priv, e.author));
+        _setDocKey(bill(e.key.split('/')[1]), fromHex(hex));
+      } catch (_) {/* not a valid key for me: ignore */}
+    }
+  }
+
+  /// Makes [billId] a hidden bill: its own key (kept if there is one), given to [recipients] and to me. The bill document is
+  /// published again, now under the new key.
+  void shareBillKey(String billId, Iterable<String> recipients) {
+    final id = bill(billId);
+    final key = _docKeys[id] ?? randomBytes(32);
+    final kd = doc(keysDoc);
+    var changed = !_docKeys.containsKey(id);
+    _docKeys[id] = key;
+    for (final pub in {me.pub, ...recipients}) {
+      final k = 'kb/$billId/$pub';
+      if (kd.get(k) != null) continue;
+      kd.set(k, nip44Encrypt(toHex(key), nip44ConversationKey(me.priv, pub)));
+      changed = true;
+    }
+    if (changed) {
+      touch(keysDoc);
+      touch(id);
+    }
+  }
 
   /// Public keys allowed to write: the admin and everyone in the members document.
   Set<String> get memberKeys => {secret.adminPub, ...doc(members).keys('m/').map((k) => k.substring(2))};
@@ -514,7 +579,7 @@ class GroupSession {
       return;
     }
     try {
-      final entries = LwwDoc.decode(aeadOpen(e.content, secret.key, d));
+      final entries = LwwDoc.decode(aeadOpen(e.content, keyFor(id), d));
       // the members document: only entries written by admins count (an admin's snapshot also carries the other admins'
       // entries); m/<pub> = member, l/admin = the founder's own person link (linkPerson)
       final adm = admins;
@@ -540,16 +605,21 @@ class GroupSession {
         accepted = self;
       }
       if (doc(id).merge(accepted) > 0 && !_changes.isClosed) _changes.add(id);
+      if (id == keysDoc) absorbKeys();
       if (isMembersDoc && _waiting.isNotEmpty) {
         final again = _waiting.toList();
         _waiting.clear();
         rejected -= again.length; // they were counted when they first arrived
         again.forEach(_onEvent);
       }
-    } on FormatException {
-      rejected++;
     } catch (_) {
+      // FormatException: sealed with another invitation's key or garbage; any other error: not readable either
       rejected++;
+      // a hidden bill whose key has not arrived yet (or was never meant for me): keep the newest one and read it when the key comes
+      if (id.startsWith('bill:') && !_docKeys.containsKey(id)) {
+        final k = '$id|${e.pubkey}', old = _locked[k];
+        if (old == null || e.createdAt >= old.createdAt) _locked[k] = e;
+      }
     }
   }
 
@@ -609,7 +679,7 @@ class GroupSession {
     final out = <BillSnapshot>[];
     for (final e in newest.values) {
       try {
-        final doc = LwwDoc(me.pub)..merge(LwwDoc.decode(aeadOpen(e.content, secret.key, d)));
+        final doc = LwwDoc(me.pub)..merge(LwwDoc.decode(aeadOpen(e.content, keyFor(bill(billId)), d)));
         out.add(BillSnapshot(author: e.pubkey, at: DateTime.fromMillisecondsSinceEpoch(e.createdAt * 1000), doc: doc));
       } catch (_) {/* not readable: skip */}
     }
@@ -628,7 +698,7 @@ class GroupSession {
       // for the next change – the other phones then showed an old state (Nutzer 04.11.)
       if (i > 0 && publishPace > Duration.zero) await Future<void>.delayed(publishPace);
       final d = _d(id);
-      final ev = NostrEvent.create(me, kind: kindData, tags: [['d', d], ['t', secret.tag]], content: aeadSeal(doc(id).encode(), secret.key, d));
+      final ev = NostrEvent.create(me, kind: kindData, tags: [['d', d], ['t', secret.tag]], content: aeadSeal(doc(id).encode(), keyFor(id), d));
       final ok = await relay.publish(ev);
       if (ok) {
         published++;
