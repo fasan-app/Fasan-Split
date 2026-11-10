@@ -311,7 +311,7 @@ class GroupItemRow extends StatelessWidget {
   /// The same tile as in the bill, with the receipt snippet (Nutzer 09.11. 18:44), so an item looks the same wherever it is.
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.only(bottom: kRowGap),
         child: ItemTile(bill: bill, item: item, active: null, showSnippet: true, onTap: onTap ?? () {}, onLongPress: onLongPress ?? onTap ?? () {}),
       );
 }
@@ -327,7 +327,7 @@ class GroupRestRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = FasanLook.of(context), r = BorderRadius.circular(l.rInner);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: kRowGap),
       child: InkWell(
         borderRadius: r,
         onTap: onTap,
@@ -389,15 +389,9 @@ class GroupBillHeading extends StatelessWidget {
     final day = '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.';
     return InkWell(
       onTap: onTap,
-      child: SizedBox(
-        height: 44,
-        child: Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text('${bill.purpose.isEmpty ? S.of(context).newBill : bill.purpose} · $day', maxLines: 1, overflow: TextOverflow.ellipsis, style: tt.titleSmall),
-          ),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, kHeadingTop, 4, FasanSpace.s),
+        child: Text('${bill.purpose.isEmpty ? S.of(context).newBill : bill.purpose} · $day', maxLines: 1, overflow: TextOverflow.ellipsis, style: tt.titleSmall),
       ),
     );
   }

@@ -10,3 +10,8 @@ extension FasanShapes on FasanLook {
   /// Inner shape: rows inside a card, notes, small surfaces.
   double get rInner => radius * 0.5;
 }
+
+/// Vertical rhythm of the lists (Nutzer 09.11. 18:44: Abstände ungleichmäßig): the gap between two rows is always [kRowGap];
+/// a heading has [kHeadingTop] above and [FasanSpace.s] below. Same in bills, items and the trash.
+const double kRowGap = FasanSpace.s;
+const double kHeadingTop = FasanSpace.l;

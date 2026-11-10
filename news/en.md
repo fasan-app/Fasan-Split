@@ -1,3 +1,10 @@
+## 0.1.95
+- New: Notes on items: the item sheet has a “Note” field. It shows under the item and search finds it.
+- New: A pinned note on a bill shows as one line under the title in the list. Search also finds the notes on bills.
+- Better: The people circles overlap less, the initials stay readable. If the same name stood twice under an item, the second line is gone.
+- Better: A tap in the news leads straight to the place: a bill opens the bill, a message opens the chat at exactly that message (centred, one short pulse).
+- Better: Same gap between all rows and the same headings in bills and items.
+
 ## 0.1.94
 - New: Send items. In the item sheet, in the ⋮ of a bill and in the item list (it sends what the filters leave) you pick items with check marks. They land as a card in the group chat, showing only those items.
 - Fixed: The browser test could not find the bill row after the ⋮ change (so 0.1.93 did not go live).

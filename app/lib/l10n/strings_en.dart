@@ -472,6 +472,7 @@ const Map<String, String> stringsEn = {
   'search.didYouMean': 'Did you mean “{0}”?',
   'search.forget': 'Remove',
   'groups.giveSubject': 'Subject (optional)',
+  'item.noteLabel': 'Note (optional)',
   'send.title': 'Send items',
   'send.all': 'All',
   'send.none': 'None',

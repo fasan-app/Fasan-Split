@@ -170,7 +170,10 @@ class BillItem {
   }
 
   /// Receipt name shown small under the plain name (only when it differs).
-  String? get subtitle => food != null ? cleanName : null;
+  String? get subtitle {
+    final f = food;
+    return f == null || cleanName.toLowerCase() == f.name.toLowerCase() ? null : cleanName;
+  }
 
   bool get assigned => proportional || shares.values.any((w) => w > 0);
 

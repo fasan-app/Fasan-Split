@@ -545,7 +545,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchText(Bill b, bool de) => [
         b.purpose,
         for (final p in b.ps) p.name,
-        for (final i in b.its) i.name,
+        for (final i in b.its) ...[i.name, if (i.note != null) i.note!],
+        for (final n in b.notes) n.text, // notes are searchable (Nutzer 09.11. 19:08: die Suche findet Notizen)
         money(b.effectiveTotal, de: de),
       ].join(' ').toLowerCase();
 
@@ -609,14 +610,14 @@ class _HomeScreenState extends State<HomeScreen> {
   /// The first item of [b] that the search words hit, or null (the name of the bill or a person matched, or nothing is searched).
   int? _hitItem(Bill b, String q, bool de) {
     if (q.isEmpty) return null;
-    final i = b.its.indexWhere((it) => it.name.toLowerCase().contains(q) || money(it.amount, de: de).contains(q));
+    final i = b.its.indexWhere((it) => it.name.toLowerCase().contains(q) || (it.note ?? '').toLowerCase().contains(q) || money(it.amount, de: de).contains(q));
     return i < 0 ? null : i;
   }
 
   /// Search in the items view: the bill head (name, people) matching shows all its items; otherwise only items whose name or
   /// amount match.
   bool _itemMatches(Bill b, BillItem i, String q, bool de) =>
-      b.purpose.toLowerCase().contains(q) || b.ps.any((p) => p.name.toLowerCase().contains(q)) || i.name.toLowerCase().contains(q) || money(i.amount, de: de).contains(q);
+      b.purpose.toLowerCase().contains(q) || b.ps.any((p) => p.name.toLowerCase().contains(q)) || i.name.toLowerCase().contains(q) || (i.note ?? '').toLowerCase().contains(q) || b.notes.any((n) => n.text.toLowerCase().contains(q)) || money(i.amount, de: de).contains(q);
 
   Widget _contextLeft(BuildContext context, BillStore store0, S t) {
     if (_page <= 2 && _searching) {
@@ -900,7 +901,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (showHeading) SliverToBoxAdapter(child: header),
         SliverList.builder(
           itemCount: list.length,
-          itemBuilder: (context, i) => Padding(padding: const EdgeInsets.only(bottom: FasanSpace.xs + 2), child: _row(context, store, mode, list[i])),
+          itemBuilder: (context, i) => Padding(padding: const EdgeInsets.only(bottom: kRowGap), child: _row(context, store, mode, list[i])),
         ),
       ]),
     );

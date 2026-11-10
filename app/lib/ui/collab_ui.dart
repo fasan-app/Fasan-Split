@@ -25,6 +25,7 @@ import 'bill_tile.dart';
 import 'common.dart' show showNote;
 import 'package:fasan_core/bill.dart' show Bill, money;
 import 'bill_screen.dart' show ItemTile;
+import 'pulse_focus.dart';
 import 'group_header.dart' show openBill;
 import 'groups.dart';
 import 'pairing_ui.dart';
@@ -716,9 +717,12 @@ class _NoteEditorState extends State<NoteEditor> {
 
 /// Chat of a live group.
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.group});
+  const ChatScreen({super.key, required this.group, this.focusMessage});
 
   final CollabGroup group;
+
+  /// Message the person is led to (from a notification or the bell): scrolled to the middle, one pulse (pulse_focus.dart).
+  final String? focusMessage;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -726,6 +730,8 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _input = TextEditingController();
+  final ScrollController _scroll = ScrollController();
+  bool _jumped = false;
 
   /// Message I answer (quote above the input) or edit (the input holds its text); at most one of the two.
   ChatMessage? _replyTo, _editing;
@@ -739,6 +745,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _scroll.dispose();
     _input.dispose();
     _query.dispose();
     super.dispose();
@@ -979,11 +986,25 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 Expanded(
                     child: ListView.builder(
+                controller: _scroll,
                 padding: const EdgeInsets.all(FasanSpace.m),
                 itemCount: msgs.length,
                 itemBuilder: (_, i) {
                   final m = msgs[i], mine = m.from == me;
-                  return Align(
+                  // the list builds lazily: before the target exists, jump close to it once; PulseOnFocus then centres it and pulses
+                  if (!_jumped && widget.focusMessage != null) {
+                    _jumped = true;
+                    final at = msgs.indexWhere((x) => x.id == widget.focusMessage);
+                    if (at > 0) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scroll.hasClients) _scroll.jumpTo((at * 96.0).clamp(0.0, _scroll.position.maxScrollExtent));
+                      });
+                    }
+                  }
+                  return PulseOnFocus(
+                    key: ValueKey('pulse-${m.id}'),
+                    active: m.id == widget.focusMessage,
+                    child: Align(
                     alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
@@ -1054,7 +1075,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ]),
                     ),
                     ),
-                  );
+                  ));
                 },
               )),
               ]);
@@ -1469,8 +1490,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
     void open(Activity a) {
       final g = c.groups[a.group];
       if (g == null) return;
+      final store = StoreScope.read(context);
+      final bill = a.ref == null ? null : store.bills.where((b) => b.id == a.ref && b.trashedAt == null).firstOrNull;
       if (a.kind == ActivityKind.message || g.secret.direct || a.kind == ActivityKind.mention && c.messages(g).any((m) => m.id == a.ref)) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: g)));
+        // lead to the exact message: centred, one pulse (Nutzer 09.11. 18:44)
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(group: g, focusMessage: a.ref)));
+      } else if ((a.kind == ActivityKind.billNew || a.kind == ActivityKind.billChanged || a.kind == ActivityKind.mention) && bill != null) {
+        // straight into the bill the news is about
+        openBill(context, bill);
       } else {
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupScreen(name: g.localName, queue: ScanQueue.current ?? ScanQueue(StoreScope.read(context)))));
       }

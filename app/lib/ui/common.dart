@@ -231,7 +231,41 @@ class ShareAvatars extends StatelessWidget {
     if (people.isEmpty) {
       return Icon(Icons.person_add_alt_1_outlined, size: size * 0.9, color: FasanLook.of(context).textMuted);
     }
-    return FasanAvatarStack(people: people, size: size);
+    return PeopleStack(people: people, size: size);
+  }
+}
+
+/// Overlapping avatars of people ((name, colour) pairs). Own stack instead of FasanAvatarStack: with the stack's 62 % step the initials of
+/// every avatar but the last were half covered („AN“ + „JO“ read „AI“, Nutzer-Foto 09.11.); at 82 % the initials stay readable and
+/// the avatars still read as one group.
+class PeopleStack extends StatelessWidget {
+  const PeopleStack({super.key, required this.people, this.size = 24, this.max = 4});
+
+  final List<(String, int)> people;
+  final double size;
+  final int max;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = people.take(max).toList(), more = people.length - shown.length, step = size * 0.82, n = shown.length + (more > 0 ? 1 : 0);
+    return SizedBox(
+      width: n == 0 ? 0 : size + step * (n - 1),
+      height: size,
+      child: Stack(children: [
+        for (var i = 0; i < shown.length; i++) Positioned(left: i * step, child: FasanAvatar(name: shown[i].$1, index: shown[i].$2, size: size)),
+        if (more > 0)
+          Positioned(
+            left: shown.length * step,
+            child: Container(
+              width: size,
+              height: size,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: FasanLook.of(context).surfaceAlt, shape: BoxShape.circle),
+              child: Text('+$more', style: TextStyle(fontSize: size * 0.36, fontWeight: FontWeight.w700)),
+            ),
+          ),
+      ]),
+    );
   }
 }
 

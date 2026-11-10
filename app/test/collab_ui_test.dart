@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // Widget tests of the collaboration screens. They use MemoryRelay only: no public relay is contacted. MPL-2.0
 import 'package:fasan_core/bill.dart';
+import 'package:fasan_split/collab/activity.dart';
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
@@ -8,6 +9,7 @@ import 'package:fasan_split/main.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/collab_ui.dart';
 import 'package:fasan_split/ui/my_balance.dart';
+import 'package:fasan_split/ui/resume.dart';
 import 'package:fasan_split/ui/send_items.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -221,9 +223,34 @@ void main() {
     expect(m.items, [0, 2]);
     await tester.pumpWidget(host(ChatScreen(group: g)));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Pizza'), findsWidgets);
-    expect(find.text('Wein'), findsWidgets);
+    expect(find.textContaining('Pizza'), findsWidgets);
+    expect(find.textContaining('Wein'), findsWidgets);
     expect(find.text('Salat'), findsNothing, reason: 'nicht geschickt');
     await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('Neuigkeiten: ein Tipp auf einen Bon führt in den Bon, auf eine Nachricht in den Chat an genau diese Stelle', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    final g = await svc.createGroup('Hütte');
+    store.upsert(Bill(id: 'b1', created: DateTime(2026, 11, 2), purpose: 'Abendessen', total: 1000, group: 'Hütte', items: [BillItem(name: 'Pizza', amount: 1000)]));
+    final mid = svc.sendMessage(g, 'Wer zahlt?')!;
+    svc.activity.insert(0, Activity(ActivityKind.billNew, DateTime.now(), g.secret.tag, 'Neuer Bon', ref: 'b1'));
+    svc.activity.insert(0, Activity(ActivityKind.message, DateTime.now(), g.secret.tag, 'Nachricht', ref: mid));
+    await tester.pumpWidget(host(const ActivityScreen()));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Neuer Bon'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ResumeFlow), findsOneWidget, reason: 'der Bon selbst, nicht nur die Gruppe');
+    Navigator.of(tester.element(find.byType(ResumeFlow))).pop();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nachricht'));
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 150));
+    }
+    final chat = tester.widget<ChatScreen>(find.byType(ChatScreen));
+    expect(chat.focusMessage, mid);
+    await tester.pump(const Duration(seconds: 2));
   });
 }

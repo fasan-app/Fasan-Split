@@ -57,7 +57,7 @@ void main() {
   testWidgets('Posten-Blatt: Name, Betrag und Menge ändern UND zuordnen im selben Blatt, sofort gespeichert', (tester) async {
     final b = _bill(people: ['Anna', 'Jo']);
     await _pump(tester, b);
-    await tester.tap(find.text('Pizza'));
+    await tester.tap(find.textContaining('Pizza'));
     await tester.pumpAndSettle();
     // edit …
     await tester.enterText(find.byWidgetPredicate((w) => w is TextField && w.decoration?.labelText == 'Name'), 'Pizza Diavola');
@@ -83,7 +83,7 @@ void main() {
   testWidgets('Posten löschen: Wischen oder Blatt, Rückgängig bringt ihn an dieselbe Stelle zurück', (tester) async {
     final b = _bill(people: ['Anna', 'Jo']);
     await _pump(tester, b);
-    await tester.drag(find.text('Pizza'), const Offset(-600, 0));
+    await tester.drag(find.textContaining('Pizza'), const Offset(-600, 0));
     await tester.pumpAndSettle();
     expect(b.its.map((i) => i.name), ['Wine']);
     expect(tester.takeException(), isNull);
@@ -106,7 +106,7 @@ void main() {
     b.its[0].shares = {0: 1, 1: 1, 2: 1};
     b.its[0].fixed = {};
     await _pump(tester, b);
-    await tester.drag(find.text('Pizza'), const Offset(-600, 0));
+    await tester.drag(find.textContaining('Pizza'), const Offset(-600, 0));
     await tester.pumpAndSettle();
     b.removePerson(0); // Anna leaves while the item is deleted: Jo becomes 0, Mia 1
     await tester.pump();
@@ -191,7 +191,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('person-1')));
     await tester.pumpAndSettle();
     expect(find.text('Tap the items of Jo'), findsOneWidget);
-    await tester.tap(find.text('Pizza'));
+    await tester.tap(find.textContaining('Pizza'));
     await tester.tap(find.text('Wine'));
     await tester.pumpAndSettle();
     expect(b.its[0].shares.keys, [1]);
@@ -284,13 +284,13 @@ void main() {
   testWidgets('Posten wischen: rechts = für alle / niemand (die Zeile federt zurück und bleibt), links = löschen mit Rückgängig', (tester) async {
     final b = _bill(people: ['Anna', 'Jo', 'Mia']);
     await _pump(tester, b);
-    await tester.drag(find.text('Pizza'), const Offset(600, 0));
+    await tester.drag(find.textContaining('Pizza'), const Offset(600, 0));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(b.its.map((i) => i.name), ['Pizza', 'Wine'], reason: 'the row is still there');
     expect(b.its[0].shares.keys.toSet(), {0, 1, 2}, reason: 'everyone has it');
-    expect(find.text('Pizza'), findsOneWidget);
-    await tester.drag(find.text('Pizza'), const Offset(600, 0));
+    expect(find.textContaining('Pizza'), findsOneWidget);
+    await tester.drag(find.textContaining('Pizza'), const Offset(600, 0));
     await tester.pumpAndSettle();
     expect(b.its[0].shares, isEmpty, reason: 'swiping again: nobody');
     // delete to the left, undo
@@ -312,7 +312,7 @@ void main() {
   testWidgets('Wischen ohne Personen: freundlicher Hinweis statt Fehler', (tester) async {
     final b = _bill();
     await _pump(tester, b);
-    await tester.drag(find.text('Pizza'), const Offset(600, 0));
+    await tester.drag(find.textContaining('Pizza'), const Offset(600, 0));
     await tester.pumpAndSettle();
     expect(find.text('Add at least two people.'), findsOneWidget);
     expect(b.its[0].shares, isEmpty);
@@ -396,7 +396,7 @@ void main() {
     expect(find.text('Only works in a shared group.'), findsOneWidget);
     await tester.tapAt(const Offset(5, 5)); // closes the menu
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Pizza'));
+    await tester.tap(find.textContaining('Pizza'));
     await tester.pumpAndSettle();
     expect(find.text('Lock item'), findsOneWidget);
     expect(find.text('Only works in a shared group.'), findsOneWidget);
@@ -414,13 +414,13 @@ void main() {
     final b = _bill(people: ['Anna', 'Jo'])..lockBy = 'ff' * 32;
     await _pump(tester, b, collab: c);
     expect(find.textContaining('Locked by'), findsOneWidget);
-    await tester.tap(find.text('Pizza'), warnIfMissed: false);
+    await tester.tap(find.textContaining('Pizza'), warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(find.text('Lock item'), findsNothing, reason: 'Posten-Blatt öffnet nicht');
     b.lockBy = c.identity!.pub;
     await _pump(tester, b, collab: c);
     expect(find.textContaining('You locked this bill'), findsOneWidget);
-    await tester.tap(find.text('Pizza'));
+    await tester.tap(find.textContaining('Pizza'));
     await tester.pumpAndSettle();
     expect(find.text('Lock item'), findsOneWidget, reason: 'der Sperrer darf weiter ändern');
   });

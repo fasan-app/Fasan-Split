@@ -1,3 +1,10 @@
+## 0.1.95
+- Neu: Notizen am Posten: Im Posten-Blatt gibt es ein Feld „Notiz“. Sie steht unter dem Posten und die Suche findet sie.
+- Neu: Eine angepinnte Notiz am Bon steht als eine Zeile unter dem Titel in der Liste. Die Suche findet auch die Notizen am Bon.
+- Besser: Die Personen-Kreise überdecken sich weniger, die Anfangsbuchstaben bleiben lesbar. Steht unter dem Posten derselbe Name nochmal, entfällt die zweite Zeile.
+- Besser: Ein Tipp in den Neuigkeiten führt direkt an die Stelle: bei einem Bon in den Bon, bei einer Nachricht in den Chat zu genau dieser Nachricht (in die Mitte, ein kurzer Puls).
+- Besser: Gleicher Abstand zwischen allen Zeilen und gleiche Überschriften in Bons und Posten.
+
 ## 0.1.94
 - Neu: Posten schicken. Im Posten-Blatt, im ⋮ des Bons und in der Posten-Liste (zeigt, was die Filter übrig lassen) wählst du Posten mit Häkchen. Sie landen als Karte im Chat der Gruppe, nur mit diesen Posten.
 - Behoben: Der Browser-Test fand die Bon-Zeile nach dem ⋮-Umbau nicht mehr (0.1.93 ging deshalb nicht live).

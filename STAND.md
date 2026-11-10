@@ -4,6 +4,14 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 10.11. 04:00 Web 0.1.95: Notizen, Abstände, Ziel-Sprung (Pakete C-Rest und E teilweise)
+- 0.1.93 und 0.1.94 sind live (CI grün, deploy grün).
+- Notiz am Posten (Feld im Posten-Blatt, synchron über `BillItem.note`), angepinnte Bon-Notiz als Zeile unter dem Titel der Bon-Kachel, Suche findet Notizen (Bon und Posten).
+- Neuigkeiten/Glocke: Bon-Meldungen öffnen den Bon (`openBill`), Nachrichten den Chat mit `focusMessage` (Sprung nahe ans Ziel, `PulseOnFocus` mittig, ein Puls). Test `collab_ui_test` „Neuigkeiten“.
+- Abstände: `kRowGap`/`kHeadingTop` in `shape_tokens.dart` (Zeilen und Überschriften in Bons und Posten gleich). Personen-Kreise `PeopleStack` (82 % Schritt, Anfangsbuchstaben lesbar), kein doppelter Untertitel unter dem Posten.
+- Offen aus E: @-Erwähnung in Notizen am Posten (Benachrichtigung), Bon-Notiz-Editor in der Liste. Nicht geprüft: Sprung im Chat bei sehr langem Verlauf (nähert per 96 dp je Nachricht), echtes Gerät.
+- Offen: Paket F (Stellvertreter-Stufen, Gerätefreigaben/Web Push, Sichtbarkeit je Bon), Abstände Rest (Kopfzone), Senden an Freunde (Direktchat).
+
 ## 10.11. 01:30 Web 0.1.94: Posten schicken (Anforderungen 11 und 20) + CI-Fehler 0.1.93
 - **0.1.93 ging nicht live:** Browser-Test (Foto-Ablauf) lief nach dem Neuladen in den Timeout. Ursache lokal nachgestellt (Chromium, `run-photo.sh`): Mit dem ⋮ je Zeile ist die Bon-Zeile eine Gruppe mit `aria-label` statt Text; `getByText('Foto-Test')` fand sie nicht. Behoben im Test (`getByLabel` als Alternative, auch `screens.js`, `safari.js`). Lokal grün, CI-Lauf `6f26906` angestoßen. Für die Bedienung ändert sich nichts.
 - Posten schicken: `lib/ui/send_items.dart` (Auswahl mit Häkchen, ein Chat-Eintrag je Bon, `ChatMessage.items` = Positionen im Bon, alte Nachrichten bleiben ganze Bons). Einstiege: Posten-Blatt („Posten schicken …“), ⋮ im Bon, Posten-Liste (⋮ bzw. Symbol in der Gruppe: „Sichtbare Posten schicken …“, ein Eintrag je Bon, Bons ohne geteilte Gruppe werden übersprungen). Chat zeigt die Karte mit denselben Posten-Kacheln, Tippen öffnet den Bon am Posten.

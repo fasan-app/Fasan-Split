@@ -190,20 +190,34 @@ void main() {
     expect(find.text('Taxi'), findsOneWidget);
   });
 
+  testWidgets('Notizen: eine angepinnte Notiz steht als Zeile unter dem Titel, die Suche findet Notizen', (tester) async {
+    store.bills.firstWhere((b) => b.purpose == 'Kneipe').notes.add(BillNote(from: 'Lena', text: 'Ich lege vor', pinned: true));
+    store.bills.firstWhere((b) => b.purpose == 'Taxi').notes.add(BillNote(from: 'Lena', text: 'nicht angepinnt'));
+    await _app(tester, store);
+    expect(find.text('Ich lege vor'), findsOneWidget, reason: 'angepinnt: eine Zeile in der Liste');
+    expect(find.text('nicht angepinnt'), findsNothing, reason: 'ohne Pin keine Zeile');
+    await tester.tap(find.byTooltip('Suche'));
+    await _settle(tester);
+    await tester.enterText(find.byKey(const ValueKey('search-field')), 'angepinnt');
+    await _settle(tester);
+    expect(find.text('Taxi'), findsOneWidget, reason: 'die Suche findet auch Notizen ohne Pin');
+    expect(find.text('Kneipe'), findsNothing);
+  });
+
   testWidgets('Posten-Ansicht: Suche filtert Posten, ein Treffer im Bon-Kopf zeigt dessen Posten', (tester) async {
     await _app(tester, store);
     await _showItems(tester);
-    expect(find.text('Salat'), findsOneWidget);
+    expect(find.textContaining('Salat'), findsOneWidget);
     await tester.tap(find.byTooltip('Suche'));
     await _settle(tester);
     await tester.enterText(find.byKey(const ValueKey('search-field')), 'pizza');
     await _settle(tester);
-    expect(find.text('Pizza'), findsOneWidget);
-    expect(find.text('Salat'), findsNothing, reason: 'other items are not shown while searching');
+    expect(find.textContaining('Pizza'), findsOneWidget);
+    expect(find.textContaining('Salat'), findsNothing, reason: 'other items are not shown while searching');
     await tester.enterText(find.byKey(const ValueKey('search-field')), 'fähre');
     await _settle(tester);
-    expect(find.text('Salat'), findsOneWidget, reason: 'the bill name matches: its items show');
-    expect(find.text('Pizza'), findsNothing);
+    expect(find.textContaining('Salat'), findsOneWidget, reason: 'the bill name matches: its items show');
+    expect(find.textContaining('Pizza'), findsNothing);
   });
 
   testWidgets('Blättern: Archiv und Papierkorb sind keine Seiten, ein Wisch führt zur Abrechnung und zurück in dieselbe Ansicht', (tester) async {
@@ -282,7 +296,7 @@ void main() {
     await _showItems(tester);
     expect(find.byType(ItemTile), findsOneWidget, reason: 'the item looks like in the bill');
     expect(find.byKey(const ValueKey('rest-z')), findsOneWidget, reason: 'service/tip is money to split and must show');
-    await tester.tap(find.text('Pizza'));
+    await tester.tap(find.textContaining('Pizza'));
     await _settle(tester);
     expect(find.byType(BottomSheet), findsOneWidget, reason: 'the item sheet opens right here, not the bill');
   });

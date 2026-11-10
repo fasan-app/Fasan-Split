@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  rowLookTests();
   test('Nachricht mit Posten: Positionen bleiben erhalten, sortiert wie gesendet', () {
     final d = LwwDoc('aa');
     Notes.send(d, 'p1', '2 Posten aus „Abendessen“', bill: 'b1', items: [3, 1]);
@@ -47,5 +48,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Posten lassen sich nur in einer geteilten Gruppe schicken.'), findsOneWidget);
     expect(find.byKey(const ValueKey('send-go')), findsNothing);
+  });
+}
+
+// Row look (Nutzer 09.11. Foto): no duplicate subtitle, initials of overlapping avatars stay readable.
+void rowLookTests() {
+  test('Untertitel nur wenn der Bon-Name vom Klarnamen abweicht', () {
+    BillItem.plainNames = true;
+    expect(BillItem(name: 'Pizza', amount: 100).subtitle, isNull, reason: 'gleicher Name, kein doppelter Text');
+    expect(BillItem(name: 'Apfelschorle 0,4', amount: 100).subtitle, isNotNull);
   });
 }

@@ -195,8 +195,18 @@ class BillTile extends StatelessWidget {
                     if (categoryById(bill.category) case final c?) ...[Icon(c.icon, size: 14, color: c.color), const SizedBox(width: 4)],
                     Flexible(child: MarqueeText(sub, style: tt.bodySmall)),
                     // people moved here from the right side: the title gets the width (Nutzer 08.11.)
-                    if (!waiting && !failed && bill.ps.isNotEmpty) ...[const SizedBox(width: FasanSpace.s), FasanAvatarStack(people: [for (final p in bill.ps) (p.name, p.color)], size: 18, max: 4)],
+                    if (!waiting && !failed && bill.ps.isNotEmpty) ...[const SizedBox(width: FasanSpace.s), PeopleStack(people: [for (final p in bill.ps) (p.name, p.color)], size: 18, max: 4)],
                   ]),
+                  // a pinned note is one line under the title (Nutzer 09.11. 19:08: Notizen auf Wunsch sichtbar anpinnen)
+                  if (bill.notes.where((n) => n.pinned && n.text.trim().isNotEmpty).firstOrNull case final n?)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(children: [
+                        Icon(Icons.push_pin_outlined, size: 13, color: l.textMuted),
+                        const SizedBox(width: 4),
+                        Expanded(child: Text(n.text.trim().replaceAll('\n', ' '), maxLines: 1, overflow: TextOverflow.ellipsis, style: tt.bodySmall!.copyWith(color: l.textMuted))),
+                      ]),
+                    ),
                 ]),
               ),
               if (failed && !selecting)

@@ -472,6 +472,7 @@ const Map<String, String> stringsDe = {
   'search.didYouMean': 'Meintest du „{0}“?',
   'search.forget': 'Entfernen',
   'groups.giveSubject': 'Betreff (optional)',
+  'item.noteLabel': 'Notiz (optional)',
   'send.title': 'Posten schicken',
   'send.all': 'Alle',
   'send.none': 'Keine',

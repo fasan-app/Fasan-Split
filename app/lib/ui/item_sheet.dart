@@ -41,9 +41,11 @@ class _ItemSheetState extends State<_ItemSheet> {
   late final _name = TextEditingController(text: it.name);
   late final _amount = TextEditingController(text: money(it.amount, de: context.langCode == 'de'));
   late final _qty = TextEditingController(text: '${it.qty}');
+  late final _note = TextEditingController(text: it.note ?? '');
 
   @override
   void dispose() {
+    _note.dispose();
     _name.dispose();
     _amount.dispose();
     _qty.dispose();
@@ -57,6 +59,8 @@ class _ItemSheetState extends State<_ItemSheet> {
     if (a != null) it.amount = a;
     final q = int.tryParse(_qty.text.trim());
     if (q != null && q >= 1) it.qty = q;
+    final nt = _note.text.trim();
+    it.note = nt.isEmpty ? null : nt;
     it.sure = true; // the user looked at it
     widget.changed();
     setState(() {});
@@ -123,6 +127,8 @@ class _ItemSheetState extends State<_ItemSheet> {
                   ),
               ]),
             ),
+          const SizedBox(height: FasanSpace.s),
+          TextField(key: const ValueKey('item-note'), controller: _note, minLines: 1, maxLines: 3, decoration: InputDecoration(labelText: context.tr('item.noteLabel')), onChanged: (_) => _apply()),
           const SizedBox(height: FasanSpace.l),
           FasanLabel(context.tr('item.who')),
           const SizedBox(height: FasanSpace.s),
