@@ -144,6 +144,8 @@ void main() {
     'b01-bon': (b) => ReviewScreen(bill: b),
     'b02-menue': (b) => ReviewScreen(bill: b),
     'b04-posten-blatt': (b) => ReviewScreen(bill: b),
+    'b04v-posten-vllt': (b) => ReviewScreen(bill: b),
+    'b04w-liste-vllt': (b) => ReviewScreen(bill: b),
     'b05-posten-blatt-fest': (b) => ReviewScreen(bill: b),
     // pieces (07.11.): item sheet with the piece counter (Pizza: quantity 2, Pia off, Lena on = one of two pieces); same steps in the browser
     'b20-stueck-posten': (b) => ReviewScreen(bill: b),
@@ -355,11 +357,16 @@ void main() {
       await t.pump(const Duration(milliseconds: 600));
     },
     'b04-posten-blatt': (t) async {
-      await t.longPress(find.text('Pizza').first);
+      await t.longPress(find.textContaining('Pizza').first);
+      await t.pump(const Duration(milliseconds: 600));
+    },
+    // „vllt“ proposal (0.1.96): the list shows the suggested person faded, the sheet offers Übernehmen / Ablehnen
+    'b04v-posten-vllt': (t) async {
+      await t.longPress(find.textContaining('Pizza').first);
       await t.pump(const Duration(milliseconds: 600));
     },
     'b20-stueck-posten': (t) async {
-      await t.longPress(find.text('Pizza').first);
+      await t.longPress(find.textContaining('Pizza').first);
       await t.pump(const Duration(milliseconds: 600));
       final sheet = find.byType(BottomSheet);
       await t.tap(find.descendant(of: sheet, matching: find.text('Pia')).first);
@@ -370,7 +377,7 @@ void main() {
       await t.pump(const Duration(milliseconds: 600));
     },
     'b05-posten-blatt-fest': (t) async {
-      await t.longPress(find.text('Pizza').first);
+      await t.longPress(find.textContaining('Pizza').first);
       await t.pump(const Duration(milliseconds: 600));
       await t.tap(find.text('Fester Betrag'));
       await t.pump(const Duration(milliseconds: 400));
@@ -394,6 +401,7 @@ void main() {
             // variants only for the screens that are also walked in the browser with DARK=1 / LAND=1
             if ((dark || land) && !(const ['b01-bon', 'b10-bon-ansicht', 'b15b-ergebnis', 'sc01-neuer-bon', 'sc02-liest'].contains(e.key) || (dark && e.key == 'b04-posten-blatt'))) return;
             bill = _walkBill(dir);
+            if (e.key.startsWith('b04v') || e.key.startsWith('b04w')) bill.its.first.maybe = {1: 'pub-lena'}; // Lena is suggested for the first item
             _pushBill = bill;
             await tester.runAsync(() => fillSnippets(bill, File(bill.imagePath!).readAsBytesSync()));
           } else if (echt != null) {

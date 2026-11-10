@@ -238,7 +238,7 @@ class _MaybeBox extends StatelessWidget {
           padding: const EdgeInsets.only(top: FasanSpace.s),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(
-              context.tr('maybe.row', [bill.ps[e.key].name, c.lockerName(bill, e.value).isEmpty ? '?' : c.lockerName(bill, e.value)]),
+              c.lockerName(bill, e.value).isEmpty ? context.tr('maybe.rowAnon', [bill.ps[e.key].name]) : context.tr('maybe.row', [bill.ps[e.key].name, c.lockerName(bill, e.value)]),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             Wrap(spacing: FasanSpace.s, children: [

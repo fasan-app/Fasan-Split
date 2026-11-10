@@ -483,6 +483,7 @@ const Map<String, String> stringsDe = {
   'send.doneMany': 'In {0} Chats geschickt.',
   'send.doneSome': 'In {0} Chats geschickt, {1} Bons ohne geteilte Gruppe übersprungen.',
   'maybe.row': '{0} vllt. – Vorschlag von {1}',
+  'maybe.rowAnon': '{0} vllt.',
   'maybe.accept': 'Übernehmen',
   'maybe.decline': 'Ablehnen',
   'maybe.propose': 'Für jemanden vorschlagen (vllt.)',
