@@ -82,6 +82,17 @@ void main() {
     }
   });
 
+  test('Verborgener Bon: Foto unter dem Bon-Schlüssel – der Gruppenschlüssel öffnet es nicht, der Bon-Schlüssel schon', () async {
+    final s = secret(), me = KeyPair.generate(), billKey = randomBytes(32);
+    final photo = receipt(noisy: true), ref = PhotoSync.refOf(photo);
+    final relay = MemoryRelay(MemoryRelayHub());
+    for (final e in PhotoSync.events(me, s, photo, key: billKey)) {
+      await relay.publish(e);
+    }
+    expect(await PhotoSync.fetch(relay, s, ref, authors: {me.pub}, timeout: const Duration(seconds: 2)), isNull, reason: 'wer nur den Gruppenschlüssel hat, bekommt kein Bild');
+    expect(await PhotoSync.fetch(relay, s, ref, authors: {me.pub}, timeout: const Duration(seconds: 5), key: billKey), photo);
+  });
+
   test('Falscher Schlüssel, fremder Absender oder verändertes Stück: kein Bild', () async {
     final s = secret(), me = KeyPair.generate(), stranger = KeyPair.generate();
     final photo = receipt(noisy: true), ref = PhotoSync.refOf(photo);
