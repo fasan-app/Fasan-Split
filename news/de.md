@@ -1,3 +1,8 @@
+## 0.1.97
+- Besser: Keine Wischgesten mehr an den Posten im Bon. „Für alle“ und „Löschen“ findest du im Posten-Blatt (Posten lang drücken).
+- Neu: Stufe „Fragt erst“: Trägt jemand einen Posten für dich ein, erscheint er blass bei dir am Posten („vllt.“), bis du ihn übernimmst.
+- Besser: Ein Tipp zeigte noch das Wischen an Bon-Karten, das es seit 0.1.93 nicht mehr gibt. Jetzt steht dort ⋮.
+
 ## 0.1.96
 - Neu: „vllt.“-Vorschläge. Wer für jemand anderen einträgt, kann einen Posten nur vorschlagen: Posten-Blatt, „Für jemanden vorschlagen (vllt.)“. Der Vorschlag steht blass am Posten und zählt in keiner Summe.
 - Neu: Die vorgeschlagene Person bekommt eine Neuigkeit, die direkt zum Posten führt, und kann dort „Übernehmen“ oder „Ablehnen“. Erst mit „Übernehmen“ zählt der Posten. Die Neuigkeit lässt sich in den Einstellungen ausschalten.

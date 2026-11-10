@@ -7,7 +7,7 @@ const Map<String, String> tipsDe = {
   'tip.open': 'Zur Anleitung',
   'tip.close': 'Tipp schließen',
   'tip.plus': 'Tippe auf das Plus: Bon fotografieren, aus der Galerie wählen oder ohne Foto eintragen.',
-  'tip.swipe': 'Wische eine Karte nach rechts, um den Bon auszugleichen (bezahlt), und nach links zum Löschen. Gelöscht heißt erst einmal Papierkorb.',
+  'tip.swipe': 'Tippe bei einem Bon auf ⋮: Ausgleichen (bezahlt) oder Löschen. Gelöscht heißt erst einmal Papierkorb.',
   'tip.drag': 'Halte einen Bon gedrückt und ziehe ihn oben auf den Namen einer Gruppe, dann liegt er dort.',
   'tip.invite': 'In einer Gruppe lädst du mit dem Personen-Symbol oben Freunde ein. Sie brauchen dafür nur den Link.',
   'tip.everyone': 'In einer Gruppe kann jeder für jeden eintragen. Wer was eingetragen hat, steht im Verlauf.',

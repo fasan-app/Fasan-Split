@@ -1,3 +1,8 @@
+## 0.1.97
+- Better: No more swipe gestures on the items in a bill. “Everyone” and “Delete” are in the item sheet (long press an item).
+- New: Level “Asks first”: if someone enters an item for you, it shows faded at the item for you (“maybe”) until you accept it.
+- Better: A tip still showed swiping on bill cards, which has been gone since 0.1.93. It now says ⋮.
+
 ## 0.1.96
 - New: “maybe” suggestions. Whoever enters for somebody else can only suggest an item: item sheet, “Suggest for someone (maybe)”. The suggestion shows faded on the item and counts in no sum.
 - New: The suggested person gets a news entry that leads straight to the item and can “Accept” or “Decline” there. Only “Accept” makes the item count. The news entry can be switched off in the settings.

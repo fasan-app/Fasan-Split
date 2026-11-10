@@ -80,16 +80,13 @@ void main() {
     expect(b.unassigned, 1, reason: 'the wine is still open');
   });
 
-  testWidgets('Posten löschen: Wischen oder Blatt, Rückgängig bringt ihn an dieselbe Stelle zurück', (tester) async {
+  testWidgets('Posten löschen: über das Blatt, Rückgängig bringt ihn an dieselbe Stelle zurück (kein Wischen, Nutzer 09.11.)', (tester) async {
     final b = _bill(people: ['Anna', 'Jo']);
     await _pump(tester, b);
     await tester.drag(find.textContaining('Pizza'), const Offset(-600, 0));
     await tester.pumpAndSettle();
-    expect(b.its.map((i) => i.name), ['Wine']);
+    expect(b.its.map((i) => i.name), ['Pizza', 'Wine'], reason: 'a swipe deletes nothing');
     expect(tester.takeException(), isNull);
-    await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
-    expect(b.its.map((i) => i.name), ['Pizza', 'Wine']);
     // via the sheet
     await tester.tap(find.text('Wine'));
     await tester.pumpAndSettle();
@@ -106,7 +103,9 @@ void main() {
     b.its[0].shares = {0: 1, 1: 1, 2: 1};
     b.its[0].fixed = {};
     await _pump(tester, b);
-    await tester.drag(find.textContaining('Pizza'), const Offset(-600, 0));
+    await tester.tap(find.textContaining('Pizza'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete').last);
     await tester.pumpAndSettle();
     b.removePerson(0); // Anna leaves while the item is deleted: Jo becomes 0, Mia 1
     await tester.pump();
@@ -281,42 +280,17 @@ void main() {
     await tester.pump(const Duration(seconds: 12));
   });
 
-  testWidgets('Posten wischen: rechts = für alle / niemand (die Zeile federt zurück und bleibt), links = löschen mit Rückgängig', (tester) async {
+  testWidgets('Kein Wischen an Posten: Ziehen in beide Richtungen ändert nichts, auch ohne Personen und viele Male hintereinander', (tester) async {
     final b = _bill(people: ['Anna', 'Jo', 'Mia']);
     await _pump(tester, b);
-    await tester.drag(find.textContaining('Pizza'), const Offset(600, 0));
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
-    expect(b.its.map((i) => i.name), ['Pizza', 'Wine'], reason: 'the row is still there');
-    expect(b.its[0].shares.keys.toSet(), {0, 1, 2}, reason: 'everyone has it');
-    expect(find.textContaining('Pizza'), findsOneWidget);
-    await tester.drag(find.textContaining('Pizza'), const Offset(600, 0));
-    await tester.pumpAndSettle();
-    expect(b.its[0].shares, isEmpty, reason: 'swiping again: nobody');
-    // delete to the left, undo
-    await tester.drag(find.text('Wine'), const Offset(-600, 0));
-    await tester.pumpAndSettle();
-    expect(b.its.map((i) => i.name), ['Pizza']);
-    await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
-    expect(b.its.map((i) => i.name), ['Pizza', 'Wine']);
-    // many swipes in a row do not break anything
+    final before = [for (final i in b.its) Map<int, double>.of(i.shares)];
     for (var i = 0; i < 12; i++) {
-      await tester.drag(find.text('Wine'), Offset(i.isEven ? 500 : 80, 0));
-      await tester.pumpAndSettle(); // the row springs back before the next swipe
+      await tester.drag(find.textContaining('Pizza'), Offset(i.isEven ? 600 : -600, 0));
+      await tester.pumpAndSettle();
     }
-    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('Wischen ohne Personen: freundlicher Hinweis statt Fehler', (tester) async {
-    final b = _bill();
-    await _pump(tester, b);
-    await tester.drag(find.textContaining('Pizza'), const Offset(600, 0));
-    await tester.pumpAndSettle();
-    expect(find.text('Add at least two people.'), findsOneWidget);
-    expect(b.its[0].shares, isEmpty);
-    expect(tester.takeException(), isNull);
+    expect(b.its.map((i) => i.name), ['Pizza', 'Wine'], reason: 'nothing was deleted');
+    expect([for (final i in b.its) i.shares], before, reason: 'nothing was assigned');
   });
 
   testWidgets('Person lang drücken: hat bezahlt, alle offenen Posten, vom Bon entfernen', (tester) async {
@@ -342,7 +316,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Sehr langer Postenname: läuft als Laufschrift, Antippen öffnet das Blatt, Wischen nach rechts ordnet allen zu', (tester) async {
+  testWidgets('Sehr langer Postenname: läuft als Laufschrift, Antippen öffnet das Blatt, Wischen tut nichts', (tester) async {
     final b = _bill(people: ['Anna', 'Jo']);
     b.its[0].name = 'Gin Tonico Martini Bianco mit Zitrone, Eis, Rosmarin und einem sehr langen Namen der nicht passt';
     await _pump(tester, b);
@@ -355,7 +329,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(longName, const Offset(600, 0));
     await tester.pumpAndSettle();
-    expect(b.its[0].shares.keys.toSet(), {0, 1}, reason: 'the swipe on the long name reaches the row');
+    expect(b.its[0].shares, isEmpty, reason: 'a swipe on the long name assigns nothing');
     expect(tester.takeException(), isNull);
     await tester.pump(const Duration(seconds: 12)); // the marquee plays and rests without errors
     expect(tester.takeException(), isNull);

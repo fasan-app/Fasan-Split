@@ -28,7 +28,6 @@ import 'item_sheet.dart';
 import 'marquee_text.dart';
 import 'payers.dart';
 import 'person_picker.dart';
-import 'swipe.dart';
 import 'when_where.dart';
 import 'shape_tokens.dart';
 import 'pulse_focus.dart';
@@ -150,18 +149,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   // ---- items ----
-
-  bool _everyone(BillItem it) => b.ps.isNotEmpty && List.generate(b.ps.length, (i) => (it.shares[i] ?? 0) > 0).every((x) => x);
-
-  /// Swipe right: everyone has this item, or – if everyone already has it – nobody.
-  void _toggleEveryone(BillItem it) {
-    if (b.ps.isEmpty) {
-      showNote(context, context.tr('bill.needPeople'));
-      return;
-    }
-    FasanHaptics.of(context).confirm();
-    setState(() => _everyone(it) ? it.clearShares() : it.setEveryone(b.ps.length));
-  }
 
   /// Long press on a person: paid, all open items, remove.
   Future<void> _personMenu(int i) async {
@@ -672,30 +659,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
               active: widget.focusItem == i,
               child: Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              // like the bills on the start page: right = the main action (everyone / nobody), left = delete (with „undo“)
-              child: SwipeActions(
-                key: ValueKey('item-${b.its[i].hashCode}'),
-                id: 'item-${identityHashCode(b.its[i])}',
-                start: SwipeSide(_everyone(b.its[i]) ? Icons.person_off_outlined : Icons.groups_2_outlined, context.tr(_everyone(b.its[i]) ? 'item.swipeNone' : 'item.swipeAll'), l.accent),
-                end: SwipeSide(Icons.delete_outline_rounded, context.tr('item.delete'), Colors.red.shade700),
-                // the right swipe does its work here and says „no“: the row springs back (a Dismissible that is dismissed but stays
-                // in the list is an error of the framework)
-                confirmDismiss: (dir) async {
-                  if (dir == DismissDirection.startToEnd) {
-                    _toggleEveryone(b.its[i]);
-                    return false;
-                  }
-                  return true;
-                },
-                onDismissed: (_) => _deleteItem(b.its[i]),
-                child: ItemTile(
-                  bill: b,
-                  item: b.its[i],
-                  active: active,
-                  showSnippet: _snippets || !b.its[i].sure,
-                  onTap: () => _tapItem(b.its[i]),
-                  onLongPress: () => _openItem(b.its[i]),
-                ),
+              // no swipes (Nutzer 09.11.): „Für alle“ and „Löschen“ are in the item sheet (long press)
+              child: ItemTile(
+                bill: b,
+                item: b.its[i],
+                active: active,
+                showSnippet: _snippets || !b.its[i].sure,
+                onTap: () => _tapItem(b.its[i]),
+                onLongPress: () => _openItem(b.its[i]),
               ),
             ),
             ),

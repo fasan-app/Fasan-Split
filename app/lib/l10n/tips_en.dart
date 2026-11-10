@@ -6,7 +6,7 @@ const Map<String, String> tipsEn = {
   'tip.open': 'Open the guide',
   'tip.close': 'Close tip',
   'tip.plus': 'Tap the plus: photograph a receipt, pick one from the gallery or enter it without a photo.',
-  'tip.swipe': 'Swipe a card right to settle the bill (paid), and left to delete it. Deleted first goes to the trash.',
+  'tip.swipe': 'Tap ⋮ on a bill: settle (paid) or delete. Deleted first goes to the trash.',
   'tip.drag': 'Press and hold a bill and drag it onto the name of a group at the top to put it there.',
   'tip.invite': 'In a group, invite friends with the person icon at the top. They only need the link.',
   'tip.everyone': 'In a group, anyone can enter for anyone. The history shows who entered what.',
