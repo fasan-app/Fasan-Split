@@ -1,3 +1,6 @@
+## 0.1.103
+- Neu: Unter „Mitglieder“ gibt es den Schalter „Neue Rechnungen nur für Beteiligte“. Rechnungen, die du in der Gruppe anlegst, sind dann gleich verborgen. Schon geteilte bleiben, wie sie sind.
+
 ## 0.1.102
 - Neu: Beim Einladen gibt es „Bisherige Rechnungen verbergen“. Dann sehen neue Mitglieder die alten Rechnungen nicht, nur die Personen darauf. Zurücknehmen geht nicht.
 

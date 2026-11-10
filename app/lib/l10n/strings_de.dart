@@ -276,6 +276,8 @@ const Map<String, String> stringsDe = {
   'vis.oldTitle': 'Bisherige Rechnungen verbergen?',
   'vis.oldText': '{0} Rechnungen sehen dann nur noch die Personen darauf. Neue Mitglieder bekommen sie nicht. Wer sie schon hat, behält die Kopie. Das lässt sich nicht zurücknehmen.',
   'vis.oldDone': '{0} Rechnungen sind jetzt nur für Beteiligte.',
+  'vis.defaultTitle': 'Neue Rechnungen nur für Beteiligte',
+  'vis.defaultSub': 'Gilt für Rechnungen, die du hier anlegst. Schon geteilte bleiben, wie sie sind.',
   'lock.billOn': 'Rechnung sperren',
   'lock.billOff': 'Sperre aufheben',
   'lock.itemOn': 'Posten gesperrt',

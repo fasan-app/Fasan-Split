@@ -579,6 +579,15 @@ class MembersScreen extends StatelessWidget {
         builder: (context) {
           final keys = [admin, ...group.session.memberKeys.where((k) => k != admin)];
           return ListView(padding: const EdgeInsets.all(FasanSpace.l), children: [
+            if (!group.secret.direct)
+              SwitchListTile(
+                key: const ValueKey('hide-new-bills'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(context.tr('vis.defaultTitle')),
+                subtitle: Text(context.tr('vis.defaultSub')),
+                value: s.hidesNewBills(group),
+                onChanged: (v) => s.setHideNewBills(group, v),
+              ),
             for (final k in keys)
               ListTile(
                 leading: CircleAvatar(child: Text(group.session.nameOf(k).characters.first.toUpperCase())),

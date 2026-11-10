@@ -1310,6 +1310,8 @@ class CollabService extends ChangeNotifier {
       for (final b in store.bills) {
         // trashed bills go out too: the others move them to their trash (04.11.: they stayed there)
         if (b.group != g.localName || b.read != BillRead.ok) continue;
+        // group default „new bills only for the people on them“: bills I started are hidden before the first write
+        if (!b.hidden && hidesNewBills(g) && canHide(b) && _startedByMe(g, b)) hideBill(b);
         // a hidden bill is never written without its own key (it would go out under the group key and everybody could read it);
         // with the key, newly eligible readers (a person added to the bill) get it too
         if (b.hidden) {
@@ -1354,6 +1356,27 @@ class CollabService extends ChangeNotifier {
     final me = g.session.me.pub;
     final readers = billReaders(g, b);
     return [for (final pub in [me, ...readers.where((k) => k != me)]) g.session.nameOf(pub)];
+  }
+
+  static const _kHideNew = 'collab.hideNew';
+
+  /// Group tags in which new bills I start are hidden at once (Standardstufe je Gruppe, Anforderung 18). Local to this phone.
+  Set<String> get _hideNew => {...?prefs?.getStringList(_kHideNew)};
+
+  bool hidesNewBills(CollabGroup g) => _hideNew.contains(g.secret.tag);
+
+  void setHideNewBills(CollabGroup g, bool on) {
+    final s = _hideNew;
+    on ? s.add(g.secret.tag) : s.remove(g.secret.tag);
+    prefs?.setStringList(_kHideNew, s.toList());
+    if (on) _pushAll();
+    notifyListeners();
+  }
+
+  /// Did I start [b] (nobody else wrote into its document yet)? Only those are hidden by the group default.
+  bool _startedByMe(CollabGroup g, Bill b) {
+    final me = g.session.me.pub;
+    return g.session.doc(GroupSession.bill(b.id)).entries.every((e) => e.author == me);
   }
 
   /// Bills of [g] that could still be hidden (not yet hidden, readable, not in the trash).

@@ -276,6 +276,8 @@ const Map<String, String> stringsEn = {
   'vis.oldTitle': 'Hide existing bills?',
   'vis.oldText': 'Then only the people on them can see {0} bills. New members do not get them. Whoever already has a copy keeps it. This cannot be undone.',
   'vis.oldDone': '{0} bills are now for people on them only.',
+  'vis.defaultTitle': 'New bills for people on them only',
+  'vis.defaultSub': 'Applies to bills you start here. Bills already shared stay as they are.',
   'lock.billOn': 'Lock bill',
   'lock.billOff': 'Remove lock',
   'lock.itemOn': 'Item locked',

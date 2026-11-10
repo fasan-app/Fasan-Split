@@ -1,3 +1,6 @@
+## 0.1.103
+- New: under “Members” there is the switch “New bills for people on them only”. Bills you start in the group are then hidden at once. Bills already shared stay as they are.
+
 ## 0.1.102
 - New: when inviting there is “Hide existing bills”. New members then do not see the old bills, only the people on them. It cannot be undone.
 

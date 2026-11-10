@@ -111,4 +111,39 @@ void main() {
     a.dispose();
     b2.dispose();
   }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test('Standardstufe der Gruppe: neuer Bon ist gleich verborgen, nur Lena (auf dem Bon) bekommt ihn; fremde Bons bleiben unberührt', () async {
+    final hub = MemoryRelayHub();
+    final storeA = BillStore.memory()..me = 'Pia';
+    final a = CollabService(store: storeA, vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    final g = await a.createGroup('Stadt 26');
+    final linkB = g.invitations!.create().link, linkC = g.invitations!.create().link;
+    a.setHideNewBills(g, true);
+    expect(a.hidesNewBills(g), isTrue);
+    await settle(400);
+    final storeB = BillStore.memory()..me = 'Lena', storeC = BillStore.memory()..me = 'Karl';
+    final b = CollabService(store: storeB, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    final c = CollabService(store: storeC, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await b.init();
+    await b.setName('Lena');
+    await b.join(linkB, 'Lena');
+    await c.init();
+    await c.setName('Karl');
+    await c.join(linkC, 'Karl');
+    await settle(9000);
+    final bill = Bill(id: 'd1', created: DateTime(2026, 11, 10), purpose: 'Bar Beispiel', total: 3000, people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Cocktail', amount: 3000, shares: {0: 1, 1: 1}),
+    ])
+      ..group = 'Stadt 26';
+    storeA.upsert(bill);
+    await settle(3500);
+    expect(bill.hidden, isTrue, reason: 'Standardstufe verbirgt den neuen Bon');
+    expect(storeB.bills.where((x) => x.id == 'd1'), hasLength(1));
+    expect(storeC.bills.where((x) => x.id == 'd1'), isEmpty);
+    a.dispose();
+    b.dispose();
+    c.dispose();
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }

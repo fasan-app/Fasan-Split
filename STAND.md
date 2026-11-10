@@ -14,7 +14,8 @@ Stand 01.11.2026.
 - 0.1.101: „?“ vor blassen Vorschlags-Kreisen (`ShareAvatars`), Bildschirmfoto b04w angesehen (hell/hoch). Nicht auf dem S23 geprüft.
 - **Lehre 10.11. 17:37 (Nutzer: „den ganzen Tag nichts gehört“):** Eine Antwort, die „ich arbeite weiter“ sagt, beendet den Zug: danach läuft nichts. Solange Pakete offen sind, keine Antwort mit Ankündigung beenden; im Zug bleiben (Warten per sleep-Schleifen), erst bei erledigter Arbeit antworten. 0.1.101 live.
 - 0.1.102 (lokal): Einladung → „Bisherige Rechnungen verbergen (N)" (`hideAllBills`, Frage, nicht zurücknehmbar), Test collab_ui_test. Nicht per Bildschirmfoto angesehen.
-- Später: Stufe „nur Beträge“, Standardstufe je Gruppe, Frage „Alte Rechnungen zeigen?“ beim Einladen.
+- 0.1.103 (lokal): Standardstufe je Gruppe (Schalter unter „Mitglieder“, `setHideNewBills`, nur auf diesem Telefon gespeichert; verbirgt Bons, die ich begonnen habe, vor dem ersten Schreiben). Test hidden_bill_test. Nicht per Bildschirmfoto angesehen; Schalter gilt nicht geräteübergreifend.
+- Später: Stufe „nur Beträge“.
 
 ## 10.11. 03:00 Web 0.1.96 live; 0.1.97 gepusht (CI läuft); 0.1.98 lokal fertig
 - Live in 0.1.96: vllt-Vorschläge, drei Stufen je Mitglied (direkt / fragt erst / nicht erlaubt), @Name in Posten-Notizen.
