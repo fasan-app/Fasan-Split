@@ -132,4 +132,34 @@ void main() {
     a.dispose();
     b.dispose();
   });
+
+  test('Stufe „fragt erst“: ein neuer Anteil für Anna kommt als vllt-Vorschlag am Posten an, zählt nicht und kann übernommen werden', () async {
+    final hub = MemoryRelayHub();
+    final (a, sa) = await phone(hub, 'Anna');
+    final (b, sb) = await phone(hub, 'Ben');
+    final ga = await a.createGroup('WG');
+    sa.upsert(Bill(id: 'p3', created: DateTime(2026, 11, 4), purpose: 'Eis', total: 900, people: [Person('Anna', 0), Person('Ben', 1)], items: [
+      BillItem(name: 'Eis', amount: 900, shares: {1: 1}),
+    ])
+      ..group = 'WG');
+    await invite(a, ga, b, 'Ben');
+    a.setTrust(b.identity!.pub, TrustLevel.confirm);
+    final billB = sb.bills.single;
+    billB.its.single.shares = {0: 1, 1: 1}; // Ben says: Anna had some ice cream too
+    sb.upsert(billB);
+    await settle();
+    final item = sa.bills.single.its.single;
+    expect(item.shares, {1: 1}, reason: 'zählt nicht');
+    expect(item.maybe, {0: b.identity!.pub}, reason: 'als Vorschlag von Ben am Posten');
+    expect(a.held, isEmpty);
+    expect(sa.bills.single.perPerson()[0] ?? 0, 0);
+    // Anna accepts
+    item.maybe.remove(0);
+    item.togglePerson(0);
+    sa.upsert(sa.bills.single);
+    await settle();
+    expect(sb.bills.single.its.single.shares.keys.toSet(), {0, 1});
+    a.dispose();
+    b.dispose();
+  });
 }

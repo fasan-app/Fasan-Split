@@ -868,6 +868,26 @@ class CollabService extends ChangeNotifier {
     final concerns = e.key == 'meta/payer' || mine.any((u) => e.key == 'p/$u' || ((e.key.startsWith('s/') || e.key.startsWith('f/')) && e.key.endsWith('/$u')));
     if (!concerns) return true;
     if (blocked.contains(e.author)) return false; // level „nein“: dropped, not even held
+    // a share added for me is only a suggestion: it shows faded at the item until I accept it (Nutzer 09.11.: „vllt“)
+    final addsMe = e.key.startsWith('s/') && e.value is num && (e.value as num) > 0 && (doc.get(e.key) is! num || (doc.get(e.key) as num) <= 0);
+    if (addsMe && mine.any((u) => e.key.endsWith('/$u'))) {
+      final parts = e.key.split('/');
+      scheduleMicrotask(() {
+        final bill = store.bills.where((b) => b.id == docId.substring(5)).firstOrNull;
+        final item = bill?.its.where((x) => x.uid == parts[1]).firstOrNull;
+        final idx = bill?.ps.indexWhere((p) => p.uid == parts[2]) ?? -1;
+        if (bill != null && item != null && idx >= 0) {
+          if ((item.shares[idx] ?? 0) <= 0) {
+            item.maybe[idx] = e.author;
+            store.upsert(bill);
+          }
+        } else if (!held.any((h) => h.docId == docId && h.entry.key == e.key && h.entry.ts == e.ts)) {
+          held.add(HeldChange(g, docId, e)); // bill, item or person not here yet: wait in the list of held changes instead
+          notifyListeners();
+        }
+      });
+      return false;
+    }
     if (!held.any((h) => h.docId == docId && h.entry.key == e.key && h.entry.ts == e.ts && h.entry.author == e.author)) {
       held.add(HeldChange(g, docId, e));
       scheduleMicrotask(notifyListeners);

@@ -597,7 +597,7 @@ const Map<String, String> stringsEn = {
   'trust.full': 'Enters directly',
   'trust.fullSub': 'Their entries for you count at once.',
   'trust.confirm': 'Asks first',
-  'trust.confirmSub': 'Their entries for you wait until you accept them.',
+  'trust.confirmSub': 'New shares for you show faded at the item (maybe), anything else waits until you accept it.',
   'trust.block': 'Not allowed',
   'trust.blockSub': 'Their entries for you are dropped.',
   'trust.blockShort': 'may not enter anything for me',

@@ -597,7 +597,7 @@ const Map<String, String> stringsDe = {
   'trust.full': 'Trägt direkt ein',
   'trust.fullSub': 'Seine Einträge für dich gelten sofort.',
   'trust.confirm': 'Fragt erst',
-  'trust.confirmSub': 'Seine Einträge für dich warten, bis du sie übernimmst.',
+  'trust.confirmSub': 'Neue Anteile für dich erscheinen blass am Posten (vllt.), anderes wartet, bis du es übernimmst.',
   'trust.block': 'Nicht erlaubt',
   'trust.blockSub': 'Seine Einträge für dich werden verworfen.',
   'trust.blockShort': 'darf nichts für mich eintragen',

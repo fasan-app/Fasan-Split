@@ -293,6 +293,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('member-trust')));
     await tester.pumpAndSettle();
     expect(find.text('Trägt direkt ein'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('trust-block'))); // the sheet scrolls on a small screen
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('trust-block')));
     await tester.pumpAndSettle();
     expect(svc.trustOf(other), TrustLevel.block);
