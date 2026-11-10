@@ -1,3 +1,6 @@
+## 0.1.101
+- Better: suggested people (“maybe”) now have a “?” in front of the pale circle, so they do not look confirmed.
+
 ## 0.1.100
 - New: note on a bill straight from the list: ⋮ on the bill card → “Note on the bill”. Pinned, it shows right under the title.
 

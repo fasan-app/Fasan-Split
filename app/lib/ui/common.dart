@@ -240,6 +240,9 @@ class ShareAvatars extends StatelessWidget {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       if (people.isNotEmpty) PeopleStack(people: people, size: size),
       if (people.isNotEmpty) const SizedBox(width: FasanSpace.xs),
+      // „?“ in front: a pale colour alone could be mistaken for a confirmed person (nicht geprüft auf dem Gerät)
+      Text('?', key: const ValueKey('maybe-mark'), style: TextStyle(fontSize: size * 0.6, fontWeight: FontWeight.w700, color: FasanLook.of(context).textMuted)),
+      const SizedBox(width: 2),
       Opacity(opacity: 0.45, child: PeopleStack(people: maybe, size: size)),
     ]);
   }

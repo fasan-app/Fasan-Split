@@ -1,3 +1,6 @@
+## 0.1.101
+- Besser: Vorgeschlagene Personen („vllt.“) haben jetzt ein „?“ vor dem blassen Kreis, damit sie nicht wie bestätigte aussehen.
+
 ## 0.1.100
 - Neu: Notiz zum Bon direkt aus der Liste: ⋮ an der Bon-Karte → „Notiz zum Bon“. Angepinnt steht sie gleich unter dem Titel.
 
