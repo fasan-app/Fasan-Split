@@ -12,6 +12,7 @@ Stand 01.11.2026.
 - Nicht geprüft: Foto-Weg geprüft in `photo_sync_test` (Stücke: Gruppenschlüssel öffnet nicht; drei Telefone: Lena bekommt Scan und Original, Karl nichts); echtes S23; Browser-Ende-zu-Ende mit verborgenem Bon (kein Schritt in tool/e2e); Gerätewechsel mit Sicherungsdatei (Schlüssel kommen aus dem keys-Dokument per NIP-44 neu, nicht getestet). Metadaten (Kennung, Zeitpunkte, Größe) bleiben für alle Mitglieder sichtbar.
 - Paket H (0.1.100, lokal): „Notiz zum Bon“ im ⋮ der Bon-Karte in der Liste (Blatt mit demselben `BillNotes` wie im Bon, anpinnen → Zeile unter dem Titel). Test home_test. Nicht per Bildschirmfoto angesehen (Blatt nur im Widget-Test), nicht im Browser-E2E.
 - 0.1.101: „?“ vor blassen Vorschlags-Kreisen (`ShareAvatars`), Bildschirmfoto b04w angesehen (hell/hoch). Nicht auf dem S23 geprüft.
+- **Lehre 10.11. 17:37 (Nutzer: „den ganzen Tag nichts gehört“):** Eine Antwort, die „ich arbeite weiter“ sagt, beendet den Zug: danach läuft nichts. Solange Pakete offen sind, keine Antwort mit Ankündigung beenden; im Zug bleiben (Warten per sleep-Schleifen), erst bei erledigter Arbeit antworten. 0.1.101 live.
 - Später: Stufe „nur Beträge“, Standardstufe je Gruppe, Frage „Alte Rechnungen zeigen?“ beim Einladen.
 
 ## 10.11. 03:00 Web 0.1.96 live; 0.1.97 gepusht (CI läuft); 0.1.98 lokal fertig
