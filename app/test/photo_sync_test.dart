@@ -192,4 +192,52 @@ void main() {
     b.dispose();
     await tmp.delete(recursive: true);
   });
+
+  test('Verborgener Bon mit Foto: Lena (auf dem Bon) bekommt Scan und Original, Karl (nicht auf dem Bon) nichts', () async {
+    final tmp = await Directory.systemTemp.createTemp('fasan_photo_h');
+    PathProviderPlatform.instance = _Docs(tmp.path);
+    SharedPreferences.setMockInitialValues({});
+    final hub = MemoryRelayHub();
+    final storeA = BillStore.memory()..me = 'Pia';
+    final a = CollabService(store: storeA, vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    storeA.addGroup('Stadt 26');
+    final scan = await saveImage('scan_h.jpg', receipt());
+    final orig = await saveImage('orig_h.jpg', receipt(w: 1800, h: 3200));
+    final bill = Bill(id: 'bh', created: DateTime(2026, 11, 10), purpose: 'Bar Beispiel', total: 1000, people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Essen', amount: 600, boxes: const [NBox(0.06, 0.075, 0.94, 0.1)], shares: {0: 1}),
+      BillItem(name: 'Wein', amount: 400, boxes: const [NBox(0.06, 0.1375, 0.94, 0.1625)], shares: {1: 1}),
+    ])
+      ..imagePath = scan
+      ..originalPath = orig
+      ..group = 'Stadt 26';
+    storeA.upsert(bill);
+    final g = await a.shareLocalGroup('Stadt 26');
+    final linkB = g.invitations!.create().link, linkC = g.invitations!.create().link;
+    expect(a.hideBill(bill), isTrue, reason: 'verborgen, bevor irgendetwas hinausgeht');
+    final storeB = BillStore.memory()..me = 'Lena', storeC = BillStore.memory()..me = 'Karl';
+    final b = CollabService(store: storeB, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    final c = CollabService(store: storeC, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await b.init();
+    await c.init();
+    expect(await b.join(linkB, 'Lena'), isNull);
+    expect(await c.join(linkC, 'Karl'), isNull);
+    for (var i = 0; i < 60 && (storeB.bills.isEmpty || !imageExists(storeB.bills.single.originalPath)); i++) {
+      await settle(300);
+    }
+    expect(storeB.bills, hasLength(1), reason: 'Lena liest den Bon');
+    expect(imageExists(storeB.bills.single.imagePath), isTrue, reason: 'Scan bei Lena');
+    expect(imageExists(storeB.bills.single.originalPath), isTrue, reason: 'Original bei Lena');
+    await settle(2000);
+    expect(storeC.bills, isEmpty, reason: 'Karl bekommt weder Bon noch Foto');
+    // what the relay holds of the photo is sealed with the bill key: with the group key alone there is no picture
+    final ref = PhotoRef.fromJson(storeA.bills.single.photoRef)!;
+    final gs = c.groups.values.single;
+    expect(await PhotoSync.fetch(gs.session.relay, gs.secret, ref, authors: gs.session.memberKeys, timeout: const Duration(seconds: 2)), isNull);
+    a.dispose();
+    b.dispose();
+    c.dispose();
+    await tmp.delete(recursive: true);
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }
