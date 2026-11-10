@@ -1,3 +1,7 @@
+## 0.1.94
+- New: Send items. In the item sheet, in the ⋮ of a bill and in the item list (it sends what the filters leave) you pick items with check marks. They land as a card in the group chat, showing only those items.
+- Fixed: The browser test could not find the bill row after the ⋮ change (so 0.1.93 did not go live).
+
 ## 0.1.93
 - New: The plus now also offers “Payment (cash)”: from whom to whom, how much, with a subject. Available in every group.
 - New: With “All groups” the plus also offers: new live group, new group only here, join. It also says that the bill goes to “No group”.

@@ -13,7 +13,7 @@ class NoteInfo {
 }
 
 class ChatMessage {
-  ChatMessage(this.id, this.from, this.text, this.at, {this.bill, this.reply, this.edited = false, this.deleted = false, this.reactions = const {}, this.mentions = const [], this.pinned = false});
+  ChatMessage(this.id, this.from, this.text, this.at, {this.bill, this.items = const [], this.reply, this.edited = false, this.deleted = false, this.reactions = const {}, this.mentions = const [], this.pinned = false});
   final String id, from, text;
 
   /// Id of the message this one answers (quote), or null.
@@ -33,6 +33,9 @@ class ChatMessage {
 
   /// A bill mentioned in the message (Nutzer 04.11.: bills tagged in the chat); shown as a card.
   final String? bill;
+
+  /// With [bill]: only these items of the bill are meant (positions in the bill's item list, Nutzer 09.11.: nur Posten schicken). Empty = the whole bill.
+  final List<int> items;
   final DateTime at;
 }
 
@@ -153,7 +156,7 @@ abstract final class Notes {
       if (v is Map) {
         final id = k.substring(2);
         out.add(ChatMessage(id, v['f'] as String? ?? '', v['x'] as String? ?? '', DateTime.fromMillisecondsSinceEpoch((v['t'] as num?)?.toInt() ?? 0),
-            bill: v['b'] as String?, reply: v['r'] as String?, edited: v['ed'] == 1, deleted: v['d'] == 1, reactions: reactions[id] ?? const {}, mentions: [for (final m in (v['m'] as List?) ?? const []) '$m'], pinned: pinned.contains(id)));
+            bill: v['b'] as String?, items: [for (final i in (v['i'] as List?) ?? const []) if (i is num) i.toInt()], reply: v['r'] as String?, edited: v['ed'] == 1, deleted: v['d'] == 1, reactions: reactions[id] ?? const {}, mentions: [for (final m in (v['m'] as List?) ?? const []) '$m'], pinned: pinned.contains(id)));
       }
     }
     out.sort((a, b) => a.at != b.at ? a.at.compareTo(b.at) : a.id.compareTo(b.id));
@@ -171,9 +174,9 @@ abstract final class Notes {
   }
 
   /// Sends a message; returns its id (to delete or quote it later).
-  static String send(LwwDoc doc, String from, String text, {String? bill, String? reply, List<String> mentions = const []}) {
+  static String send(LwwDoc doc, String from, String text, {String? bill, List<int> items = const [], String? reply, List<String> mentions = const []}) {
     final id = newUid();
-    doc.set('c/$id', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill, 'r': ?reply, if (mentions.isNotEmpty) 'm': mentions});
+    doc.set('c/$id', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill, if (items.isNotEmpty) 'i': items, 'r': ?reply, if (mentions.isNotEmpty) 'm': mentions});
     return id;
   }
 

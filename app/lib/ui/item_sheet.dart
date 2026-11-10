@@ -12,6 +12,7 @@ import 'assign.dart' show PeoplePicker;
 import 'scope.dart';
 import 'common.dart';
 import 'person_picker.dart';
+import 'send_items.dart';
 
 /// Opens the sheet. [changed] runs after every change; [onDelete] when the item is deleted (the screen puts it back on „undo“).
 Future<void> showItemSheet(BuildContext context, Bill bill, BillItem item, {required VoidCallback changed, required VoidCallback onDelete, bool focusAmount = false}) =>
@@ -135,7 +136,21 @@ class _ItemSheetState extends State<_ItemSheet> {
             },
           ),
           if (widget.bill.ps.any((p) => (it.shares[widget.bill.ps.indexOf(p)] ?? 0) > 0)) _FixedAmounts(bill: widget.bill, item: it, changed: widget.changed),
-          const SizedBox(height: FasanSpace.l),
+          const SizedBox(height: FasanSpace.s),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FasanButton(
+              key: const ValueKey('send-this-item'),
+              label: context.tr('send.item'),
+              kind: FasanButtonKind.quiet,
+              icon: Icons.forward_to_inbox_outlined,
+              onPressed: () {
+                final i = widget.bill.its.indexOf(it);
+                sendItemsFlow(context, widget.bill, preselected: i < 0 ? const {} : {i});
+              },
+            ),
+          ),
+          const SizedBox(height: FasanSpace.s),
           Row(children: [
             FasanButton(
               label: context.tr('item.delete'),

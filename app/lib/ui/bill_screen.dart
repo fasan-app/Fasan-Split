@@ -2,6 +2,7 @@
 // Fasan Split – THE bill screen (Nutzer 05.11.): total and purpose, who was there, who paid, the items – changed and assigned on
 // one screen. Replaces the old steps 1 (total), 2 (people) and 3 (assign); what follows is the summary (PayScreen). All texts
 // come from lib/l10n (context.tr). Researched layout: docs/recherche/2026-11-05-ein-bildschirm-bon.md. MPL-2.0
+import 'send_items.dart';
 import 'dart:math' as math;
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -413,6 +414,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 setState(() => _snippets = !_snippets);
               case 'receipt':
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssignScreen(bill: b, initialMode: AssignMode.receipt)));
+              case 'send':
+                sendItemsFlow(context, b);
               case 'history':
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => HistoryScreen.bill(billId: b.id, billTitle: b.purpose)));
               case 'lock':
@@ -439,6 +442,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 child: hasSnippets ? Text(context.tr('bill.snippets')) : ListTile(title: Text(context.tr('bill.snippets')), subtitle: Text(noPhoto), enabled: false),
               ),
               PopupMenuItem(value: 'receipt', enabled: hasScan, child: row(Icons.receipt_long_outlined, context.tr('bill.assignOnReceipt'), hasScan ? null : noPhoto)),
+              PopupMenuItem(value: 'send', enabled: b.its.isNotEmpty && canSendItems(context, b), child: row(Icons.forward_to_inbox_outlined, context.tr('send.item'), canSendItems(context, b) ? null : context.tr('send.noGroup'))),
               PopupMenuItem(value: 'history', child: row(Icons.history_rounded, context.tr('history.title'), null)),
               // padlock on the whole bill (Nutzer 07.11.); disabled with the reason when it cannot work
               PopupMenuItem(

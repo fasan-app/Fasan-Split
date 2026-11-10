@@ -4,6 +4,12 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 10.11. 01:30 Web 0.1.94: Posten schicken (Anforderungen 11 und 20) + CI-Fehler 0.1.93
+- **0.1.93 ging nicht live:** Browser-Test (Foto-Ablauf) lief nach dem Neuladen in den Timeout. Ursache lokal nachgestellt (Chromium, `run-photo.sh`): Mit dem ⋮ je Zeile ist die Bon-Zeile eine Gruppe mit `aria-label` statt Text; `getByText('Foto-Test')` fand sie nicht. Behoben im Test (`getByLabel` als Alternative, auch `screens.js`, `safari.js`). Lokal grün, CI-Lauf `6f26906` angestoßen. Für die Bedienung ändert sich nichts.
+- Posten schicken: `lib/ui/send_items.dart` (Auswahl mit Häkchen, ein Chat-Eintrag je Bon, `ChatMessage.items` = Positionen im Bon, alte Nachrichten bleiben ganze Bons). Einstiege: Posten-Blatt („Posten schicken …“), ⋮ im Bon, Posten-Liste (⋮ bzw. Symbol in der Gruppe: „Sichtbare Posten schicken …“, ein Eintrag je Bon, Bons ohne geteilte Gruppe werden übersprungen). Chat zeigt die Karte mit denselben Posten-Kacheln, Tippen öffnet den Bon am Posten.
+- Grenzen: Positionen können sich ändern, wenn Posten später gelöscht werden (Karte zeigt dann weniger). Nicht als Bildschirmfoto geprüft: die Chat-Karte (nur Widget-Test). Direkte Chats mit Freunden noch nicht (nur Gruppen-Chat).
+- Offen: Abstände Kopfzone; Pakete E (Notizen, @, Ziel-Sprung aus Benachrichtigungen) und F (Stellvertreter, Gerätefreigaben/Web Push, Sichtbarkeit je Bon).
+
 ## 09.11. 23:50 Web 0.1.93: Paket D (Plus-Menü, Wischen raus, ⋮ je Bon)
 - Plus: „Zahlung (Bargeld)“ (Wer, an wen, Betrag, Betreff) in jeder Gruppe mit ≥ 2 Personen; bei „Alle Gruppen“ Hinweis „landet in Ohne Gruppe“ und Gruppen-Einträge (live, nur hier, beitreten). Test `plus_menu_test.dart`.
 - Wischen an Bons raus, ⋮ je Zeile (Ausgleichen/Papierkorb/Wiederherstellen). Texte in Tutorial und Hinweisen angepasst. Offen: Freunde-Karte und Zuordnung im Bon wischen noch (andere Zwecke).

@@ -1,3 +1,7 @@
+## 0.1.94
+- Neu: Posten schicken. Im Posten-Blatt, im ⋮ des Bons und in der Posten-Liste (zeigt, was die Filter übrig lassen) wählst du Posten mit Häkchen. Sie landen als Karte im Chat der Gruppe, nur mit diesen Posten.
+- Behoben: Der Browser-Test fand die Bon-Zeile nach dem ⋮-Umbau nicht mehr (0.1.93 ging deshalb nicht live).
+
 ## 0.1.93
 - Neu: Beim Plus steht jetzt auch „Zahlung (Bargeld)“: von wem an wen, wie viel, mit Betreff. Das gibt es in jeder Gruppe.
 - Neu: Bei „Alle Gruppen“ bietet das Plus zusätzlich: neue Gruppe live, neue Gruppe nur hier, beitreten. Dort steht auch, dass der Bon in „Ohne Gruppe“ landet.

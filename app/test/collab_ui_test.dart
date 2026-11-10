@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // Widget tests of the collaboration screens. They use MemoryRelay only: no public relay is contacted. MPL-2.0
+import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
@@ -7,6 +8,7 @@ import 'package:fasan_split/main.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/collab_ui.dart';
 import 'package:fasan_split/ui/my_balance.dart';
+import 'package:fasan_split/ui/send_items.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -195,6 +197,33 @@ void main() {
     expect(find.text('Niemand sonst in der Gruppe.'), findsOneWidget);
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('Posten schicken: Auswahl mit Häkchen, Karte im Chat zeigt nur diese Posten', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    final g = await svc.createGroup('Hütte');
+    final bill = Bill(id: 'b1', created: DateTime(2026, 11, 2), purpose: 'Abendessen', total: 3000, group: 'Hütte', items: [BillItem(name: 'Pizza', amount: 1400), BillItem(name: 'Salat', amount: 800), BillItem(name: 'Wein', amount: 800)]);
+    store.upsert(bill);
+    await tester.pumpWidget(host(Builder(builder: (c) => Scaffold(body: Center(child: TextButton(onPressed: () => sendItemsFlow(c, bill, preselected: {0}), child: const Text('senden')))))));
+    await tester.tap(find.text('senden'));
+    await tester.pumpAndSettle();
+    expect(find.text('Schicken (1)'), findsOneWidget, reason: 'der Posten, von dem aus geöffnet wurde, ist angehakt');
+    await tester.tap(find.byKey(const ValueKey('send-item-2')));
+    await tester.pump();
+    expect(find.text('Schicken (2)'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('send-go')));
+    await tester.pumpAndSettle();
+    final m = svc.messages(g).single;
+    expect(m.bill, 'b1');
+    expect(m.items, [0, 2]);
+    await tester.pumpWidget(host(ChatScreen(group: g)));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Pizza'), findsWidgets);
+    expect(find.text('Wein'), findsWidgets);
+    expect(find.text('Salat'), findsNothing, reason: 'nicht geschickt');
     await tester.pump(const Duration(seconds: 1));
   });
 }

@@ -36,6 +36,7 @@ import 'onboarding.dart';
 import 'update_ui.dart';
 import '../state/images.dart';
 import 'search_suggest.dart';
+import 'send_items.dart';
 import 'shape_tokens.dart';
 
 /// Which list of bills a page shows.
@@ -72,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _query = '';
   final _searchCtl = TextEditingController(); // set from a recent search or a suggestion
   bool _itemsView = false; // Gruppe tab: false = bills, true = all items of the scope
+  List<(Bill, BillItem?)> _visibleItems = const []; // the items the Posten view shows right now (filters and search applied); „sichtbare Posten schicken“
 
   /// The picked scope; „Alle“ when the picked group is gone (deleted, left).
   String _scopeOf(BillStore s) => scopeIsGroup(_scope) && !s.allGroups.contains(_scope) ? kScopeAll : _scope;
@@ -504,7 +506,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final t = S.of(context);
     final canSelect = list != null && _hasAny(store, list);
     if (_page <= 2 && scopeIsGroup(_scopeOf(store))) {
-      return Row(mainAxisSize: MainAxisSize.min, children: groupActions(context, _scopeOf(store), compact: true, onDeleted: () => setState(() => _scope = kScopeAll), onSelect: canSelect ? () => setState(() => _selecting = true) : null));
+      return Row(mainAxisSize: MainAxisSize.min, children: [
+        if (_itemsView && _hasVisibleItems) IconButton(key: const ValueKey('send-visible'), tooltip: trLang(t.de ? 'de' : 'en', 'send.filtered'), icon: const Icon(Icons.forward_to_inbox_outlined), onPressed: () => _sendVisible(context)),
+        ...groupActions(context, _scopeOf(store), compact: true, onDeleted: () => setState(() => _scope = kScopeAll), onSelect: canSelect ? () => setState(() => _selecting = true) : null),
+      ]);
     }
     if (_page > 2) {
       return PopupMenuButton<String>(
@@ -515,9 +520,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return PopupMenuButton<String>(
       key: const ValueKey('more-menu'),
-      onSelected: (_) => setState(() => _selecting = true),
-      itemBuilder: (_) => [PopupMenuItem(value: 'select', enabled: canSelect, child: Text(t.select))],
+      onSelected: (v) => v == 'send' ? _sendVisible(context) : setState(() => _selecting = true),
+      itemBuilder: (_) => [
+        PopupMenuItem(value: 'select', enabled: canSelect, child: Text(t.select)),
+        if (_itemsView) PopupMenuItem(value: 'send', enabled: _hasVisibleItems, child: Text(trLang(t.de ? 'de' : 'en', 'send.filtered'))),
+      ],
     );
+  }
+
+  bool get _hasVisibleItems => _visibleItems.any((e) => e.$2 != null);
+
+  /// Sends the items the Posten view shows (filters and search applied) as cards into the chats of their groups.
+  Future<void> _sendVisible(BuildContext context) {
+    final byBill = <Bill, Set<int>>{};
+    for (final (b, it) in _visibleItems) {
+      if (it == null) continue;
+      final i = b.its.indexOf(it);
+      if (i >= 0) (byBill[b] ??= {}).add(i);
+    }
+    return sendItemsOfBills(context, byBill);
   }
 
   /// What a search looks at: purpose, place, people, item names and the amount as written (Karte-Recherche: Suche über Zweck, Zahler und Betrag).
@@ -690,6 +711,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ? store.inGroup(scope)
         : [if (scope == kScopeAll) for (final g in store.groups) ...store.inGroup(g), ...store.inGroup(null)];
     final flat = _itemsView ? flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => _itemMatches(b, i, q, t.de)) : const <(Bill, BillItem?)>[];
+    _visibleItems = flat;
     final peopleCount = scopeIsGroup(scope) ? CollabScope.of(context).peopleOf(scope).length : {for (final b in scopeBills) for (final p in b.ps) p.name.trim().toLowerCase()}.length;
     // one banner at a time, most important first: update, backup due, home-screen tip (iPhone browser)
     final Widget? banner = done

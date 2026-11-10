@@ -200,7 +200,7 @@ Wünsche:
 8. „Alle Gruppen“ + Plus: wo landet der Bon? Dort zuerst Gruppenmenü (neue Gruppe live, beitreten).
 9. In der Gruppe + Plus: direkt Bargeldzahlung (von A zu B, Summe, Betreff) wählbar, auch ohne Bon, intuitiver.
 10. Wischmenü in der Gruppe (ausgleichen/löschen) fraglich: Nutzer wollen zur Abrechnung wischen.
-11. „Bons schicken“-Menü grafisch schlecht; vielleicht nur Posten schicken.
+11. „Bons schicken“-Menü grafisch schlecht; vielleicht nur Posten schicken. Stand 10.11.: umgesetzt als „Posten schicken“ (0.1.94).
 12. Notizen überall (Bon, Posten, generell), auf Wunsch sichtbar anpinnbar; @Person in Notizen löst Benachrichtigung aus.
 13. Benachrichtigung/Glocke führt genau zum Ziel (ggf. mittig), kurz pulsierend; Aufmerksamkeitslenkung nach Apple-Vorgaben.
 14. Stellvertreter einzeln wählbar (optional), die für mich eintragen dürfen.
@@ -212,6 +212,6 @@ Wünsche:
 17. „Hatte vielleicht“: Eintrag „vllt Name“ im Posten, Posten bleibt offen bis die Person bestätigt; sie bekommt eine Benachrichtigung. Mehrere Kandidaten („Mama oder Papa“) sind ihm zu kompliziert – nur eine Person je Vorschlag.
 18. Datenschutz in der Gruppe: wer später eingeladen wird, sieht nicht automatisch alte Rechnungen/Posten; Optionen: unsichtbar, Posten geschwärzt oder nur Beträge. Rechnungen, bei denen nicht alle dabei waren, auf Wunsch nur für Beteiligte sichtbar. Die Gruppe muss nicht alles sehen.
 19. Benachrichtigungen: Nutzer hält sie für essenziell, standardmäßig an, in den Einstellungen abschaltbar; Frage nach Community-Sicht.
-20. Posten verschicken: Auswahl in der Rechnung, über den Filter oder im geöffneten Posten.
+20. Posten verschicken: Auswahl in der Rechnung, über den Filter oder im geöffneten Posten. Stand 10.11.: umgesetzt (0.1.94).
 21. Frage: Hashtag # einführen, oder ist alles (Personen, Notizen) über die Suche auffindbar?
 22. (09.11. 22:48–22:50) Wischen erzeugt noch „ausgleichen/löschen“; Posten sehen noch nicht aus wie im Bon (mit Miniatur); „Was stimmt noch alles nicht, du hast nichts geprüft.“ Ursache: Nutzer hatte 0.1.91 (CI von 0.1.92 hing). Stand: Wischen in 0.1.93; Prüfung per Bildschirmfoto läuft. Stand: in Arbeit.

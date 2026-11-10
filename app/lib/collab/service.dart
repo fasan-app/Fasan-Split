@@ -994,13 +994,13 @@ class CollabService extends ChangeNotifier {
   List<ChatMessage> messages(CollabGroup g) => Notes.messages(g.session.doc(GroupSession.chat));
 
   /// Sends a chat message; returns its id, or null when nothing was sent.
-  String? sendMessage(CollabGroup g, String text, {String? bill, String? reply, List<String> mentions = const []}) {
+  String? sendMessage(CollabGroup g, String text, {String? bill, List<int> items = const [], String? reply, List<String> mentions = const []}) {
     final me = identity;
     final t = text.trim();
     if (me == null || t.isEmpty && bill == null) return null;
     // a mention counts while its @name is still in the text, and only for members of the group
     final ms = [for (final k in mentions.toSet()) if (k != me.pub && g.session.memberKeys.contains(k) && t.contains('@${g.session.nameOf(k)}')) k];
-    final id = Notes.send(g.session.doc(GroupSession.chat), me.pub, t, bill: bill, reply: reply, mentions: ms);
+    final id = Notes.send(g.session.doc(GroupSession.chat), me.pub, t, bill: bill, items: items, reply: reply, mentions: ms);
     g.session.touch(GroupSession.chat);
     return id;
   }
