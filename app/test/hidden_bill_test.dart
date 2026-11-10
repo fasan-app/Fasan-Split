@@ -72,4 +72,43 @@ void main() {
     b.dispose();
     c.dispose();
   }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test('Neustart ohne Netz: Lena hat Schlüssel und verborgenen Bon von der Platte', () async {
+    final hub = MemoryRelayHub();
+    final storeA = BillStore.memory()..me = 'Pia';
+    final a = CollabService(store: storeA, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    final g = await a.createGroup('Stadt 26');
+    final link = g.invitations!.create().link;
+    await settle(400);
+    final storeB = BillStore.memory()..me = 'Lena';
+    final vaultB = MemoryVault();
+    final prefsB = await SharedPreferences.getInstance();
+    var b = CollabService(store: storeB, vault: vaultB, prefs: prefsB, relayFactory: (_) => MemoryRelay(hub));
+    await b.init();
+    await b.setName('Lena');
+    await b.join(link, 'Lena');
+    await settle(9000);
+    final bill = Bill(id: 'h2', created: DateTime(2026, 11, 10), purpose: 'Bar Beispiel', total: 3000, people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Cocktail', amount: 3000, shares: {0: 1, 1: 1}),
+    ])
+      ..group = 'Stadt 26';
+    storeA.upsert(bill);
+    expect(a.hideBill(bill), isTrue);
+    await settle(3000);
+    expect(storeB.bills.where((x) => x.id == 'h2'), hasLength(1));
+    b.saveDocs();
+    b.dispose();
+
+    // restart: new empty relay world (no network), empty store – everything must come from the disk
+    final b2 = CollabService(store: BillStore.memory()..me = 'Lena', vault: vaultB, prefs: prefsB, relayFactory: (_) => MemoryRelay(MemoryRelayHub()));
+    await b2.init();
+    await settle(2500);
+    final s2 = b2.groups.values.single.session;
+    expect(s2.hasBillKey('h2'), isTrue, reason: 'der Schlüssel kommt aus dem keys-Dokument auf der Platte');
+    expect(s2.doc(GroupSession.bill('h2')).keys('').isNotEmpty, isTrue, reason: 'der Bon war unter dem Bon-Schlüssel gespeichert und ist wieder lesbar');
+    a.dispose();
+    b2.dispose();
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }
