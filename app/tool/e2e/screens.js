@@ -47,6 +47,8 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await click(/^(Beitreten|Verbinden|Beitritt anfragen|Join|Connect|Ask to join)$/);
     await shot('j02-teilen-hinweis');
     await click(/^(Verstanden, teilen|Understood, share)$/);
+    await p.getByRole('button', { name: /^(Nicht jetzt|Not now)$/ }).first().click({ timeout: 8000 }).catch(() => {}); // the one-time notification question
+    await p.waitForTimeout(800);
     await shot('j03-beigetreten');
     await click(/^(Zur Gruppe|Go to the group)$/);
     for (let i = 0; i < 60 && (await p.getByText('Foto-Test').or(p.getByLabel('Foto-Test')).count()) === 0; i++) await p.waitForTimeout(1000);

@@ -25,6 +25,10 @@ class DeviceNotifier with WidgetsBindingObserver {
   /// Switched on by the user (Einstellungen → Benachrichtigungen).
   bool get enabled => prefs?.getBool(_kOn) ?? false;
 
+  /// The one-time question after the first sharing (Nutzer 09.11.: device notifications are essential, asked in context).
+  bool get asked => prefs?.getBool('notify.asked') ?? false;
+  Future<void> markAsked() async => prefs?.setBool('notify.asked', true);
+
   Future<void> init() async {
     WidgetsBinding.instance.addObserver(this);
     if (!enabled) return;

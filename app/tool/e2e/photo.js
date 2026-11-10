@@ -38,10 +38,12 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
   await p.waitForTimeout(1500);
   const shot = (n) => p.screenshot({ path: `${dir}/photo-${n}.png` });
   const click = async (name) => { await p.getByRole('button', { name }).first().click({ timeout: 20000 }); await p.waitForTimeout(1500); };
+  const later = async () => { await p.getByRole('button', { name: /^(Nicht jetzt|Not now)$/ }).first().click({ timeout: 8000 }).catch(() => {}); await p.waitForTimeout(800); };
   const result = {};
   try {
     await click(/^(Beitreten|Verbinden|Beitritt anfragen)$/);
     await click('Verstanden, teilen');
+    await later(); // the one-time notification question
     await click('Zur Gruppe');
     for (let i = 0; i < 60 && (await p.getByText('Foto-Test').or(p.getByLabel('Foto-Test')).count()) === 0; i++) await p.waitForTimeout(1000);
     await shot('1-gruppe');

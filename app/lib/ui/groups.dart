@@ -26,7 +26,6 @@ import 'hints.dart';
 import 'history.dart';
 import 'my_balance.dart';
 import 'pay_ui.dart';
-import 'swipe.dart';
 import 'marquee_text.dart';
 import 'shape_tokens.dart';
 
@@ -679,15 +678,8 @@ class FriendsPage extends StatelessWidget {
       );
       return Padding(
         padding: const EdgeInsets.only(bottom: FasanSpace.s),
-        child: f.fromBills && f.pub == null
-            ? SwipeActions(
-                key: ValueKey('friend-${f.name}'),
-                id: 'friend-${f.name}',
-                end: SwipeSide(Icons.person_remove_outlined, t.forget, Colors.red.shade700),
-                onDismissed: (_) => store.forgetFriend(f.name),
-                child: card,
-              )
-            : card,
+        // no swipe (Nutzer 09.11.): „Aus Vorschlägen entfernen“ is in the menu (long press)
+        child: card,
       );
     }
 

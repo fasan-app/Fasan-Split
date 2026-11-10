@@ -1,3 +1,7 @@
+## 0.1.98
+- Besser: Auch bei den Freunden gibt es kein Wischen mehr. „Aus Vorschlägen entfernen“ steht im Menü (Karte lang drücken).
+- Neu: Nach dem ersten Teilen fragt die App einmal, ob dein Gerät Benachrichtigungen zeigen darf (bei neuen Nachrichten, Bons und Vorschlägen, solange die App läuft). Abschalten geht jederzeit in den Einstellungen.
+
 ## 0.1.97
 - Besser: Keine Wischgesten mehr an den Posten im Bon. „Für alle“ und „Löschen“ findest du im Posten-Blatt (Posten lang drücken).
 - Neu: Stufe „Fragt erst“: Trägt jemand einen Posten für dich ein, erscheint er blass bei dir am Posten („vllt.“), bis du ihn übernimmst.

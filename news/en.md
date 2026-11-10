@@ -1,3 +1,7 @@
+## 0.1.98
+- Better: No more swiping on the friends either. “Remove from suggestions” is in the menu (long press the card).
+- New: After you share for the first time, the app asks once whether your device may show notifications (new messages, bills and suggestions, while the app is running). You can turn it off any time in the settings.
+
 ## 0.1.97
 - Better: No more swipe gestures on the items in a bill. “Everyone” and “Delete” are in the item sheet (long press an item).
 - New: Level “Asks first”: if someone enters an item for you, it shows faded at the item for you (“maybe”) until you accept it.

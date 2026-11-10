@@ -196,7 +196,7 @@ Fehler/Mängel (gesehen auf dem S23):
 5. Nach kurzem App-Wechsel ist die Seite manchmal komplett weiß, Neuladen nötig (Fehler).
 6. Ausgeglichener Saldo immer mit 0 anzeigen; Frage: wie sieht der Kopf mit Saldo aus.
 Wünsche:
-7. Web fragt Geräteberechtigungen ab (Benachrichtigungen).
+7. Web fragt Geräteberechtigungen ab (Benachrichtigungen). Stand 10.11.: einmalige Frage nach der ersten Einwilligung zum Teilen (0.1.97); echtes Push bei geschlossener App offen.
 8. „Alle Gruppen“ + Plus: wo landet der Bon? Dort zuerst Gruppenmenü (neue Gruppe live, beitreten).
 9. In der Gruppe + Plus: direkt Bargeldzahlung (von A zu B, Summe, Betreff) wählbar, auch ohne Bon, intuitiver.
 10. Wischmenü in der Gruppe (ausgleichen/löschen) fraglich: Nutzer wollen zur Abrechnung wischen.

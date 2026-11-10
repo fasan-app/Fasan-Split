@@ -15,6 +15,7 @@ import '../collab/activity.dart';
 import '../collab/group.dart';
 import '../collab/notes.dart';
 import '../collab/service.dart';
+import 'notify_prompt.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
 import '../platform/web_platform.dart';
@@ -56,6 +57,7 @@ Future<bool> ensureConsent(BuildContext context, CollabService s) async {
   if (ok != true) return false;
   _consentInMemory = true;
   await s.prefs?.setBool(_kConsent, true);
+  if (context.mounted) await askNotificationsOnce(context);
   return true;
 }
 

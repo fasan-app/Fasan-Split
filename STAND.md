@@ -4,11 +4,11 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
-## 10.11. 03:00 Web 0.1.96 live (Deploy grün, Lauf 42741947091); 0.1.97 in Arbeit
+## 10.11. 03:00 Web 0.1.96 live; 0.1.97 gepusht (CI läuft); 0.1.98 lokal fertig
 - Live in 0.1.96: vllt-Vorschläge, drei Stufen je Mitglied (direkt / fragt erst / nicht erlaubt), @Name in Posten-Notizen.
-- 0.1.97 lokal: „Fragt erst“ macht neue Anteile für mich zu vllt-Vorschlägen (core_admin_test), Wischgesten an Posten im Bon entfernt (Zwillinge im Posten-Blatt), veralteter Wisch-Tipp korrigiert, Bildschirmschritte `b04v`/`b04w` (Blatt und Liste mit Vorschlag; angesehen, Layout in Ordnung; Namenszusatz „von ?“ entfernt).
+- 0.1.97 (gepusht 85660d2) und danach lokal: Freunde-Karte ohne Wischen (swipe.dart entfernt); „Fragt erst“ macht neue Anteile für mich zu vllt-Vorschlägen (core_admin_test), Wischgesten an Posten im Bon entfernt (Zwillinge im Posten-Blatt), veralteter Wisch-Tipp korrigiert, Bildschirmschritte `b04v`/`b04w` (Blatt und Liste mit Vorschlag; angesehen, Layout in Ordnung; Namenszusatz „von ?“ entfernt).
 - Nicht geprüft: Aussehen auf dem S23; blasser Kreis (45 %) könnte bei hellen Farben mit bestätigt verwechselt werden (ggf. „?“-Marke); Sprung zum Posten aus der Neuigkeit nur im Test.
-- Noch offen: Profil-Standardstufe, Web Push, Sichtbarkeit je Bon, Freunde-Karte „vergessen“ (Wisch), Posten an Freunde schicken, Notiz am Bon in der Liste bearbeiten.
+- Einmalige Frage nach Geräte-Benachrichtigungen direkt nach der ersten Einwilligung zum Teilen (`askNotificationsOnce`; Browser-E2E lokal grün, Skripte klicken „Nicht jetzt“). Noch offen: Profil-Standardstufe, Web Push (echtes Push bei geschlossener App braucht einen eigenen Sender-Dienst; ohne den gilt „solange die App läuft“), Sichtbarkeit je Bon, Posten an Freunde schicken, Notiz am Bon in der Liste bearbeiten.
 
 ## 10.11. 07:00 Paket F1 (vllt-Vorschläge) lokal fertig, noch nicht live (wartet auf Deploy 0.1.95)
 - `BillItem.maybe` (Person → Vorschlagender), Sync `sv/<posten>/<person>`, Aufräumen, Sperrregel, `removePerson` verschiebt Indizes. Zählt in keiner Summe.

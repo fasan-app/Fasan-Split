@@ -3,6 +3,7 @@
 import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/collab/activity.dart';
 import 'package:fasan_split/collab/keys.dart';
+import 'package:fasan_split/collab/notify.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_split/main.dart';
@@ -11,6 +12,7 @@ import 'package:fasan_split/ui/collab_ui.dart';
 import 'package:fasan_split/ui/item_sheet.dart';
 import 'package:fasan_split/ui/my_balance.dart';
 import 'package:fasan_split/ui/resume.dart';
+import 'package:fasan_split/ui/scope.dart';
 import 'package:fasan_split/ui/send_items.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -301,5 +303,32 @@ void main() {
     await tester.tap(find.text('auf'));
     await tester.pumpAndSettle();
     expect(find.text('Nicht erlaubt'), findsOneWidget, reason: 'die gewählte Stufe steht im Menü');
+  });
+
+  testWidgets('Benachrichtigungen: nach der ersten Einwilligung einmal gefragt, „Einschalten“ ohne Berechtigung zeigt den Hinweis, danach nie wieder', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    svc.dispose();
+    svc = CollabService(store: store, vault: MemoryVault(), prefs: prefs, relayFactory: (_) => MemoryRelay(hub));
+    final old = deviceNotifier;
+    deviceNotifier = DeviceNotifier(prefs);
+    addTearDown(() => deviceNotifier = old);
+    tester.view.physicalSize = const Size(1080, 2400);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(Builder(builder: (c) => Scaffold(body: Center(child: TextButton(onPressed: () => ensureConsent(c, svc), child: const Text('auf')))))));
+    await tester.tap(find.text('auf'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Verstanden, teilen'));
+    await tester.pumpAndSettle();
+    expect(find.text('Benachrichtigungen einschalten?'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('notify-on')));
+    await tester.pumpAndSettle();
+    expect(deviceNotifier!.asked, isTrue);
+    expect(find.textContaining('blockiert'), findsOneWidget, reason: 'in the test there is no platform that grants it');
+    await tester.pump(const Duration(seconds: 5));
+    await tester.tap(find.text('auf'));
+    await tester.pumpAndSettle();
+    expect(find.text('Benachrichtigungen einschalten?'), findsNothing, reason: 'asked only once');
+    expect(find.text('Verstanden, teilen'), findsNothing);
   });
 }

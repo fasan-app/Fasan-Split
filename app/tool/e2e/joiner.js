@@ -39,9 +39,11 @@ const mode = process.env.MODE || 'normal';
   const shot = (n) => p.screenshot({ path: `${dir}/${mode}-${n}.png` });
   await shot('1-join');
   const click = async (name) => { await p.getByRole('button', { name }).first().click({ timeout: 20000 }); await p.waitForTimeout(1500); };
+  const later = async () => { await p.getByRole('button', { name: /^(Nicht jetzt|Not now)$/ }).first().click({ timeout: 8000 }).catch(() => {}); await p.waitForTimeout(800); };
   try {
     await click(/^(Beitreten|Verbinden|Beitritt anfragen)$/);
     await click('Verstanden, teilen');
+    await later(); // the one-time notification question
     // the join screen says „Du bist dabei“ and offers the way into the group (it no longer jumps there by itself)
     await click("Zur Gruppe");
   } catch (e) { console.log('FAIL Knopf fehlt', String(e).slice(0, 200)); await shot('fail'); await b.close(); process.exit(1); }
