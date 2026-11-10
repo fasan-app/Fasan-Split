@@ -2,6 +2,7 @@
 - New: “maybe” suggestions. Whoever enters for somebody else can only suggest an item: item sheet, “Suggest for someone (maybe)”. The suggestion shows faded on the item and counts in no sum.
 - New: The suggested person gets a news entry that leads straight to the item and can “Accept” or “Decline” there. Only “Accept” makes the item count. The news entry can be switched off in the settings.
 - New: Three levels per member: “Enters directly”, “Asks first” and “Not allowed”. Set them in the member list (tap a member, “May change my shares”). With “Not allowed” their entries for you are dropped.
+- New: If you write “@Name” in the note of an item, that person gets a news entry that leads to the item.
 
 ## 0.1.95
 - New: Notes on items: the item sheet has a “Note” field. It shows under the item and search finds it.

@@ -1458,6 +1458,7 @@ class CollabService extends ChangeNotifier {
   final Map<String, Set<String>> _knownMessages = {};
   final Map<String, Set<String>> _knownNotes = {}; // bill doc → note ids seen
   final Map<String, Set<String>> _knownMaybe = {}; // bill doc → proposal keys (sv/…) seen
+  final Map<String, Map<String, String>> _knownItemNotes = {}; // bill doc → item uid → note text seen
 
   /// New since the bell was opened.
   int get unseenActivity {
@@ -1583,6 +1584,29 @@ class CollabService extends ChangeNotifier {
             _note(Activity(ActivityKind.mention, DateTime.now(), g.secret.tag, '${v['f']} hat dich in „${p is String && p.isNotEmpty ? p : 'Bon'}“ erwähnt: ${v['x']}', ref: billId,
                 en: '${v['f']} mentioned you in “${p is String && p.isNotEmpty ? p : 'Receipt'}”: ${v['x']}'));
           }
+        }
+      }
+      // @mention of me in the note of an item (Nutzer 09.11.): the writer of the item entry is the one who mentioned
+      final itemNotes = <String, String>{
+        for (final k in doc.keys('i/'))
+          if (doc.get(k) case final Map v when v['note'] is String && (v['note'] as String).trim().isNotEmpty) k.substring(2): v['note'] as String
+      };
+      final knownI = _knownItemNotes[id];
+      _knownItemNotes[id] = itemNotes;
+      if (knownI != null && !_quiet(g)) {
+        final myName = (identity?.name ?? store.me).trim().toLowerCase();
+        for (final n in itemNotes.entries) {
+          if (knownI[n.key] == n.value || myName.isEmpty || !n.value.toLowerCase().contains('@$myName')) continue;
+          Entry? w;
+          for (final e in doc.entries) {
+            if (e.key == 'i/${n.key}' && (w == null || e.beats(w))) w = e;
+          }
+          if (w == null || w.author == identity?.pub) continue;
+          final item = doc.get('i/${n.key}');
+          final it = item is Map ? '${item['name']}' : '';
+          final who = s.nameOf(w.author);
+          _note(Activity(ActivityKind.mention, DateTime.now(), g.secret.tag, '$who hat dich bei „$it“ erwähnt: ${n.value}', ref: '$billId#${n.key}',
+              en: '$who mentioned you at “$it”: ${n.value}'));
         }
       }
       // tentative „vllt“ proposals for me (sv/<item>/<person>): the person is me when the name matches mine

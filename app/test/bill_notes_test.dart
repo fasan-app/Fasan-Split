@@ -82,4 +82,37 @@ void main() {
     a.dispose();
     b.dispose();
   }, timeout: const Timeout(Duration(minutes: 1)));
+
+  test('@Lena in der Notiz eines Postens: kommt bei Lena als Erwähnung an und führt zum Posten', () async {
+    final hub = MemoryRelayHub();
+    final storeA = BillStore.memory()..me = 'Pia';
+    final a = CollabService(store: storeA, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    final g = await a.createGroup('Stadt 26');
+    final bill = Bill(id: 'r3', created: DateTime(2026, 11, 10), purpose: 'Bar Beispiel', total: 1800, people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Cocktail', amount: 1800, shares: {0: 1}),
+    ])
+      ..group = 'Stadt 26';
+    storeA.upsert(bill);
+    final link = g.invitations!.create().link;
+    await settle(400);
+    final storeB = BillStore.memory()..me = 'Lena';
+    final b = CollabService(store: storeB, vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => MemoryRelay(hub));
+    await b.init();
+    await b.setName('Lena');
+    await b.join(link, 'Lena');
+    await settle(9000);
+
+    bill.its.first.note = '@Lena war der für dich?';
+    storeA.upsert(bill);
+    await settle(2000);
+    final got = storeB.bills.firstWhere((x) => x.id == 'r3');
+    expect(got.its.first.note, '@Lena war der für dich?');
+    final n = b.activity.where((x) => x.kind == ActivityKind.mention && x.text.contains('Cocktail')).toList();
+    expect(n, hasLength(1));
+    expect(n.single.ref, 'r3#${got.its.first.uid}');
+    a.dispose();
+    b.dispose();
+  }, timeout: const Timeout(Duration(minutes: 1)));
 }
