@@ -32,6 +32,36 @@ import 'when_where.dart';
 import 'shape_tokens.dart';
 import 'pulse_focus.dart';
 
+/// The question before hiding a bill. Returns null when cancelled, else whether the amounts stay visible for everyone.
+Future<bool?> askHideBill(BuildContext context, String names) async {
+  var sums = false;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setD) => AlertDialog(
+        title: Text(ctx.tr('vis.title')),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(ctx.tr('vis.text', [names])),
+          CheckboxListTile(
+            key: const ValueKey('vis-sums'),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: sums,
+            onChanged: (v) => setD(() => sums = v ?? false),
+            title: Text(ctx.tr('vis.sumsCheck')),
+            subtitle: Text(ctx.tr('vis.sumsHelp')),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.of(ctx).cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(ctx.tr('vis.action'))),
+        ],
+      ),
+    ),
+  );
+  return ok == true ? sums : null;
+}
+
 class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key, required this.bill, this.scan, this.focusItem});
 
@@ -258,32 +288,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Future<void> _hideFlow(Bill b) async {
     final collab = CollabScope.read(context);
     final names = collab.hiddenReaderNames(b).join(', ');
-    var sums = false;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setD) => AlertDialog(
-          title: Text(ctx.tr('vis.title')),
-          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(ctx.tr('vis.text', [names])),
-            CheckboxListTile(
-              key: const ValueKey('vis-sums'),
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              value: sums,
-              onChanged: (v) => setD(() => sums = v ?? false),
-              title: Text(ctx.tr('vis.sumsCheck')),
-              subtitle: Text(ctx.tr('vis.sumsHelp')),
-            ),
-          ]),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.of(ctx).cancel)),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(ctx.tr('vis.action'))),
-          ],
-        ),
-      ),
-    );
-    if (ok != true || !mounted) return;
+    final res = await askHideBill(context, names);
+    if (res == null || !mounted) return;
+    final sums = res;
     final done = collab.hideBill(b, sums: sums);
     if (mounted) showNote(context, context.tr(done ? 'vis.done' : 'vis.failed'));
     setState(() {});

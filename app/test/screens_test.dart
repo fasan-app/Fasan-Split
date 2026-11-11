@@ -24,8 +24,7 @@ import 'package:fasan_split/perf/perf_governor.dart';
 import 'package:fasan_split/state/snippets.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/assign.dart';
-import 'package:fasan_split/l10n/tr.dart';
-import 'package:fasan_split/ui/collab_ui.dart' show confirmDialog;
+import 'package:fasan_split/ui/bill_screen.dart' show askHideBill;
 import 'package:fasan_split/ui/flow.dart';
 import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_split/ui/join_screen.dart';
@@ -151,7 +150,7 @@ void main() {
     // visibility question (Sichtbarkeit je Rechnung): the dialog over the bill
     'b24-sichtbarkeit': (b) => Builder(builder: (c) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (c.mounted) confirmDialog(c, c.tr('vis.title'), c.tr('vis.text', ['Lena, Pia']), c.tr('vis.action'));
+            if (c.mounted) askHideBill(c, 'Lena, Pia');
           });
           return ReviewScreen(bill: b);
         }),

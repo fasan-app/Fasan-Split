@@ -82,6 +82,8 @@ Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete ste
 
 **Lehre 10.11. 17:37:** Eine Antwort mit „ich arbeite weiter“ beendet den Zug, danach läuft nichts (Nutzer wartete einen ganzen Tag). Solange Pakete in STAND.md offen sind, nie mit einer Ankündigung antworten: im Zug bleiben, Wartezeiten mit sleep-Schleifen überbrücken, nächstes Paket sofort beginnen; antworten erst, wenn gebaut, getestet, gepusht und live ist (oder eine unumkehrbare Entscheidung ansteht).
 
+**Nach „live“ nicht aufhören (Nutzer 11.11. 02:53):** Ist ein Paket live, sofort das nächste benennen, bauen und verbessern; eigene Verbesserungen vorschlagen und umsetzen, nie warten, bis der Nutzer etwas sagt. Nachts komplett autonom (Nutzer 11.11. 02:52).
+
 **Lehre 07.11.:** Nie `git add -A` über `app` (oder `.`), solange ein Web-Build läuft oder lief: `flutter create` legt `app/web/`, `.metadata`, `analysis_options.yaml` an und `pub get` ändert `pubspec.lock` – das landete so im Commit (Sitzung B, 07.11.). Vor jedem Commit `git status --short` ansehen und nur die gewollten Dateien mit Pfad hinzufügen; Build-Skripte räumen am Ende selbst auf.
 
 **Lehre 09.11.:** Auch bei reinen Textänderungen (l10n, Tutorial, Tipps) vor dem Push `flutter analyze` und die betroffenen Tests laufen lassen: ein Apostroph in einem einfach gequoteten englischen Text ("group's") brach den Build, und der Push ging vorher raus (Sitzung B, 09.11.). Englische Texte ohne Apostroph schreiben oder doppelt quoten.
