@@ -1,5 +1,17 @@
 # Roadmap Fasan Split und Fasan-Familie (Stand 04.11.2026)
 
+## Abgleich mit dem Code, 11.11.2026 (nur Web; APK auf Eis). Belege: grep im Code und STAND.md; nicht jeder Punkt am Bildschirm geprüft
+
+**Gebaut (laut Code):** exakter Ausgleich mit wenigsten Überweisungen (`settle.dart`, ≤16 Personen); Rückgängig/Verlauf (`history.dart`); Ausgaben ohne Bon (`add_bill.dart`); Fremdwährung; Sperren (Schloss); Sichtbarkeit je Bon mit allen Stufen außer „Posten geschwärzt“; Schlüsselwechsel beim Entfernen (`rotateKey`, mit verborgenen Bons getestet); Konto: Sicherung mit Passwort und per Mail an sich selbst (`flows/backup.dart`), zweites Gerät per QR (`collab/pairing.dart`), Gruppenliste verschlüsselt auf Relays; Einstellungen Apple-Stil (09.11.); Pfand/Rabatt als Zusätze am Posten erkannt (`zusaetze`); Posten schicken; Notizen, @, vllt; Stellvertreter-Stufen; Teilzahlung und Saldo-Aufstellung; Tutorial und Tipps.
+
+**Offen (kein Code gefunden):** Passkey, Zwei-Faktor, soziale Wiederherstellung (2 von 3); Web Push bei geschlossener App (nur die einmalige Frage nach Benachrichtigungen ist da; echtes Push braucht einen eigenen Sender-Dienst, Freigabe nötig); Privatnachricht/Direktchat; Schraffur je Person; Bon digital als PDF; Import aus Splitwise/Tricount; Profile der Familie (Einfach, Kinder, Gut lesbar …); Widgets; Querformat-Leiste; MCP-Schnittstelle; „Posten geschwärzt“; Stile Papier, Braun-Technik, Kino; Lebendig/Warten.
+
+**Ungeklärt, am Bildschirm prüfen:** Abstände der Kopfzone, Bon-Ansicht angleichen (Nutzer 11.11.: Bon-Ansicht ist nicht aktuell), „bekommt/schuldet“ mit Wort, Probleme mit Accounts (Nutzer 11.11., Einzelheiten kommen).
+
+**Prüflücken:** im Browser-Bildschirmvergleich (`tool/e2e/screens.js`) fehlen b21–b28 (nur in `test/screens_test.dart`); Messung auf echtem Samsung/Firefox und iPhone/Safari; weiße Seite nach App-Wechsel; Wasm-Fehler einmal im Browser-Test beobachtet.
+
+**Datenschutz-Nacharbeit:** alte Commit-Stände bei GitHub Support, Zweig `aufraeumen`, Releases im Repo Fasan.
+
 Zusammengetragen aus allen Repos der Familie (gelesen 04.11.): `fasan-app/Fasan` (ENTSCHEIDUNGEN, GRUNDSAETZE,
 ZUSTAENDE-UND-PROFILE), `Fasan-Karte` (docs/PLAN-FLUTTER, docs/ENTSCHEIDUNGEN, Recherchen), `fasan_ui`
 (docs/GESTALTUNG §4 und §9), `Fasan-Camera` (FUNDAMENT, Recherchen), `CUK999/Fasan-Kiosk` (README, BAUPLAN),
