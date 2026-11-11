@@ -1,3 +1,6 @@
+## 0.1.111
+- Better: “What for” and the total on the bill are smaller, the items move further up.
+
 ## 0.1.110
 - New: The bill starts with “What for” and the total, below it a grey line with category, date and place (tap to open it). The items now sit near the top.
 - New: “Paid by” is a card right above the items, red or green like an item. In a group it is a row of the items view and counts in the status buttons.

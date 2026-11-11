@@ -520,7 +520,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
               flex: 3,
               child: TextField(
                 controller: _purpose,
-                decoration: InputDecoration(labelText: context.tr('bill.purpose'), hintText: t.purposeHint),
+                decoration: InputDecoration(labelText: context.tr('bill.purpose'), hintText: t.purposeHint, isDense: true),
+                style: tt.titleMedium,
                 textInputAction: TextInputAction.next,
                 onChanged: (v) {
                   b.purpose = v.trim();
@@ -534,9 +535,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
               child: TextField(
                 controller: _total,
                 textAlign: TextAlign.end,
-                decoration: InputDecoration(labelText: context.tr('bill.total'), suffixText: sign),
+                decoration: InputDecoration(labelText: context.tr('bill.total'), suffixText: sign, isDense: true),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: tt.titleLarge,
+                style: tt.titleMedium!.copyWith(fontWeight: FontWeight.w800),
                 onChanged: (v) {
                   setState(() {
                     b.total = parseMoney(v);

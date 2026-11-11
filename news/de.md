@@ -1,3 +1,6 @@
+## 0.1.111
+- Besser: „Wofür“ und Summe im Bon sind kleiner, die Posten rücken weiter nach oben.
+
 ## 0.1.110
 - Neu: Der Bon beginnt mit „Wofür“ und Summe, darunter eine graue Zeile mit Kategorie, Datum und Ort (antippen klappt sie auf). Die Posten stehen jetzt weit oben.
 - Neu: „Bezahlt von“ ist eine Kachel direkt über den Posten, rot oder grün wie ein Posten. In der Gruppe ist sie eine Zeile der Posten-Ansicht und zählt in den Statusknöpfen mit.
