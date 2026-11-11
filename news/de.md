@@ -1,3 +1,6 @@
+## 0.1.105
+- Sicherer: Ein Mitglied kann den Schlüssel für einen verborgenen Bon bei dir nicht mehr durch einen falschen ersetzen und dich damit aussperren.
+
 ## 0.1.104
 - Neu: Beim Verbergen einer Rechnung gibt es „Beträge für alle sichtbar lassen“. Die anderen in der Gruppe sehen dann Summe, Zahler und Betrag je Person, damit ihr Stand stimmt, aber keine Postennamen, Fotos oder Notizen.
 

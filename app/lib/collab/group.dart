@@ -583,7 +583,7 @@ class GroupSession {
       // the members document: only entries written by admins count (an admin's snapshot also carries the other admins'
       // entries); m/<pub> = member, l/admin = the founder's own person link (linkPerson)
       final adm = admins;
-      final Iterable<Entry> accepted;
+      Iterable<Entry> accepted;
       if (id.startsWith('profile:')) {
         // a profile (name, later picture and status) is written by its owner only, from the owner's own event
         final owner = id.substring('profile:'.length);
@@ -591,6 +591,7 @@ class GroupSession {
         accepted = entries.where((x) => x.author == owner);
       } else if (!isMembersDoc) {
         accepted = acceptEntry == null ? entries : entries.where((x) => x.author == me.pub || acceptEntry!(id, x));
+        if (id == keysDoc) accepted = accepted.where(_keyEntryOk);
       } else if (fromAdmin) {
         accepted = entries.where((x) => (x.key.startsWith('m/') || x.key == 'l/admin' || x.key.startsWith('i/')) && adm.contains(x.author));
       } else {
@@ -620,6 +621,21 @@ class GroupSession {
         final k = '$id|${e.pubkey}', old = _locked[k];
         if (old == null || e.createdAt >= old.createdAt) _locked[k] = e;
       }
+    }
+  }
+
+  /// Keys document, entry for me: a member must not replace a bill key I already hold with another one (that would lock me out
+  /// of a hidden bill: security review 11.11., known weakness). An entry that holds a different key than mine is dropped; an
+  /// entry for someone else, or for a bill I hold no key for yet, passes.
+  bool _keyEntryOk(Entry x) {
+    final parts = x.key.split('/');
+    if (parts.length != 3 || parts[0] != 'kb' || parts[2] != me.pub || x.value == null) return true;
+    final have = _docKeys[bill(parts[1])];
+    if (have == null) return true;
+    try {
+      return toHex(fromHex(nip44Decrypt('${x.value}', nip44ConversationKey(me.priv, x.author)))) == toHex(have);
+    } catch (_) {
+      return false;
     }
   }
 

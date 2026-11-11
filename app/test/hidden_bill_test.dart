@@ -3,6 +3,7 @@
 // cannot, until they are added. Test relay only, invented names. MPL-2.0
 import 'dart:convert';
 
+import 'package:fasan_split/collab/crypto.dart';
 import 'package:fasan_split/collab/group.dart';
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
@@ -195,6 +196,51 @@ void main() {
     expect(full.its.first.name, 'Cocktail');
     expect(full.purpose, 'Bar Beispiel');
     a.dispose();
+    c.dispose();
+  }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test('Schlüssel überschreiben geht nicht: Karl (Mitglied) schiebt Lena einen falschen Bon-Schlüssel unter, Lena liest weiter', () async {
+    final hub = MemoryRelayHub();
+    final storeA = BillStore.memory()..me = 'Pia';
+    final a = CollabService(store: storeA, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    final g = await a.createGroup('Stadt 26');
+    final linkB = g.invitations!.create().link;
+    final linkC = g.invitations!.create().link;
+    await settle(400);
+    final storeB = BillStore.memory()..me = 'Lena';
+    final b = CollabService(store: storeB, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await b.init();
+    await b.setName('Lena');
+    await b.join(linkB, 'Lena');
+    final storeC = BillStore.memory()..me = 'Karl';
+    final c = CollabService(store: storeC, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await c.init();
+    await c.setName('Karl');
+    await c.join(linkC, 'Karl');
+    await settle(9000);
+    final bill = Bill(id: 'k1', created: DateTime(2026, 11, 11), purpose: 'Bar Beispiel', total: 3000, people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Cocktail', amount: 3000, shares: {0: 1, 1: 1}),
+    ])
+      ..group = 'Stadt 26';
+    storeA.upsert(bill);
+    expect(a.hideBill(bill), isTrue);
+    await settle(3000);
+    expect(storeB.bills.where((x) => x.id == 'k1'), hasLength(1));
+
+    // Karl writes a key of his own into Lena's slot (he is a member, so his event is accepted as such)
+    final gb = b.groups.values.single.session, gc = c.groups.values.single.session;
+    gc.doc(GroupSession.keysDoc).set('kb/k1/${gb.me.pub}', nip44Encrypt(toHex(randomBytes(32)), nip44ConversationKey(gc.me.priv, gb.me.pub)));
+    gc.touch(GroupSession.keysDoc);
+    await settle(3000);
+
+    bill.its.first.name = 'Cocktail mit Schirm';
+    storeA.upsert(bill);
+    await settle(3000);
+    expect(storeB.bills.firstWhere((x) => x.id == 'k1').its.first.name, 'Cocktail mit Schirm', reason: 'Lena behielt ihren Schlüssel');
+    a.dispose();
+    b.dispose();
     c.dispose();
   }, timeout: const Timeout(Duration(minutes: 2)));
 }

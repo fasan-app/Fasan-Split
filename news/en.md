@@ -1,3 +1,6 @@
+## 0.1.105
+- Safer: a member can no longer replace your key for a hidden bill with a wrong one and lock you out.
+
 ## 0.1.104
 - New: when hiding a bill there is “Keep amounts visible for everyone”. The others in the group then see total, payer and amount per person, so their balance is right, but no item names, photos or notes.
 
