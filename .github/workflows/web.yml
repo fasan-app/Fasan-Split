@@ -132,6 +132,12 @@ jobs:
           E2E_DIR: ${{ runner.temp }}/e2e-photo
         run: bash tool/e2e/run-photo.sh
 
+      - name: Verborgene Bons Ende zu Ende (Browser liest den eigenen, nicht den fremden, bekommt ihn nach dem Eintragen)
+        working-directory: app
+        env:
+          E2E_DIR: ${{ runner.temp }}/e2e-hidden
+        run: bash tool/e2e/run-hidden.sh
+
       - if: always()
         uses: actions/upload-artifact@v4
         with:

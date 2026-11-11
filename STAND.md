@@ -4,6 +4,9 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 11.11. Browser-E2E für verborgene Bons (Sitzung B)
+- Neu: `app/test/e2e_web_hidden_test.dart` (Telefon) + `app/tool/e2e/hidden.js` + `run-hidden.sh`, als CI-Schritt nach dem Foto-Test. Lokal grün (Web-Build, lokaler Relay): Browser tritt als „Lena“ bei, liest Bon A (Pia+Lena, verborgen, Postenname sichtbar), sieht Bon B (Pia+Max) nicht, bekommt B nach dem Eintragen auf den Bon. Das belegt den Weg über den Web-NIP-44-Schlüsseltausch (curve_web.dart). Bildschirmfotos angesehen (Gruppenliste, Bon B). Nicht geprüft: echtes S23/Safari, „nur Beträge“ im Browser.
+
 ## 10.11. Paket G: Rechnung nur für Beteiligte (0.1.99, lokal fertig, noch nicht gepusht)
 - Gebaut: Schlüssel je Rechnung K_b (`group.dart`: `keysDoc`, `shareBillKey`, `absorbKeys`, `keyFor`; Fotos unter K_b), ⋮-Menü „Sichtbar für alle in der Gruppe“ → Frage mit Namen → „Nur Beteiligte“ (`hideBill`, nicht zurücknehmbar, Kopien bleiben), „Posten schicken“ für verborgene Bons gesperrt.
 - Leserkreis = ich + Mitglieder, deren Name oder verknüpfte Person im Bon steht. **Admins zählen nicht automatisch**: wer per offenem Link beitritt, wird Admin (`setAdmin` im Beitrittsweg), „alle Admins“ wäre „alle“.
