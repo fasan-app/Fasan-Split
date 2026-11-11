@@ -11,7 +11,7 @@ import '../l10n.dart';
 import '../l10n/tr.dart' show trLang;
 import 'common.dart';
 import 'groups.dart' show groupNaming;
-import 'my_balance.dart' show myNames;
+import 'my_balance.dart' show myNames, myPerson;
 import 'scope.dart';
 
 String _day(DateTime d) => '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.';
@@ -35,7 +35,7 @@ class MyBreakdownScreen extends StatelessWidget {
     // per bill: confirmed lines, provisional lines
     final rows = <({Bill bill, Map<String, int> sure, Map<String, int> soft})>[];
     for (final b in bills) {
-      final sure = myDebts([b], isMe), soft = myProvisional([b], isMe);
+      final sure = myDebts([b], isMe, isMePerson: myPerson(context)), soft = myProvisional([b], isMe, isMePerson: myPerson(context));
       if (sum(sure) + sum(soft) != 0 || sure.isNotEmpty || soft.isNotEmpty) rows.add((bill: b, sure: sure, soft: soft));
     }
     rows.sort((a, b) => (b.bill.receiptDate ?? b.bill.created).compareTo(a.bill.receiptDate ?? a.bill.created));

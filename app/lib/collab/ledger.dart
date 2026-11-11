@@ -42,10 +42,10 @@ class LedgerEntry {
 }
 
 /// What [b] adds to my balance now: confirmed transfers of a finished bill, or the assigned part of an open one.
-int mineOf(Bill b, bool Function(String) isMe) {
+int mineOf(Bill b, bool Function(String) isMe, {bool Function(Person)? isMePerson}) {
   if (b.trashedAt != null) return 0;
   int sum(Map<String, int> m) => m.values.fold(0, (a, x) => a + x);
-  return sum(myDebts([b], isMe)) + sum(myProvisional([b], isMe));
+  return sum(myDebts([b], isMe, isMePerson: isMePerson)) + sum(myProvisional([b], isMe, isMePerson: isMePerson));
 }
 
 class BalanceLedger {
@@ -59,9 +59,9 @@ class BalanceLedger {
 
   /// Looks at all [bills]; books every difference. Returns true if something was booked or the baseline was set.
   /// [why] gives the reason for a bill (German, English) or null.
-  bool update(Iterable<Bill> bills, bool Function(String) isMe, {DateTime? now, (String, String)? Function(String billId, int before, int after)? why}) {
+  bool update(Iterable<Bill> bills, bool Function(String) isMe, {bool Function(Person)? isMePerson, DateTime? now, (String, String)? Function(String billId, int before, int after)? why}) {
     final list = bills.toList();
-    final cur = {for (final b in list) b.id: mineOf(b, isMe)};
+    final cur = {for (final b in list) b.id: mineOf(b, isMe, isMePerson: isMePerson)};
     final last = seen;
     if (last == null) {
       seen = cur; // first look: what is there already is the starting point, not a booking

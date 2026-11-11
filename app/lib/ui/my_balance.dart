@@ -41,26 +41,20 @@ class _T {
   String owesTo(String p) => trLang(de ? 'de' : 'en', 'my_balance.youOwe2', [p]);
 }
 
-/// My names: the own name and every name linked to my key in a live group.
-bool Function(String) myNames(BuildContext context) {
-  final store = StoreScope.read(context), collab = CollabScope.read(context);
-  final me = store.me.trim().toLowerCase();
-  final pub = collab.identity?.pub;
-  final linked = <String>{
-    if (pub != null)
-      for (final g in collab.groups.values) ...g.session.personsOf(pub).map((n) => n.toLowerCase()),
-  };
-  return (n) => n.trim().toLowerCase() == me && me.isNotEmpty || linked.contains(n.trim().toLowerCase());
-}
+/// My names: the account name, „Ich bin“, earlier names and every name linked to my key (see CollabService.ownNames).
+bool Function(String) myNames(BuildContext context) => CollabScope.read(context).isMeName;
+
+/// Who is me on a bill, by the stable uid of the person first (Nutzer 11.11.), names only as a way in.
+bool Function(Person) myPerson(BuildContext context) => CollabScope.read(context).isMePerson;
 
 /// My balance over all bills (+ get, − owe).
 /// Includes the provisional part of unfinished bills (Nutzer 07.11.: confirmed and provisional together, the provisional part shown paler).
 int myTotal(BuildContext context) => myConfirmed(context) + myProvisionalTotal(context);
 
-int myConfirmed(BuildContext context) => myDebts(StoreScope.of(context).bills.where((b) => b.trashedAt == null), myNames(context)).values.fold(0, (a, x) => a + x);
+int myConfirmed(BuildContext context) => myDebts(StoreScope.of(context).bills.where((b) => b.trashedAt == null), myNames(context), isMePerson: myPerson(context)).values.fold(0, (a, x) => a + x);
 
 int myProvisionalTotal(BuildContext context, {String? group, bool anyGroup = true}) =>
-    myProvisional(StoreScope.of(context).bills.where((b) => b.trashedAt == null && (anyGroup || b.group == group)), myNames(context)).values.fold(0, (a, x) => a + x);
+    myProvisional(StoreScope.of(context).bills.where((b) => b.trashedAt == null && (anyGroup || b.group == group)), myNames(context), isMePerson: myPerson(context)).values.fold(0, (a, x) => a + x);
 
 /// The round badge on every main page: my initial, ring and amount in the colour of the balance. Tap opens „Mein Stand“.
 class MyBalanceBadge extends StatelessWidget {
@@ -107,8 +101,9 @@ class MyBalanceScreen extends StatelessWidget {
     CollabScope.of(context); // rebuild on group changes
     final isMe = myNames(context);
     final bills = store.bills.where((b) => b.trashedAt == null).toList();
-    final per = myDebts(bills, isMe);
-    final prov = myProvisional(bills, isMe);
+    final isP = myPerson(context);
+    final per = myDebts(bills, isMe, isMePerson: isP);
+    final prov = myProvisional(bills, isMe, isMePerson: isP);
     final provTotal = prov.values.fold(0, (a, x) => a + x);
     final total = per.values.fold(0, (a, x) => a + x) + provTotal;
     Color c(int v) => v > 0 ? Colors.green.shade600 : (v < 0 ? Colors.red.shade600 : l.textMuted);
@@ -136,8 +131,8 @@ class MyBalanceScreen extends StatelessWidget {
         for (final g in groups)
           Builder(builder: (context) {
             final inG = bills.where((b) => b.group == g);
-            final sure = myDebts(inG, isMe).values.fold(0, (a, x) => a + x);
-            final soft = myProvisional(inG, isMe).values.fold(0, (a, x) => a + x);
+            final sure = myDebts(inG, isMe, isMePerson: isP).values.fold(0, (a, x) => a + x);
+            final soft = myProvisional(inG, isMe, isMePerson: isP).values.fold(0, (a, x) => a + x);
             final mine = sure + soft;
             if (mine == 0) return const SizedBox.shrink();
             return ListTile(
@@ -316,7 +311,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: FasanSpace.xl),
         if (collab.identity != null)
           ListTile(
+            key: const ValueKey('profile-signout'),
             contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.logout_rounded),
+            title: Text(trLang(de ? 'de' : 'en', 'my_balance.signOut')),
+            subtitle: Text(trLang(de ? 'de' : 'en', 'my_balance.signOutSub')),
+            onTap: () => _signOut(context),
+          ),
+        if (collab.identity != null)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            subtitle: Text(trLang(de ? 'de' : 'en', 'my_balance.deleteAccountHint')),
             leading: Icon(Icons.person_off_outlined, color: Colors.red.shade600),
             title: Text(trLang(de ? 'de' : 'en', 'my_balance.deleteAccount'), style: TextStyle(color: Colors.red.shade600)),
             onTap: () => _deleteAccount(context),
@@ -326,6 +331,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
+
+/// Signing out (Nutzer 11.11.: „Natürlich muss es reines Abmelden geben“): only this device forgets the account. Asks
+/// whether the way back (12 words, backup file) is saved, offers both right here, deletes nothing for anyone else.
+Future<void> _signOut(BuildContext context) async {
+  final de = S.of(context).de;
+  final l = de ? 'de' : 'en';
+  var alsoBills = false;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, set) => AlertDialog(
+        title: Text(trLang(l, 'my_balance.signOutTitle')),
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(trLang(l, 'my_balance.signOutText')),
+            const SizedBox(height: FasanSpace.s),
+            Wrap(spacing: FasanSpace.s, children: [
+              OutlinedButton(
+                  onPressed: () => Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AccountScreen())),
+                  child: Text(trLang(l, 'my_balance.signOutShowWords'))),
+              OutlinedButton(onPressed: () => saveBackupFlow(ctx), child: Text(trLang(l, 'my_balance.signOutBackup'))),
+            ]),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: alsoBills,
+              onChanged: (v) => set(() => alsoBills = v ?? false),
+              title: Text(trLang(l, 'my_balance.signOutAlsoBills')),
+            ),
+          ]),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(trLang(l, 'my_balance.cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(trLang(l, 'my_balance.signOutDo'))),
+        ],
+      ),
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  final nav = Navigator.of(context), messenger = ScaffoldMessenger.of(context);
+  await CollabScope.read(context).signOut(alsoBills: alsoBills);
+  nav.popUntil((r) => r.isFirst);
+  messenger.showSnackBar(SnackBar(content: Text(trLang(l, 'my_balance.signedOut'))));
+}
 
 /// Deleting the account (Nutzer 04.11.): asks once, says what happens and what cannot be promised.
 Future<void> _deleteAccount(BuildContext context) async {

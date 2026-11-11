@@ -125,8 +125,13 @@ class Identity {
   }
 
   /// Restores from 12 words (throws [FormatException] for a wrong phrase) and stores it.
+  /// Words as people paste them: numbers („1. wort“), commas, line breaks and capitals do not matter (Nutzer 11.11.).
+  static String normalizeWords(String words) =>
+      words.toLowerCase().replaceAll(RegExp(r'[0-9]+[.):]?'), ' ').split(RegExp(r'[^a-zäöüß]+')).where((w) => w.isNotEmpty).join(' ');
+
   static Future<Identity> restore(Vault v, String words, {String name = ''}) async {
-    final id = Identity(keyFromMnemonic(words), name, mnemonic: words.trim().toLowerCase().split(RegExp(r'\s+')).join(' '));
+    words = normalizeWords(words);
+    final id = Identity(keyFromMnemonic(words), name, mnemonic: words);
     await id.save(v);
     return id;
   }

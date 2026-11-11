@@ -1,3 +1,10 @@
+## 0.1.106
+- Neu: „Abmelden“ im Profil. Es gilt nur für dieses Gerät, nichts wird gelöscht, die anderen sehen dich weiter. Vorher fragt die App, ob du deine 12 Wörter oder eine Sicherungsdatei hast, und bietet beides gleich an.
+- Besser: Nach der Anmeldung mit den 12 Wörtern kommt dein Name aus der Gruppe zurück. Die Wörter lassen sich als Ganzes kopieren und einfügen (Komma, Großbuchstaben, Zeilenumbrüche sind egal).
+- Besser: Bons gehören deinem Konto über eine feste Kennung, nicht nur über den Namen. Benennt jemand deine Person im Bon um, bist du es weiter.
+- Besser: Freunde zeigt dich selbst nicht mehr unter einem alten Namen. Wer gelöscht ist oder nicht mehr in deinen Gruppen ist, steht so da. Wer eine Gruppe verlässt, wird für die anderen sichtbar abgemeldet.
+- Klarer: „Konto auf neues Gerät übertragen“ und „Hier anmelden mit Code vom anderen Gerät“ heißen jetzt so; „Konto löschen“ sagt deutlich, dass es für alle gilt.
+
 ## 0.1.105
 - Sicherer: Ein Mitglied kann den Schlüssel für einen verborgenen Bon bei dir nicht mehr durch einen falschen ersetzen und dich damit aussperren.
 

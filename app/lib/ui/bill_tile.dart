@@ -217,11 +217,11 @@ class BillTile extends StatelessWidget {
                   CurrencyScope(code: bill.currency ?? StoreScope.read(context).homeCurrency, child: Money(bill.effectiveTotal)),
                   // my balance from this bill: green = I get, red = I owe (Nutzer 04.11.: indicators at a glance)
                   if (bill.done && !bill.settled && bill.payer != null)
-                    if (myDebts([bill], myNames(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
+                    if (myDebts([bill], myNames(context), isMePerson: myPerson(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
                       Text('${money(v, de: t.de, sign: true)} ${signOf(context)}', style: tt.labelMedium!.copyWith(color: v > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
                   // not finished yet: what is assigned so far, paler (Nutzer 07.11.)
                   if (!bill.done && !bill.settled)
-                    if (myProvisional([bill], myNames(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
+                    if (myProvisional([bill], myNames(context), isMePerson: myPerson(context)).values.fold(0, (a, x) => a + x) case final v when v != 0)
                       Text(trLang(t.de ? 'de' : 'en', 'my_balance.provisionalShort', [money(v, de: t.de, sign: true)]), style: tt.labelMedium!.copyWith(color: (v > 0 ? Colors.green.shade600 : Colors.red.shade600).withValues(alpha: 0.65))),
                 ]),
               ],

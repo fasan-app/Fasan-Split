@@ -235,6 +235,7 @@ class CollabService extends ChangeNotifier {
     final old = id.name;
     id.name = n;
     await id.save(vault);
+    _rememberOwnName(old);
     if (store.me.trim().isEmpty || store.me.trim() == old.trim()) store.me = n;
     for (final g in groups.values) {
       g.session.setMyName(n);
@@ -263,7 +264,66 @@ class CollabService extends ChangeNotifier {
   Future<int> restoreIdentity(String words, {String? name}) async {
     identity = await Identity.restore(vault, words, name: name ?? identity?.name ?? '');
     notifyListeners();
-    return recoverGroups();
+    final n = await recoverGroups();
+    _adoptPending = (name ?? '').trim().isEmpty; // the profiles may arrive a moment later: adopt then
+    await _adoptNameFromGroups(typed: name ?? '');
+    return n;
+  }
+
+  /// After a sign-in with the words (Nutzer 11.11.: the browser had no name afterwards): the name the groups know me by comes
+  /// back as my name, unless the person typed another one – then the group's name is remembered as an old name of mine (the
+  /// bills keep using it, see [ownNames]). A „gelöscht“ mark on my profile from an earlier deletion is taken away.
+  bool _adoptPending = false;
+
+  Future<void> _adoptNameFromGroups({String typed = ''}) async {
+    final id = identity;
+    if (id == null) return;
+    String? known;
+    for (final g in groups.values) {
+      final d = g.session.doc(GroupSession.profile(id.pub));
+      if (d.get('deleted') == true) {
+        d.set('deleted', null);
+        g.session.touch(GroupSession.profile(id.pub));
+      }
+      final n = g.session.knownName(id.pub);
+      if (known == null && n != null && n.trim().isNotEmpty && n != '—') known = n.trim();
+    }
+    if (known == null) return;
+    _adoptPending = false;
+    // A fresh restore without a typed name carries the placeholder (first 8 characters of the key), not a real name.
+    final placeholder = id.name.trim().isEmpty || id.name.trim() == id.pub.substring(0, 8);
+    if (typed.trim().isEmpty && placeholder) {
+      await setName(known);
+    } else if (typed.trim().isNotEmpty && typed.trim() != known) {
+      _rememberOwnName(known);
+    }
+  }
+
+  // ---- my names (Nutzer 11.11.: „Chris“ stayed behind as a friend after renaming to „Chris2“) ----
+  //
+  // The bills know me by a name (a person on the bill). Renaming the account must not turn that person into a stranger:
+  // the names I used before are kept (this phone only) and, with the persons an admin linked to my key in the groups, they
+  // all count as me.
+
+  static const _kOldNames = 'collab.ownNames';
+
+  void _rememberOwnName(String old) {
+    final o = old.trim();
+    if (o.isEmpty || o == '—') return;
+    final all = {...?prefs?.getStringList(_kOldNames), o};
+    prefs?.setStringList(_kOldNames, all.toList());
+  }
+
+  /// Every name that means me (lower case): the account name, „Ich bin“ in the bills, earlier names and linked persons.
+  Set<String> get ownNames {
+    final me = identity;
+    return {
+      (me?.name ?? '').trim().toLowerCase(),
+      store.me.trim().toLowerCase(),
+      for (final n in prefs?.getStringList(_kOldNames) ?? const <String>[]) n.trim().toLowerCase(),
+      if (me != null)
+        for (final g in groups.values) ...g.session.personsOf(me.pub).map((n) => n.trim().toLowerCase()),
+    }..remove('');
   }
 
   // ---- linking a second device (pairing.dart) ----
@@ -947,10 +1007,7 @@ class CollabService extends ChangeNotifier {
         ..set('deleted', true)
         ..set('seen', null);
       s.touch(GroupSession.profile(me.pub));
-      if (s.doc(GroupSession.members).get('m/${me.pub}') != null && !s.isAdmin) {
-        s.doc(GroupSession.members).set('m/${me.pub}', null); // own entry: allowed (group.dart _validSelfEntry)
-        s.touch(GroupSession.members);
-      }
+      _announceLeaving(g);
       await s.flush();
       for (final id in s.docIds) {
         if (!id.startsWith('profile:')) refs.add('$kindData:${me.pub}:fs:${g.secret.tag}:$id');
@@ -985,6 +1042,25 @@ class CollabService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// People who are no longer in any of my groups although I know them (they left or were removed): pub → name. A member
+  /// leaves a tombstone in the members list (`m/<pub>` empty); the name comes from the profile that stays. Not the deleted
+  /// accounts (see [deletedFriends]) and not the people who are still in some group.
+  Map<String, String> get leftFriends {
+    final out = <String, String>{}, hidden = hiddenFriends, me = identity?.pub;
+    final current = {for (final g in groups.values) ...g.session.memberKeys};
+    for (final g in groups.values) {
+      if (g.secret.direct) continue;
+      for (final e in g.session.doc(GroupSession.members).entries) {
+        if (e.value != null || !e.key.startsWith('m/')) continue;
+        final pub = e.key.substring(2);
+        if (pub == me || hidden.contains(pub) || current.contains(pub) || isDeleted(pub)) continue;
+        final n = g.session.nameOf(pub);
+        if (n.trim().isNotEmpty && n != '—') out.putIfAbsent(pub, () => n);
+      }
+    }
+    return out;
+  }
+
   /// People who deleted their account, from their profiles in my groups (they left the member lists): pub → name.
   Map<String, String> get deletedFriends {
     final out = <String, String>{}, hidden = hiddenFriends, me = identity?.pub;
@@ -1016,8 +1092,25 @@ class CollabService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Leaves a group on this phone (the others keep it). Bills stay, without the shared link.
-  Future<void> leave(CollabGroup g) async {
+  /// Takes my entry out of the members list, so the others see that I am gone (Nutzer 11.11.: a deleted account stayed a
+  /// member). The founder stays (the group secret names it); a member who came in over a link is an admin in the list and
+  /// writes the tombstone as such, others as „self entry“ (group.dart _validSelfEntry). Nothing happens without an entry.
+  void _announceLeaving(CollabGroup g) {
+    final me = identity;
+    if (me == null || me.pub == g.secret.adminPub) return;
+    final s = g.session, md = s.doc(GroupSession.members);
+    if (md.get('m/${me.pub}') == null) return;
+    md.set('m/${me.pub}', null);
+    s.touch(GroupSession.members);
+  }
+
+  /// Leaves a group on this phone (the others keep it). Bills stay, without the shared link. [announce]: the others see me
+  /// gone from the members list (a deliberate leaving); false for the technical cases (key change, sign-out).
+  Future<void> leave(CollabGroup g, {bool announce = false}) async {
+    if (announce) {
+      _announceLeaving(g);
+      await g.session.flush();
+    }
     await _subs.remove(g.secret.tag)?.cancel();
     await g.session.close();
     await g.invitations?.close();
@@ -1026,6 +1119,35 @@ class CollabService extends ChangeNotifier {
       await prefs?.remove(k);
     }
     await _persistGroups();
+    notifyListeners();
+  }
+
+  /// Signs out of this device (Nutzer 11.11.): the account stays as it is – for the groups nothing changes, nothing is
+  /// written to the relays, no deletion mark. Key, words, group list and collaboration data leave this device; the 12 words
+  /// (or a backup, or a second device) bring everything back. [alsoBills] also empties the bills here (shared computer).
+  Future<void> signOut({bool alsoBills = false}) async {
+    for (final g in groups.values.toList()) {
+      await leave(g);
+    }
+    for (final k in ['fasan.identity.priv', 'fasan.identity.name', 'fasan.identity.words', _kGroups]) {
+      await vault.delete(k);
+    }
+    for (final k in prefs?.getKeys().where((k) => k.startsWith('collab.')).toList() ?? <String>[]) {
+      await prefs?.remove(k);
+    }
+    _accountWatch?.cancel();
+    _accountWatch = null;
+    _directWatch?.cancel();
+    _directWatch = null;
+    _act = null;
+    _readCache = null;
+    joins.clear();
+    identity = null;
+    if (alsoBills) {
+      store.trash(store.bills.where((b) => b.trashedAt == null).toList());
+      store.deleteForever(store.bills.toList());
+    }
+    store.me = '';
     notifyListeners();
   }
 
@@ -1765,14 +1887,38 @@ class CollabService extends ChangeNotifier {
 
   BalanceLedger get ledger => _ledger ??= BalanceLedger.decode(prefs?.getString(_kLedger));
 
-  /// My names: the own name and every name linked to my key in a live group (same rule as „Mein Stand“).
+  /// Who counts as me on a bill (Nutzer 11.11.: „Alles muss überall mit dem echten User verknüpft sein“). Names alone
+  /// were the weak point: a renamed person or a second „Chris“ broke the link. A person is me when its stable uid is
+  /// known as mine ([_ownUids], learned from every person that carries one of my names, see [learnOwnUids]); the names
+  /// ([ownNames]) stay only as the way in for bills that no uid was learned from yet.
   bool Function(String) get isMeName {
-    final me = store.me.trim().toLowerCase(), pub = identity?.pub;
-    final linked = <String>{
-      if (pub != null)
-        for (final g in groups.values) ...g.session.personsOf(pub).map((n) => n.toLowerCase()),
-    };
-    return (n) => n.trim().toLowerCase() == me && me.isNotEmpty || linked.contains(n.trim().toLowerCase());
+    final names = ownNames;
+    return (n) => names.contains(n.trim().toLowerCase());
+  }
+
+  static const _kUids = 'collab.ownUids';
+
+  Set<String> get ownUids => {...?prefs?.getStringList(_kUids)};
+
+  bool Function(Person) get isMePerson {
+    final names = ownNames, uids = ownUids;
+    return (p) => uids.contains(p.uid) || names.contains(p.name.trim().toLowerCase());
+  }
+
+  /// Pins the uid of every person on my bills that carries one of my names: from then on a rename of that person (or a
+  /// new person with the same name) cannot change who is me. Returns true when something was added.
+  bool learnOwnUids() {
+    if (identity == null) return false;
+    final names = ownNames, uids = ownUids;
+    final before = uids.length;
+    for (final b in store.bills) {
+      for (final p in b.ps) {
+        if (names.contains(p.name.trim().toLowerCase())) uids.add(p.uid);
+      }
+    }
+    if (uids.length == before) return false;
+    prefs?.setStringList(_kUids, uids.toList());
+    return true;
   }
 
   // after the bill documents were read into the store and the change log has its line (burst timer 800 ms)
@@ -1785,7 +1931,8 @@ class CollabService extends ChangeNotifier {
   void _bookLedger() {
     if (_disposed) return;
     final l = ledger;
-    final changed = l.update(store.bills, isMeName, why: (id, before, after) {
+    learnOwnUids();
+    final changed = l.update(store.bills, isMeName, isMePerson: isMePerson, why: (id, before, after) {
       final now = DateTime.now();
       for (final r in changeLog) {
         if (r.billId != id) continue;
@@ -1866,6 +2013,7 @@ class CollabService extends ChangeNotifier {
 
   void _onDocChanged(CollabGroup g, String id) {
     _scheduleSave();
+    if (_adoptPending && (id.startsWith('profile:') || id == GroupSession.members)) unawaited(_adoptNameFromGroups());
     _trackActivity(g, id);
     if (id == GroupSession.members || id == GroupSession.chat || id == GroupSession.notes || id.startsWith('profile:')) {
       if (id == GroupSession.members) {

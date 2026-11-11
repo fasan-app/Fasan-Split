@@ -1,3 +1,10 @@
+## 0.1.106
+- New: „Sign out“ in the profile. It only affects this device, nothing is deleted, the others still see you. First the app asks whether you have your 12 words or a backup file and offers both right there.
+- Better: After signing in with the 12 words your name comes back from the group. The words can be copied and pasted as a whole (commas, capitals and line breaks do not matter).
+- Better: Bills belong to your account by a stable id, not only by name. If someone renames your person on a bill, you are still you.
+- Better: Friends no longer shows you under an old name. Deleted people and people no longer in your groups are marked. Someone who leaves a group is visibly signed off for the others.
+- Clearer: „Move account to a new device“ and „Sign in here with a code from another device“ are the new names; „Delete account“ says it applies to everyone.
+
 ## 0.1.105
 - Safer: a member can no longer replace your key for a hidden bill with a wrong one and lock you out.
 

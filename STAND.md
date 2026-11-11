@@ -1140,3 +1140,8 @@ Reihenfolge (jeweils ganz fertig; Paket „Verlauf“ zuerst auf main):
 - Alte Pfade bleiben: `GroupScreen` (Einzelbildschirm) wird noch von Benachrichtigungen und der Übersicht geöffnet.
 - Leistung: neue Recherche (Nachtrag 04:05): 60-fps-Grenze beim Scrollen im Browser wahrscheinlich Android/Browser, nicht App; Ziel im Browser = stabile 60.
 - Nächstes (Web): Leistungslauf des Nutzers (Akku >50 %, Bewegungsflüssigkeit „Hoch“); Leistungsurteil an gemessene Browser-Obergrenze koppeln; Startbildschirm verschlanken; Rechnungsfarben/Sortierung/Suche.
+
+## 11.11. Konto, Abmelden, feste Kennung (0.1.106, in Arbeit bis CI grün)
+- Abmelden (`CollabService.signOut`, Profil-Kachel mit Sicherungsfrage), Namen nach Anmeldung (`_adoptNameFromGroups`, auch wenn das Profil später ankommt), Wörter kopieren/normalisieren, Freunde ohne alte Eigennamen, `leftFriends`.
+- Bon ↔ Konto über uid: `ownUids` (lokal, gelernt aus Personen mit meinem Namen), `isMePerson` in `myDebts/myProvisional/ledger`. Test `account_flow_test.dart` (6 Tests).
+- **Offen:** uid-Verknüpfung im Mitglieder-Dokument (andere Geräte lernen uid sonst erst über den Namen), Chat/Mitgliederliste/`billReaders` noch namensbasiert, Browser-Ende-zu-Ende für Abmelden, Bildschirmvergleich (screens.js), Stresstest mit gleichen Namen, Tutorial/Tipps-Eintrag zu Abmelden, Recherche zu Abmelden/Gerätewechsel (nur vorhandene Recherche gelesen).

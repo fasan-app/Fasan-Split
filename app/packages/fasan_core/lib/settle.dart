@@ -90,7 +90,11 @@ List<(String from, String to, int cents)> _greedy(Map<String, int> bal) {
 
 /// What [me] gets (+) or owes (−) to each other person over [bills], from the transfers of each bill. [isMe] decides
 /// which names are me (own name, names linked to my member key in live groups).
-Map<String, int> myDebts(Iterable<Bill> bills, bool Function(String name) isMe) {
+///
+/// [isMePerson] (Nutzer 11.11.: „Bons dürfen nicht nur mit Namen verknüpft sein“) decides by the person's stable uid first;
+/// when it is null the name predicate [isMe] is used alone.
+Map<String, int> myDebts(Iterable<Bill> bills, bool Function(String name) isMe, {bool Function(Person)? isMePerson}) {
+  bool me(int i, Bill b) => isMePerson?.call(b.ps[i]) ?? isMe(b.ps[i].name);
   final out = <String, int>{};
   for (final b in bills) {
     if (!b.done || b.settled || b.payer == null) continue;
@@ -98,8 +102,9 @@ Map<String, int> myDebts(Iterable<Bill> bills, bool Function(String name) isMe) 
       if (from >= b.ps.length || to >= b.ps.length) continue;
       final f = b.ps[from].name, t = b.ps[to].name;
       final h = b.toHome(c);
-      if (isMe(f) && !isMe(t)) out.update(t, (x) => x - h, ifAbsent: () => -h);
-      if (isMe(t) && !isMe(f)) out.update(f, (x) => x + h, ifAbsent: () => h);
+      final mf = me(from, b), mt = me(to, b);
+      if (mf && !mt) out.update(t, (x) => x - h, ifAbsent: () => -h);
+      if (mt && !mf) out.update(f, (x) => x + h, ifAbsent: () => h);
     }
   }
   out.removeWhere((_, v) => v == 0);
@@ -111,13 +116,14 @@ Map<String, int> myDebts(Iterable<Bill> bills, bool Function(String name) isMe) 
 /// Only what is assigned counts (no tip/difference spread, open items are not guessed). Key = the other person's name,
 /// or '' when nobody is known to have paid yet (then it is only what I owe, recipient open). The sum is added to the
 /// confirmed balance for display, but never to settlement suggestions ([balances], [settle]) – those stay confirmed only.
-Map<String, int> myProvisional(Iterable<Bill> bills, bool Function(String name) isMe) {
+Map<String, int> myProvisional(Iterable<Bill> bills, bool Function(String name) isMe, {bool Function(Person)? isMePerson}) {
+  bool me(int i, Bill b) => isMePerson?.call(b.ps[i]) ?? isMe(b.ps[i].name);
   final out = <String, int>{};
   void add(String k, int v) => out.update(k, (x) => x + v, ifAbsent: () => v);
   for (final b in bills) {
     if (b.done || b.settled || b.trashedAt != null || b.multiPay || b.ps.length < 2) continue;
     final parts = b.perPerson(withDifference: false);
-    final mine = [for (var i = 0; i < b.ps.length; i++) if (isMe(b.ps[i].name)) i];
+    final mine = [for (var i = 0; i < b.ps.length; i++) if (me(i, b)) i];
     if (mine.isEmpty) continue;
     final sign = b.refund ? -1 : 1;
     final p = b.payer;
@@ -125,7 +131,7 @@ Map<String, int> myProvisional(Iterable<Bill> bills, bool Function(String name) 
       if (mine.contains(p)) {
         // I paid: everybody else owes me what is assigned to them so far
         for (final e in parts.entries) {
-          if (e.key == p || e.key >= b.ps.length || isMe(b.ps[e.key].name) || e.value == 0) continue;
+          if (e.key == p || e.key >= b.ps.length || me(e.key, b) || e.value == 0) continue;
           add(b.ps[e.key].name, sign * b.toHome(e.value));
         }
       } else {

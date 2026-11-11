@@ -1335,7 +1335,7 @@ Future<void> leaveGroupFlow(BuildContext context, CollabGroup g) async {
       ? '${t.leaveText} ${trLang(t.de ? 'de' : 'en', 'collab_ui.youAreTheOnly')}'
       : t.leaveText;
   if (!await confirmDialog(context, t.leaveGroup, text, t.leaveGroup)) return;
-  await s.leave(g);
+  await s.leave(g, announce: true);
   if (context.mounted) Navigator.of(context).maybePop();
 }
 
@@ -1444,10 +1444,20 @@ class _AccountScreenState extends State<AccountScreen> {
             const SizedBox(height: FasanSpace.s),
             Text(t.accountWordsText, style: tt.bodySmall),
             TextButton(onPressed: () => setState(() => _showWords = !_showWords), child: Text(_showWords ? t.accountHide : t.accountShow)),
-            if (_showWords)
+            if (_showWords) ...[
               Wrap(spacing: FasanSpace.s, runSpacing: FasanSpace.s, children: [
                 for (final (i, w) in id.mnemonic!.split(' ').indexed) Chip(label: Text('${i + 1}. $w')),
               ]),
+              TextButton.icon(
+                icon: const Icon(Icons.copy_rounded),
+                label: Text(trLang(t.de ? 'de' : 'en', 'collab_ui.copyWords')),
+                onPressed: () async {
+                  final m = ScaffoldMessenger.of(context);
+                  await Clipboard.setData(ClipboardData(text: id.mnemonic!));
+                  m.showSnackBar(SnackBar(content: Text(trLang(t.de ? 'de' : 'en', 'collab_ui.wordsCopied'))));
+                },
+              ),
+            ],
           ],
         ],
         const Divider(height: FasanSpace.xl),

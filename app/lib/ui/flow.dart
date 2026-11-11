@@ -19,7 +19,7 @@ import 'currency_ui.dart';
 import 'collab_ui.dart';
 import 'bill_notes.dart';
 import 'change_badge.dart';
-import 'my_balance.dart' show myNames;
+import 'my_balance.dart' show myPerson;
 import 'pay_ui.dart';
 import 'payers.dart';
 import 'common.dart';
@@ -193,7 +193,7 @@ class ResultBody extends StatelessWidget {
             const SizedBox(width: FasanSpace.m),
             Expanded(child: Text(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} ${billSign(context, bill)}'), style: tt.bodyMedium)),
             // I owe: pay right here (Nutzer 04.11.; pay_ui.dart)
-            if (myNames(context)(bill.ps[from].name) && !bill.settled)
+            if (myPerson(context)(bill.ps[from]) && !bill.settled)
               TextButton(
                 onPressed: () {
                   final live = bill.group == null ? null : CollabScope.read(context).groupByLocalName(bill.group!);

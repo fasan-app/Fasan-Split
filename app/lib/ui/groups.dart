@@ -93,8 +93,8 @@ class GroupsPage extends StatelessWidget {
                     Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
                       Badge(isLabelVisible: unread > 0, label: Text('$unread'), offset: const Offset(10, -6), child: Text('${money(sum, de: t.de)} ${signOf(context)}', style: tt.titleMedium)),
                       // my balance in this group (green = I get, red = I owe)
-                      if (myDebts(store.inGroup(g, done: true), myNames(context)).values.fold(0, (a, x) => a + x) case final sure)
-                        if (myProvisional(store.inGroup(g, done: false), myNames(context)).values.fold(0, (a, x) => a + x) case final soft)
+                      if (myDebts(store.inGroup(g, done: true), myNames(context), isMePerson: myPerson(context)).values.fold(0, (a, x) => a + x) case final sure)
+                        if (myProvisional(store.inGroup(g, done: false), myNames(context), isMePerson: myPerson(context)).values.fold(0, (a, x) => a + x) case final soft)
                           if (sure + soft != 0) ...[
                             Text('${money(sure + soft, de: t.de, sign: true)} ${signOf(context)}', style: tt.labelMedium!.copyWith(color: sure + soft > 0 ? Colors.green.shade600 : Colors.red.shade600, fontWeight: FontWeight.w700)),
                             if (soft != 0) Text(trLang(t.de ? 'de' : 'en', 'my_balance.provisionalShort', [money(soft, de: t.de, sign: true)]), style: tt.labelSmall!.copyWith(color: (soft > 0 ? Colors.green.shade600 : Colors.red.shade600).withValues(alpha: 0.65))),
@@ -559,9 +559,15 @@ class FriendsPage extends StatelessWidget {
         ..pub ??= e.key
         ..deleted = true;
     }
-    // not myself (Bildschirmvergleich 06.11.: the browser user saw themself in „Freunde“)
-    final myName = (collab.identity?.name ?? store.me).trim().toLowerCase();
-    if (myName.isNotEmpty) rows.remove(myName);
+    // gone from all my groups (left or removed) but not deleted (Nutzer 11.11.): shown as such, not as a current friend
+    for (final e in collab.leftFriends.entries) {
+      at(e.value)
+        ..pub ??= e.key
+        ..left = true;
+    }
+    // not myself, under any name I ever had (Nutzer 11.11.: „Chris“ stayed behind as a friend after renaming) and not my own key
+    final mine = collab.ownNames;
+    rows.removeWhere((k, f) => mine.contains(k) || (f.pub != null && f.pub == collab.identity?.pub));
     final waiting = <CollabGroup>[];
     for (final g in collab.directs) {
       final n = collab.directName(g);
@@ -613,10 +619,12 @@ class FriendsPage extends StatelessWidget {
     }
 
     Widget row(_Friend f) {
-      final hasChat = !f.deleted && (f.pub != null || f.direct != null);
+      final hasChat = !f.deleted && !f.left && (f.pub != null || f.direct != null);
       final bold = f.unread > 0;
       final sub = f.deleted
           ? (trLang(de ? 'de' : 'en', 'groups.accountDeleted'))
+          : f.left
+          ? trLang(de ? 'de' : 'en', 'groups.accountLeft')
           : f.last != null
           ? (f.last!.from == collab.identity?.pub ? (trLang(de ? 'de' : 'en', 'groups.you')) : '') + f.last!.text
           : [
@@ -723,7 +731,7 @@ class _Friend {
   _Friend(this.name);
   final String name;
   int color = 0, bills = 0, sum = 0, unread = 0;
-  bool fromBills = false, deleted = false;
+  bool fromBills = false, deleted = false, left = false;
   String? pub;
   CollabGroup? direct;
   ChatMessage? last;
