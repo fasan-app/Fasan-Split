@@ -1,3 +1,7 @@
+## 0.1.108
+- Besser: Die Gruppe erkennt über die feste Kennung, wer eine Person im Bon ist. Wird die Person umbenannt, liest das Mitglied einen verborgenen Bon weiter.
+- Behoben: Nach „Abmelden“ oder „Konto löschen“ legt das Schließen des Profils kein neues Konto mit dem alten Namen mehr an.
+
 ## 0.1.107
 - Behoben: Meldest du dich ab und mit den 12 Wörtern wieder an, bleibt dein zuletzt gewählter Name. Vorher konnte ein alter Name die Umbenennung überschreiben.
 - Neu: Frühere Namen und die feste Kennung deiner Personen in Bons gehören jetzt zum Konto (verschlüsselt, wie die Gruppenliste). Auf einem neuen Gerät sind deine Bons sofort wieder „du“.

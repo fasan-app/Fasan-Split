@@ -189,16 +189,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    final store = _store; // both looked up here, never first in dispose()
     final n = _collab.identity?.name ?? '';
-    _name.text = n.isNotEmpty ? n : _store.me;
+    _name.text = n.isNotEmpty ? n : store.me;
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     final n = _name.text.trim(), store = _store, collab = _collab;
-    // after the frame: saving notifies listeners, which is not allowed while the tree is torn down
-    if (n.isNotEmpty) {
+    // after the frame: saving notifies listeners, which is not allowed while the tree is torn down.
+    // Not after „Abmelden“ / „Konto löschen“ (no account any more): saving the name would create a new account.
+    if (n.isNotEmpty && !collab.justLeft) {
       scheduleMicrotask(() {
         store.me = n;
         collab.setName(n);

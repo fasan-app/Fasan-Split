@@ -164,4 +164,19 @@ void main() {
     w.c.dispose();
     cur.dispose();
   }, timeout: const Timeout(Duration(minutes: 5)));
+
+  test('Mitglied ↔ Person über die Kennung: wird die Person im Bon umbenannt, liest das Mitglied den verborgenen Bon weiter', () async {
+    final w = await setup();
+    w.b.learnOwnUids(); // (the ledger timer usually did it already)
+    await settle(2500);
+    final g = w.a.groups.values.first;
+    final bill = w.sa.bills.firstWhere((b) => b.id == 'x1');
+    final testPub = w.b.identity!.pub;
+    expect(g.session.uidsOf(testPub), isNotEmpty, reason: 'die Kennung steht im Profil, die Gruppe liest sie');
+    bill.ps[1].name = 'Tessa'; // someone renames the person
+    expect(w.a.billReaders(g, bill), contains(testPub), reason: 'über die Kennung, nicht über den Namen');
+    w.a.dispose();
+    w.b.dispose();
+    w.c.dispose();
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }

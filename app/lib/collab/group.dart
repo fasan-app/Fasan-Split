@@ -841,6 +841,19 @@ class GroupSession {
   static String profile(String pub) => 'profile:$pub';
 
   /// Sets my name in this group (my profile; as admin also my entry in the members list, for older app versions).
+  /// The uids of the persons on bills that are me, published in my own profile (Nutzer 11.11.: bills are linked to the
+  /// real member, not only by name). Others read them with [uidsOf].
+  void setMyUids(Iterable<String> uids) {
+    final l = uids.toList()..sort();
+    if (l.isEmpty || '${doc(profile(me.pub)).get('uids')}' == '$l') return;
+    doc(profile(me.pub)).set('uids', l);
+    touch(profile(me.pub));
+  }
+
+  Set<String> uidsOf(String pub) => {
+        if (doc(profile(pub)).get('uids') case final List l) for (final x in l) '$x',
+      };
+
   void setMyName(String name) {
     if (name.isEmpty) return;
     doc(profile(me.pub)).set('name', name);

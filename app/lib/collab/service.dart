@@ -221,6 +221,13 @@ class CollabService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// True for a moment after „Abmelden“ / „Konto löschen“: screens that save a typed name when they close must not
+  /// create a new account then.
+  bool get justLeft => _leftAt != null && DateTime.now().difference(_leftAt!) < const Duration(seconds: 3);
+  DateTime? _leftAt;
+
+  void _markLeft() => _leftAt = DateTime.now();
+
   Future<Identity> ensureIdentity({String name = ''}) async {
     identity ??= await Identity.loadOrCreate(vault, defaultName: name);
     return identity!;
@@ -260,6 +267,7 @@ class CollabService extends ChangeNotifier {
     } else if (store.me.trim().isEmpty && id.name.trim().isNotEmpty) {
       store.me = id.name.trim();
     }
+    publishOwnUids();
     if (id.name.trim().isEmpty) return;
     for (final g in groups.values) {
       if (g.session.doc(GroupSession.profile(id.pub)).get('name') != id.name.trim()) g.session.setMyName(id.name.trim());
@@ -1048,6 +1056,7 @@ class CollabService extends ChangeNotifier {
   /// – honoured by many, not guaranteed – and key, words, group list and collaboration data go from this device.
   /// [alsoBills] also empties the bills on this device.
   Future<void> deleteAccount({bool alsoBills = false}) async {
+    _markLeft();
     final me = identity;
     if (me == null) return;
     final refs = <String>{'$kindData:${me.pub}:$_accountD'};
@@ -1176,6 +1185,7 @@ class CollabService extends ChangeNotifier {
   /// written to the relays, no deletion mark. Key, words, group list and collaboration data leave this device; the 12 words
   /// (or a backup, or a second device) bring everything back. [alsoBills] also empties the bills here (shared computer).
   Future<void> signOut({bool alsoBills = false}) async {
+    _markLeft();
     for (final g in groups.values.toList()) {
       await leave(g);
     }
@@ -1522,10 +1532,12 @@ class CollabService extends ChangeNotifier {
   Set<String> billReaders(CollabGroup g, Bill b) {
     final s = g.session;
     final names = {for (final p in b.ps) p.name.trim().toLowerCase()}..remove('');
+    final uids = {for (final p in b.ps) p.uid};
     return {
       s.me.pub,
       for (final pub in s.memberKeys)
-        if ({s.nameOf(pub), ...s.personsOf(pub)}.any((n) => names.contains(n.trim().toLowerCase()))) pub,
+        // by the member's own published person uid first (a renamed person stays linked), names as the way in
+        if (s.uidsOf(pub).any(uids.contains) || {s.nameOf(pub), ...s.personsOf(pub)}.any((n) => names.contains(n.trim().toLowerCase()))) pub,
     };
   }
 
@@ -1957,6 +1969,14 @@ class CollabService extends ChangeNotifier {
 
   /// Pins the uid of every person on my bills that carries one of my names: from then on a rename of that person (or a
   /// new person with the same name) cannot change who is me. Returns true when something was added.
+  /// My person uids into my profile in every group (others use them, see [CollabGroup] billReaders).
+  void publishOwnUids() {
+    final u = ownUids;
+    for (final g in groups.values) {
+      g.session.setMyUids(u);
+    }
+  }
+
   bool learnOwnUids() {
     if (identity == null) return false;
     final names = ownNames, uids = ownUids;
@@ -1969,6 +1989,7 @@ class CollabService extends ChangeNotifier {
     if (uids.length == before) return false;
     prefs?.setStringList(_kUids, uids.toList());
     unawaited(syncAccount());
+    publishOwnUids();
     return true;
   }
 
