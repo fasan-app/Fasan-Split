@@ -251,6 +251,24 @@ void main() {
             ]),
           );
         }),
+    // history page (11.11.): the same line only once (×n), no empty changes, no technical text, rows tappable (Nutzer 11.11. 15:05)
+    'b31-verlauf': (_) => Builder(builder: (c) {
+          final co = CollabScope.read(c);
+          final now = DateTime.now();
+          co.changeLog
+            ..clear()
+            ..addAll([
+              for (var i = 0; i < 6; i++)
+                ChangeRecord(at: now.subtract(Duration(minutes: 3 + i)), group: 'x', billId: 'nb', title: 'Strandbar Erfunden', who: 'Hugo', whoKey: 'k1', app: 'web a634b56', lines: [
+                  ChangeLine('Pia bei „Sprudel“ ausgetragen', 'Pia removed from “Sprudel”'),
+                  ChangeLine('Pia bei „Sprudel“ eingetragen (2 Stück)', 'Pia added to “Sprudel” (2 pcs)'),
+                ]),
+              ChangeRecord(at: now.subtract(const Duration(hours: 2)), group: 'x', billId: 'nb', title: 'Strandbar Erfunden', who: 'Rosa', whoKey: 'k2', lines: [
+                ChangeLine('Summe 86,90 € → 90,00 €', 'Total 86.90 € → 90.00 €'),
+              ]),
+            ]);
+          return const HistoryScreen.all();
+        }),
     'b26-anleitung': (_) => const TutorialScreen(),
     'b25-gruppe-aufstellung': (_) => Builder(builder: (c) {
           final st = StoreScope.read(c);
