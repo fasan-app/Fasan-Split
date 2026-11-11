@@ -1,3 +1,6 @@
+## 0.1.104
+- Neu: Beim Verbergen einer Rechnung gibt es „Beträge für alle sichtbar lassen“. Die anderen in der Gruppe sehen dann Summe, Zahler und Betrag je Person, damit ihr Stand stimmt, aber keine Postennamen, Fotos oder Notizen.
+
 ## 0.1.103
 - Neu: Unter „Mitglieder“ gibt es den Schalter „Neue Rechnungen nur für Beteiligte“. Rechnungen, die du in der Gruppe anlegst, sind dann gleich verborgen. Schon geteilte bleiben, wie sie sind.
 

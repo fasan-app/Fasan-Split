@@ -20,7 +20,6 @@ import 'assign.dart';
 import 'history.dart';
 import 'category_ui.dart';
 import 'change_badge.dart';
-import 'collab_ui.dart' show confirmDialog;
 import 'common.dart';
 import 'hints.dart';
 import 'currency_ui.dart';
@@ -259,9 +258,33 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Future<void> _hideFlow(Bill b) async {
     final collab = CollabScope.read(context);
     final names = collab.hiddenReaderNames(b).join(', ');
-    final ok = await confirmDialog(context, context.tr('vis.title'), context.tr('vis.text', [names]), context.tr('vis.action'));
-    if (!ok || !mounted) return;
-    final done = collab.hideBill(b);
+    var sums = false;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => AlertDialog(
+          title: Text(ctx.tr('vis.title')),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(ctx.tr('vis.text', [names])),
+            CheckboxListTile(
+              key: const ValueKey('vis-sums'),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: sums,
+              onChanged: (v) => setD(() => sums = v ?? false),
+              title: Text(ctx.tr('vis.sumsCheck')),
+              subtitle: Text(ctx.tr('vis.sumsHelp')),
+            ),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.of(ctx).cancel)),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(ctx.tr('vis.action'))),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final done = collab.hideBill(b, sums: sums);
     if (mounted) showNote(context, context.tr(done ? 'vis.done' : 'vis.failed'));
     setState(() {});
   }

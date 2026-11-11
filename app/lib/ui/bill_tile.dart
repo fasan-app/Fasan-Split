@@ -18,6 +18,7 @@ import 'my_balance.dart';
 import 'scan_stage.dart';
 import 'flow.dart';
 import 'change_badge.dart';
+import '../l10n/tr.dart';
 import 'common.dart';
 import 'resume.dart';
 import '../state/images.dart';
@@ -229,6 +230,8 @@ class BillTile extends StatelessWidget {
           ),
         ));
     // Waiting, reading and failed photos have nothing to open yet.
+    // a summary copy of a hidden bill (only amounts) has nothing to open
+    if (bill.sumOnly && !selecting) return body(() => showNote(context, context.tr('vis.sumOnlyOpen')));
     if (waiting || failed || selecting || !openable) return body(null);
     // Container transform: the card grows into the bill (fasan_ui GESTALTUNG.md §7). Unfinished bills continue where
     // the user left (Karte 3.9: Schließen verwirft nie).

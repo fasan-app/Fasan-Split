@@ -1317,6 +1317,14 @@ class CollabService extends ChangeNotifier {
         if (b.hidden) {
           if (!g.session.hasBillKey(b.id)) continue;
           g.session.shareBillKey(b.id, billReaders(g, b));
+          // „nur Beträge“: the summary (no item names, photos, notes) goes out under the group key for everybody
+          if (b.sums) {
+            final sid = 'sum:${b.id}', sd = g.session.doc(sid);
+            if (BillSync.writeSummary(sd, b)) {
+              g.session.touch(sid);
+              _saveDoc(g, sid);
+            }
+          }
         }
         final id = GroupSession.bill(b.id);
         final doc = g.session.doc(id);
@@ -1399,8 +1407,9 @@ class CollabService extends ChangeNotifier {
 
   /// Makes [b] a hidden bill: own key for it, given to [billReaders]; from now on its document and photos are encrypted with
   /// it. What other members already hold from before stays with them (the dialog says so). False if it cannot be done.
-  bool hideBill(Bill b) {
+  bool hideBill(Bill b, {bool sums = false}) {
     if (!canHide(b)) return false;
+    b.sums = sums;
     final g = groupByLocalName(b.group!)!;
     g.session.shareBillKey(b.id, billReaders(g, b));
     b.hidden = true;
@@ -1870,6 +1879,10 @@ class CollabService extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    if (id.startsWith('sum:')) {
+      _adoptSummary(g, id);
+      return;
+    }
     if (!id.startsWith('bill:')) return;
     final billId = id.substring(5);
     final doc = g.session.doc(id);
@@ -1882,6 +1895,22 @@ class CollabService extends ChangeNotifier {
     bill.group = g.localName;
     store.upsert(bill, record: false); // notifies; the write back finds nothing to change (not a step of the user's undo)
     _wantPhotos(g, bill);
+  }
+
+  /// A summary of a hidden bill with visible amounts arrived: without the bill's key this phone gets a copy with one line per
+  /// person (what they owe), so balances are right. With the key, the full bill is the truth.
+  void _adoptSummary(CollabGroup g, String id) {
+    final billId = id.substring(4);
+    final doc = g.session.doc(id);
+    if (!BillSync.hasSummary(doc) || g.session.hasBillKey(billId)) return;
+    Bill? existing;
+    for (final b in store.bills) {
+      if (b.id == billId) existing = b;
+    }
+    if (existing != null && !existing.sumOnly) return;
+    final bill = BillSync.readSummary(doc, id: billId, into: existing)..purpose = '•••';
+    bill.group = g.localName;
+    store.upsert(bill, record: false);
   }
 
   // ---- persistence ----

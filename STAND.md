@@ -15,7 +15,8 @@ Stand 01.11.2026.
 - **Lehre 10.11. 17:37 (Nutzer: „den ganzen Tag nichts gehört“):** Eine Antwort, die „ich arbeite weiter“ sagt, beendet den Zug: danach läuft nichts. Solange Pakete offen sind, keine Antwort mit Ankündigung beenden; im Zug bleiben (Warten per sleep-Schleifen), erst bei erledigter Arbeit antworten. 0.1.101 live.
 - 0.1.102 (lokal): Einladung → „Bisherige Rechnungen verbergen (N)" (`hideAllBills`, Frage, nicht zurücknehmbar), Test collab_ui_test. Nicht per Bildschirmfoto angesehen.
 - 0.1.103 (lokal): Standardstufe je Gruppe (Schalter unter „Mitglieder“, `setHideNewBills`, nur auf diesem Telefon gespeichert; verbirgt Bons, die ich begonnen habe, vor dem ersten Schreiben). Test hidden_bill_test. Nicht per Bildschirmfoto angesehen; Schalter gilt nicht geräteübergreifend.
-- Später: Stufe „nur Beträge“.
+- 0.1.104 (lokal): Stufe „nur Beträge“: Häkchen im Verbergen-Dialog (`Bill.sums`), Leser schreiben `sum:<id>` unter dem Gruppenschlüssel (Personen, Betrag je Person, Summe, Zahler, Stand; keine Postennamen/Fotos/Notizen); Nicht-Leser bauen daraus eine Kopie `sumOnly` (ein Posten je Person ohne Namen, Titel „•••“, nicht öffenbar), die der volle Bon ersetzt, sobald der Schlüssel kommt. Test hidden_bill_test. Grenzen: Personennamen und Beträge sind für alle Mitglieder lesbar; nachträgliches Umstellen auf „nur Beträge“ geht nicht (nur beim Verbergen); nicht per Bildschirmfoto angesehen, nicht auf dem S23.
+- Später: (nichts mehr aus dem Sichtbarkeits-Konzept offen).
 
 ## 10.11. 03:00 Web 0.1.96 live; 0.1.97 gepusht (CI läuft); 0.1.98 lokal fertig
 - Live in 0.1.96: vllt-Vorschläge, drei Stufen je Mitglied (direkt / fragt erst / nicht erlaubt), @Name in Posten-Notizen.

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // Sichtbarkeit je Rechnung (Paket G): a hidden bill has its own key. Members on the bill read it, a member who is not on it
 // cannot, until they are added. Test relay only, invented names. MPL-2.0
+import 'dart:convert';
+
 import 'package:fasan_split/collab/group.dart';
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
@@ -144,6 +146,55 @@ void main() {
     expect(storeC.bills.where((x) => x.id == 'd1'), isEmpty);
     a.dispose();
     b.dispose();
+    c.dispose();
+  }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test('Nur Beträge: Karl (nicht auf dem Bon) sieht Summe und Anteile, aber keinen Postennamen; mit Schlüssel wird daraus der ganze Bon', () async {
+    final hub = MemoryRelayHub();
+    final storeA = BillStore.memory()..me = 'Pia';
+    final a = CollabService(store: storeA, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    final g = await a.createGroup('Stadt 26');
+    final linkC = g.invitations!.create().link;
+    await settle(400);
+    final storeC = BillStore.memory()..me = 'Karl';
+    final c = CollabService(store: storeC, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await c.init();
+    await c.setName('Karl');
+    await c.join(linkC, 'Karl');
+    await settle(9000);
+    final bill = Bill(id: 'sm1', created: DateTime(2026, 11, 10), purpose: 'Bar Beispiel', total: 3000, people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Cocktail', amount: 3000, shares: {0: 1, 1: 1}),
+    ])
+      ..payer = 0
+      ..group = 'Stadt 26';
+    storeA.upsert(bill);
+    expect(a.hideBill(bill, sums: true), isTrue);
+    await settle(3500);
+    final got = storeC.bills.where((x) => x.id == 'sm1').toList();
+    expect(got, hasLength(1), reason: 'die Zusammenfassung kommt an');
+    final sc = got.single;
+    expect(sc.sumOnly, isTrue);
+    expect(sc.effectiveTotal, 3000);
+    expect(sc.its.map((i) => i.name).toSet(), {''}, reason: 'keine Postennamen');
+    expect(sc.its.map((i) => i.amount).toList(), [1500, 1500]);
+    expect(sc.ps.map((p) => p.name), ['Pia', 'Lena']);
+    expect(sc.payer, 0);
+    expect(sc.purpose, '•••');
+    final gc = c.groups.values.single.session;
+    expect(gc.doc(GroupSession.bill('sm1')).keys('').isEmpty, isTrue, reason: 'der eigentliche Bon bleibt unlesbar');
+    expect(jsonEncode(gc.doc('sum:sm1').entries.map((e) => e.value).toList()).contains('Cocktail'), isFalse);
+
+    // Karl is put on the bill: the full bill replaces the summary copy
+    bill.people!.add(Person('Karl', 2));
+    storeA.upsert(bill);
+    await settle(4500);
+    final full = storeC.bills.firstWhere((x) => x.id == 'sm1');
+    expect(full.sumOnly, isFalse);
+    expect(full.its.first.name, 'Cocktail');
+    expect(full.purpose, 'Bar Beispiel');
+    a.dispose();
     c.dispose();
   }, timeout: const Timeout(Duration(minutes: 2)));
 }

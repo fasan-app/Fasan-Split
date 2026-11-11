@@ -24,6 +24,10 @@ import 'bill_screen.dart' show ItemTile, ReviewScreen;
 
 /// Opens a bill the way the tile does: finished bills show the result, unfinished ones continue where the user left.
 void openBill(BuildContext context, Bill bill, {int? focusItem}) {
+  if (bill.sumOnly) {
+    showNote(context, context.tr('vis.sumOnlyOpen'));
+    return;
+  }
   CollabScope.read(context).billSeen(bill.id);
   markBillOrigin(context);
   Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => focusItem != null

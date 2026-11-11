@@ -50,6 +50,7 @@ abstract final class BillSync {
     set('meta/refund', b.refund);
     set('meta/lock', b.lockBy);
     if (b.hidden) set('meta/hidden', true);
+    if (b.sums) set('meta/sums', true);
     set('meta/category', b.category); // shared like the other metadata (04.11.)
     set('meta/currency', b.currency);
     set('meta/rate', b.rate);
@@ -123,6 +124,57 @@ abstract final class BillSync {
   }
 
   /// True if the document holds a bill (at least one fact about it).
+  /// The summary of a hidden bill with visible amounts (`sum:<id>`): people, what each owes, who paid, total, state. No item
+  /// names, no photo, no notes. Returns true if anything changed.
+  static bool writeSummary(LwwDoc doc, Bill b) {
+    final pp = b.perPerson();
+    final v = <String, Object?>{
+      'people': [for (final p in b.ps) {'u': p.uid, 'n': p.name, 'c': p.color}],
+      'amounts': {for (final e in pp.entries) if (e.key < b.ps.length && e.value != 0) b.ps[e.key].uid: e.value},
+      'total': b.effectiveTotal,
+      'payer': b.payer != null && b.payer! < b.ps.length ? b.ps[b.payer!].uid : null,
+      'paid': {for (final e in b.paid.entries) if (e.key < b.ps.length) b.ps[e.key].uid: e.value},
+      'done': b.done,
+      'settled': b.settled,
+      'trashed': b.trashedAt?.millisecondsSinceEpoch,
+      'date': b.receiptDate?.millisecondsSinceEpoch,
+      'currency': b.currency,
+      'rate': b.rate,
+    };
+    return doc.set('s', v);
+  }
+
+  static bool hasSummary(LwwDoc doc) => doc.get('s') is Map;
+
+  /// A bill without items made from [writeSummary]: one item per person with what they owe, so balances work as usual.
+  static Bill readSummary(LwwDoc doc, {required String id, Bill? into}) {
+    final m = (doc.get('s') as Map).cast<String, Object?>();
+    final b = into ?? Bill(id: id, created: DateTime.now(), items: [], people: []);
+    final ps = [for (final j in (m['people'] as List? ?? const [])) Person((j as Map)['n'] as String, (j['c'] as num).toInt(), uid: j['u'] as String)];
+    final idx = {for (final (i, p) in ps.indexed) p.uid: i};
+    final amounts = (m['amounts'] as Map? ?? const {}).cast<String, Object?>();
+    b.people = ps;
+    b.items = [
+      for (final e in amounts.entries)
+        if (idx[e.key] != null) BillItem(uid: 'sum-${e.key}', name: '', amount: (e.value as num).toInt(), shares: {idx[e.key]!: 1}),
+    ];
+    b.purpose = '';
+    b.total = (m['total'] as num?)?.toInt();
+    b.payer = m['payer'] is String ? idx[m['payer']] : null;
+    final paid = (m['paid'] as Map? ?? const {});
+    b.paid = {for (final e in paid.entries) if (idx['${e.key}'] != null) idx['${e.key}']!: (e.value as num).toInt()};
+    b.done = m['done'] == true;
+    b.settled = m['settled'] == true;
+    b.trashedAt = m['trashed'] is num ? DateTime.fromMillisecondsSinceEpoch((m['trashed'] as num).toInt()) : null;
+    b.receiptDate = m['date'] is num ? DateTime.fromMillisecondsSinceEpoch((m['date'] as num).toInt()) : null;
+    b.currency = m['currency'] as String?;
+    b.rate = (m['rate'] as num?)?.toDouble();
+    b.hidden = true;
+    b.sums = true;
+    b.sumOnly = true;
+    return b;
+  }
+
   static bool hasBill(LwwDoc doc) => doc.entries.any((e) => e.value != null);
 
   /// Applies the document to [into] (or a new bill with [id]). Local-only fields of [into] stay as they are.
@@ -203,6 +255,8 @@ abstract final class BillSync {
     b.category = doc.get('meta/category') as String?;
     b.lockBy = doc.get('meta/lock') as String?;
     if (doc.get('meta/hidden') == true) b.hidden = true;
+    if (doc.get('meta/sums') == true) b.sums = true;
+    b.sumOnly = false; // a full document replaces a summary copy
     b.currency = doc.get('meta/currency') as String?;
     b.rate = (doc.get('meta/rate') as num?)?.toDouble();
     b.rateDate = switch (doc.get('meta/rateDate')) { final num t => DateTime.fromMillisecondsSinceEpoch(t.toInt()), _ => null };

@@ -339,6 +339,8 @@ class Bill {
     this.category,
     this.lockBy,
     this.hidden = false,
+    this.sums = false,
+    this.sumOnly = false,
     this.currency,
     this.rate,
     this.rateDate,
@@ -437,6 +439,13 @@ class Bill {
   /// Only the people on the bill (and the group admin) can read it: the bill has its own key (docs/KONZEPT-SICHTBARKEIT.md).
   /// Set once; it stays on for the life of the bill (a key that was given out cannot be taken back).
   bool hidden;
+
+  /// A hidden bill whose amounts per person stay visible for the whole group (Stufe „nur Beträge“): the readers also write the
+  /// document `sum:<id>` (no item names, photos, notes).
+  bool sums;
+
+  /// This copy was built from that summary only: no items, nothing to edit, replaced by the full bill if the key arrives.
+  bool sumOnly;
 
   /// Currency of the receipt (ISO code); null = the home currency (Einstellungen, default EUR). Amounts of the bill stay in
   /// this currency; [rate] (home units per 1 unit of it) turns them into the home currency for balances across bills.
@@ -717,6 +726,8 @@ class Bill {
         if (category != null) 'category': category,
         if (lockBy != null) 'lockBy': lockBy,
         if (hidden) 'hidden': true,
+        if (sums) 'sums': true,
+        if (sumOnly) 'sumOnly': true,
         if (currency != null) 'currency': currency,
         if (rate != null) 'rate': rate,
         if (rateDate != null) 'rateDate': rateDate!.toIso8601String(),
@@ -756,6 +767,8 @@ class Bill {
         category: j['category'] as String?,
         lockBy: j['lockBy'] as String?,
         hidden: j['hidden'] == true,
+        sums: j['sums'] == true,
+        sumOnly: j['sumOnly'] == true,
         currency: j['currency'] as String?,
         rate: (j['rate'] as num?)?.toDouble(),
         rateDate: DateTime.tryParse(j['rateDate'] as String? ?? ''),

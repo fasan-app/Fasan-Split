@@ -1,3 +1,6 @@
+## 0.1.104
+- New: when hiding a bill there is “Keep amounts visible for everyone”. The others in the group then see total, payer and amount per person, so their balance is right, but no item names, photos or notes.
+
 ## 0.1.103
 - New: under “Members” there is the switch “New bills for people on them only”. Bills you start in the group are then hidden at once. Bills already shared stay as they are.
 
