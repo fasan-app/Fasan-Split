@@ -243,4 +243,55 @@ void main() {
     b.dispose();
     c.dispose();
   }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test('Mitglied entfernen (neuer Gruppenschlüssel): verborgener Bon bleibt für Pia und Lena les- und schreibbar, Karl bekommt nichts Neues', () async {
+    final hub = MemoryRelayHub();
+    final storeA = BillStore.memory()..me = 'Pia';
+    final a = CollabService(store: storeA, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    final g = await a.createGroup('Stadt 26');
+    final linkB = g.invitations!.create().link;
+    final linkC = g.invitations!.create().link;
+    await settle(400);
+    final storeB = BillStore.memory()..me = 'Lena';
+    final b = CollabService(store: storeB, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await b.init();
+    await b.setName('Lena');
+    await b.join(linkB, 'Lena');
+    final storeC = BillStore.memory()..me = 'Karl';
+    final c = CollabService(store: storeC, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await c.init();
+    await c.setName('Karl');
+    await c.join(linkC, 'Karl');
+    await settle(9000);
+    final bill = Bill(id: 'r1', created: DateTime(2026, 11, 11), purpose: 'Bar Beispiel', total: 3000, people: [Person('Pia', 0), Person('Lena', 1)], items: [
+      BillItem(name: 'Cocktail', amount: 3000, shares: {0: 1, 1: 1}),
+    ])
+      ..group = 'Stadt 26';
+    storeA.upsert(bill);
+    expect(a.hideBill(bill), isTrue);
+    await settle(3000);
+    expect(storeB.bills.where((x) => x.id == 'r1'), hasLength(1));
+
+    final karlPub = c.groups.values.single.session.me.pub;
+    await a.removeMember(a.groups.values.single, karlPub);
+    await settle(6000);
+    expect(a.groups.values.single.session.hasBillKey('r1'), isTrue, reason: 'Pia hat nach dem Wechsel ihren Bon-Schlüssel noch');
+    expect(b.groups.values.single.session.hasBillKey('r1'), isTrue, reason: 'Lena hat nach dem Wechsel ihren Bon-Schlüssel noch');
+
+    bill.its.first.name = 'Cocktail mit Schirm';
+    storeA.upsert(bill);
+    await settle(4000);
+    expect(storeB.bills.firstWhere((x) => x.id == 'r1').its.first.name, 'Cocktail mit Schirm', reason: 'Pias Änderung kommt nach dem Wechsel bei Lena an');
+    final lb = storeB.bills.firstWhere((x) => x.id == 'r1');
+    lb.its.first.name = 'Cocktail Zwei';
+    storeB.upsert(lb);
+    await settle(4000);
+    expect(storeA.bills.firstWhere((x) => x.id == 'r1').its.first.name, 'Cocktail Zwei', reason: 'und umgekehrt');
+    expect(storeC.bills.where((x) => x.id == 'r1'), isEmpty, reason: 'Karl war nie auf dem Bon und ist nicht mehr in der Gruppe');
+    a.dispose();
+    b.dispose();
+    c.dispose();
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }
