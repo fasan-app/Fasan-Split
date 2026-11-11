@@ -9,7 +9,7 @@ import '../l10n/tr.dart';
 import 'shape_tokens.dart';
 
 /// Steps of the guide in order; keys `tutorial.<id>.title` / `.body`. A new function gets its step here and its texts in every language.
-const tutorialIds = <String>['idea', 'scan', 'check', 'assign', 'paid', 'group', 'invite', 'together', 'history', 'settle', 'settings'];
+const tutorialIds = <String>['idea', 'scan', 'check', 'assign', 'paid', 'group', 'invite', 'together', 'history', 'settle', 'account', 'settings'];
 
 class TutorialScreen extends StatelessWidget {
   const TutorialScreen({super.key});

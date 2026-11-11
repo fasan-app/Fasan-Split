@@ -236,9 +236,16 @@ class CollabService extends ChangeNotifier {
     id.name = n;
     await id.save(vault);
     _rememberOwnName(old);
+    if (!_adopting) {
+      _adoptPending = false; // typed by the person: no group name replaces it any more
+      _adoptedGuess = null;
+    }
     if (store.me.trim().isEmpty || store.me.trim() == old.trim()) store.me = n;
-    for (final g in groups.values) {
-      g.session.setMyName(n);
+    // adopting a name from the groups must never write it back: an older name would overwrite a newer rename (LWW)
+    if (!_adopting) {
+      for (final g in groups.values) {
+        g.session.setMyName(n);
+      }
     }
     notifyListeners();
   }
@@ -274,28 +281,60 @@ class CollabService extends ChangeNotifier {
   /// back as my name, unless the person typed another one – then the group's name is remembered as an old name of mine (the
   /// bills keep using it, see [ownNames]). A „gelöscht“ mark on my profile from an earlier deletion is taken away.
   bool _adoptPending = false;
+  bool _adopting = false;
+  String? _adoptedGuess; // the name taken from the groups; while it is still my name, a newer one from my profile replaces it
+
+  bool _adoptBusy = false, _adoptAgain = false;
 
   Future<void> _adoptNameFromGroups({String typed = ''}) async {
+    if (_adoptBusy) {
+      _adoptAgain = true; // one run at a time; a change that arrives meanwhile is looked at afterwards
+      return;
+    }
+    _adoptBusy = true;
+    try {
+      do {
+        _adoptAgain = false;
+        await _adoptNameOnce(typed: typed);
+      } while (_adoptAgain);
+    } finally {
+      _adoptBusy = false;
+    }
+  }
+
+  Future<void> _adoptNameOnce({String typed = ''}) async {
     final id = identity;
     if (id == null) return;
-    String? known;
+    String? known, fromProfile;
     for (final g in groups.values) {
       final d = g.session.doc(GroupSession.profile(id.pub));
       if (d.get('deleted') == true) {
         d.set('deleted', null);
         g.session.touch(GroupSession.profile(id.pub));
       }
+      if (d.get('name') case final String pn when pn.trim().isNotEmpty && fromProfile == null) fromProfile = pn.trim();
       final n = g.session.knownName(id.pub);
       if (known == null && n != null && n.trim().isNotEmpty && n != '—') known = n.trim();
     }
+    // my own profile is the newest word on my name (a rename writes it first); the members list can lag behind, and
+    // older versions of the profile can arrive before newer ones – so adopting goes on until I type a name myself
+    known = fromProfile ?? known;
     if (known == null) return;
-    _adoptPending = false;
     // A fresh restore without a typed name carries the placeholder (first 8 characters of the key), not a real name.
-    final placeholder = id.name.trim().isEmpty || id.name.trim() == id.pub.substring(0, 8);
+    final placeholder = id.name.trim().isEmpty || id.name.trim() == id.pub.substring(0, 8) || (_adoptPending && id.name == _adoptedGuess);
     if (typed.trim().isEmpty && placeholder) {
-      await setName(known);
+      if (id.name != known) {
+        _adopting = true;
+        try {
+          await setName(known);
+        } finally {
+          _adopting = false;
+        }
+      }
+      _adoptedGuess = known;
     } else if (typed.trim().isNotEmpty && typed.trim() != known) {
       _rememberOwnName(known);
+      _adoptPending = false;
     }
   }
 
@@ -309,9 +348,11 @@ class CollabService extends ChangeNotifier {
 
   void _rememberOwnName(String old) {
     final o = old.trim();
-    if (o.isEmpty || o == '—') return;
-    final all = {...?prefs?.getStringList(_kOldNames), o};
-    prefs?.setStringList(_kOldNames, all.toList());
+    if (o.isEmpty || o == '—' || (identity != null && o == identity!.pub.substring(0, 8))) return;
+    final had = prefs?.getStringList(_kOldNames) ?? const <String>[];
+    if (had.contains(o)) return;
+    prefs?.setStringList(_kOldNames, [...had, o]);
+    if (identity != null) unawaited(syncAccount());
   }
 
   /// Every name that means me (lower case): the account name, „Ich bin“ in the bills, earlier names and linked persons.
@@ -390,6 +431,10 @@ class CollabService extends ChangeNotifier {
     final body = jsonEncode({
       'v': 1,
       'groups': [for (final g in groups.values) {'secret': g.secret.toJson(), 'local': g.localName}],
+      // who I am on the bills (Nutzer 11.11.: „alles mit dem echten User verknüpft“): earlier names and the uids of my
+      // persons travel with the account to every device (encrypted to myself like the rest)
+      'names': prefs?.getStringList(_kOldNames) ?? const <String>[],
+      'uids': ownUids.toList(),
     });
     final ev = NostrEvent.create(me.key, kind: kindData, tags: [['d', _accountD], ['t', 'fs:account']], content: nip44Encrypt(body, nip44ConversationKey(me.key.priv, me.pub)));
     try {
@@ -405,10 +450,13 @@ class CollabService extends ChangeNotifier {
     final me = await ensureIdentity();
     final relay = _relayFactory(defaultRelays);
     final seen = <String, Map<String, dynamic>>{};
+    final oldNames = <String>{}, uids = <String>{};
     final sub = relay.subscribe(Filter(kinds: const [kindData], authors: [me.pub], tags: {'t': ['fs:account']})).listen((e) {
       if (!e.valid || e.pubkey != me.pub || e.tag('d') != _accountD) return;
       try {
         final j = jsonDecode(nip44Decrypt(e.content, nip44ConversationKey(me.key.priv, me.pub))) as Map<String, dynamic>;
+        oldNames.addAll([for (final n in (j['names'] as List? ?? const [])) '$n']);
+        uids.addAll([for (final u in (j['uids'] as List? ?? const [])) '$u']);
         for (final g in (j['groups'] as List? ?? const [])) {
           final m = (g as Map).cast<String, dynamic>();
           final s = GroupSecret.fromJson((m['secret'] as Map).cast<String, dynamic>());
@@ -418,6 +466,8 @@ class CollabService extends ChangeNotifier {
     });
     await Future<void>.delayed(wait);
     await sub.cancel();
+    oldNames.forEach(_rememberOwnName);
+    if (uids.isNotEmpty) prefs?.setStringList(_kUids, {...ownUids, ...uids}.toList());
     var added = 0;
     for (final m in seen.values) {
       final s = GroupSecret.fromJson((m['secret'] as Map).cast<String, dynamic>());
@@ -1918,6 +1968,7 @@ class CollabService extends ChangeNotifier {
     }
     if (uids.length == before) return false;
     prefs?.setStringList(_kUids, uids.toList());
+    unawaited(syncAccount());
     return true;
   }
 

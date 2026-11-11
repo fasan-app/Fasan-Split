@@ -3,6 +3,7 @@
 // entry, the Original/Digital switch and the line pictures were missing – the photo never left the phone that scanned).
 // Pieces ≤ 40 KB, encrypted with the group key, checked by hash; line pictures cut on the receiving device. Test relay only.
 // MPL-2.0
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -78,7 +79,8 @@ void main() {
     expect(got, photo);
     // what the relay operator sees: no JPEG bytes in any stored event
     for (final e in hub.stored) {
-      expect(e.content.contains('/9j/'), isFalse, reason: 'base64 of a JPEG header must not be visible');
+      // 24 characters of the real photo's base64, not just '/9j/': four random base64 characters match by chance in ~1 of 100 runs
+      expect(e.content.contains(base64.encode(photo.sublist(0, 18))), isFalse, reason: 'base64 of the JPEG header must not be visible');
     }
   });
 

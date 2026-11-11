@@ -15,7 +15,7 @@ import 'shape_tokens.dart';
 
 /// Ids of all tips; text key `tip.<id>`. A new tip = a new id here and its text in every `tips_<code>.dart` (test: tips_test).
 const tipIds = <String>[
-  'plus', 'swipe', 'drag', 'invite', 'everyone', 'lock', 'hide', 'give', 'colors', 'people', 'autosave', 'history', 'balance', 'backup', 'local', 'perf', 'tutorial', 'off',
+  'plus', 'swipe', 'drag', 'invite', 'everyone', 'lock', 'hide', 'give', 'colors', 'people', 'autosave', 'history', 'balance', 'backup', 'signout', 'local', 'perf', 'tutorial', 'off',
 ];
 
 class TipLine extends StatefulWidget {

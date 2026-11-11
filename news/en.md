@@ -1,3 +1,8 @@
+## 0.1.107
+- Fixed: If you sign out and sign in again with the 12 words, your latest name stays. Before, an old name could overwrite the rename.
+- New: Your earlier names and the stable id of your persons on bills now belong to the account (encrypted, like the group list). On a new device your bills are „you“ right away.
+- New: A tip and a guide step about account, devices and signing out.
+
 ## 0.1.106
 - New: „Sign out“ in the profile. It only affects this device, nothing is deleted, the others still see you. First the app asks whether you have your 12 words or a backup file and offers both right there.
 - Better: After signing in with the 12 words your name comes back from the group. The words can be copied and pasted as a whole (commas, capitals and line breaks do not matter).

@@ -139,4 +139,29 @@ void main() {
     expect(myDebts([b], a.isMeName, isMePerson: a.isMePerson), {'Lena': 1000}, reason: 'über die Kennung bin ich es weiterhin');
     a.dispose();
   });
+
+  test('Stresstest: dreimal abmelden und mit den Wörtern zurück, dazwischen umbenennen – keine Doppelten, Bon und Name bleiben', () async {
+    final w = await setup();
+    final words = w.b.identity!.mnemonic!;
+    var cur = w.b;
+    for (var i = 0; i < 3; i++) {
+      await cur.signOut();
+      expect(cur.identity, isNull);
+      final (next, sn) = await phone(w.hub, '');
+      expect(await next.restoreIdentity(words), 1, reason: 'Lauf $i: die Gruppe kommt zurück');
+      await settle(3500);
+      expect(next.identity!.name, i == 0 ? 'Test' : 'Test$i', reason: 'Lauf $i: Name aus Konto/Gruppe');
+      expect(sn.bills.map((b) => b.id), contains('x1'));
+      await next.setName('Test${i + 1}');
+      await settle(1500);
+      cur.dispose();
+      cur = next;
+    }
+    expect(w.a.memberFriends.values.where((n) => n.startsWith('Test')).length, 1, reason: 'ein Mitglied, nicht vier');
+    expect(w.a.deletedFriends, isEmpty);
+    expect(cur.ownNames, containsAll(['test', 'test1', 'test2', 'test3']));
+    w.a.dispose();
+    w.c.dispose();
+    cur.dispose();
+  }, timeout: const Timeout(Duration(minutes: 5)));
 }

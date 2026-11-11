@@ -1,3 +1,8 @@
+## 0.1.107
+- Behoben: Meldest du dich ab und mit den 12 Wörtern wieder an, bleibt dein zuletzt gewählter Name. Vorher konnte ein alter Name die Umbenennung überschreiben.
+- Neu: Frühere Namen und die feste Kennung deiner Personen in Bons gehören jetzt zum Konto (verschlüsselt, wie die Gruppenliste). Auf einem neuen Gerät sind deine Bons sofort wieder „du“.
+- Neu: Im Profil gibt es einen Tipp und einen Anleitungsschritt zu Konto, Geräten und Abmelden.
+
 ## 0.1.106
 - Neu: „Abmelden“ im Profil. Es gilt nur für dieses Gerät, nichts wird gelöscht, die anderen sehen dich weiter. Vorher fragt die App, ob du deine 12 Wörter oder eine Sicherungsdatei hast, und bietet beides gleich an.
 - Besser: Nach der Anmeldung mit den 12 Wörtern kommt dein Name aus der Gruppe zurück. Die Wörter lassen sich als Ganzes kopieren und einfügen (Komma, Großbuchstaben, Zeilenumbrüche sind egal).
