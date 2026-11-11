@@ -106,12 +106,12 @@ jobs:
         run: |
           pip install websockets==13.1
           mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw" && npm init -y >/dev/null && npm install playwright@1.48.2 --silent
-          # the download hung twice on 11.11. (run 43033772363 and 43042396469 sat 35 min): each try gets 5 minutes, three tries
-          for i in 1 2 3; do
-            timeout 300 npx playwright install --with-deps chromium webkit && break
-            echo "playwright install: try $i failed"
-            [ "$i" = 3 ] && exit 1
-          done
+          # apt on the runner could not resolve its mirrors on 11.11. (runs 43033772363, 43042396469, 43045063287 hung there):
+          # with-deps gets 4 minutes, then the browsers alone (they come from the Playwright host, not from apt)
+          timeout 240 npx playwright install --with-deps chromium webkit || {
+            echo "playwright install --with-deps failed, trying the browsers without apt"
+            timeout 300 npx playwright install chromium webkit
+          }
           echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
           nohup python3 "$GITHUB_WORKSPACE/app/tool/e2e/relay.py" 7777 > "$RUNNER_TEMP/relay.log" 2>&1 &
           cd "$RUNNER_TEMP/srv" && nohup python3 -m http.server 8765 > "$RUNNER_TEMP/http.log" 2>&1 &
