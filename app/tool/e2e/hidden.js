@@ -39,6 +39,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     result.seesA = await waitFor('Versteckt-A', 90);
     await shot('1-gruppe');
     result.bAbsent = (await has('Versteckt-B')) === 0 && (await has('Geheimposten')) === 0;
+    // bill C is „nur Beträge“: sums arrive as a nameless bill („•••“), the purpose and the item name never do
+    for (let i = 0; i < 60 && (await has('•••')) === 0; i++) await p.waitForTimeout(1000);
+    result.sumsOnly = (await has('•••')) > 0 && (await has('Versteckt-C')) === 0 && (await has('Sparposten')) === 0;
+    await shot('1b-nur-betraege');
     if (result.seesA) {
       await p.getByText('Versteckt-A').or(p.getByLabel('Versteckt-A')).first().click({ timeout: 20000 });
       await p.waitForTimeout(2500);
@@ -60,7 +64,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     }
   } catch (e) { console.log('FAIL', String(e).slice(0, 300)); await shot('fail'); }
   fs.writeFileSync(dir + '/hidden-done.txt', JSON.stringify(result));
-  const ok = result.seesA && result.bAbsent && result.itemA && result.seesB && result.itemB && errs.length === 0;
+  const ok = result.seesA && result.bAbsent && result.itemA && result.sumsOnly && result.seesB && result.itemB && errs.length === 0;
   console.log(`${ok ? 'OK' : 'FAIL'} ${JSON.stringify(result)} · Fehler: ${errs.join(' | ') || 'keine'}`);
   await b.close();
   process.exit(ok ? 0 : 1);

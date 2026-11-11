@@ -3,7 +3,7 @@
 // exchange (NIP-44 via curve_web.dart) differently from the phone, so only a real browser proves it. Runs only with
 // FASAN_E2E_RELAY (local relay, never public ones). Invented names. Flow: phone shares a group and writes link.txt; the
 // browser joins as „Lena“ and writes joined.txt; the phone then creates bill A (Pia + Lena) and bill B (Pia + Max), both hidden;
-// the browser must read A and not see B; when it wrote a-seen.txt the phone puts Lena on B and the browser must get it too.
+// bill C is hidden with „nur Beträge“ (browser sees sums only); the browser must read A and not see B; when it wrote a-seen.txt the phone puts Lena on B and the browser must get it too.
 // The phone stays online until tool/e2e/hidden.js wrote hidden-done.txt. MPL-2.0
 import 'dart:io';
 
@@ -52,7 +52,12 @@ void main() {
     expect(a.hideBill(ba), isTrue);
     expect(a.hideBill(bb), isTrue);
     await g.session.flush();
-    File('$dir/bills.txt').writeAsStringSync('A+B angelegt');
+    // bill C: hidden with „nur Beträge“ – the browser may see the sums, never the item name
+    final bc = mk('e2e-hid-c', 'Versteckt-C', 'Sparposten', 'Max', 1);
+    store.upsert(bc);
+    expect(a.hideBill(bc, sums: true), isTrue);
+    await g.session.flush();
+    File('$dir/bills.txt').writeAsStringSync('A+B+C angelegt');
 
     if (await _waitFile('$dir/a-seen.txt', 240)) {
       // put Lena on B: she must now get the key and the bill
