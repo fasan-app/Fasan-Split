@@ -4,6 +4,9 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 11.11. Weiße Seite nach App-Wechsel: Befund (Sitzung B)
+- Engine-Quelltext 3.47.7 gelesen (`flutter_web_sdk/lib/_engine`, `skwasm_impl/surface.dart`, `canvaskit/surface.dart`): beide Zeichenwege fangen `webglcontextlost` ab und legen die Fläche neu an. Der Verlust der Grafikfläche allein erklärt die weiße Seite also weniger als gedacht [Likely]; verbleibende Kandidaten: vom Browser verworfener Tab (lädt neu, Dienst-Skript lädt die Seite dabei einmal nochmals), Wiederherstellung aus dem Seiten-Cache. Schon vorhanden: `coi-serviceworker.js` schickt nach >5 s im Hintergrund ein resize. Nicht reproduzierbar im Headless-Chromium (Canvas ist bei wasm eine OffscreenCanvas, Kontext von außen nicht auslösbar). Ohne Gerät keine weitere Aussage; bei neuem Auftreten Uhrzeit und Browser nennen lassen.
+
 ## 11.11. Web 0.1.105: Schlüssel-Härtung (Sitzung B)
 - Browser-E2E für verborgene Bons ist in der CI grün (Lauf 36adf55, Deploy grün, 0.1.104 live mit neuem Schritt).
 - 0.1.105: bekannte Schwäche behoben. `GroupSession._keyEntryOk` verwirft einen Eintrag im keys-Dokument, der einen schon gehaltenen Bon-Schlüssel durch einen anderen ersetzen würde. Test `hidden_bill_test` „Schlüssel überschreiben geht nicht“ (scheitert ohne die Korrektur, geprüft). Ganze Suite lokal grün (480). Offen: Karl kann einen Schlüssel noch setzen, bevor Lena den echten hat (Wettlauf, erster gültiger gewinnt); nicht im Browser geprüft.
