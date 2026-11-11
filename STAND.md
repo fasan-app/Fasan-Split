@@ -4,6 +4,10 @@
 öffentlichem Test-Schlüssel signiert. Internet nur für die Update-Prüfung (GitHub) und auf Tipp OSM im Browser.
 Stand 01.11.2026.
 
+## 11.11. 10:02 PAUSE der App-Entwicklung (Nutzer: „Die App Entwicklung lassen wir aktuell außen vor“)
+- Keine neuen App-Funktionen, kein Push von Code, bis der Nutzer die Entwicklung wieder freigibt. Stand: 0.1.105 live. Nicht eingecheckt, liegt lokal: Erweiterung des Browser-Tests `hidden.js`/`e2e_web_hidden_test.dart` um den Verbergen-Dialog im Browser (analysiert, nicht gelaufen).
+- „Posten geschwärzt“ zurückgestellt (ohne lesbare Ansicht für Fremde wenig Nutzen). Hashtag (#): erstmal nicht (Nutzer 10:00).
+
 ## 11.11. Weiße Seite nach App-Wechsel: Befund (Sitzung B)
 - Engine-Quelltext 3.47.7 gelesen (`flutter_web_sdk/lib/_engine`, `skwasm_impl/surface.dart`, `canvaskit/surface.dart`): beide Zeichenwege fangen `webglcontextlost` ab und legen die Fläche neu an. Der Verlust der Grafikfläche allein erklärt die weiße Seite also weniger als gedacht [Likely]; verbleibende Kandidaten: vom Browser verworfener Tab (lädt neu, Dienst-Skript lädt die Seite dabei einmal nochmals), Wiederherstellung aus dem Seiten-Cache. Schon vorhanden: `coi-serviceworker.js` schickt nach >5 s im Hintergrund ein resize. Nicht reproduzierbar im Headless-Chromium (Canvas ist bei wasm eine OffscreenCanvas, Kontext von außen nicht auslösbar). Ohne Gerät keine weitere Aussage; bei neuem Auftreten Uhrzeit und Browser nennen lassen.
 
