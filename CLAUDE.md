@@ -159,3 +159,5 @@ E2E-Läufe und Commits macht die Sitzung selbst, Rückmeldung kommt vom Handy (S
    `Fasan-Split/`, `tool/e2e/relay.py 7777` (pip `websockets==13.1`), dann `run.sh` als Hintergrundskript mit Log.
 7. Push und CI: Der Push stößt die CI an, bei grünen Tests wird die APK als `neueste` veröffentlicht und kommt per In-App-Update
    aufs Handy. Das ist Teil der Arbeit (eigenes Repo, keine fremden Dienste); vor dem Push `git fetch origin` und Tests grün.
+
+**APK auf Eis, nur Web (Nutzer 09.11. 03:20, am 11.11. 10:04 nochmals bestätigt):** Keine APK-Updates, keine Android-Arbeit. Entwickelt wird nur die Web-Version. „App“ ohne Zusatz heißt die Web-App; bei „App-Entwicklung außen vor“ o. ä. nachfragen, ob die APK gemeint ist, statt die Web-Arbeit zu stoppen.
