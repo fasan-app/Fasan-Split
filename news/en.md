@@ -1,3 +1,6 @@
+## 0.1.109
+- Clearer: The account entries in the profile are now „Move to a new device“ and „Sign in with a device code“ and fit the screen; „Delete account“ says briefly that it applies to everyone.
+
 ## 0.1.108
 - Better: The group recognises who a person on a bill is by the stable id. If the person is renamed, the member keeps reading a hidden bill.
 - Fixed: After „Sign out“ or „Delete account“, closing the profile no longer creates a new account with the old name.

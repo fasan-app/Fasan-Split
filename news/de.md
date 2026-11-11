@@ -1,3 +1,6 @@
+## 0.1.109
+- Klarer: Die Konto-Einträge im Profil heißen jetzt „Auf neues Gerät übertragen“ und „Mit Code vom Gerät anmelden“ und passen auf den Bildschirm; „Konto löschen“ sagt kurz, dass es für alle gilt.
+
 ## 0.1.108
 - Besser: Die Gruppe erkennt über die feste Kennung, wer eine Person im Bon ist. Wird die Person umbenannt, liest das Mitglied einen verborgenen Bon weiter.
 - Behoben: Nach „Abmelden“ oder „Konto löschen“ legt das Schließen des Profils kein neues Konto mit dem alten Namen mehr an.

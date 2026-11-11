@@ -8,6 +8,9 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:fasan_split/main.dart';
+import 'package:fasan_split/collab/keys.dart' show MemoryVault;
+import 'package:fasan_split/collab/nostr.dart' show MemoryRelay, MemoryRelayHub;
+import 'package:fasan_split/collab/service.dart' show CollabService;
 import 'package:fasan_split/flows/scan_queue.dart';
 import 'package:fasan_split/ui/my_balance.dart';
 import 'package:fasan_split/ui/history.dart';
@@ -284,12 +287,23 @@ void main() {
     'b11-bon-original': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.original),
     'b12-bon-digital': (b) => _ReceiptLayerProbe(bill: b, layer: ReceiptLayer.digital),
     'b14e-fertig': (b) => PayScreen(bill: b),
+    // account (Nutzer 11.11.): profile with „Abmelden“ and the sign-out question (signed-in account, invented name)
+    'b29-profil': (_) => const ProfileScreen(),
+    'b30-abmelden-dialog': (_) => const ProfileScreen(),
     'b15b-ergebnis': (b) => ResultScreen(bill: b..done = true),
   };
   // interaction before the picture (same steps as the browser walk)
   final acts = <String, Future<void> Function(WidgetTester)>{
     'b23-verlauf-kosten': (t) async {
       await t.tap(find.widgetWithText(Tab, 'Kosten'));
+      for (var i = 0; i < 8; i++) {
+        await t.pump(const Duration(milliseconds: 100));
+      }
+    },
+    'b30-abmelden-dialog': (t) async {
+      await t.ensureVisible(find.byKey(const ValueKey('profile-signout')));
+      await t.pump(const Duration(milliseconds: 600));
+      await t.tap(find.byKey(const ValueKey('profile-signout')), warnIfMissed: false);
       for (var i = 0; i < 8; i++) {
         await t.pump(const Duration(milliseconds: 100));
       }
@@ -433,7 +447,15 @@ void main() {
           final ctl = SplitController(settings: look);
           if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j') || e.key.startsWith('sc'))) ctl.tier = PerfTier.slow;
           final key = GlobalKey();
-          await tester.pumpWidget(RepaintBoundary(key: key, child: SplitApp(store: store, ui: ctl, home: e.value(bill))));
+          CollabService? svc;
+          if (e.key.startsWith('b29') || e.key.startsWith('b30')) {
+            final made = svc = CollabService(store: store, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(MemoryRelayHub()));
+            await tester.runAsync(() async {
+              await made.init();
+              await made.setName('Lena');
+            });
+          }
+          await tester.pumpWidget(RepaintBoundary(key: key, child: SplitApp(store: store, ui: ctl, collab: svc, home: e.value(bill))));
           // Bon-Foto und Shader laden echt asynchron; danach ein paar Bilder ohne Dauer-Animation.
           await tester.runAsync(() async {
             await precacheImage(FileImage(File(bill.imagePath ?? path)), key.currentContext!);
@@ -451,6 +473,10 @@ void main() {
             final png = await image.toByteData(format: ui.ImageByteFormat.png);
             File('${dir.path}/$tag-${e.key}.png').writeAsBytesSync(png!.buffer.asUint8List());
           });
+          if (svc != null) {
+            await tester.pumpWidget(const SizedBox());
+            svc.dispose();
+          }
         }, skip: out == null);
       }
     }
