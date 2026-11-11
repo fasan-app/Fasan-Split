@@ -57,6 +57,10 @@ void main() {
     store.upsert(bc);
     expect(a.hideBill(bc, sums: true), isTrue);
     await g.session.flush();
+    // bill D stays visible for all: the browser hides it itself through the ⋮ menu and the dialog (web = app check)
+    final bd = mk('e2e-hid-d', 'Sichtbar-D', 'Tagesgericht', 'Lena', 1);
+    store.upsert(bd);
+    await g.session.flush();
     File('$dir/bills.txt').writeAsStringSync('A+B+C angelegt');
 
     if (await _waitFile('$dir/a-seen.txt', 240)) {
@@ -65,6 +69,14 @@ void main() {
       store.upsert(bb);
       await g.session.flush();
       File('$dir/lena-on-b.txt').writeAsStringSync('ok');
+    }
+    // the browser hid bill D with „Beträge sichtbar“: the flags must come back to the phone
+    if (await _waitFile('$dir/d-done.txt', 240)) {
+      for (var i = 0; i < 60 && !(bd.hidden && bd.sums); i++) {
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+      File('$dir/d-phone.txt').writeAsStringSync('hidden=${bd.hidden} sums=${bd.sums}');
+      expect(bd.hidden && bd.sums, isTrue, reason: 'der Browser hat D verborgen, das Telefon hat es nicht übernommen');
     }
     expect(await _waitFile('$dir/hidden-done.txt', 300), isTrue);
     a.dispose();
