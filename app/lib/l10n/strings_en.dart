@@ -995,6 +995,7 @@ const Map<String, String> stringsEn = {
   'history.restoreSummary': '{0} items · total {1}\n{2}',
   'history.restoreConfirm': 'Bring back the state of {0} ({1})? Everyone in the group sees it as a new change.',
   'history.restoreDo': 'Bring back',
+  'changes.oneLine': 'New since your visit: {0} changes by {1}',
   'changes.since': 'New since your last visit',
   'changes.more': '… and {0} more. Tap for the whole history.',
   'history.tabChanges': 'Changes',

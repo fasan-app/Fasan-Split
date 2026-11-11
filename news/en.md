@@ -1,3 +1,9 @@
+## 0.1.110
+- New: The bill starts with “What for” and the total, below it a grey line with category, date and place (tap to open it). The items now sit near the top.
+- New: “Paid by” is a card right above the items, red or green like an item. In a group it is a row of the items view and counts in the status buttons.
+- New: The group has a search field. It finds “beer” among the items and “paid” in the “Paid by” row.
+- Better: “New since your visit” is just one line now and leads to the history. The history no longer shows empty changes or duplicates, and every entry can be tapped.
+
 ## 0.1.109
 - Clearer: The account entries in the profile are now „Move to a new device“ and „Sign in with a device code“ and fit the screen; „Delete account“ says briefly that it applies to everyone.
 

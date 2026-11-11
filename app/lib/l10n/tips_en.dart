@@ -19,6 +19,7 @@ const Map<String, String> tipsEn = {
   'tip.history': 'In the menu (⋮) of a bill, a group and in the profile you find the history: who changed what. A bill mixed up? At the top of its history you can bring back an earlier state.',
   'tip.balance': 'In the profile, “How your balance adds up” shows every bill with plus and minus at a glance.',
   'tip.backup': 'Back up your data in the profile with “Save a backup”. With a password the file may go to the cloud.',
+  'tip.groupsearch': 'In a group, search at the top for items, people and “Paid”. The status buttons also apply to the “Paid by” row.',
   'tip.signout': 'In the profile there is “Sign out”. It only affects this device and deletes nothing. First save your 12 words or a backup file.',
   'tip.local': 'Everything stays on your device. There is no account and no telemetry. Only what you share is shared.',
   'tip.perf': 'App sluggish on your device? In the settings you can adjust the effects under “Performance”.',

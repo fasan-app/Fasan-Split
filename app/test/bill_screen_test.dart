@@ -155,7 +155,7 @@ void main() {
     expect(b.payer, 2);
     await tester.tap(find.text('Done').last);
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(ActionChip, 'Mia'), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const ValueKey('payer')), matching: find.text('Mia')), findsOneWidget, reason: 'the payer card shows the name');
   });
 
   testWidgets('Personenauswahl: wird beim Tippen gefiltert, ohne Akzente, „Neu:“ am Ende, Enter nimmt den ersten Treffer', (tester) async {

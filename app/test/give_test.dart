@@ -38,7 +38,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Ben').last);
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).first, '20'); // Betrag (das Betreff-Feld folgt danach)
+    await tester.enterText(find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)).first, '20'); // Betrag (das Betreff-Feld folgt danach)
     await tester.pump();
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
@@ -82,7 +82,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Ben').last);
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).first, '20');
+    await tester.enterText(find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)).first, '20');
     await tester.enterText(find.byKey(const ValueKey('give-subject')), 'Taxi vom Bahnhof');
     await tester.pump();
     await tester.tap(find.text('OK'));

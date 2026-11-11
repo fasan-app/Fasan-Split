@@ -276,7 +276,7 @@ void main() {
     'h07b-gruppe-posten': (_) => const HomeScreen(),
     'h13-freunde': (_) => const HomeScreen(),
     // group page with the walk receipt (Beispielstadt, Pia paid, Lena owes 10,00): Personen, settle as paid – whole and a part (06.11.)
-    for (final k in ['h07-gruppe-offen', 'h08-personen', 'h08b-bezahlt-frage', 'h08d-teilbetrag', 'h08e-rest-offen'])
+    for (final k in ['h07-gruppe-offen', 'h08-personen', 'h08b-bezahlt-frage', 'h08d-teilbetrag', 'h08e-rest-offen', 'h07c-gruppe-suche'])
       k: (_) => Builder(builder: (c) => GroupScreen(name: 'Beispielstadt', queue: ScanQueue.current ?? ScanQueue(StoreScope.read(c)))),
     // scanning (07.11.): the choice sheet of the plus, the reading page with its progress, the failure page; same steps in the browser (scan walk of screens.js)
     'sc01-neuer-bon': (_) => const HomeScreen(),
@@ -294,6 +294,15 @@ void main() {
   };
   // interaction before the picture (same steps as the browser walk)
   final acts = <String, Future<void> Function(WidgetTester)>{
+    // group page, items view, searched for „bezahlt“: the payer line is a row like an item (Nutzer 11.11.)
+    'h07c-gruppe-suche': (t) async {
+      await t.tap(find.text('Posten').first);
+      await t.pump(const Duration(milliseconds: 300));
+      await t.enterText(find.byKey(const ValueKey('group-search')), 'bezahlt');
+      for (var i = 0; i < 8; i++) {
+        await t.pump(const Duration(milliseconds: 100));
+      }
+    },
     'b23-verlauf-kosten': (t) async {
       await t.tap(find.widgetWithText(Tab, 'Kosten'));
       for (var i = 0; i < 8; i++) {

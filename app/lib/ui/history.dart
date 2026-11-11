@@ -11,7 +11,9 @@ import '../collab/group.dart' show BillSnapshot;
 import '../collab/ledger.dart';
 import '../l10n.dart';
 import '../l10n/tr.dart' show trLang;
+import 'bill_screen.dart' show ReviewScreen;
 import 'common.dart';
+import 'resume.dart' show ResumeFlow;
 import 'scope.dart';
 
 class HistoryScreen extends StatelessWidget {
@@ -90,30 +92,66 @@ class _ChangesList extends StatelessWidget {
     if (changes.isEmpty) {
       return _empty(context, 'history.emptyChanges');
     }
+    // the same change repeated one after another (somebody toggles a person on and off) is one line with a count
+    final rows = <(ChangeRecord, int)>[];
+    for (final r in changes) {
+      final last = rows.isEmpty ? null : rows.last;
+      if (last != null && last.$1.whoKey == r.whoKey && last.$1.billId == r.billId && last.$1.at.difference(r.at).abs() < const Duration(minutes: 30) && _sameText(last.$1, r)) {
+        rows[rows.length - 1] = (last.$1, last.$2 + 1);
+      } else {
+        rows.add((r, 1));
+      }
+    }
     return ListView.separated(
       padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom),
-      itemCount: changes.length,
+      itemCount: rows.length,
       separatorBuilder: (_, _) => Divider(height: 1, color: l.hairline),
       itemBuilder: (_, i) {
-        final r = changes[i];
+        final (r, times) = rows[i];
         final mine = r.whoKey == c.identity?.pub;
         final who = mine ? trLang(de ? 'de' : 'en', 'history.you') : r.who;
         final where = [if (showBill) r.title, if (showGroup) c.groups[r.group]?.localName].whereType<String>().join(' · ');
+        // everything is a link (Nutzer 11.11.): the entry opens the bill, a line about an item opens it at that item
+        void open(String? itemUid) {
+          final bill = StoreScope.read(context).bills.where((b) => b.id == r.billId).firstOrNull;
+          if (bill == null) return;
+          final at = itemUid == null ? -1 : bill.its.indexWhere((x) => x.uid == itemUid);
+          final focus = at < 0 ? null : at;
+          Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => bill.done ? ReviewScreen(bill: bill, focusItem: focus) : ResumeFlow(bill: bill, focusItem: focus)));
+        }
+
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: FasanSpace.s),
+          padding: const EdgeInsets.symmetric(vertical: FasanSpace.xs),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Expanded(child: Text(where.isEmpty ? who : '$who · $where', style: tt.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
-              Text([_when(context, r.at), if (r.app != null) r.app!].join(' · '), style: tt.bodySmall!.copyWith(color: l.textMuted)),
-            ]),
-            const SizedBox(height: 2),
-            for (final line in r.lines) Padding(padding: const EdgeInsets.only(top: 1), child: Text('• ${line.text(de)}', style: tt.bodyMedium)),
+            InkWell(
+              onTap: () => open(null),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: FasanSpace.xs),
+                child: Row(children: [
+                  Expanded(child: Text(where.isEmpty ? who : '$who · $where', style: tt.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  Text(_when(context, r.at), style: tt.bodySmall!.copyWith(color: l.textMuted)),
+                ]),
+              ),
+            ),
+            for (final line in r.lines)
+              InkWell(
+                onTap: () => open(line.item),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(children: [
+                    Expanded(child: Text('• ${line.text(de)}${times > 1 ? '  ×$times' : ''}', style: tt.bodyMedium)),
+                    Icon(Icons.chevron_right_rounded, size: 18, color: l.textMuted),
+                  ]),
+                ),
+              ),
           ]),
         );
       },
     );
   }
 }
+
+bool _sameText(ChangeRecord a, ChangeRecord b) => a.lines.length == b.lines.length && [for (var i = 0; i < a.lines.length; i++) a.lines[i].de == b.lines[i].de].every((x) => x);
 
 class _CostList extends StatelessWidget {
   const _CostList({required this.entries, required this.perGroup});

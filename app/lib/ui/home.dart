@@ -543,13 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// What a search looks at: purpose, place, people, item names and the amount as written (Karte-Recherche: Suche über Zweck, Zahler und Betrag).
-  String _searchText(Bill b, bool de) => [
-        b.purpose,
-        for (final p in b.ps) p.name,
-        for (final i in b.its) ...[i.name, if (i.note != null) i.note!],
-        for (final n in b.notes) n.text, // notes are searchable (Nutzer 09.11. 19:08: die Suche findet Notizen)
-        money(b.effectiveTotal, de: de),
-      ].join(' ').toLowerCase();
+  String _searchText(Bill b, bool de) => billSearchText(b, de);
 
   /// Last searches under the search field: tap one to search it again, the x removes it alone.
   Widget _recentSearches(BuildContext context, BillStore store) {
@@ -617,8 +611,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Search in the items view: the bill head (name, people) matching shows all its items; otherwise only items whose name or
   /// amount match.
-  bool _itemMatches(Bill b, BillItem i, String q, bool de) =>
-      b.purpose.toLowerCase().contains(q) || b.ps.any((p) => p.name.toLowerCase().contains(q)) || i.name.toLowerCase().contains(q) || (i.note ?? '').toLowerCase().contains(q) || b.notes.any((n) => n.text.toLowerCase().contains(q)) || money(i.amount, de: de).contains(q);
+  bool _itemMatches(Bill b, BillItem i, String q, bool de) => itemSearchMatch(b, i, q, de);
 
   Widget _contextLeft(BuildContext context, BillStore store0, S t) {
     if (_page <= 2 && _searching) {
@@ -698,7 +691,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final sort = store.sortMode;
     final scope = _scopeOf(store);
     final q = _query.trim().toLowerCase();
-    bool keep(Bill b) => billMatches(b, _fills, _noPayer) && (q.isEmpty || _searchText(b, t.de).contains(q));
+    bool keep(Bill b) => billMatches(b, _fills, _noPayer) && (q.isEmpty || _searchText(b, t.de).contains(q) || (hasPayerRow(b) && payerSearchMatch(context, b, q)));
     final groups = [
       for (final g in store.groups)
         if (scope == kScopeAll || scope == g) (g, arrange(store.inGroup(g, archived: done), sort, _catFilter, onlyOpen: store.onlyOpen).where(keep).toList())
@@ -712,7 +705,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final scopeBills = scopeIsGroup(scope)
         ? store.inGroup(scope)
         : [if (scope == kScopeAll) for (final g in store.groups) ...store.inGroup(g), ...store.inGroup(null)];
-    final flat = _itemsView ? flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => _itemMatches(b, i, q, t.de)) : const <(Bill, BillItem?)>[];
+    final flat = _itemsView ? flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => _itemMatches(b, i, q, t.de), payerMatch: q.isEmpty ? null : (b) => payerSearchMatch(context, b, q)) : const <(Bill, BillItem?)>[];
     _visibleItems = flat;
     final peopleCount = scopeIsGroup(scope) ? CollabScope.of(context).peopleOf(scope).length : {for (final b in scopeBills) for (final p in b.ps) p.name.trim().toLowerCase()}.length;
     // one banner at a time, most important first: update, backup due, home-screen tip (iPhone browser)
@@ -846,6 +839,7 @@ class _HomeScreenState extends State<HomeScreen> {
           itemBuilder: (_, i) {
             final (b, it) = flat[i];
             if (it == null) return GroupBillHeading(key: ValueKey('h-${b.id}'), bill: b, onTap: () => openBill(context, b));
+            if (identical(it, kPayerRow)) return GroupPayerRow(key: ValueKey('payer-${b.id}'), bill: b, onTap: () => openBill(context, b));
             if (identical(it, kDifferenceRow)) return GroupRestRow(key: ValueKey('rest-${b.id}'), bill: b, onTap: () => openBill(context, b));
             return GroupItemRow(key: ValueKey('${b.id}/${b.its.indexOf(it)}'), bill: b, item: it, onTap: () => _editItem(context, b, it));
           },

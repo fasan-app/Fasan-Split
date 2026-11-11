@@ -182,6 +182,7 @@ class GroupScreen extends StatefulWidget {
 class _GroupScreenState extends State<GroupScreen> {
   Set<ItemFill> _fills = {};
   bool _noPayer = false;
+  String _q = ''; // search in the group (Nutzer 11.11.: Bier suchen) – same rules as on the start screen
   int _view = 0; // 0 bills, 1 all items of the group (Nutzer 08.11. 04:16)
 
   String get name => widget.name;
@@ -209,11 +210,12 @@ class _GroupScreenState extends State<GroupScreen> {
     final lang = t.de ? 'de' : 'en';
     final store = StoreScope.of(context);
     final all = store.inGroup(name);
-    final bills = (store.onlyOpen ? all.where((b) => b.fill != ItemFill.complete).toList() : all).where((b) => billMatches(b, _fills, _noPayer)).toList();
+    final q = _q.trim().toLowerCase();
+    final bills = (store.onlyOpen ? all.where((b) => b.fill != ItemFill.complete).toList() : all).where((b) => billMatches(b, _fills, _noPayer) && (q.isEmpty || billSearchText(b, t.de).contains(q) || (hasPayerRow(b) && payerSearchMatch(context, b, q)))).toList();
     final live = CollabScope.of(context).groupByLocalName(name);
     final l = FasanLook.of(context);
     final people = CollabScope.of(context).peopleOf(name).length;
-    final flat = _view == 1 ? flattenItems(bills, onlyOpen: store.onlyOpen, fills: _fills) : const <(Bill, BillItem?)>[];
+    final flat = _view == 1 ? flattenItems(bills, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => itemSearchMatch(b, i, q, t.de), payerMatch: q.isEmpty ? null : (b) => payerSearchMatch(context, b, q)) : const <(Bill, BillItem?)>[];
     return Scaffold(
       // the plus inside the group (Nutzer 07.11.): a bill started here is put into this group
       floatingActionButton: FasanDepth(
@@ -255,6 +257,15 @@ class _GroupScreenState extends State<GroupScreen> {
               ),
               GroupCountsLine(bills: all, fills: _fills, noPayer: _noPayer, onFills: (v) => setState(() => _fills = v), onNoPayer: (v) => setState(() => _noPayer = v)),
               const SizedBox(height: FasanSpace.s),
+              TextField(
+                key: const ValueKey('group-search'),
+                autocorrect: false,
+                enableSuggestions: false,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(prefixIcon: const Icon(Icons.search_rounded), hintText: trLang(lang, 'search.hint'), isDense: true),
+                onChanged: (v) => setState(() => _q = v),
+              ),
+              const SizedBox(height: FasanSpace.s),
               FasanSegmented<int>(
                 values: const [0, 1],
                 selected: _view,
@@ -289,6 +300,8 @@ class _GroupScreenState extends State<GroupScreen> {
               itemCount: flat.length,
               itemBuilder: (_, i) {
                 final (b, it) = flat[i];
+                if (identical(it, kDifferenceRow)) return GroupRestRow(key: ValueKey('rest-${b.id}'), bill: b, onTap: () => openBill(context, b));
+                if (identical(it, kPayerRow)) return GroupPayerRow(key: ValueKey('payer-${b.id}'), bill: b, onTap: () => openBill(context, b));
                 return it == null
                     ? GroupBillHeading(key: ValueKey('h-${b.id}'), bill: b, onTap: () => openBill(context, b))
                     : GroupItemRow(key: ValueKey('${b.id}/${b.its.indexOf(it)}'), bill: b, item: it, onTap: () => openBill(context, b));

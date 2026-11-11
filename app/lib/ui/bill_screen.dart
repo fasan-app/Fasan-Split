@@ -18,6 +18,7 @@ import '../recognition/service.dart';
 import '../state/images.dart';
 import 'assign.dart';
 import 'history.dart';
+import 'category.dart' show categoryById;
 import 'category_ui.dart';
 import 'change_badge.dart';
 import 'common.dart';
@@ -77,6 +78,7 @@ class ReviewScreen extends StatefulWidget {
 
 class _ReviewScreenState extends State<ReviewScreen> {
   bool _onlyOpen = false;
+  bool? _detailsOpen; // null = automatic: open only while the bill is still empty (Nutzer 11.11.: items first)
   late final _purpose = TextEditingController(text: widget.bill.purpose);
   late final _total = TextEditingController(text: widget.bill.total == null ? '' : money(widget.bill.total!, de: context.langCode == 'de'));
 
@@ -545,14 +547,40 @@ class _ReviewScreenState extends State<ReviewScreen> {
               ),
             ),
           ]),
-          const SizedBox(height: FasanSpace.xs),
-          Wrap(spacing: 4, runSpacing: 0, children: [CurrencyChip(bill: b), CategoryChip(bill: b)]),
-          WhenWhere(bill: b, compact: true, onChanged: _changed),
-          const SizedBox(height: FasanSpace.s),
+          // one quiet line with the details; tap opens them (category, currency, date, place). Items come first (Nutzer 11.11.)
+          Builder(builder: (context) {
+            final open = _detailsOpen ?? b.its.isEmpty;
+            final c = categoryById(b.category);
+            final d = b.date;
+            final day = '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+            final line = [
+              c?.label(t.de) ?? context.tr('category_ui.chooseCategory'),
+              day,
+              if ((b.placeAddress ?? '').trim().isNotEmpty) b.placeAddress!.trim(),
+            ].join(' · ');
+            return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              InkWell(
+                key: const ValueKey('bill-details'),
+                onTap: () => setState(() => _detailsOpen = !open),
+                borderRadius: BorderRadius.circular(l.rInner),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: l.minTap),
+                  child: Row(children: [
+                    Icon(c?.icon ?? Icons.category_outlined, size: 18, color: c?.color ?? l.textMuted),
+                    const SizedBox(width: FasanSpace.s),
+                    Expanded(child: Text(line, style: tt.bodySmall!.copyWith(color: l.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Icon(open ? Icons.expand_less_rounded : Icons.expand_more_rounded, size: 20, color: l.textMuted),
+                  ]),
+                ),
+              ),
+              if (open) ...[
+                Wrap(spacing: 4, runSpacing: 0, children: [CurrencyChip(bill: b), CategoryChip(bill: b)]),
+                WhenWhere(bill: b, compact: true, onChanged: _changed),
+              ],
+            ]);
+          }),
 
           // people: chips of everyone on the bill (tap = „now tap their items“), suggestions, then who paid
-          FasanLabel(context.tr('bill.people')),
-          const SizedBox(height: FasanSpace.xs),
           Wrap(spacing: 4, runSpacing: 0, children: [
             for (var i = 0; i < b.ps.length; i++)
               // long press: the same things as a menu (paid, all open items, remove) – tap = their items, x = remove
@@ -625,26 +653,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 TextButton(key: const ValueKey('active-stop'), onPressed: () => setState(() => _active = null), child: Text(context.tr('item.done'))),
               ]),
             ),
-          if (b.ps.length >= 2)
-            Padding(
-              padding: const EdgeInsets.only(top: FasanSpace.xs),
-              child: Row(children: [
-                Text('${context.tr('bill.paidBy')}:', style: tt.labelLarge!.copyWith(color: l.textMuted)),
-                const SizedBox(width: FasanSpace.s),
-                // a long name is cut inside the chip instead of pushing the row wider than the screen
-                Flexible(
-                  child: ActionChip(
-                    key: const ValueKey('payer'),
-                    visualDensity: VisualDensity.compact,
-                    side: fillSide(context, b.payFill),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(l.rInner)),
-                    avatar: Icon(fillIcon(b.payFill), size: 18, color: fillColor(context, b.payFill)), // same colour language as the items (Nutzer 08.11.)
-                    label: MarqueeLabel(payer.isEmpty ? context.tr('bill.paidByNone') : payer, maxWidth: 230, style: (Theme.of(context).chipTheme.labelStyle ?? tt.labelLarge)?.copyWith(color: b.payFill == ItemFill.complete ? null : fillColor(context, b.payFill))),
-                    onPressed: () => showPayersSheet(context, b, changed: _changed),
-                  ),
-                ),
-              ]),
-            ),
 
           // the sign question (only when the total is negative) and the refund note
           if (b.needsSignQuestion) ...[
@@ -683,6 +691,39 @@ class _ReviewScreenState extends State<ReviewScreen> {
               ),
             ),
 
+          // who paid: a card like an item, same colour language (open = border, done = filled) – a priority, not a footnote (Nutzer 11.11.)
+          if (b.ps.length >= 2) ...[
+            const SizedBox(height: FasanSpace.m),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const ValueKey('payer'),
+                borderRadius: BorderRadius.circular(l.rInner),
+                onTap: () => showPayersSheet(context, b, changed: _changed),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    color: b.payFill == ItemFill.complete ? fillColor(context, b.payFill).withValues(alpha: 0.18) : null,
+                    borderRadius: BorderRadius.circular(l.rInner),
+                    border: Border.fromBorderSide(fillSide(context, b.payFill)),
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: l.minTap),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m),
+                      child: Row(children: [
+                        Icon(fillIcon(b.payFill), size: 20, color: fillColor(context, b.payFill)),
+                        const SizedBox(width: FasanSpace.s),
+                        Text(context.tr('bill.paidBy'), style: tt.bodyMedium),
+                        const SizedBox(width: FasanSpace.s),
+                        Expanded(child: Text(payer.isEmpty ? context.tr('bill.paidByNone') : payer, textAlign: TextAlign.end, maxLines: 1, overflow: TextOverflow.ellipsis, style: tt.bodyMedium!.copyWith(fontWeight: FontWeight.w700))),
+                        Icon(Icons.chevron_right_rounded, size: 18, color: l.textMuted),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
           // items
           const SizedBox(height: FasanSpace.m),
           Row(children: [

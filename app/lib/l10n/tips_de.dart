@@ -20,6 +20,7 @@ const Map<String, String> tipsDe = {
   'tip.history': 'Im Menü (⋮) eines Bons, einer Gruppe und im Profil findest du den Verlauf: wer hat was geändert. Ein Bon durcheinander? Oben im Verlauf holst du einen früheren Stand zurück.',
   'tip.balance': 'Im Profil zeigt „So ergibt sich dein Stand“ jede Rechnung mit Plus und Minus auf einen Blick.',
   'tip.backup': 'Sichere deine Daten im Profil mit „Sicherung speichern“. Mit Passwort darf die Datei auch in die Cloud.',
+  'tip.groupsearch': 'In einer Gruppe suchst du oben nach Posten, Personen und „Bezahlt“. Die Statusknöpfe gelten auch für die Zeile „Bezahlt von“.',
   'tip.signout': 'Im Profil gibt es „Abmelden“. Es gilt nur für dieses Gerät und löscht nichts. Sichere vorher deine 12 Wörter oder eine Sicherungsdatei.',
   'tip.local': 'Alles bleibt auf deinem Gerät. Es gibt kein Konto und keine Telemetrie. Geteilt wird nur, was du teilst.',
   'tip.perf': 'Läuft die App auf deinem Gerät zäh? In den Einstellungen kannst du die Effekte unter „Leistung“ anpassen.',

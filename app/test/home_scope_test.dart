@@ -164,9 +164,9 @@ void main() {
     expect(find.byKey(const ValueKey('chip-done')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('chip-open')));
     await _settle(tester);
-    // Kneipe and Fähre are complete: open filter leaves nothing
+    // Kneipe is complete. Fähre has no payer: the payer counts like an open item (Nutzer 11.11.), so the open filter keeps Fähre
     expect(find.text('Kneipe'), findsNothing);
-    expect(find.text('Keine Treffer'), findsOneWidget);
+    expect(find.text('Fähre'), findsOneWidget, reason: 'die offene Zahler-Zeile hält den Bon im Filter');
     await tester.tap(find.byKey(const ValueKey('chip-open'))); // off again
     await tester.tap(find.byKey(const ValueKey('chip-done')));
     await _settle(tester);

@@ -17,6 +17,7 @@ import '../l10n.dart';
 import '../l10n/tr.dart';
 import 'common.dart';
 import 'flow.dart' show ResultScreen;
+import 'payers.dart' show payersSummary;
 import 'resume.dart' show ResumeFlow;
 import 'scope.dart';
 import 'shape_tokens.dart';
@@ -40,8 +41,9 @@ void openBill(BuildContext context, Bill bill, {int? focusItem}) {
   var d = 0, p = 0, o = 0;
   for (final b in bills) {
     if (b.isTransfer) continue;
-    for (final it in b.its) {
-      switch (it.fill) {
+    // the payer counts like an item (Nutzer 11.11.): the buttons and the rows of the list must show the same things
+    for (final f in [for (final it in b.its) it.fill, if (hasPayerRow(b)) b.payFill]) {
+      switch (f) {
         case ItemFill.complete:
           d++;
         case ItemFill.partial:
@@ -184,7 +186,7 @@ class _FramePainter extends CustomPainter {
 bool billMatches(Bill b, Set<ItemFill> fills, bool noPayer) {
   if (noPayer && !(!b.isTransfer && b.its.isNotEmpty && b.payer == null && !b.multiPay)) return false;
   if (fills.isEmpty) return true;
-  return b.its.any((i) => fills.contains(i.fill));
+  return b.its.any((i) => fills.contains(i.fill)) || (hasPayerRow(b) && fills.contains(b.payFill));
 }
 
 /// The row under the frame: three state buttons (done, in progress, open) with their counts, the „no payer“ button and a „?“.
@@ -356,10 +358,79 @@ class GroupRestRow extends StatelessWidget {
 /// like the items, so it must show (Nutzer 09.11. 18:44: „Service … müssen erscheinen“). Compare by identity.
 final BillItem kDifferenceRow = BillItem(name: '', amount: 0);
 
-/// Entries of the flat list: a bill heading ([item] null) followed by its visible items.
+/// Marks the line „Bezahlt von …“ in the flat list: the payer is a priority like an item (Nutzer 11.11.), so it shows, is coloured by
+/// [Bill.payFill], follows the status buttons and is found by the search. Compare by identity.
+final BillItem kPayerRow = BillItem(name: '', amount: 0);
+
+/// What a search looks at in a bill: purpose, people, item names and notes, the amount as written (Karte-Recherche).
+String billSearchText(Bill b, bool de) => [
+      b.purpose,
+      for (final p in b.ps) p.name,
+      for (final i in b.its) ...[i.name, if (i.note != null) i.note!],
+      for (final n in b.notes) n.text, // notes are searchable (Nutzer 09.11. 19:08)
+      money(b.effectiveTotal, de: de),
+    ].join(' ').toLowerCase();
+
+/// Does [q] (lower case, not empty) find this item? Its own name, note and amount, or what belongs to the bill around it.
+bool itemSearchMatch(Bill b, BillItem i, String q, bool de) =>
+    b.purpose.toLowerCase().contains(q) ||
+    b.ps.any((p) => p.name.toLowerCase().contains(q)) ||
+    i.name.toLowerCase().contains(q) ||
+    (i.note ?? '').toLowerCase().contains(q) ||
+    b.notes.any((n) => n.text.toLowerCase().contains(q)) ||
+    money(i.amount, de: de).contains(q);
+
+/// The payer line is found by „bezahlt“/„paid“, by the payer's name and by what finds the bill itself (Nutzer 11.11.: Bier, Bezahlt).
+bool payerSearchMatch(BuildContext context, Bill b, String q) =>
+    b.purpose.toLowerCase().contains(q) ||
+    b.ps.any((p) => p.name.toLowerCase().contains(q)) ||
+    trLang(S.of(context).de ? 'de' : 'en', 'bill.paidBy').toLowerCase().contains(q) ||
+    payersSummary(context, b).toLowerCase().contains(q);
+
+/// The payer line only exists where the bill shows it (two or more people, items).
+bool hasPayerRow(Bill b) => !b.isTransfer && b.ps.length >= 2 && b.its.isNotEmpty;
+
+/// The payer line in the flat list: the same look as the card on the bill (colour language of the items).
+class GroupPayerRow extends StatelessWidget {
+  const GroupPayerRow({super.key, required this.bill, this.onTap});
+
+  final Bill bill;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context), r = BorderRadius.circular(l.rInner), tt = Theme.of(context).textTheme;
+    final f = bill.payFill, payer = payersSummary(context, bill);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: kRowGap),
+      child: InkWell(
+        borderRadius: r,
+        onTap: onTap,
+        child: Container(
+          constraints: BoxConstraints(minHeight: l.minTap),
+          padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: r,
+            color: f == ItemFill.complete ? fillColor(context, f).withValues(alpha: 0.18) : null,
+            border: Border.fromBorderSide(fillSide(context, f)),
+          ),
+          child: Row(children: [
+            Icon(fillIcon(f), size: 20, color: fillColor(context, f)),
+            const SizedBox(width: FasanSpace.s),
+            Text(trLang(S.of(context).de ? 'de' : 'en', 'bill.paidBy'), style: tt.bodyMedium),
+            const SizedBox(width: FasanSpace.s),
+            Expanded(child: Text(payer.isEmpty ? trLang(S.of(context).de ? 'de' : 'en', 'bill.paidByNone') : payer, textAlign: TextAlign.end, maxLines: 1, overflow: TextOverflow.ellipsis, style: tt.bodyMedium!.copyWith(fontWeight: FontWeight.w700))),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Entries of the flat list: a bill heading ([item] null), the payer line, then its visible items.
 /// [fills] (the status buttons) wins over [onlyOpen]: with „erledigt“ switched on, the items that are done must show even when
 /// „Nur offene Posten“ is on (Nutzer 09.11. 18:44: the button showed nothing). [itemMatch] narrows the items to the search.
-List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOpen, Set<ItemFill> fills = const {}, bool Function(Bill, BillItem)? itemMatch}) {
+List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOpen, Set<ItemFill> fills = const {}, bool Function(Bill, BillItem)? itemMatch, bool Function(Bill)? payerMatch}) {
   final out = <(Bill, BillItem?)>[];
   for (final b in bills) {
     if (b.isTransfer) continue;
@@ -369,8 +440,12 @@ List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOp
         .toList();
     // the rest to the total shows only in the plain list: not under a status button or a search, not with „Nur offene“
     final rest = fills.isEmpty && itemMatch == null && !onlyOpen && b.difference != 0 && b.its.isNotEmpty;
-    if (its.isEmpty && !rest) continue;
+    final payer = hasPayerRow(b) &&
+        (fills.isNotEmpty ? fills.contains(b.payFill) : (!onlyOpen || b.payFill != ItemFill.complete)) &&
+        (itemMatch == null || (payerMatch?.call(b) ?? false));
+    if (its.isEmpty && !rest && !payer) continue;
     out.add((b, null));
+    if (payer) out.add((b, kPayerRow));
     for (final i in its) {
       out.add((b, i));
     }

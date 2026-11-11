@@ -11,8 +11,11 @@ import 'lww.dart';
 
 /// One line of a record, German and English.
 class ChangeLine {
-  const ChangeLine(this.de, this.en);
+  const ChangeLine(this.de, this.en, {this.item});
   final String de, en;
+
+  /// uid of the item the line is about (the history opens the bill at that item), null otherwise.
+  final String? item;
   String text(bool german) => german ? de : en;
 }
 
@@ -39,7 +42,7 @@ class ChangeRecord {
         'n': title,
         'w': who,
         'k': whoKey,
-        'l': [for (final l in lines) [l.de, l.en]],
+        'l': [for (final l in lines) [l.de, l.en, if (l.item != null) l.item]],
       };
 
   static ChangeRecord? fromJson(Object? j) {
@@ -52,7 +55,7 @@ class ChangeRecord {
         title: m['n'] as String,
         who: m['w'] as String,
         whoKey: m['k'] as String,
-        lines: [for (final l in m['l'] as List) ChangeLine((l as List)[0] as String, l[1] as String)],
+        lines: [for (final l in m['l'] as List) ChangeLine((l as List)[0] as String, l[1] as String, item: l.length > 2 ? l[2] as String? : null)],
         app: m['a'] as String?,
       );
     } catch (_) {
@@ -83,8 +86,9 @@ List<ChangeLine> describeChanges(LwwDoc doc, List<EntryChange> changes) {
   String m(int c) => money(c);
   final out = <ChangeLine>[];
   final seen = <String>{};
+  String? ref; // item uid of the entry being described
   void add(String de, String en) {
-    if (seen.add(de)) out.add(ChangeLine(de, en));
+    if (seen.add(de)) out.add(ChangeLine(de, en, item: ref));
   }
 
   // item rows first, so that „new item“ comes before who put themselves on it
@@ -93,6 +97,9 @@ List<ChangeLine> describeChanges(LwwDoc doc, List<EntryChange> changes) {
     final k = now.key;
     final parts = k.split('/');
     final nv = now.value, ov = old?.value;
+    // no change, no line (Nutzer 11.11.: „Summe 86,90 → 86,90“, „Datum geändert“ without a difference)
+    if (jsonEncode(ov) == jsonEncode(nv)) continue;
+    ref = (parts.first == 'i' || parts.first == 's' || parts.first == 'f') && parts.length > 1 ? parts[1] : null;
     switch (parts.first) {
       case 'i':
         final o = ov is Map ? ov : null, n = nv is Map ? nv : null;
@@ -163,6 +170,7 @@ List<ChangeLine> describeChanges(LwwDoc doc, List<EntryChange> changes) {
           case 'purpose':
             if (nv is String && nv.isNotEmpty) add(ov is String && ov.isNotEmpty ? 'Name „$ov“ → „$nv“' : 'Name „$nv“ vergeben', ov is String && ov.isNotEmpty ? 'Name “$ov” → “$nv”' : 'Named “$nv”');
           case 'refund':
+            if ((ov == true) == (nv == true)) break;
             add(nv == true ? 'als Rückerstattung markiert' : 'Rückerstattung zurückgenommen', nv == true ? 'marked as refund' : 'refund undone');
           case 'currency':
             if (nv is String) add('Währung $nv', 'Currency $nv');

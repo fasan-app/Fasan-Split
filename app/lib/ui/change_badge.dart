@@ -85,25 +85,31 @@ class UnseenChangesBanner extends StatelessWidget {
     final de = S.of(context).de;
     String tr(String k, [List<Object> a = const []]) => trLang(de ? 'de' : 'en', k, a);
     final l = FasanLook.of(context);
-    final lines = <(String, String)>[
-      for (final r in recs) for (final x in r.lines) (r.who, de ? x.de : x.en),
-    ];
+    final n = recs.fold<int>(0, (a, r) => a + r.lines.length);
+    final who = {for (final r in recs) r.who}.toList();
+    // ONE line (Nutzer 11.11.: too much information before the items): what is new and from whom in a few words; the
+    // whole list is on the history page, one tap away
+    final from = who.length <= 2 ? who.join(', ') : '${who.take(2).join(', ')} +${who.length - 2}';
     return Padding(
-      padding: const EdgeInsets.only(top: FasanSpace.s, bottom: FasanSpace.s),
+      padding: const EdgeInsets.only(top: FasanSpace.xs, bottom: FasanSpace.xs),
       child: Material(
         color: Color.alphaBlend(l.accent.withValues(alpha: 0.10), l.surface),
         borderRadius: BorderRadius.circular(l.rInner),
         child: InkWell(
+          key: const ValueKey('unseen-changes'),
           borderRadius: BorderRadius.circular(l.rInner),
           onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => HistoryScreen.bill(billId: billId, billTitle: recs.first.title))),
-          child: Padding(
-            padding: const EdgeInsets.all(FasanSpace.m),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(tr('changes.since'), style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 4),
-              for (final (who, text) in lines.take(5)) Text('$who: $text', style: Theme.of(context).textTheme.bodyMedium),
-              if (lines.length > 5) Text(tr('changes.more', ['${lines.length - 5}']), style: Theme.of(context).textTheme.bodySmall),
-            ]),
+          child: SizedBox(
+            height: 44,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m),
+              child: Row(children: [
+                Icon(Icons.history_rounded, size: 18, color: l.accent),
+                const SizedBox(width: FasanSpace.s),
+                Expanded(child: Text(tr('changes.oneLine', ['$n', from]), maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium)),
+                const Icon(Icons.chevron_right_rounded, size: 20),
+              ]),
+            ),
           ),
         ),
       ),

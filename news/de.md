@@ -1,3 +1,9 @@
+## 0.1.110
+- Neu: Der Bon beginnt mit „Wofür“ und Summe, darunter eine graue Zeile mit Kategorie, Datum und Ort (antippen klappt sie auf). Die Posten stehen jetzt weit oben.
+- Neu: „Bezahlt von“ ist eine Kachel direkt über den Posten, rot oder grün wie ein Posten. In der Gruppe ist sie eine Zeile der Posten-Ansicht und zählt in den Statusknöpfen mit.
+- Neu: Die Gruppe hat ein Suchfeld. Es findet „Bier“ unter den Posten und „Bezahlt“ in der Zeile „Bezahlt von“.
+- Besser: „Neu seit deinem Besuch“ ist nur noch eine Zeile und führt zum Verlauf. Der Verlauf zeigt keine leeren Änderungen und keine Dubletten mehr, und jeder Eintrag lässt sich antippen.
+
 ## 0.1.109
 - Klarer: Die Konto-Einträge im Profil heißen jetzt „Auf neues Gerät übertragen“ und „Mit Code vom Gerät anmelden“ und passen auf den Bildschirm; „Konto löschen“ sagt kurz, dass es für alle gilt.
 
