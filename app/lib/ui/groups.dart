@@ -33,9 +33,12 @@ import 'shape_tokens.dart';
 
 /// All groups with their number of bills and sum; tap opens the group. Pending join requests are shown on top.
 class GroupsPage extends StatelessWidget {
-  const GroupsPage({super.key, required this.queue});
+  const GroupsPage({super.key, required this.queue, this.onOpen});
 
   final ScanQueue queue;
+
+  /// Picks the group in the start page (the same screen as the group picker, Nutzer 12.11.: the card opened a different screen); without it the group screen opens.
+  final void Function(String group)? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +77,7 @@ class GroupsPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(l.rCard),
               child: InkWell(
                 borderRadius: BorderRadius.circular(l.rCard),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupScreen(name: g, queue: queue))),
+                onTap: () => onOpen != null ? onOpen!(g) : Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupScreen(name: g, queue: queue))),
                 child: Padding(
                   padding: const EdgeInsets.all(FasanSpace.m),
                   child: Row(children: [
@@ -361,16 +364,19 @@ class GroupPeople extends StatelessWidget {
         ),
       if (people.isEmpty) Text(t.groupNoPeople, style: tt.bodyMedium!.copyWith(color: l.textMuted)),
       for (final (i, p) in people.indexed)
-        InkWell(
-          // the profile of the person (Nutzer 12.11.): status, balance, groups, changes, and the actions that used to be in a sheet
-          onTap: () => openProfile(context, groupName: name, person: p),
-          child: Container(
+        Container(
           constraints: BoxConstraints(minHeight: l.minTap),
           decoration: BoxDecoration(border: Border(bottom: BorderSide(color: l.hairline))),
           child: Row(children: [
-            FasanAvatar(name: p, index: i, size: 32),
-            const SizedBox(width: FasanSpace.m),
             Expanded(
+              // the profile of the person (Nutzer 12.11.): status, balance, groups, changes, and the actions that used to be in a sheet;
+              // a sibling of the balance button, not its parent, so both stay buttons for screen readers
+              child: InkWell(
+                onTap: () => openProfile(context, groupName: name, person: p),
+                child: Row(children: [
+                  FasanAvatar(name: p, index: i, size: 32),
+                  const SizedBox(width: FasanSpace.m),
+                  Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(p, style: tt.bodyLarge),
                 if (live != null)
@@ -387,13 +393,16 @@ class GroupPeople extends StatelessWidget {
                     ),
                   ),
               ]),
+                  ),
+                ]),
+              ),
             ),
             // 0 € and „ungewiss“ are shown too, not only a non-zero amount (Nutzer 12.11.)
-            if (label(keyOf(p)) == p) PersonBalance(cents: bal[keyOf(p)] ?? 0, gap: gaps[keyOf(p)]),
+            if (label(keyOf(p)) == p)
+              PersonBalance(cents: bal[keyOf(p)] ?? 0, gap: gaps[keyOf(p)], onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupBreakdownScreen(name: name, person: keyOf(p))))),
             if (store.isHandMember(name, p))
               IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: () => store.removeGroupMember(name, p)),
           ]),
-        ),
         ),
       Align(
         alignment: Alignment.centerLeft,

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import '../l10n/tr.dart' show trLang;
+import 'balance_state_ui.dart' show gapReasons;
 import 'common.dart';
 import 'shape_tokens.dart';
 import 'history.dart' show HistoryScreen;
@@ -118,8 +119,11 @@ class MyBreakdownScreen extends StatelessWidget {
 
 /// One group, for everyone: each finished receipt with who owes whom, the balance per person, and the transfers that settle it.
 class GroupBreakdownScreen extends StatelessWidget {
-  const GroupBreakdownScreen({super.key, required this.name});
+  const GroupBreakdownScreen({super.key, required this.name, this.person});
   final String name;
+
+  /// Only this person (key as of `groupNaming`): their bills, their balance, their transfers (Nutzer 12.11.: tap on a balance).
+  final String? person;
 
   @override
   Widget build(BuildContext context) {
@@ -130,16 +134,38 @@ class GroupBreakdownScreen extends StatelessWidget {
     final sign = signOf(context);
     final (:keyOf, :label) = groupNaming(context, name);
     final bills = store.inGroup(name, done: true);
-    final moves = billMoves(bills, key: keyOf);
-    final bal = balances(bills, key: keyOf)..removeWhere((_, v) => v == 0);
-    final plan = settle(bal);
+    final who = person;
+    final allMoves = billMoves(bills, key: keyOf);
+    final moves = who == null
+        ? allMoves
+        : [
+            for (final bm in allMoves)
+              if (bm.moves.any((m) => m.$1 == who || m.$2 == who)) BillMoves(bm.bill, [for (final m in bm.moves) if (m.$1 == who || m.$2 == who) m])
+          ];
+    final fullBal = balances(bills, key: keyOf)..removeWhere((_, v) => v == 0);
+    final bal = who == null ? fullBal : {for (final e in fullBal.entries) if (e.key == who) e.key: e.value};
+    final plan = settle(fullBal).where((p) => who == null || p.$1 == who || p.$2 == who).toList();
+    final gap = who == null ? null : store.groupGaps(name, key: keyOf)[who];
+    // why the balance of this person is uncertain, in words (never colour alone)
+    final gapLine = gap != null && gap.uncertain
+        ? Padding(
+            key: const ValueKey('breakdown-uncertain'),
+            padding: const EdgeInsets.only(bottom: FasanSpace.m),
+            child: Row(children: [
+              Icon(Icons.help_outline_rounded, size: 18, color: l.textMuted),
+              const SizedBox(width: FasanSpace.s),
+              Expanded(child: Text('${tr('balance.uncertain')}: ${gapReasons(gap, de ? 'de' : 'en').join(' · ')}', style: tt.bodyMedium!.copyWith(color: l.textMuted))),
+            ]),
+          )
+        : null;
     Color c(int v) => v > 0 ? Colors.green.shade600 : (v < 0 ? Colors.red.shade600 : l.textMuted);
     String m(int v) => '${money(v, de: de)} $sign';
     return Scaffold(
-      appBar: AppBar(title: Text(tr('breakdown.groupTitle'))),
+      appBar: AppBar(title: Text(who == null ? tr('breakdown.groupTitle') : tr('breakdown.personTitle', [label(who)]))),
       body: moves.isEmpty
-          ? Center(child: Padding(padding: const EdgeInsets.all(FasanSpace.xl), child: Text(tr('breakdown.nothing'), textAlign: TextAlign.center, style: tt.bodyMedium!.copyWith(color: l.textMuted))))
+          ? Center(child: Padding(padding: const EdgeInsets.all(FasanSpace.xl), child: Column(mainAxisSize: MainAxisSize.min, children: [?gapLine, Text(who == null ? tr('breakdown.nothing') : tr('breakdown.personNothing', [label(who)]), textAlign: TextAlign.center, style: tt.bodyMedium!.copyWith(color: l.textMuted))])))
           : ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
+              ?gapLine,
               FasanLabel(tr('breakdown.bills')),
               for (final bm in moves)
                 Padding(

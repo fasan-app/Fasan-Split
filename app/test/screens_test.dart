@@ -312,7 +312,7 @@ void main() {
     'h07b-gruppe-posten': (_) => const HomeScreen(),
     'h13-freunde': (_) => const HomeScreen(),
     // group page with the walk receipt (Beispielstadt, Pia paid, Lena owes 10,00): Personen, settle as paid – whole and a part (06.11.)
-    for (final k in ['h07-gruppe-offen', 'h08-personen', 'h08b-bezahlt-frage', 'h08d-teilbetrag', 'h08e-rest-offen', 'h08g-profil', 'h07c-gruppe-suche'])
+    for (final k in ['h07-gruppe-offen', 'h08-personen', 'h08b-bezahlt-frage', 'h08d-teilbetrag', 'h08e-rest-offen', 'h08g-profil', 'h08h-person-saldo', 'h07c-gruppe-suche'])
       k: (_) => Builder(builder: (c) => GroupScreen(name: 'Beispielstadt', queue: ScanQueue.current ?? ScanQueue(StoreScope.read(c)))),
     // scanning (07.11.): the choice sheet of the plus, the reading page with its progress, the failure page; same steps in the browser (scan walk of screens.js)
     'sc01-neuer-bon': (_) => const HomeScreen(),
@@ -405,6 +405,14 @@ void main() {
     'h08g-profil': (t) async {
       await _openPeople(t);
       await t.tap(find.text('Lena').first);
+      await _frames(t, 8);
+    },
+    // tap on a balance: the breakdown only for this person (Nutzer 12.11.); same step in the browser walk
+    'h08h-person-saldo': (t) async {
+      await _openPeople(t);
+      final y = t.getCenter(find.text('Lena').first).dy; // the balance button sits beside the name
+      final taps = find.byKey(const ValueKey('balance-tap')).evaluate().toList()..sort((a, b) => (t.getCenter(find.byElementPredicate((e) => e == a)).dy - y).abs().compareTo((t.getCenter(find.byElementPredicate((e) => e == b)).dy - y).abs()));
+      await t.tap(find.byElementPredicate((e) => e == taps.first));
       await _frames(t, 8);
     },
     'h08d-teilbetrag': (t) async {

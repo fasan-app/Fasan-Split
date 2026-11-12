@@ -7,6 +7,7 @@ import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/recognition/service.dart';
 import 'package:fasan_split/flows/scan_queue.dart';
 import 'package:fasan_split/state/store.dart';
+import 'package:fasan_split/ui/groups.dart' show GroupScreen;
 import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
@@ -266,6 +267,18 @@ void main() {
       }
       expect(find.text('Urlaub'), findsOneWidget, reason: 'Karte der Abrechnung (der Gruppenschalter zeigt „Alle Gruppen“)');
       expect(find.textContaining('1 Bon · '), findsOneWidget, reason: 'Karte zeigt jetzt Bons und Mitgliederzahl (Nutzer 12.11.)');
+      // Nutzer 12.11.: the card opens the same screen as the group picker, not a different group screen
+      await tester.tap(find.text('Urlaub'));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.byType(GroupScreen), findsNothing, reason: 'kein eigener Gruppenbildschirm');
+      expect(find.textContaining('Alle Gruppen'), findsNothing, reason: 'der Gruppenschalter zeigt jetzt die Gruppe');
+      expect(find.text('Urlaub'), findsWidgets);
+      await tester.tap(find.text('Abrechnung').last);
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
       await tester.tap(find.text('Freunde').last);
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
@@ -280,14 +293,17 @@ void main() {
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
-      await tester.tap(find.text('Urlaub').last); // the card; the first one is the chip of the picker
+      await tester.tap(find.text('Urlaub').last); // the card picks the group in the start page (Nutzer 12.11.: no separate group screen)
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Gruppe').last); // the bills are on the Gruppe tab
       await tester.pumpAndSettle();
       await tester.tap(find.text('Frühstück').last);
       await tester.pumpAndSettle();
       await tester.tap(find.byType(BackButton).last);
       await tester.pumpAndSettle();
       expect(find.text('Urlaub'), findsWidgets, reason: 'zurück in der Gruppe, nicht auf der Startseite');
-      expect(find.byType(BackButton), findsOneWidget);
+      expect(find.text('Alle Gruppen'), findsNothing, reason: 'der Gruppenschalter bleibt bei der Gruppe');
+      expect(find.byType(BackButton), findsNothing);
     });
 
     testWidgets('Foto in der Warteschlange: wartet, wird gelesen, ohne Öffnen; fehlgeschlagen bietet „Nochmal lesen“', (tester) async {

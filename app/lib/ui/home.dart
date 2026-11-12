@@ -792,6 +792,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: (i) => trLang(t.de ? 'de' : 'en', i == 0 ? 'grp.bills' : 'grp.items'),
                   onChanged: (v) => setState(() => _itemsView = v == 1),
                 ),
+                // Notizen, Chat and held changes of a live group: they only existed in the separate group screen, which the group card no longer opens (Nutzer 12.11.)
+                if (scopeIsGroup(scope))
+                  Builder(builder: (context) {
+                    final live = CollabScope.of(context).groupByLocalName(scope);
+                    return live == null ? const SizedBox.shrink() : Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: CollabGroupPanel(group: live));
+                  }),
                 if (_searching && q.isEmpty && store.recentSearches.isNotEmpty)
                   _recentSearches(context, store)
                 else if (shown.isEmpty || (_itemsView && flat.isEmpty))
@@ -860,7 +866,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _settlePage(BuildContext context) {
     final store = StoreScope.of(context);
     final scope = _scopeOf(store);
-    if (!scopeIsGroup(scope)) return GroupsPage(queue: queue);
+    if (!scopeIsGroup(scope)) return GroupsPage(queue: queue, onOpen: (g) => setState(() => _scope = g));
     final bottom = 150 + MediaQuery.paddingOf(context).bottom;
     return ListView(
       padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, bottom),

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../l10n/tr.dart' show trLang;
 import 'common.dart';
+import 'shape_tokens.dart';
 
 /// Why the balance is uncertain, as short text parts („2 Bons noch nicht fertig“, „1 Bon ohne Zahler“).
 List<String> gapReasons(BalanceGap gap, String lang) => [
@@ -18,11 +19,14 @@ List<String> gapReasons(BalanceGap gap, String lang) => [
 
 /// Amount (0,00 € when nothing is finished) and, if the balance is uncertain, a line „ungewiss“ with the reasons.
 class PersonBalance extends StatelessWidget {
-  const PersonBalance({super.key, required this.cents, required this.gap, this.big = false});
+  const PersonBalance({super.key, required this.cents, required this.gap, this.big = false, this.onTap});
 
   final int cents;
   final BalanceGap? gap;
   final bool big;
+
+  /// Tap on the balance opens how it comes about (Nutzer 12.11.: everything that looks tappable does something, and the balance is what people tap).
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +34,7 @@ class PersonBalance extends StatelessWidget {
     final lang = t.de ? 'de' : 'en';
     final sign = signOf(context);
     final uncertain = gap?.uncertain ?? false;
-    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+    final col = Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
       Text('${money(cents, de: t.de, sign: cents != 0)} $sign',
           style: (big ? tt.headlineSmall : tt.titleMedium)!.copyWith(color: cents > 0 ? l.accent : (cents == 0 ? l.textMuted : null))),
       if (uncertain)
@@ -40,5 +44,13 @@ class PersonBalance extends StatelessWidget {
           Text(trLang(lang, 'balance.uncertain'), style: tt.labelSmall!.copyWith(color: l.textMuted)),
         ]),
     ]);
+    if (onTap == null) return col;
+    // its own semantics node: a screen reader finds the balance as a button of its own, not merged into the row (Prüfliste: Signifier)
+    return Semantics(container: true, button: true, child: InkWell(
+      key: const ValueKey('balance-tap'),
+      borderRadius: BorderRadius.circular(l.rInner),
+      onTap: onTap,
+      child: ConstrainedBox(constraints: BoxConstraints(minHeight: l.minTap, minWidth: l.minTap), child: Padding(padding: const EdgeInsets.symmetric(horizontal: FasanSpace.s), child: Row(mainAxisSize: MainAxisSize.min, children: [col, Icon(Icons.chevron_right_rounded, size: 20, color: l.textMuted)]))),  // the chevron says: tap me
+    ));
   }
 }

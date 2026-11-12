@@ -1,3 +1,8 @@
+## 0.1.115
+- New: Tap a person's balance in the group (also in the profile): "How this comes about" opens for that person only, with their bills, their balance and the transfers they are part of. If the balance is uncertain, the reason is shown on top.
+- Better: Tapping a group in "All groups" opens the same view as the group picker (no second, different screen any more). The group's notes and chat sit right under "Bills/Items".
+- Better: The friends list says "account linked" instead of "in the app", and "name only in receipts" instead of "only in receipts".
+
 ## 0.1.114
 - New: Tap a person and their profile opens. It shows whether they linked an account or are only a name, their balance, your shared groups and what they changed. In a chat, the name at the top leads there too (in a group chat to the member list).
 - Better: "Without app / In the app" is gone. It now says "Account linked" or "Name only".

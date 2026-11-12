@@ -236,3 +236,4 @@ Wünsche:
    (g) Eigene Favoriten/Anpinnen für Posten und Rechnungen.
    (h) Mitgliederzahl: „Alle Gruppen“ zeigt 7, Lisboa 8: stimmt nicht. In „Alle Gruppen“/Abrechnung fehlt die Mitgliederzahl; Tipp auf die Gruppe dort öffnet einen ganz anderen Bildschirm als die Hauptgruppe (mit Notizen/Chat); „Chat“ öffnet ein missverständliches Fenster.
    Alles mit Design- und Strukturvorgaben (Prüfliste) abgleichen.
+30. (12.11. 14:48, Nutzer) **Browser-Bildschirmfotos immer selbst ansehen**, bei jeder Änderung (nicht nur App-Ansicht). Stand: gilt ab sofort; 0.1.114-Profil im Browser wird nachgesehen.

@@ -104,5 +104,27 @@ void main() {
     expect(find.text('So gleicht ihr aus'), findsOneWidget);
     expect(find.textContaining('Ben zahlt Anna 10,00'), findsOneWidget);
     expect(find.textContaining('Ali zahlt Anna 10,00'), findsOneWidget);
+    // Nutzer 12.11.: a tap on a balance shows the breakdown for this person only
+    // the balance button sits beside the name (not inside it): pick the one on the same line as the name
+    Finder balanceOf(String who) {
+      final y = tester.getCenter(find.text(who)).dy;
+      final all = find.byKey(const ValueKey('balance-tap')).evaluate().toList();
+      all.sort((a, b) => (tester.getCenter(find.byElementPredicate((e) => e == a)).dy - y).abs().compareTo((tester.getCenter(find.byElementPredicate((e) => e == b)).dy - y).abs()));
+      return find.byElementPredicate((e) => e == all.first);
+    }
+
+    await tester.tap(balanceOf('Ben'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ben: so kommt das zustande'), findsOneWidget);
+    expect(find.textContaining('Ben schuldet Anna'), findsOneWidget);
+    expect(find.textContaining('Ali schuldet Anna'), findsNothing, reason: 'nur Ben');
+    expect(find.textContaining('Ali zahlt Anna'), findsNothing);
+    // Dora has nothing finished: 0, and the screen says so
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pumpAndSettle();
+    await tester.tap(balanceOf('Dora'));
+    await tester.pumpAndSettle();
+    expect(find.text('Dora: so kommt das zustande'), findsOneWidget);
+    expect(find.textContaining('Der Stand ist 0,00'), findsOneWidget);
   });
 }

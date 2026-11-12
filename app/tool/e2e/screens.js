@@ -121,24 +121,30 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('b16-zurueck', async () => { await back(); });
     await step('b17-gruppe', async () => { await back(); });
     await step('h01-home', async () => { await back(); });
-    await step('h02-einstellungen', async () => { await p.getByRole('button', { name: /Einstellungen|Settings/ }).first().click(); });
-    await step('h03-zurueck', async () => { await back(); });
-    const tap = async (re, ms = 800) => { const l = p.getByRole('tab', { name: re }).or(p.getByRole('button', { name: re })).or(p.getByRole('checkbox', { name: re })).or(p.getByText(re)).first(); await l.click({ timeout: 8000 }); await p.waitForTimeout(ms); };
+    const tap = async (re, ms = 800) => { const l = p.getByRole('tab', { name: re }).or(p.getByRole('button', { name: re })).or(p.getByRole('checkbox', { name: re })).or(p.getByRole('menuitemcheckbox', { name: re })).or(p.getByText(re)).first(); await l.click({ timeout: 8000 }); await p.waitForTimeout(ms); };
     await step('h04-archiv', async () => { await tap(/^(Offen|Archiv|Papierkorb)$/); await tap(/^Archiv$/); });
     await step('h05-papierkorb', async () => { await tap(/^(Offen|Archiv|Papierkorb)$/); await tap(/^Papierkorb$/); });
     await step('h06-gruppen', async () => { await tap(/^Abrechnung/); });
+    // the group card of „Alle Gruppen“ opens the same screen as the group picker (12.11.), then back to „Alle Gruppen“ for the picker step
+    await step('h06b-karte-tippen', async () => { await p.getByRole('button', { name: /^Beispielstadt .*Bon/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(1200); });
+    await step('h06c-wieder-alle', async () => { await p.getByRole('button', { name: /^Beispielstadt$/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(500); await p.getByText(/^Alle Gruppen$/).last().click({ timeout: 8000 }); await p.waitForTimeout(800); });
     // Option A (09.11.): the chip of the group picker picks the group, the tab Abrechnung then shows its people directly
     await step('h07-gruppe-offen', async () => { await tap(/^Alle Gruppen/); await p.waitForTimeout(500); await p.getByText(/^Beispielstadt$/).last().click({ timeout: 8000 }); await p.waitForTimeout(800); });
     await step('h08-personen', async () => { await p.waitForTimeout(300); });
-    await step('h08b-bezahlt-frage', async () => { await tap(/Als bezahlt eintragen/); });
     // profile of a person (12.11.): tap Lena in the people list, same name as the app walk (test/screens_test.dart h08g)
-    await step('h08g-profil', async () => { await p.getByText(/^Lena$/).first().click({ timeout: 8000 }); await p.waitForTimeout(800); });
+    await step('h08g-profil', async () => { await p.getByRole('button', { name: /^LE Lena/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(800); });
     await step('h08g2-profil-zu', async () => { await back(); });
+    // tap on a balance: the breakdown only for this person (12.11.), same name as the app walk (test/screens_test.dart h08h)
+    await step('h08h-person-saldo', async () => { await p.getByRole('button', { name: /^[\u2212-]10,00 €$/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(800); });
+    await step('h08h2-saldo-zu', async () => { await back(); });
+    await step('h08b-bezahlt-frage', async () => { await tap(/Als bezahlt eintragen/); });
     // a part first (06.11.: Teilbetrag), same names as the app walk (test/screens_test.dart h08d/h08e), then the rest
     await step('h08d-teilbetrag', async () => { const f = p.getByRole('textbox').last(); await f.click({ timeout: 8000 }); await p.waitForTimeout(400); await f.fill('4,00'); });
     await step('h08e-rest-offen', async () => { await p.getByRole('button', { name: /^Bezahlt$/ }).last().click({ timeout: 8000 }); await p.waitForTimeout(1500); });
     await step('h08f-rest-frage', async () => { await tap(/Als bezahlt eintragen/); });
     await step('h08c-bezahlt-eingetragen', async () => { await p.getByRole('button', { name: /^Bezahlt$/ }).last().click({ timeout: 8000 }); await p.waitForTimeout(1500); });
+    // Notizen and Chat live on the Gruppe tab of the group (the walk was on Abrechnung)
+    await step('h08i-gruppe-tab', async () => { await tap(/^Gruppe( Gruppe)?$/); await p.waitForTimeout(500); await tap(/^(Offen|Archiv|Papierkorb)$/); await tap(/^Offen$/); await p.waitForTimeout(500); });
     await step('h09-notizen', async () => { await tap(/^Notizen/); });
     await step('h10-notizen-zu', async () => { await back(); });
     await step('h11-chat', async () => { await tap(/^Chat/); });

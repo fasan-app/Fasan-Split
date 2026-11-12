@@ -1,3 +1,8 @@
+## 0.1.115
+- Neu: Tippe in der Gruppe auf den Stand einer Person (auch im Profil): Es öffnet sich „So kommt das zustande“ nur für sie, mit ihren Bons, ihrem Stand und den Überweisungen, an denen sie beteiligt ist. Ist der Stand ungewiss, steht der Grund oben.
+- Besser: Tippst du in „Alle Gruppen“ auf eine Gruppe, öffnet sich dieselbe Ansicht wie über den Gruppenschalter (kein zweiter, anderer Bildschirm mehr). Notizen und Chat der Gruppe stehen dort direkt unter „Rechnungen/Posten“.
+- Besser: In der Freundesliste steht „Konto verknüpft“ statt „in der App“, und „nur Name in Bons“ statt „nur in Bons“.
+
 ## 0.1.114
 - Neu: Tippst du eine Person an, öffnet sich ihr Profil. Dort steht, ob sie ein Konto verknüpft hat oder nur als Name eingetragen ist, ihr Stand, eure gemeinsamen Gruppen und was sie geändert hat. Im Chat führt der Name oben ebenfalls dorthin (im Gruppenchat zur Mitgliederliste).
 - Besser: „Ohne App / In der App“ ist weg. Statt dessen steht „Konto verknüpft“ oder „Nur Name“.

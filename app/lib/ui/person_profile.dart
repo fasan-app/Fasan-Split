@@ -15,6 +15,7 @@ import 'balance_state_ui.dart';
 import 'collab_ui.dart';
 import 'groups.dart' show groupNaming;
 import 'history.dart' show openBillAt, whenShort;
+import 'balance_breakdown.dart';
 import 'scope.dart';
 
 /// Opens the profile of [person] (a name from the bills) or of the member [pub] in the group [groupName].
@@ -98,7 +99,7 @@ class PersonProfileScreen extends StatelessWidget {
               ? Text(gapReasons(gap, lang).join(' · '), style: tt.bodySmall!.copyWith(color: l.textMuted))
               : Text(trLang(lang, 'groups.groupBalanceHint'), style: tt.bodySmall!.copyWith(color: l.textMuted)),
         ),
-        PersonBalance(cents: cents, gap: gap, big: true),
+        PersonBalance(cents: cents, gap: gap, big: true, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupBreakdownScreen(name: groupName, person: key)))),
       ]),
       const SizedBox(height: FasanSpace.l),
       FasanLabel(trLang(lang, 'profile.sharedGroups')),
