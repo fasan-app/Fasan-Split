@@ -224,3 +224,5 @@ Wünsche:
 
 
 (12.11., Folge zu 27) Dubletten im Verlauf: wahrscheinlichste Ursache [Likely, nicht bewiesen]: ein Gerät mit alter APK (Gerätekennung 0.1.83, letzte APK 0.1.85) schreibt veraltete Rechnungen zurück. 0.1.113 warnt im Verlauf. Offen: Nutzer fragen, ob ein altes Handy/APK in der Gruppe ist.
+
+(12.11. 12:21, Nutzer) Er hat die alte APK einmal geöffnet (wegen fehlerhafter Nutzer). Das bestätigt die Dubletten-Ursache [Likely]: Einmal-Öffnen von APK 0.1.83 schrieb alte Stände zurück. Möglicher Zusammenhang mit den −5 € im Saldo, nicht geprüft.

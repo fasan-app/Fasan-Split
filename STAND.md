@@ -1166,3 +1166,4 @@ Noch offen: Browser-Gegenstück (screens.js) für Saldo-Verlauf und Gruppensuche
 
 ## 12.11. Dubletten – Stand
 - 0.1.112 live (Deploy grün). Dubletten-Ursache nicht reproduzierbar im Zwei-Geräte-Test (sync_quiet_test). Gerätekennung der Einträge ist die APK-Laufnummer (0.1.83); letzte APK = 0.1.85 (09.11.), ohne die Schutz-Fixes vor Zurückschreiben alter Stände. 0.1.113: Warnung im Verlauf (`staleAppOf`, test/stale_app_test.dart). Weiter offen: Bon-Kopf Personenchips, Browser-Schritt Saldo-Verlauf/Gruppensuche.
+- 12.11. 12:21: Nutzer bestätigt: APK einmal geöffnet. Dubletten damit erklärt [Likely]. −5 €: im Saldo-Verlauf (Reiter Saldo) nach einem Eintrag um den Öffnungszeitpunkt der APK suchen und ggf. rückgängig machen; noch nicht geprüft.
