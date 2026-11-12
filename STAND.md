@@ -1180,7 +1180,7 @@ Noch offen: Browser-Gegenstück (screens.js) für Saldo-Verlauf und Gruppensuche
 
 ## 13.11. 00:25 Reihenfolge neu (Nutzer 00:24, ANFORDERUNGEN 32)
 1. Paket 3 / 0.1.116: CI-Lauf 43322443929 abwarten (Tor läuft noch), dann „live“ melden.
-2. **CI-Filter:** Erkennungs-Tor nur bei Änderung von Erkennung/Modellen/Bon-Tests, sonst letztes grünes Ergebnis; zusätzlich täglich ein Volllauf auf main; bei unklarer Dateiliste läuft das Tor. (Ändert die Regel „Tor bei jeder Veröffentlichung“; vom Nutzer 13.11. gebilligt.)
+2. **CI-Filter ERLEDIGT 13.11. (Ursache war ein Fehler, kein fehlender Filter):** Der Filter von 08.11. verglich mit der Release „neueste“ (APK, seit 09.11. eingefroren, Stand d077992) und lief deshalb bei jedem Push. Jetzt Vergleich mit dem letzten erfolgreichen Lauf von web.yml auf main; zusätzlich nächtlicher Volllauf (02:17 UTC); unklar → Tor läuft. Geprüft nur durch Lesen/YAML-Syntax; Wirkung zeigt der nächste Push (dieser läuft einmal voll, weil erkennung.yml selbst in der Dateiliste steht).
 3. **Modularer Umbau** nach `docs/ARCHITEKTUR.md`, in kleinen Schritten unter den bestehenden Toren: `recognition` und `l10n` als Pakete, `ui` aufteilen, Speicher/Sync trennen, Wächter-Tests für Abhängigkeitsrichtung.
 4. Danach Pakete 4–8 und Roadmap.
 **Lehre 13.11.:** Das Browser-Build-Skript kopierte den neuen Code nicht in die Arbeitskopie; alle Browser-Fotos von 12.11. (0.1.114/0.1.115) zeigten einen alten Stand und gelten als ungeprüft. Vor jedem Browserlauf `diff -rq app/lib <Arbeitskopie>/lib` prüfen. Offen: Foto des Bons kommt im Browserlauf nicht an (`ready:false`).

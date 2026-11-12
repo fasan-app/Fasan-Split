@@ -9,8 +9,11 @@ on:
       FASAN_DIAGNOSE_TOKEN:
         required: false
   workflow_dispatch: {}
+  schedule:
+    - cron: '17 2 * * *'   # Nutzer 13.11.: einmal täglich Volllauf auf main, auch wenn der Filter sonst überspringt
 permissions:
   contents: read
+  actions: read
 jobs:
   tor:
     runs-on: ubuntu-24.04
@@ -20,23 +23,23 @@ jobs:
         with:
           fetch-depth: 0   # to compare with the last published version
 
-      # Nutzer 08.11.: Das Tor läuft nur, wenn sich seit der letzten VERÖFFENTLICHTEN Version etwas geändert hat, das die Erkennung
-      # berührt (Erkennungscode, Pakete, Modelle, Tor-Test, Abhängigkeiten, dieses Tor). Die letzte Veröffentlichung steht im Text der
-      # Release „neueste“ („Testversion aus <sha>“). Jede veröffentlichte Version hat das Tor bestanden oder die Erkennung nicht
-      # verändert; ein gescheiterter Stand wird nie veröffentlicht und nie Vergleichsstand. Unklar (kein Stand, Stand nicht im
-      # Verlauf, manueller Start): das Tor läuft.
+      # Nutzer 08.11./13.11.: Das Tor läuft nur, wenn sich seit der letzten ERFOLGREICHEN Web-Veröffentlichung etwas geändert hat, das die
+      # Erkennung berührt (Erkennungscode, Pakete, Modelle, Tor-Test, Abhängigkeiten, dieses Tor). Vergleichsstand = Commit des letzten
+      # erfolgreichen Laufs von web.yml auf main (Deploy läuft nur nach bestandenem oder zu Recht übersprungenem Tor). Bis 13.11. war es
+      # die Release „neueste“ (APK) – die ist eingefroren, darum lief das Tor bei jedem Push (Fehler). Unklar (kein Stand, Stand nicht im
+      # Verlauf, manueller oder nächtlicher Start): das Tor läuft.
       - name: Erkennung berührt?
         id: chg
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           pruefen=true
-          if [ "${{ github.event_name }}" != workflow_dispatch ]; then
-            base=$(gh api "repos/${{ github.repository }}/releases/tags/neueste" -q .body 2>/dev/null | grep -o 'Testversion aus [0-9a-f]\{7\}' | head -1 | awk '{print $3}')
+          if [ "${{ github.event_name }}" = push ]; then
+            base=$(gh api "repos/${{ github.repository }}/actions/workflows/web.yml/runs?branch=main&status=success&per_page=1" -q '.workflow_runs[0].head_sha' 2>/dev/null || true)
             if [ -n "$base" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
               if git diff --quiet "$base" HEAD -- app/lib/recognition app/packages app/test/gate_test.dart app/test/support app/tool/fetch_models.sh app/pubspec.yaml app/pubspec.lock .github/workflows/erkennung.yml; then
                 pruefen=false
-                echo "TOR übersprungen: die Erkennung ist seit $base (letzte Veröffentlichung) unverändert." | tee -a "$GITHUB_STEP_SUMMARY"
+                echo "TOR übersprungen: die Erkennung ist seit $base (letzte erfolgreiche Veröffentlichung) unverändert." | tee -a "$GITHUB_STEP_SUMMARY"
               fi
             else
               echo "Kein brauchbarer Vergleichsstand ($base): das Tor läuft."
