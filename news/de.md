@@ -1,3 +1,10 @@
+## 0.1.112
+- Neu: Saldo-Verlauf. Im Profil unter „So ergibt sich dein Stand“ (Uhr-Symbol) und im Verlauf (Reiter „Saldo“) steht jede Änderung an deinem Stand. Tippe eine Zeile an: Du siehst, wer was geändert hat (mit Gerät), vorher und nachher, kannst den Bon an der Stelle öffnen und die Änderung rückgängig machen.
+- Neu: Die Suche kennt die Art der Posten. „Bier“ findet auch „Super Bock“ und „Cerveja“, „Wasser“ findet „Agua“ (eigenes Wörterbuch, sieben Sprachen, nichts geht ins Netz).
+- Behoben: Ein Posten mit einem offenen „vielleicht“-Vorschlag gilt nicht mehr als erledigt. „vllt.“ heißt jetzt „vielleicht“.
+- Besser: Im Bon sind die Vorschläge für weitere Personen eine einzige Zeile zum Wischen, die Posten rücken höher.
+- Besser: Der Saldo-Verlauf findet auch dann die Ursache, wenn jemand die Änderung erst später übertragen hat (vorher stand dann keine Ursache da).
+
 ## 0.1.111
 - Besser: „Wofür“ und Summe im Bon sind kleiner, die Posten rücken weiter nach oben.
 

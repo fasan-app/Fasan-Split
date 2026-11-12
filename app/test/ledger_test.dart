@@ -20,7 +20,7 @@ void main() {
     expect(l.entries, isEmpty, reason: 'baseline is not a booking');
 
     a.its.first.amount = 450; // Lena owes 1.50 more
-    expect(l.update([a], isMe, why: (_, _, _) => ('Hugo: Cola Betrag 3,00 → 4,50', 'x')), isTrue);
+    expect(l.update([a], isMe, why: (_, _, _) => ('Hugo: Cola Betrag 3,00 → 4,50', 'x', null, null)), isTrue);
     expect(l.entries.single.delta, 150);
     expect(l.entries.single.total, 450);
     expect(l.entries.single.whyDe, contains('Hugo'));

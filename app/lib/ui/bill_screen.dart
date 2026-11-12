@@ -614,19 +614,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           if (suggestions.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: FasanSpace.xs),
-              child: Wrap(spacing: 4, runSpacing: 0, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                for (final n in suggestions)
-                  ActionChip(
-                    key: ValueKey('suggest-$n'),
-                    visualDensity: VisualDensity.compact,
-                    label: Text('+ $n'),
-                    onPressed: () {
-                      if (addPersonTo(b, n)) {
-                        FasanHaptics.of(context).tap();
-                        setState(() {});
-                      }
-                    },
-                  ),
+              child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
                 if (b.group != null && suggestions.length >= 2)
                   ActionChip(
                     key: const ValueKey('suggest-all'),
@@ -641,7 +629,20 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       setState(() {});
                     },
                   ),
-              ]),
+                if (b.group != null && suggestions.length >= 2) const SizedBox(width: 4),
+                for (final n in suggestions)
+                  Padding(padding: const EdgeInsets.only(right: 4), child: ActionChip(
+                    key: ValueKey('suggest-$n'),
+                    visualDensity: VisualDensity.compact,
+                    label: Text('+ $n'),
+                    onPressed: () {
+                      if (addPersonTo(b, n)) {
+                        FasanHaptics.of(context).tap();
+                        setState(() {});
+                      }
+                    },
+                  )),
+              ])),
             ),
           if (active != null)
             Container(

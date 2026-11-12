@@ -247,7 +247,15 @@ class BillItem {
 
   /// Assignment state for the frame colour: nothing / some pieces / everything. Items from before 07.11. with several
   /// pieces and exactly one person count as „partial“ so that the user checks them (Nutzer 07.11.).
+  /// A proposal („vielleicht“, [maybe]) that nobody has accepted yet: the item is not done while one is pending (Nutzer 12.11.).
+  bool get hasPendingMaybe => maybe.keys.any((i) => (shares[i] ?? 0) <= 0);
+
   ItemFill get fill {
+    final f = _baseFill;
+    return f == ItemFill.complete && hasPendingMaybe ? ItemFill.partial : f;
+  }
+
+  ItemFill get _baseFill {
     if (!assigned) return ItemFill.open;
     if (proportional) return ItemFill.complete;
     if (perUnit) return overUnits > 1e-9 || coveredUnits < qty - 1e-9 ? ItemFill.partial : ItemFill.complete; // too many is not done either

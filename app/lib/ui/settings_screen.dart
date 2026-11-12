@@ -236,7 +236,7 @@ class SettingsScreen extends StatelessWidget {
           (ActivityKind.mention, 'Erwähnungen in Notizen', 'Mentions in notes'),
           (ActivityKind.joined, 'Jemand tritt bei (Einladung angenommen)', 'Someone joins (invitation accepted)'),
           (ActivityKind.billNew, 'Neue und geänderte Bons', 'New and changed receipts'),
-          (ActivityKind.proposal, 'Vorschläge für dich (vllt.)', 'Suggestions for you (maybe)'),
+          (ActivityKind.proposal, 'Vorschläge für dich (vielleicht)', 'Suggestions for you (maybe)'),
         ])
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),

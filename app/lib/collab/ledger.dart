@@ -9,7 +9,7 @@ import 'package:fasan_core/settle.dart';
 
 /// One booking: [delta] cents on my balance because of [title].
 class LedgerEntry {
-  const LedgerEntry({required this.at, required this.billId, required this.title, required this.group, required this.delta, required this.total, required this.groupTotal, this.whyDe, this.whyEn});
+  const LedgerEntry({required this.at, required this.billId, required this.title, required this.group, required this.delta, required this.total, required this.groupTotal, this.whyDe, this.whyEn, this.recAt, this.recBy});
 
   final DateTime at;
   final String billId, title;
@@ -19,7 +19,12 @@ class LedgerEntry {
   final int groupTotal; // my balance in [group] after the booking
   final String? whyDe, whyEn;
 
-  Map<String, Object?> toJson() => {'t': at.millisecondsSinceEpoch, 'b': billId, 'n': title, if (group != null) 'g': group, 'd': delta, 'a': total, 'ga': groupTotal, if (whyDe != null) 'x': whyDe, if (whyEn != null) 'y': whyEn};
+  /// The change record behind this booking (its [ChangeRecord.at] in ms and the author's key), null if none matched: the balance
+  /// history opens it for details and takes it back (Nutzer 12.11.).
+  final int? recAt;
+  final String? recBy;
+
+  Map<String, Object?> toJson() => {'t': at.millisecondsSinceEpoch, 'b': billId, 'n': title, if (group != null) 'g': group, 'd': delta, 'a': total, 'ga': groupTotal, if (recAt != null) 'ra': recAt, if (recBy != null) 'rb': recBy, if (whyDe != null) 'x': whyDe, if (whyEn != null) 'y': whyEn};
 
   static LedgerEntry? fromJson(Object? j) {
     try {
@@ -34,6 +39,8 @@ class LedgerEntry {
         groupTotal: (m['ga'] as num).toInt(),
         whyDe: m['x'] as String?,
         whyEn: m['y'] as String?,
+        recAt: (m['ra'] as num?)?.toInt(),
+        recBy: m['rb'] as String?,
       );
     } catch (_) {
       return null;
@@ -59,7 +66,7 @@ class BalanceLedger {
 
   /// Looks at all [bills]; books every difference. Returns true if something was booked or the baseline was set.
   /// [why] gives the reason for a bill (German, English) or null.
-  bool update(Iterable<Bill> bills, bool Function(String) isMe, {bool Function(Person)? isMePerson, DateTime? now, (String, String)? Function(String billId, int before, int after)? why}) {
+  bool update(Iterable<Bill> bills, bool Function(String) isMe, {bool Function(Person)? isMePerson, DateTime? now, (String, String, int?, String?)? Function(String billId, int before, int after)? why}) {
     final list = bills.toList();
     final cur = {for (final b in list) b.id: mineOf(b, isMe, isMePerson: isMePerson)};
     final last = seen;
@@ -86,7 +93,7 @@ class BalanceLedger {
       groupTotals.update(g, (x) => x + delta, ifAbsent: () => delta);
       final w = why?.call(id, before, after);
       final title = b == null ? (entries.where((e) => e.billId == id).firstOrNull?.title ?? 'Bon') : (b.purpose.isNotEmpty ? b.purpose : 'Bon');
-      entries.insert(0, LedgerEntry(at: at, billId: id, title: title, group: g, delta: delta, total: total, groupTotal: groupTotals[g] ?? delta, whyDe: w?.$1, whyEn: w?.$2));
+      entries.insert(0, LedgerEntry(at: at, billId: id, title: title, group: g, delta: delta, total: total, groupTotal: groupTotals[g] ?? delta, whyDe: w?.$1, whyEn: w?.$2, recAt: w?.$3, recBy: w?.$4));
       changed = true;
     }
     seen = cur;

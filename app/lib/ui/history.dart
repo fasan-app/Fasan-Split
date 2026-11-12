@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../collab/bill_changes.dart';
 import '../collab/group.dart' show BillSnapshot;
 import '../collab/ledger.dart';
+import '../collab/service.dart' show UndoResult;
 import '../l10n.dart';
 import '../l10n/tr.dart' show trLang;
 import 'bill_screen.dart' show ReviewScreen;
@@ -18,15 +19,18 @@ import 'scope.dart';
 
 class HistoryScreen extends StatelessWidget {
   /// Changes of one bill only.
-  const HistoryScreen.bill({super.key, required String this.billId, this.billTitle}) : groupTag = null, groupName = null;
+  const HistoryScreen.bill({super.key, required String this.billId, this.billTitle}) : groupTag = null, groupName = null, initialTab = 0;
 
   /// One group: its changes and its costs.
-  const HistoryScreen.group({super.key, required String this.groupTag, required String this.groupName}) : billId = null, billTitle = null;
+  const HistoryScreen.group({super.key, required String this.groupTag, required String this.groupName, this.initialTab = 0}) : billId = null, billTitle = null;
 
   /// Everything: all groups.
-  const HistoryScreen.all({super.key}) : billId = null, billTitle = null, groupTag = null, groupName = null;
+  const HistoryScreen.all({super.key, this.initialTab = 0}) : billId = null, billTitle = null, groupTag = null, groupName = null;
 
   final String? billId, billTitle, groupTag, groupName;
+
+  /// 0 = Änderungen, 1 = Saldo (the balance history; the balance pages open it directly).
+  final int initialTab;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +53,7 @@ class HistoryScreen extends StatelessWidget {
     }
     return DefaultTabController(
       length: 2,
+      initialIndex: initialTab,
       child: Scaffold(
         appBar: AppBar(
           title: Text(groupName == null ? title : '$title · $groupName'),
@@ -58,6 +63,15 @@ class HistoryScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Opens a bill, at an item when [itemUid] is given. Everything in the histories is a link (Nutzer 11.11., 12.11.).
+void openBillAt(BuildContext context, String billId, [String? itemUid]) {
+  final bill = StoreScope.read(context).bills.where((b) => b.id == billId).firstOrNull;
+  if (bill == null) return;
+  final at = itemUid == null ? -1 : bill.its.indexWhere((x) => x.uid == itemUid);
+  final focus = at < 0 ? null : at;
+  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => bill.done ? ReviewScreen(bill: bill, focusItem: focus) : ResumeFlow(bill: bill, focusItem: focus)));
 }
 
 String _when(BuildContext context, DateTime d) {
@@ -112,13 +126,7 @@ class _ChangesList extends StatelessWidget {
         final who = mine ? trLang(de ? 'de' : 'en', 'history.you') : r.who;
         final where = [if (showBill) r.title, if (showGroup) c.groups[r.group]?.localName].whereType<String>().join(' · ');
         // everything is a link (Nutzer 11.11.): the entry opens the bill, a line about an item opens it at that item
-        void open(String? itemUid) {
-          final bill = StoreScope.read(context).bills.where((b) => b.id == r.billId).firstOrNull;
-          if (bill == null) return;
-          final at = itemUid == null ? -1 : bill.its.indexWhere((x) => x.uid == itemUid);
-          final focus = at < 0 ? null : at;
-          Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => bill.done ? ReviewScreen(bill: bill, focusItem: focus) : ResumeFlow(bill: bill, focusItem: focus)));
-        }
+        void open(String? itemUid) => openBillAt(context, r.billId, itemUid);
 
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: FasanSpace.xs),
@@ -174,7 +182,10 @@ class _CostList extends StatelessWidget {
         final e = entries[i];
         final after = perGroup ? e.groupTotal : e.total;
         final why = de ? e.whyDe : (e.whyEn ?? e.whyDe);
-        return Padding(
+        return InkWell(
+          key: ValueKey('ledger-$i'),
+          onTap: () => showLedgerSheet(context, e, perGroup: perGroup),
+          child: Padding(
           padding: const EdgeInsets.symmetric(vertical: FasanSpace.s),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             SizedBox(width: 96, child: Text('${money(e.delta, de: de, sign: true)} $sign', style: tt.titleSmall!.copyWith(color: col(e.delta), fontWeight: FontWeight.w700))),
@@ -185,9 +196,117 @@ class _CostList extends StatelessWidget {
                 Text('${trLang(de ? 'de' : 'en', 'history.balanceAfter')}: ${money(after, de: de, sign: true)} $sign · ${_when(context, e.at)}', style: tt.bodySmall!.copyWith(color: l.textMuted)),
               ]),
             ),
+            Padding(padding: const EdgeInsets.only(top: 4), child: Icon(Icons.chevron_right_rounded, size: 20, color: l.textMuted)),
           ]),
-        );
+        ));
       },
+    );
+  }
+}
+
+/// The detail of one booking of the balance history (Nutzer 12.11.: „klickbar, nachvollziehbar, rückgängig machbar“): how much,
+/// before and after, what changed and who did it (with the device), open the bill, take the change back.
+Future<void> showLedgerSheet(BuildContext context, LedgerEntry e, {required bool perGroup}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (ctx) => LedgerSheet(entry: e, perGroup: perGroup, parent: context),
+  );
+}
+
+class LedgerSheet extends StatelessWidget {
+  const LedgerSheet({super.key, required this.entry, required this.perGroup, required this.parent});
+
+  final LedgerEntry entry;
+  final bool perGroup;
+  final BuildContext parent;
+
+  @override
+  Widget build(BuildContext context) {
+    final de = S.of(context).de, l = FasanLook.of(context), tt = Theme.of(context).textTheme;
+    final c = CollabScope.of(context);
+    String tr(String k, [List<Object> a = const []]) => trLang(de ? 'de' : 'en', k, a);
+    final sign = signOf(context);
+    final e = entry;
+    final after = perGroup ? e.groupTotal : e.total, before = after - e.delta;
+    // the record behind it: same bill, same time and author
+    final rec = e.recAt == null ? null : c.changeLog.where((r) => r.billId == e.billId && r.at.millisecondsSinceEpoch == e.recAt && r.whoKey == e.recBy).firstOrNull;
+    final mine = rec != null && rec.whoKey == c.identity?.pub;
+    final who = rec == null ? null : (mine ? tr('history.you') : rec.who);
+    final bill = StoreScope.of(context).bills.where((b) => b.id == e.billId).firstOrNull;
+    final col = e.delta > 0 ? Colors.green.shade600 : (e.delta < 0 ? Colors.red.shade600 : l.textMuted);
+    Future<void> undo() async {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(tr('ledger.undo')),
+          content: Text(tr('ledger.undoAsk', [who ?? ''])),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.of(ctx).cancel)),
+            TextButton(key: const ValueKey('ledger-undo-yes'), onPressed: () => Navigator.pop(ctx, true), child: Text(tr('ledger.undo'))),
+          ],
+        ),
+      );
+      if (ok != true || !context.mounted) return;
+      final r = CollabScope.read(context).undoChange(rec!);
+      Navigator.pop(context);
+      if (parent.mounted) {
+        ScaffoldMessenger.of(parent).showSnackBar(SnackBar(content: Text(tr(r == UndoResult.done ? 'ledger.undoDone' : r == UndoResult.partly ? 'ledger.undoPartly' : 'ledger.undoNothing'))));
+      }
+    }
+
+    return SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.xl),
+        children: [
+          Text('${money(e.delta, de: de, sign: true)} $sign', style: tt.headlineSmall!.copyWith(color: col, fontWeight: FontWeight.w800)),
+          const SizedBox(height: FasanSpace.xs),
+          Text([e.title, if (!perGroup && e.group != null) e.group!].join(' · '), style: tt.titleMedium),
+          const SizedBox(height: FasanSpace.s),
+          Text('${tr('ledger.before')}: ${money(before, de: de, sign: true)} $sign  →  ${tr('history.balanceAfter')}: ${money(after, de: de, sign: true)} $sign', style: tt.bodyMedium),
+          Text(_when(context, e.at), style: tt.bodySmall!.copyWith(color: l.textMuted)),
+          const SizedBox(height: FasanSpace.m),
+          if (rec == null)
+            Text(de ? (e.whyDe ?? tr('ledger.noRecord')) : (e.whyEn ?? e.whyDe ?? tr('ledger.noRecord')), style: tt.bodyMedium)
+          else ...[
+            FasanLabel(tr('ledger.what')),
+            Text('$who · ${_when(context, rec.at)}${rec.app == null ? '' : ' · ${tr('ledger.device')} ${rec.app}'}', style: tt.bodySmall!.copyWith(color: l.textMuted)),
+            const SizedBox(height: FasanSpace.xs),
+            for (final line in rec.lines)
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  openBillAt(parent, e.billId, line.item);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(children: [
+                    Expanded(child: Text('• ${line.text(de)}', style: tt.bodyMedium)),
+                    Icon(Icons.chevron_right_rounded, size: 20, color: l.textMuted),
+                  ]),
+                ),
+              ),
+          ],
+          const SizedBox(height: FasanSpace.m),
+          if (bill != null)
+            FasanButton(
+              key: const ValueKey('ledger-open'),
+              label: tr('ledger.open'),
+              kind: FasanButtonKind.quiet,
+              onPressed: () {
+                Navigator.pop(context);
+                openBillAt(parent, e.billId);
+              },
+            ),
+          if (rec != null && rec.undo.isNotEmpty) ...[
+            const SizedBox(height: FasanSpace.s),
+            FasanButton(key: const ValueKey('ledger-undo'), label: tr('ledger.undo'), onPressed: undo),
+          ] else if (rec != null)
+            Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: Text(tr('ledger.noUndo'), style: tt.bodySmall!.copyWith(color: l.textMuted))),
+        ],
+      ),
     );
   }
 }

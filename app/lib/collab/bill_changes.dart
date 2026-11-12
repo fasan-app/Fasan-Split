@@ -19,9 +19,48 @@ class ChangeLine {
   String text(bool german) => german ? de : en;
 }
 
+/// One value of a bill document that a change replaced: with it the change can be taken back (Nutzer 12.11.: Saldo-Verlauf,
+/// „rückgängig machbar“). [old] is what the key held before (null = it was new), [now] what the change wrote.
+class UndoOp {
+  const UndoOp(this.key, this.old, this.now);
+  final String key;
+  final Object? old, now;
+
+  List<Object?> toJson() => [key, old, now];
+  static UndoOp fromJson(Object? j) => UndoOp((j as List)[0] as String, j[1], j[2]);
+}
+
+/// Keys that are never kept for taking back: big blobs (photo, thumbnail) – the change is listed, but not revertible through them.
+bool undoable(String key) => !(key == 'meta/thumb' || key == 'meta/photo' || key == 'meta/orig' || key.startsWith('meta/schema'));
+
+/// Puts the old values of [ops] back into [doc] (as new changes of this device). A key that was changed again since is left
+/// alone: it is returned in the list of skipped keys, so the caller can say „seitdem weiter geändert“. [allow] is the padlock rule.
+List<String> applyUndo(LwwDoc doc, List<UndoOp> ops, {bool Function(String key)? allow}) {
+  final skipped = <String>[];
+  for (final o in ops) {
+    if (jsonEncode(doc.get(o.key)) != jsonEncode(o.now)) {
+      skipped.add(o.key);
+      continue;
+    }
+    if (allow != null && !allow(o.key)) {
+      skipped.add(o.key);
+      continue;
+    }
+    doc.set(o.key, o.old);
+  }
+  return skipped;
+}
+
 /// What one person changed in one bill in one go.
 class ChangeRecord {
-  ChangeRecord({required this.at, required this.group, required this.billId, required this.title, required this.who, required this.whoKey, required this.lines, this.app});
+  ChangeRecord({required this.at, required this.group, required this.billId, required this.title, required this.who, required this.whoKey, required this.lines, this.app, DateTime? rcvAt, this.undo = const []}) : rcvAt = rcvAt ?? DateTime.now();
+
+  /// When the change reached this phone (the writer's [at] can be hours older when they were offline): the balance history
+  /// matches a change of my balance to the records that arrived since it last looked.
+  final DateTime rcvAt;
+
+  /// The replaced values, empty if the change cannot be taken back (too big, or nothing recorded).
+  final List<UndoOp> undo;
 
   final DateTime at;
   final String group; // group tag
@@ -42,6 +81,8 @@ class ChangeRecord {
         'n': title,
         'w': who,
         'k': whoKey,
+        'rv': rcvAt.millisecondsSinceEpoch,
+        if (undo.isNotEmpty) 'u': [for (final o in undo) o.toJson()],
         'l': [for (final l in lines) [l.de, l.en, if (l.item != null) l.item]],
       };
 
@@ -57,6 +98,8 @@ class ChangeRecord {
         whoKey: m['k'] as String,
         lines: [for (final l in m['l'] as List) ChangeLine((l as List)[0] as String, l[1] as String, item: l.length > 2 ? l[2] as String? : null)],
         app: m['a'] as String?,
+        rcvAt: m['rv'] == null ? null : DateTime.fromMillisecondsSinceEpoch((m['rv'] as num).toInt()),
+        undo: [for (final u in (m['u'] as List?) ?? const []) UndoOp.fromJson(u)],
       );
     } catch (_) {
       return null;

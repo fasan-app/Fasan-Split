@@ -1481,6 +1481,25 @@ class CollabService extends ChangeNotifier {
     store.upsert(b);
   }
 
+  /// Takes a change back (Nutzer 12.11.: Saldo-Verlauf, „rückgängig machbar“): the values it replaced go into the bill document
+  /// again, as a new change of this phone that everybody sees in the history. Keys that were changed again since, or that a
+  /// padlock protects, stay as they are.
+  UndoResult undoChange(ChangeRecord r) {
+    final g = groups.values.where((x) => x.secret.tag == r.group).firstOrNull;
+    if (g == null || r.undo.isEmpty) return UndoResult.nothing;
+    final id = GroupSession.bill(r.billId), doc = g.session.doc(id), me = identity?.pub;
+    final skipped = applyUndo(doc, r.undo, allow: me == null ? null : (k) => lockAllows(doc, k, me, adminPub: g.secret.adminPub));
+    if (skipped.length >= r.undo.length) return UndoResult.nothing;
+    g.session.touch(id);
+    _saveDoc(g, id);
+    final b = store.bills.where((x) => x.id == r.billId).firstOrNull;
+    if (b != null) {
+      BillSync.read(doc, id: b.id, into: b);
+      store.upsert(b);
+    }
+    return skipped.isEmpty ? UndoResult.done : UndoResult.partly;
+  }
+
   void _pushAll() {
     if (writesPaused) return;
     for (final b in store.bills) {
@@ -1923,7 +1942,7 @@ class CollabService extends ChangeNotifier {
           final item = doc.get('i/${parts[1]}');
           final it = item is Map ? '${item['name']}' : '';
           final who = s.nameOf(by);
-          _note(Activity(ActivityKind.proposal, DateTime.now(), g.secret.tag, '$who schlägt vor, dass „$it“ zu dir gehört (vllt.)', ref: '$billId#${parts[1]}',
+          _note(Activity(ActivityKind.proposal, DateTime.now(), g.secret.tag, '$who schlägt vor, dass „$it“ zu dir gehört (vielleicht)', ref: '$billId#${parts[1]}',
               en: '$who suggests “$it” is yours (maybe)'));
         }
       }
@@ -2000,22 +2019,30 @@ class CollabService extends ChangeNotifier {
     _ledgerTimer = Timer(const Duration(milliseconds: 1500), _bookLedger);
   }
 
+  static const _kLedgerAt = 'collab.ledgerAt';
+  // when the ledger last looked; kept across restarts so a change that arrived while the app was closed still finds its record
+  late DateTime _lastBooked = DateTime.fromMillisecondsSinceEpoch(prefs?.getInt(_kLedgerAt) ?? DateTime.now().millisecondsSinceEpoch);
+
   void _bookLedger() {
     if (_disposed) return;
     final l = ledger;
     learnOwnUids();
     final changed = l.update(store.bills, isMeName, isMePerson: isMePerson, why: (id, before, after) {
-      final now = DateTime.now();
-      for (final r in changeLog) {
-        if (r.billId != id) continue;
-        if (now.difference(r.at) > const Duration(minutes: 5)) break;
-        final de = '${r.who}: ${r.lines.take(2).map((x) => x.de).join('; ')}', en = '${r.who}: ${r.lines.take(2).map((x) => x.en).join('; ')}';
-        return (de, en);
+      // every record of this bill that reached this phone since the last look (not „within 5 minutes by the writer's clock“:
+      // somebody who was offline writes hours late, and then the history had no reason at all, Nutzer 12.11.)
+      final mine = [for (final r in changeLog) if (r.billId == id && r.rcvAt.isAfter(_lastBooked)) r];
+      if (mine.isNotEmpty) {
+        final r = mine.first;
+        final more = mine.length > 1 ? ' (+${mine.length - 1})' : '';
+        final de = '${r.who}: ${r.lines.take(2).map((x) => x.de).join('; ')}$more', en = '${r.who}: ${r.lines.take(2).map((x) => x.en).join('; ')}$more';
+        return (de, en, r.at.millisecondsSinceEpoch, r.whoKey);
       }
-      if (before == 0) return ('Bon hinzugekommen', 'Receipt added');
-      if (after == 0) return ('Bon abgeschlossen oder entfernt', 'Receipt closed or removed');
+      if (before == 0) return ('Bon hinzugekommen', 'Receipt added', null, null);
+      if (after == 0) return ('Bon abgeschlossen oder entfernt', 'Receipt closed or removed', null, null);
       return null;
     });
+    _lastBooked = DateTime.now();
+    prefs?.setInt(_kLedgerAt, _lastBooked.millisecondsSinceEpoch);
     if (changed) {
       prefs?.setString(_kLedger, l.encode());
       notifyListeners();
@@ -2068,7 +2095,15 @@ class CollabService extends ChangeNotifier {
       final walls = [for (final p in e.value) if (p.$2.wall != null) p.$2.wall!];
       final at = walls.isEmpty ? now : DateTime.fromMillisecondsSinceEpoch(walls.reduce((a, c) => a > c ? a : c).clamp(0, now.millisecondsSinceEpoch));
       final app = [for (final p in e.value) if (p.$2.app != null) p.$2.app!].firstOrNull;
-      final rec = ChangeRecord(at: at, group: g.secret.tag, billId: billId, title: title, who: who, whoKey: e.key, lines: lines, app: app);
+      // the replaced values, so the change can be taken back from the balance history (not for photos, and not for huge changes)
+      final first = <String, Object?>{}, last = <String, Object?>{};
+      for (final p in e.value) {
+        if (!undoable(p.$2.key)) continue;
+        first.putIfAbsent(p.$2.key, () => p.$1?.value); // the oldest value of a key that changed twice in one go
+        last[p.$2.key] = p.$2.value;
+      }
+      final ops = [for (final k in first.keys) if (jsonEncode(first[k]) != jsonEncode(last[k])) UndoOp(k, first[k], last[k])];
+      final rec = ChangeRecord(at: at, group: g.secret.tag, billId: billId, title: title, who: who, whoKey: e.key, lines: lines, app: app, undo: ops.length <= 60 ? ops : const []);
       final l = changeLog;
       l.insert(0, rec);
       if (l.length > 600) l.removeRange(600, l.length);
@@ -2226,6 +2261,9 @@ abstract final class LwwDocDecode {
 }
 
 /// Entries of one document that arrived close together (one edit, one snapshot).
+/// Outcome of [CollabService.undoChange].
+enum UndoResult { done, partly, nothing }
+
 class _Burst {
   _Burst(this.g, this.docId, this.liveBefore);
   final CollabGroup g;

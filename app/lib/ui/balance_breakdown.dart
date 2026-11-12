@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../l10n/tr.dart' show trLang;
 import 'common.dart';
+import 'shape_tokens.dart';
+import 'history.dart' show HistoryScreen;
 import 'groups.dart' show groupNaming;
 import 'my_balance.dart' show myNames, myPerson;
 import 'scope.dart';
@@ -61,10 +63,35 @@ class MyBreakdownScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(tr('breakdown.myTitle'))),
+      appBar: AppBar(title: Text(tr('breakdown.myTitle')), actions: [
+        IconButton(
+          key: const ValueKey('balance-history-icon'),
+          tooltip: tr('history.openBalance'),
+          icon: const Icon(Icons.history_rounded),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const HistoryScreen.all(initialTab: 1))),
+        ),
+      ]),
       body: rows.isEmpty
           ? Center(child: Padding(padding: const EdgeInsets.all(FasanSpace.xl), child: Text(tr('breakdown.nothing'), textAlign: TextAlign.center, style: tt.bodyMedium!.copyWith(color: l.textMuted))))
           : ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
+              // the visible twin of the history icon: every change of the balance, with cause and undo (Nutzer 12.11.)
+              InkWell(
+                key: const ValueKey('balance-history'),
+                borderRadius: BorderRadius.circular(l.rInner),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const HistoryScreen.all(initialTab: 1))),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: l.minTap),
+                  child: Row(children: [
+                    Icon(Icons.history_rounded, color: l.accent),
+                    const SizedBox(width: FasanSpace.m),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                      Text(tr('history.openBalance'), style: tt.titleSmall),
+                      Text(tr('history.openBalanceSub'), style: tt.bodySmall!.copyWith(color: l.textMuted)),
+                    ])),
+                    Icon(Icons.chevron_right_rounded, color: l.textMuted),
+                  ]),
+                ),
+              ),
               for (final g in groups)
                 if (rows.any((r) => r.bill.group == g)) ...[
                   Padding(

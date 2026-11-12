@@ -82,6 +82,20 @@ void main() {
     expect(itemSearchMatch(beer, beer.its[1], 'bier', true), isFalse);
   });
 
+  test('Suche nach der Art: „Bier“ findet Super Bock und Cerveja, nicht die Pizza; „cerveja“ findet „Bier“ (Nutzer 12.11.)', () {
+    final b = bill('e', [ItemFill.complete, ItemFill.complete, ItemFill.complete, ItemFill.complete]);
+    b.its[0].name = 'Super Bock 0,5l';
+    b.its[1].name = 'Cerveja Sagres';
+    b.its[2].name = 'Pizza Margherita';
+    b.its[3].name = 'Bier';
+    bool hit(int n, String q) => itemSearchMatch(b, b.its[n], q, true);
+    expect([hit(0, 'bier'), hit(1, 'bier'), hit(2, 'bier'), hit(3, 'bier')], [true, true, false, true]);
+    expect([hit(0, 'cerveja'), hit(1, 'cerveja'), hit(2, 'cerveja'), hit(3, 'cerveja')], [true, true, false, true]);
+    expect(billSearchText(b, true).contains('bier'), isTrue);
+    expect(hit(2, 'pizza'), isTrue, reason: 'the own name still finds');
+    expect(hit(2, 'x'), isFalse);
+  });
+
   test('billsWithoutPayer: nur Bons mit Posten und ohne Zahler', () {
     expect(billsWithoutPayer([bill('a', [ItemFill.open], paid: false), bill('b', [ItemFill.open])]), 1);
     expect(billsWithoutPayer([bill('c', [], paid: false)]), 0);

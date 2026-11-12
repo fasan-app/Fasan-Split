@@ -269,6 +269,24 @@ void main() {
             ]);
           return const HistoryScreen.all();
         }),
+    // balance history (12.11.): rows are links; the sheet shows cause, device, before/after, open and undo (Nutzer 12.11.)
+    'b32-saldo-verlauf': (_) => Builder(builder: (c) {
+          final co = CollabScope.read(c);
+          final at = DateTime.now().subtract(const Duration(minutes: 40));
+          co.changeLog
+            ..clear()
+            ..add(ChangeRecord(at: at, group: 'x', billId: 'nb', title: 'Strandbar Erfunden', who: 'Hugo', whoKey: 'k1', app: 'web 1a2b3c4', lines: const [
+              ChangeLine('Pia bei „Sprudel“ ausgetragen', 'Pia removed from “Sprudel”'),
+              ChangeLine('Hugo bei „Sprudel“ eingetragen (2 Stück)', 'Hugo added to “Sprudel” (2 pcs)'),
+            ], undo: const [UndoOp('s/a/b', 1.0, null)]));
+          co.ledger.entries
+            ..clear()
+            ..addAll([
+              LedgerEntry(at: at, billId: 'nb', title: 'Strandbar Erfunden', group: 'Beispielstadt', delta: -500, total: 1250, groupTotal: 1250, whyDe: 'Hugo: Pia bei „Sprudel“ ausgetragen', whyEn: 'Hugo: Pia removed from “Sprudel”', recAt: at.millisecondsSinceEpoch, recBy: 'k1'),
+              LedgerEntry(at: at.subtract(const Duration(days: 1)), billId: 'nb', title: 'Kiosk', group: 'Beispielstadt', delta: 1750, total: 1750, groupTotal: 1750, whyDe: 'Bon hinzugekommen', whyEn: 'Receipt added'),
+            ]);
+          return const HistoryScreen.all(initialTab: 1);
+        }),
     'b26-anleitung': (_) => const TutorialScreen(),
     'b25-gruppe-aufstellung': (_) => Builder(builder: (c) {
           final st = StoreScope.read(c);
@@ -312,6 +330,12 @@ void main() {
   };
   // interaction before the picture (same steps as the browser walk)
   final acts = <String, Future<void> Function(WidgetTester)>{
+    'b32-saldo-verlauf': (t) async {
+      await t.tap(find.byKey(const ValueKey('ledger-0')));
+      for (var i = 0; i < 8; i++) {
+        await t.pump(const Duration(milliseconds: 100));
+      }
+    },
     // group page, items view, searched for „bezahlt“: the payer line is a row like an item (Nutzer 11.11.)
     'h07c-gruppe-suche': (t) async {
       await t.tap(find.text('Posten').first);

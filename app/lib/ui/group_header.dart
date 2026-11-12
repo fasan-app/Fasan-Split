@@ -10,6 +10,7 @@
 import 'dart:math' as math;
 
 import 'package:fasan_core/bill.dart';
+import 'package:fasan_core/speisen.dart' show Speisen;
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -362,11 +363,35 @@ final BillItem kDifferenceRow = BillItem(name: '', amount: 0);
 /// [Bill.payFill], follows the status buttons and is found by the search. Compare by identity.
 final BillItem kPayerRow = BillItem(name: '', amount: 0);
 
+final _foodCache = <String, String>{};
+
+/// What the item is, in German ("Bier" for "Super Bock 0,5l" or "Cerveja"), lower case and without accents; '' if the own
+/// dictionary (Speisen, 7 languages) does not know it. The search uses it so „Bier“ finds the beer, whatever the receipt calls it
+/// (Nutzer 12.11.: Wenn ich Bier suche wird es nicht gefunden). Cached by name: it runs for every item on every keystroke.
+String foodNameOf(BillItem i) {
+  final key = '${i.name}\u0000${i.note ?? ''}';
+  return _foodCache.putIfAbsent(key, () {
+    final m = Speisen.recognise(i.name) ?? ((i.note ?? '').isEmpty ? null : Speisen.recognise(i.note));
+    return m == null ? '' : Speisen.norm(m.name);
+  });
+}
+
+/// True if [q] (lower case) names what [i] is: the query is part of its German name, or is itself the same kind of thing
+/// ("cerveja" finds the item recognised as Bier).
+bool foodMatches(BillItem i, String q) {
+  final f = foodNameOf(i);
+  if (f.isEmpty) return false;
+  final nq = Speisen.norm(q);
+  if (nq.length >= 2 && f.contains(nq)) return true;
+  final asked = nq.isEmpty ? null : Speisen.recognise(q);
+  return asked != null && Speisen.norm(asked.name) == f;
+}
+
 /// What a search looks at in a bill: purpose, people, item names and notes, the amount as written (Karte-Recherche).
 String billSearchText(Bill b, bool de) => [
       b.purpose,
       for (final p in b.ps) p.name,
-      for (final i in b.its) ...[i.name, if (i.note != null) i.note!],
+      for (final i in b.its) ...[i.name, if (i.note != null) i.note!, foodNameOf(i)],
       for (final n in b.notes) n.text, // notes are searchable (Nutzer 09.11. 19:08)
       money(b.effectiveTotal, de: de),
     ].join(' ').toLowerCase();
@@ -377,6 +402,7 @@ bool itemSearchMatch(Bill b, BillItem i, String q, bool de) =>
     b.ps.any((p) => p.name.toLowerCase().contains(q)) ||
     i.name.toLowerCase().contains(q) ||
     (i.note ?? '').toLowerCase().contains(q) ||
+    foodMatches(i, q) ||
     b.notes.any((n) => n.text.toLowerCase().contains(q)) ||
     money(i.amount, de: de).contains(q);
 

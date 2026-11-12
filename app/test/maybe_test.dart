@@ -53,4 +53,14 @@ void main() {
     expect(lockAllows(doc, 'sv/abc/p1', 'pubB'), isFalse);
     expect(lockAllows(doc, 'sv/abc/p1', 'pubA'), isTrue);
   });
+
+  test('Offener Vorschlag („vielleicht“): der Posten gilt nicht als erledigt, nach dem Übernehmen schon (Nutzer 12.11.)', () {
+    final it = BillItem(name: 'Pizza', amount: 2000, shares: {0: 1, 2: 1}, maybe: {1: 'pubC'});
+    expect(it.fill, ItemFill.partial, reason: 'ohne den Vorschlag wäre er erledigt');
+    final plain = BillItem(name: 'Salat', amount: 1000, shares: {0: 1, 2: 1});
+    expect(plain.fill, ItemFill.complete);
+    it.maybe.remove(1);
+    it.togglePerson(1);
+    expect(it.fill, ItemFill.complete);
+  });
 }

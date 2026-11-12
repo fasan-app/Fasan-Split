@@ -1,3 +1,10 @@
+## 0.1.112
+- New: Balance history. In the profile under “How your balance adds up” (clock icon) and in the history (tab “Balance”) every change to your balance is listed. Tap a row: you see who changed what (with the device), before and after, can open the receipt there and undo the change.
+- New: The search knows what an item is. “Beer” also finds “Super Bock” and “Cerveja”, “water” finds “Agua” (own dictionary, seven languages, nothing goes online).
+- Fixed: An item with an open “maybe” proposal no longer counts as done. “vllt.” now reads “maybe”.
+- Better: On the bill the suggestions for more people are one swipeable line, so the items sit higher.
+- Better: The balance history also finds the cause when somebody synced the change late (before, no cause was shown then).
+
 ## 0.1.111
 - Better: “What for” and the total on the bill are smaller, the items move further up.
 
