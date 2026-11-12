@@ -1,3 +1,6 @@
+## 0.1.113
+- New: If a device with an old app version (up to 0.1.85) writes into your bills, the history warns you. Old versions overwrite new changes and create duplicate entries.
+
 ## 0.1.112
 - New: Balance history. In the profile under “How your balance adds up” (clock icon) and in the history (tab “Balance”) every change to your balance is listed. Tap a row: you see who changed what (with the device), before and after, can open the receipt there and undo the change.
 - New: The search knows what an item is. “Beer” also finds “Super Bock” and “Cerveja”, “water” finds “Agua” (own dictionary, seven languages, nothing goes online).

@@ -1008,6 +1008,7 @@ const Map<String, String> stringsDe = {
   'ledger.before': 'Stand davor',
   'ledger.what': 'Was sich geändert hat',
   'ledger.device': 'Gerät',
+  'history.oldApp': 'Ein Gerät mit alter App-Version {0} schreibt noch in eure Rechnungen. Alte Versionen überschreiben neue Änderungen – das erzeugt doppelte Einträge. Bitte dort die App aktualisieren oder entfernen.',
   'ledger.open': 'Bon öffnen',
   'ledger.undo': 'Änderung rückgängig machen',
   'ledger.undoAsk': 'Das nimmt die Änderung von {0} zurück. Alle in der Gruppe sehen es als neue Änderung von dir. Was seitdem weiter geändert wurde, bleibt.',

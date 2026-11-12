@@ -1,3 +1,6 @@
+## 0.1.113
+- Neu: Schreibt ein Gerät mit alter App-Version (bis 0.1.85) in eure Rechnungen, warnt der Verlauf. Alte Versionen überschreiben neue Änderungen und erzeugen doppelte Einträge.
+
 ## 0.1.112
 - Neu: Saldo-Verlauf. Im Profil unter „So ergibt sich dein Stand“ (Uhr-Symbol) und im Verlauf (Reiter „Saldo“) steht jede Änderung an deinem Stand. Tippe eine Zeile an: Du siehst, wer was geändert hat (mit Gerät), vorher und nachher, kannst den Bon an der Stelle öffnen und die Änderung rückgängig machen.
 - Neu: Die Suche kennt die Art der Posten. „Bier“ findet auch „Super Bock“ und „Cerveja“, „Wasser“ findet „Agua“ (eigenes Wörterbuch, sieben Sprachen, nichts geht ins Netz).

@@ -17,6 +17,20 @@ import 'common.dart';
 import 'resume.dart' show ResumeFlow;
 import 'scope.dart';
 
+/// The app tag of an old APK build (0.1.N with N up to [kLastOldApk]) that wrote within the last 14 days, or null. Builds up to 0.1.85
+/// lack the fixes against writing stale bills back (STAND 12.11.); the history showed entries of 0.1.83 repeating (Nutzer 12.11.).
+/// Web builds carry „web“ plus short hash, so they never match. Cause: [Likely], not proven.
+const kLastOldApk = 85;
+String? staleAppOf(List<ChangeRecord> changes, {DateTime? now}) {
+  final t = (now ?? DateTime.now()).subtract(const Duration(days: 14));
+  final re = RegExp(r'^0\.1\.(\d+)$');
+  for (final r in changes) {
+    final m = r.app == null ? null : re.firstMatch(r.app!);
+    if (m != null && r.at.isAfter(t) && int.parse(m.group(1)!) <= kLastOldApk) return r.app;
+  }
+  return null;
+}
+
 class HistoryScreen extends StatelessWidget {
   /// Changes of one bill only.
   const HistoryScreen.bill({super.key, required String this.billId, this.billTitle}) : groupTag = null, groupName = null, initialTab = 0;
@@ -116,12 +130,21 @@ class _ChangesList extends StatelessWidget {
         rows.add((r, 1));
       }
     }
+    final oldApp = staleAppOf(changes);
+    final lead = oldApp == null ? 0 : 1;
     return ListView.separated(
       padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom),
-      itemCount: rows.length,
+      itemCount: rows.length + lead,
       separatorBuilder: (_, _) => Divider(height: 1, color: l.hairline),
       itemBuilder: (_, i) {
-        final (r, times) = rows[i];
+        if (lead == 1 && i == 0) {
+          return Padding(
+            key: const Key('old-app-warning'),
+            padding: const EdgeInsets.symmetric(vertical: FasanSpace.s),
+            child: Text(trLang(de ? 'de' : 'en', 'history.oldApp', [oldApp!]), style: tt.bodyMedium!.copyWith(color: Theme.of(context).colorScheme.error)),
+          );
+        }
+        final (r, times) = rows[i - lead];
         final mine = r.whoKey == c.identity?.pub;
         final who = mine ? trLang(de ? 'de' : 'en', 'history.you') : r.who;
         final where = [if (showBill) r.title, if (showGroup) c.groups[r.group]?.localName].whereType<String>().join(' · ');
