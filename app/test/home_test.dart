@@ -102,6 +102,20 @@ void main() {
       expect(store.inGroup(null).map((b) => b.id), ['c']);
     });
 
+    testWidgets('Auswahl: untere Leiste „Schicken (N)“ ersetzt die Navigation, Löschen ist rot', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen')]);
+      await app(tester, store, idle(store));
+      await tester.longPress(find.text('Frühstück'));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byKey(const ValueKey('select-send')), findsOneWidget);
+      expect(find.text('Schicken (1)'), findsOneWidget);
+      await tester.tap(find.text('Abendessen'));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Schicken (2)'), findsOneWidget);
+      final del = tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.delete_outline_rounded));
+      expect(del.style?.foregroundColor?.resolve({}), Colors.red.shade600);
+    });
+
     testWidgets('Langdruck wählt aus; Auswahl auf einen Bon ziehen sortiert sie davor', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen'), _bill('c', 'Taxi')]);
       await app(tester, store, idle(store));

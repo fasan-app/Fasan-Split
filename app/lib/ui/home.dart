@@ -62,6 +62,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _catFilter; // category filter of the lists, null = all
   bool _dragging = false; // bills are lifted: drop targets light up (segments above, Gruppen tab)
   final Set<String> _selected = {};
+  /// Selected items of the Posten view, as „billId/position“ (Nutzer 12.11.: select in Posten too).
+  final Set<String> _selItems = {};
   final _pager = PageController();
   int _page = 0; // 0 open, 1 archive, 2 trash (tab Gruppe), 3 Abrechnung, 4 friends
   // Which of the three bill lists the Gruppe page shows. Archive and trash are views of that ONE page, not pages of the pager:
@@ -250,7 +252,33 @@ class _HomeScreenState extends State<HomeScreen> {
   void _exitSelect() => setState(() {
         _selecting = false;
         _selected.clear();
+        _selItems.clear();
       });
+
+  void _toggleItem(Bill b, BillItem it) {
+    FasanHaptics.of(context).tap();
+    final k = '${b.id}/${b.its.indexOf(it)}';
+    setState(() {
+      if (!_selItems.remove(k)) _selItems.add(k);
+    });
+  }
+
+  /// What the selection holds, as bill → item positions (bills: all their items), for sending.
+  Map<Bill, Set<int>> _sendable(BillStore s) {
+    final out = <Bill, Set<int>>{};
+    if (_itemsView) {
+      for (final k in _selItems) {
+        final at = k.lastIndexOf('/');
+        final b = s.bills.where((x) => x.id == k.substring(0, at)).firstOrNull;
+        if (b != null) (out[b] ??= {}).add(int.parse(k.substring(at + 1)));
+      }
+    } else {
+      for (final b in _picked(s)) {
+        out[b] = {for (var i = 0; i < b.its.length; i++) i};
+      }
+    }
+    return out;
+  }
 
   List<Bill> _picked(BillStore s) => [for (final b in s.bills) if (_selected.contains(b.id)) b];
 
@@ -356,7 +384,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final list = _list;
     // The selection mode stays until it is left again: with the X, with the same icon, or with „Zurück“ (Nutzer 02.11.).
     final selecting = _selecting && list != null;
-    final any = selected.isNotEmpty;
+    final count = _itemsView && _page <= 2 && scopeIsGroup(_scopeOf(store)) ? _selItems.length : selected.length;
+    final any = count > 0;
     final inTrash = list == BillList.trash;
     final inArchive = list == BillList.archive;
     return PopScope(
@@ -374,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: selecting
             ? AppBar(
                 leading: IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: _exitSelect),
-                title: Text(_dragging ? (trLang(t.de ? 'de' : 'en', 'home.dragOntoATarget')) : any ? t.nSelected(selected.length) : t.selectHint),
+                title: Text(_dragging ? (trLang(t.de ? 'de' : 'en', 'home.dragOntoATarget')) : any ? t.nSelected(count) : t.selectHint),
                 // while dragging only the targets below act (Nutzer 04.11.: two sets of archive/trash symbols)
                 actions: _dragging ? const [] : [
                   if (inTrash) ...[
@@ -382,7 +411,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       store.untrash(selected);
                       _exitSelect();
                     }),
-                    IconButton(tooltip: t.deleteForever, icon: const Icon(Icons.delete_forever_outlined), onPressed: !any ? null : () async {
+                    const SizedBox(width: FasanSpace.l),
+                    IconButton(tooltip: t.deleteForever, style: IconButton.styleFrom(foregroundColor: Colors.red.shade600), icon: Icon(Icons.delete_forever_outlined, color: Colors.red.shade600), onPressed: !any ? null : () async {
                       final l = selected;
                       if (await _confirmForever(context, l.length)) {
                         store.deleteForever(l);
@@ -400,9 +430,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         _toArchive(context, l, !inArchive);
                       },
                     ),
+                    // red and set apart (Nutzer 12.11.): nobody deletes by accident while reaching for „Schicken“
+                    const SizedBox(width: FasanSpace.l),
                     IconButton(
                       tooltip: t.delete,
-                      icon: const Icon(Icons.delete_outline_rounded),
+                      style: IconButton.styleFrom(foregroundColor: Colors.red.shade600), // the theme's icon button style would override `color`
+                      icon: Icon(Icons.delete_outline_rounded, color: Colors.red.shade600),
                       onPressed: !any ? null : () {
                         final l = selected;
                         _exitSelect();
@@ -484,7 +517,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-        bottomNavigationBar: _dragging && list != null
+        bottomNavigationBar: selecting && !_dragging && !inTrash
+            ? _SelectBar(
+                count: count,
+                onSend: !any ? null : () async {
+                  final map = _sendable(store);
+                  await sendItemsOfBills(context, map);
+                  if (mounted) _exitSelect();
+                },
+              )
+            : _dragging && list != null
             ? _DropDock(
                 from: list,
                 onList: (bills, target) => _dropOnList(context, store, bills, target),
@@ -505,11 +547,12 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Entries stay and are greyed out when they cannot act (docs/recherche: never hide menu entries).
   Widget _moreMenu(BuildContext context, BillStore store, BillList? list) {
     final t = S.of(context);
-    final canSelect = list != null && _hasAny(store, list);
+    final canSelect = _selecting || (list != null && (_itemsView ? _hasVisibleItems : _hasAny(store, list)));
+    void toggleSelect() => _selecting ? _exitSelect() : setState(() => _selecting = true);
     if (_page <= 2 && scopeIsGroup(_scopeOf(store))) {
       return Row(mainAxisSize: MainAxisSize.min, children: [
         if (_itemsView && _hasVisibleItems) IconButton(key: const ValueKey('send-visible'), tooltip: trLang(t.de ? 'de' : 'en', 'send.filtered'), icon: const Icon(Icons.forward_to_inbox_outlined), onPressed: () => _sendVisible(context)),
-        ...groupActions(context, _scopeOf(store), compact: true, onDeleted: () => setState(() => _scope = kScopeAll), onSelect: canSelect ? () => setState(() => _selecting = true) : null),
+        ...groupActions(context, _scopeOf(store), compact: true, onDeleted: () => setState(() => _scope = kScopeAll), onSelect: canSelect ? toggleSelect : null, selecting: _selecting),
       ]);
     }
     if (_page > 2) {
@@ -521,9 +564,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return PopupMenuButton<String>(
       key: const ValueKey('more-menu'),
-      onSelected: (v) => v == 'send' ? _sendVisible(context) : setState(() => _selecting = true),
+      onSelected: (v) => v == 'send' ? _sendVisible(context) : toggleSelect(),
       itemBuilder: (_) => [
-        PopupMenuItem(value: 'select', enabled: canSelect, child: Text(t.select)),
+        PopupMenuItem(value: 'select', enabled: canSelect, child: Text(_selecting ? trLang(t.de ? 'de' : 'en', 'select.end') : t.select)),
         if (_itemsView) PopupMenuItem(value: 'send', enabled: _hasVisibleItems, child: Text(trLang(t.de ? 'de' : 'en', 'send.filtered'))),
       ],
     );
@@ -855,6 +898,17 @@ class _HomeScreenState extends State<HomeScreen> {
             if (it == null) return GroupBillHeading(key: ValueKey('h-${b.id}'), bill: b, onTap: () => openBill(context, b));
             if (identical(it, kPayerRow)) return GroupPayerRow(key: ValueKey('payer-${b.id}'), bill: b, onTap: () => openBill(context, b));
             if (identical(it, kDifferenceRow)) return GroupRestRow(key: ValueKey('rest-${b.id}'), bill: b, onTap: () => openBill(context, b));
+            if (_selecting) {
+              final on = _selItems.contains('${b.id}/${b.its.indexOf(it)}');
+              return InkWell(
+                key: ValueKey('sel-${b.id}/${b.its.indexOf(it)}'),
+                onTap: () => _toggleItem(b, it),
+                child: Row(children: [
+                  Checkbox(value: on, onChanged: (_) => _toggleItem(b, it)),
+                  Expanded(child: IgnorePointer(child: GroupItemRow(bill: b, item: it, onTap: () {}))),
+                ]),
+              );
+            }
             return GroupItemRow(key: ValueKey('${b.id}/${b.its.indexOf(it)}'), bill: b, item: it, onTap: () => _editItem(context, b, it));
           },
         ),
@@ -1231,6 +1285,28 @@ class _DragFeedback extends StatelessWidget {
 /// While bills are dragged the bottom bar becomes the drop targets (Nutzer 04.11.: „beim Verschieben auf den darunter
 /// liegenden Papierkorb muss er deutlich animiert zeigen, dass beim Loslassen gelöscht wird – systemweit die Regel“).
 /// The target under the finger grows, takes its colour and says what happens on release.
+/// Bottom bar of the selection mode: same size as the navigation bar, one clear action „Schicken (N)“ (Nutzer 12.11.).
+class _SelectBar extends StatelessWidget {
+  const _SelectBar({required this.count, required this.onSend});
+
+  final int count;
+  final VoidCallback? onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = FasanLook.of(context), lang = S.of(context).de ? 'de' : 'en';
+    return Padding(
+      padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s + MediaQuery.paddingOf(context).bottom),
+      child: SizedBox(
+        height: l.minTap + 24,
+        child: Center(
+          child: FasanButton(key: const ValueKey('select-send'), label: trLang(lang, 'select.send', ['$count']), onPressed: onSend),
+        ),
+      ),
+    );
+  }
+}
+
 class _DropDock extends StatelessWidget {
   const _DropDock({required this.from, required this.onList, required this.onGroup});
 
@@ -1250,7 +1326,7 @@ class _DropDock extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(FasanSpace.l, 0, FasanSpace.l, FasanSpace.s + MediaQuery.paddingOf(context).bottom),
       child: SizedBox(
-        height: l.minTap + 56,
+        height: l.minTap + 24, // as high as the navigation bar: the bottom does not jump when dragging starts (Nutzer 12.11.)
         child: Row(children: [
           for (final (icon, label, action, color, drop) in targets)
             Expanded(
@@ -1278,13 +1354,14 @@ class _DropDock extends StatelessWidget {
                           border: Border.all(color: color.withValues(alpha: over ? 1 : 0.5), width: 1.5),
                         ),
                         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          AnimatedScale(duration: motion.short, scale: over ? 1.25 : 1, child: Icon(icon, color: over ? Colors.white : color, size: 26)),
-                          const SizedBox(height: 4),
+                          AnimatedScale(duration: motion.short, scale: over ? 1.25 : 1, child: Icon(icon, color: over ? Colors.white : color, size: 22)),
+                          const SizedBox(height: 2),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Text(over ? action : label,
                                 textAlign: TextAlign.center,
-                                maxLines: 2,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.labelSmall!.copyWith(color: over ? Colors.white : color, fontWeight: FontWeight.w700)),
                           ),
                         ]),

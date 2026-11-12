@@ -1,3 +1,8 @@
+## 0.1.116
+- New: While selecting, a "Send (N)" button sits at the bottom, for whole bills and, in the items view, for single items. The app asks before sending, then you can undo for 10 seconds.
+- Better: Delete is red while selecting and set apart at the top right, so you don't hit it by accident.
+- Better: The drag bar is as high as the navigation, the bottom no longer jumps.
+
 ## 0.1.115
 - New: Tap a person's balance in the group (also in the profile): "How this comes about" opens for that person only, with their bills, their balance and the transfers they are part of. If the balance is uncertain, the reason is shown on top.
 - Better: Tapping a group in "All groups" opens the same view as the group picker (no second, different screen any more). The group's notes and chat sit right under "Bills/Items".

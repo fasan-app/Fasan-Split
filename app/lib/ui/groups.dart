@@ -120,7 +120,7 @@ class GroupsPage extends StatelessWidget {
 
 /// Invite, filter and menu (history, leave, delete) of one group: the app bar of the group screen and of the Gruppe tab with a
 /// group picked. [onDeleted] runs after the group was deleted (screen: close it, tab: fall back to „Alle“).
-List<Widget> groupActions(BuildContext context, String name, {required VoidCallback onDeleted, bool compact = false, VoidCallback? onSelect}) {
+List<Widget> groupActions(BuildContext context, String name, {required VoidCallback onDeleted, bool compact = false, VoidCallback? onSelect, bool selecting = false}) {
   final t = S.of(context);
   final lang = t.de ? 'de' : 'en';
   final store = StoreScope.of(context);
@@ -166,7 +166,8 @@ List<Widget> groupActions(BuildContext context, String name, {required VoidCallb
               }
             },
             itemBuilder: (_) => [
-              if (onSelect != null) PopupMenuItem(value: 'select', child: Text(t.select)),
+              // while selecting the entry ends the selection (Nutzer 12.11.: „Auswählen“ made no sense then)
+              if (onSelect != null) PopupMenuItem(value: 'select', child: Text(selecting ? trLang(lang, 'select.end') : t.select)),
               if (compact) PopupMenuItem(value: 'invite', child: Text(t.invite)),
               PopupMenuItem(value: 'history', child: Text(trLang(lang, 'history.title'))),
               if (live != null) PopupMenuItem(value: 'leave', child: Text(t.leaveGroup)),

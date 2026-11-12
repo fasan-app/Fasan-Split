@@ -1,3 +1,8 @@
+## 0.1.116
+- Neu: Beim Auswählen steht unten der Knopf „Schicken (N)“ – für ganze Rechnungen und, in der Posten-Ansicht, für einzelne Posten. Vor dem Senden fragt die App nach, danach kannst du 10 Sekunden lang rückgängig machen.
+- Besser: Löschen ist beim Auswählen rot und steht abgesetzt oben rechts, damit du es nicht aus Versehen triffst.
+- Besser: Die Leiste beim Ziehen ist so hoch wie die Navigation, der Boden springt nicht mehr.
+
 ## 0.1.115
 - Neu: Tippe in der Gruppe auf den Stand einer Person (auch im Profil): Es öffnet sich „So kommt das zustande“ nur für sie, mit ihren Bons, ihrem Stand und den Überweisungen, an denen sie beteiligt ist. Ist der Stand ungewiss, steht der Grund oben.
 - Besser: Tippst du in „Alle Gruppen“ auf eine Gruppe, öffnet sich dieselbe Ansicht wie über den Gruppenschalter (kein zweiter, anderer Bildschirm mehr). Notizen und Chat der Gruppe stehen dort direkt unter „Rechnungen/Posten“.

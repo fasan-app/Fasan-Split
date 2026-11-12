@@ -7,6 +7,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:fasan_split/ui/bill_tile.dart';
 import 'package:fasan_split/main.dart';
 import 'package:fasan_split/collab/keys.dart' show MemoryVault;
 import 'package:fasan_split/collab/nostr.dart' show MemoryRelay, MemoryRelayHub;
@@ -310,6 +311,7 @@ void main() {
     'h06-gruppen': (_) => const HomeScreen(),
     // Posten view of the start page: the same tiles as in the bill, with the receipt snippet (09.11.); browser walk step still to add
     'h07b-gruppe-posten': (_) => const HomeScreen(),
+    'h03-auswahl': (_) => const HomeScreen(),
     'h13-freunde': (_) => const HomeScreen(),
     // group page with the walk receipt (Beispielstadt, Pia paid, Lena owes 10,00): Personen, settle as paid – whole and a part (06.11.)
     for (final k in ['h07-gruppe-offen', 'h08-personen', 'h08b-bezahlt-frage', 'h08d-teilbetrag', 'h08e-rest-offen', 'h08g-profil', 'h08h-person-saldo', 'h07c-gruppe-suche'])
@@ -374,6 +376,14 @@ void main() {
       for (var i = 0; i < 8; i++) {
         await t.pump(const Duration(milliseconds: 100));
       }
+    },
+    'h03-auswahl': (t) async {
+      await t.tap(find.byKey(const ValueKey('more-menu')));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Auswählen'));
+      await t.pump(const Duration(milliseconds: 300));
+      await t.tap(find.byType(BillTile).first);
+      await t.pump(const Duration(milliseconds: 500));
     },
     'h04-archiv': (t) async {
       await t.tap(find.byKey(const ValueKey('view-menu')));

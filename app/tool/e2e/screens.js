@@ -59,7 +59,7 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     // the photo comes in pieces: wait until the menu entries are enabled (line pictures and receipt need the scan)
     let ready = false;
     for (let i = 0; i < 90 && !ready; i++) {
-      await p.getByRole('button', { name: /Mehr|More/ }).first().click({ timeout: 10000 }).catch(() => {});
+      await p.getByRole('button', { name: /Menü anzeigen|Show menu/ }).first().click({ timeout: 10000 }).catch(() => {});
       await p.waitForTimeout(800);
       const item = p.getByRole('menuitem', { name: /Am Original zuordnen|Assign on the original/ }).first();
       ready = (await item.count()) > 0 && !(await item.isDisabled().catch(() => true));
@@ -122,6 +122,9 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('b17-gruppe', async () => { await back(); });
     await step('h01-home', async () => { await back(); });
     const tap = async (re, ms = 800) => { const l = p.getByRole('tab', { name: re }).or(p.getByRole('button', { name: re })).or(p.getByRole('checkbox', { name: re })).or(p.getByRole('menuitemcheckbox', { name: re })).or(p.getByText(re)).first(); await l.click({ timeout: 8000 }); await p.waitForTimeout(ms); };
+    // selection mode: bottom bar „Schicken (N)“ instead of the navigation (12.11.), same step in test/screens_test.dart
+    await step('h03-auswahl', async () => { await p.getByRole('button', { name: /Menü anzeigen|Show menu/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(400); await p.getByRole('menuitem', { name: /^Auswählen$/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(500); await p.getByText('Foto-Test').or(p.getByLabel('Foto-Test')).first().click({ timeout: 8000 }); await p.waitForTimeout(500); });
+    await step('h03b-auswahl-zu', async () => { await p.getByRole('button', { name: /Abbrechen|Cancel/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(500); });
     await step('h04-archiv', async () => { await tap(/^(Offen|Archiv|Papierkorb)$/); await tap(/^Archiv$/); });
     await step('h05-papierkorb', async () => { await tap(/^(Offen|Archiv|Papierkorb)$/); await tap(/^Papierkorb$/); });
     await step('h06-gruppen', async () => { await tap(/^Abrechnung/); });

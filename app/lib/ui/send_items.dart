@@ -45,28 +45,66 @@ Future<bool> sendItemsFlow(BuildContext context, Bill bill, {Set<int> preselecte
   final idx = picked.toList()..sort();
   final names = [for (final i in idx) bill.its[i].title];
   final text = idx.length == 1 ? names.first : trLang(lang, 'send.text', ['${idx.length}', bill.purpose.isEmpty ? names.first : bill.purpose]);
-  CollabScope.read(context).sendMessage(g, text, bill: bill.id, items: idx);
-  showNote(context, trLang(lang, 'send.done', [g.localName as String]));
+  final c = CollabScope.read(context);
+  final id = c.sendMessage(g, text, bill: bill.id, items: idx);
+  // 10 s to take it back (Nutzer 12.11.): the message is deleted again, nobody has to ask a moderator
+  showNote(context, trLang(lang, 'send.done', [g.localName as String]), actionLabel: trLang(lang, 'send.undo'), duration: const Duration(seconds: 10), onAction: id == null ? null : () => c.deleteMessage(g, id));
   return true;
 }
 
-/// Sends the given items of several bills: one card per bill (used by the filtered item list).
+/// Sends the given items of several bills: one card per bill (used by the filtered item list). Nothing goes out before the
+/// person has seen WHAT (items and bills) and WHERE (which chats) and confirmed (Nutzer 12.11.); then 10 s to take it back.
 Future<void> sendItemsOfBills(BuildContext context, Map<Bill, Set<int>> byBill) async {
   final lang = context.langCode;
   final c = CollabScope.read(context);
-  var n = 0, skipped = 0;
+  // plan: per chat (group) the items and bills; bills without a shared group are named, not silently dropped
+  final plan = <dynamic, ({int items, int bills})>{};
+  var skipped = 0;
   for (final e in byBill.entries) {
     final g = _groupOf(context, e.key);
     if (g == null || e.value.isEmpty) {
       skipped++;
       continue;
     }
+    final old = plan[g];
+    plan[g] = (items: (old?.items ?? 0) + e.value.length, bills: (old?.bills ?? 0) + 1);
+  }
+  if (plan.isEmpty) {
+    showNote(context, trLang(lang, 'send.noGroup'));
+    return;
+  }
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      key: const ValueKey('send-confirm'),
+      title: Text(trLang(lang, 'send.confirmTitle')),
+      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(trLang(lang, 'send.confirmWhat', ['${plan.values.fold(0, (a, v) => a + v.items)}', '${plan.values.fold(0, (a, v) => a + v.bills)}'])),
+        const SizedBox(height: FasanSpace.s),
+        for (final e in plan.entries) Text(trLang(lang, 'send.confirmLine', [e.key.localName as String, '${e.value.items}', '${e.value.bills}'])),
+        if (skipped > 0) Padding(padding: const EdgeInsets.only(top: FasanSpace.s), child: Text(trLang(lang, 'send.confirmSkipped', ['$skipped']))),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(trLang(lang, 's.cancel'))),
+        FilledButton(key: const ValueKey('send-confirm-go'), onPressed: () => Navigator.pop(ctx, true), child: Text(trLang(lang, plan.length == 1 ? 'send.confirmGoOne' : 'send.confirmGoMany', ['${plan.length}']))),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  final sent = <(dynamic, String)>[];
+  for (final e in byBill.entries) {
+    final g = _groupOf(context, e.key);
+    if (g == null || e.value.isEmpty) continue;
     final idx = e.value.toList()..sort();
     final names = [for (final i in idx) e.key.its[i].title];
-    c.sendMessage(g, idx.length == 1 ? names.first : trLang(lang, 'send.text', ['${idx.length}', e.key.purpose.isEmpty ? names.first : e.key.purpose]), bill: e.key.id, items: idx);
-    n++;
+    final id = c.sendMessage(g, idx.length == 1 ? names.first : trLang(lang, 'send.text', ['${idx.length}', e.key.purpose.isEmpty ? names.first : e.key.purpose]), bill: e.key.id, items: idx);
+    if (id != null) sent.add((g, id));
   }
-  if (context.mounted) showNote(context, n == 0 ? trLang(lang, 'send.noGroup') : trLang(lang, skipped == 0 ? 'send.doneMany' : 'send.doneSome', ['$n', '$skipped']));
+  showNote(context, trLang(lang, 'send.doneMany', ['${plan.length}']), actionLabel: trLang(lang, 'send.undo'), duration: const Duration(seconds: 10), onAction: () {
+    for (final (g, id) in sent) {
+      c.deleteMessage(g, id);
+    }
+  });
 }
 
 class _SendItemsSheet extends StatefulWidget {

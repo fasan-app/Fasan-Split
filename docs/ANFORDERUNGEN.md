@@ -237,3 +237,4 @@ Wünsche:
    (h) Mitgliederzahl: „Alle Gruppen“ zeigt 7, Lisboa 8: stimmt nicht. In „Alle Gruppen“/Abrechnung fehlt die Mitgliederzahl; Tipp auf die Gruppe dort öffnet einen ganz anderen Bildschirm als die Hauptgruppe (mit Notizen/Chat); „Chat“ öffnet ein missverständliches Fenster.
    Alles mit Design- und Strukturvorgaben (Prüfliste) abgleichen.
 30. (12.11. 14:48, Nutzer) **Browser-Bildschirmfotos immer selbst ansehen**, bei jeder Änderung (nicht nur App-Ansicht). Stand: gilt ab sofort; 0.1.114-Profil im Browser wird nachgesehen.
+31. (12.11. 20:15, Nutzer) **Selbstständig weiterarbeiten, nicht nach Paket 3 stoppen, sondern erst wenn alle Pakete (3–8) und die Roadmap durch sind.** Stand: gilt; Reihenfolge laut STAND.md.
