@@ -1,3 +1,9 @@
+## 0.1.114
+- Neu: Tippst du eine Person an, öffnet sich ihr Profil. Dort steht, ob sie ein Konto verknüpft hat oder nur als Name eingetragen ist, ihr Stand, eure gemeinsamen Gruppen und was sie geändert hat. Im Chat führt der Name oben ebenfalls dorthin (im Gruppenchat zur Mitgliederliste).
+- Besser: „Ohne App / In der App“ ist weg. Statt dessen steht „Konto verknüpft“ oder „Nur Name“.
+- Besser: Der Stand einer Person zählt nur fertige Rechnungen. Sind offene Rechnungen oder fehlende Zahler im Spiel, steht „ungewiss“ daneben, auch bei 0 €.
+- Behoben: Die Mitgliederzahl stimmt jetzt überall (Startseite, Gruppenkarte, Gruppe).
+
 ## 0.1.113
 - Neu: Schreibt ein Gerät mit alter App-Version (bis 0.1.85) in eure Rechnungen, warnt der Verlauf. Alte Versionen überschreiben neue Änderungen und erzeugen doppelte Einträge.
 

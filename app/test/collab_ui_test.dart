@@ -12,6 +12,7 @@ import 'package:fasan_split/ui/bill_screen.dart';
 import 'package:fasan_split/ui/collab_ui.dart';
 import 'package:fasan_split/ui/item_sheet.dart';
 import 'package:fasan_split/ui/my_balance.dart';
+import 'package:fasan_split/ui/person_profile.dart';
 import 'package:fasan_split/ui/resume.dart';
 import 'package:fasan_split/ui/scope.dart';
 import 'package:fasan_split/ui/send_items.dart';
@@ -359,6 +360,33 @@ void main() {
     await tester.tap(find.text('auf'));
     await tester.pumpAndSettle();
     expect(find.text('Nicht erlaubt'), findsOneWidget, reason: 'die gewählte Stufe steht im Menü');
+  });
+
+  testWidgets('Profil: Person ohne Konto zeigt „Nur Name“, Saldo 0 und die Menüpunkte (Nutzer 12.11.)', (tester) async {
+    final g = await svc.createGroup('WG');
+    tester.view.physicalSize = const Size(1080, 2400);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(Builder(builder: (c) => Scaffold(body: Center(child: TextButton(onPressed: () => openProfile(c, groupName: g.localName, person: 'Berta'), child: const Text('auf')))))));
+    await tester.tap(find.text('auf'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('profile-name')), findsOneWidget);
+    expect(find.text('Berta'), findsWidgets);
+    expect(find.descendant(of: find.byKey(const ValueKey('profile-status')), matching: find.textContaining('Nur')), findsOneWidget, reason: 'kein Konto verknüpft');
+    expect(find.byKey(const ValueKey('profile-balance')), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-chat')), findsOneWidget);
+    expect(find.text('Ohne App'), findsNothing);
+    expect(find.text('In der App'), findsNothing);
+  });
+
+  testWidgets('Chat: Name oben antippen öffnet im Gruppenchat die Mitglieder (Nutzer 12.11.)', (tester) async {
+    final g = await svc.createGroup('WG');
+    tester.view.physicalSize = const Size(1080, 2400);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(ChatScreen(group: g)));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('chat-header')));
+    await tester.pumpAndSettle();
+    expect(find.byType(MembersScreen), findsOneWidget);
   });
 
   testWidgets('Benachrichtigungen: nach der ersten Einwilligung einmal gefragt, „Einschalten“ ohne Berechtigung zeigt den Hinweis, danach nie wieder', (tester) async {

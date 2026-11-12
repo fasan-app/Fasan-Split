@@ -26,6 +26,8 @@ import 'hints.dart';
 import 'history.dart';
 import 'my_balance.dart';
 import 'pay_ui.dart';
+import 'balance_state_ui.dart';
+import 'person_profile.dart';
 import 'marquee_text.dart';
 import 'shape_tokens.dart';
 
@@ -64,6 +66,9 @@ class GroupsPage extends StatelessWidget {
             final lg = CollabScope.of(context).groupByLocalName(g), live = lg != null;
             final unread = lg == null ? 0 : CollabScope.of(context).unread(lg);
             final last = lg == null ? null : CollabScope.of(context).lastMessage(lg);
+            // the same count as the group header (Nutzer 12.11.: the members were missing here and the numbers differed)
+            final nPeople = CollabScope.of(context).peopleOf(g).length;
+            final members = trLang(t.de ? 'de' : 'en', nPeople == 1 ? 'groups.oneMember' : 'groups.nMembers', ['$nPeople']);
             return Material(
               color: l.surfaceAlt,
               borderRadius: BorderRadius.circular(l.rCard),
@@ -83,8 +88,8 @@ class GroupsPage extends StatelessWidget {
                             last != null && unread > 0
                                 ? '${lg!.session.nameOf(last.from)}: ${last.text}'
                                 : live
-                                    ? '${t.billsCount(spend.length)} · ${t.shared}'
-                                    : t.billsCount(spend.length),
+                                    ? '${t.billsCount(spend.length)} · $members · ${t.shared}'
+                                    : '${t.billsCount(spend.length)} · $members',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: tt.bodySmall!.copyWith(fontWeight: unread > 0 ? FontWeight.w700 : null)),
@@ -341,6 +346,7 @@ class GroupPeople extends StatelessWidget {
     // the member's first name stands for all of them.
     final (:keyOf, :label) = groupNaming(context, name);
     final bal = store.groupBalance(name, key: keyOf);
+    final gaps = store.groupGaps(name, key: keyOf);
     final moves = settle(bal);
     final anyDone = store.inGroup(name, done: true).isNotEmpty;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -356,8 +362,8 @@ class GroupPeople extends StatelessWidget {
       if (people.isEmpty) Text(t.groupNoPeople, style: tt.bodyMedium!.copyWith(color: l.textMuted)),
       for (final (i, p) in people.indexed)
         InkWell(
-          // Live group: who of the bills is which member (Nutzer 03.11.: invite people from a bill, link, unlink).
-          onTap: live == null ? null : () => _personActions(context, live, p),
+          // the profile of the person (Nutzer 12.11.): status, balance, groups, changes, and the actions that used to be in a sheet
+          onTap: () => openProfile(context, groupName: name, person: p),
           child: Container(
           constraints: BoxConstraints(minHeight: l.minTap),
           decoration: BoxDecoration(border: Border(bottom: BorderSide(color: l.hairline))),
@@ -373,17 +379,17 @@ class GroupPeople extends StatelessWidget {
                     docId: GroupSession.members,
                     builder: (context) => Text(
                       switch (live.session.memberOfPerson(p)) {
-                        final m? when label('@$m') != p => '${t.inTheApp} · ${t.countsWith(label('@$m'))}',
-                        _?  => t.inTheApp,
-                        _ => t.withoutApp,
+                        null => t.nameOnlyText,
+                        final m when label('@$m') != p => '${t.linkedAccountText} · ${t.countsWith(label('@$m'))}',
+                        _ => t.linkedAccountText,
                       },
                       style: tt.bodySmall!.copyWith(color: l.textMuted),
                     ),
                   ),
               ]),
             ),
-            if (label(keyOf(p)) == p && bal[keyOf(p)] != null && bal[keyOf(p)] != 0)
-              Text('${money(bal[keyOf(p)]!, de: t.de, sign: true)} ${signOf(context)}', style: tt.titleMedium!.copyWith(color: bal[keyOf(p)]! > 0 ? l.accent : null)),
+            // 0 € and „ungewiss“ are shown too, not only a non-zero amount (Nutzer 12.11.)
+            if (label(keyOf(p)) == p) PersonBalance(cents: bal[keyOf(p)] ?? 0, gap: gaps[keyOf(p)]),
             if (store.isHandMember(name, p))
               IconButton(tooltip: t.cancel, icon: const Icon(Icons.close_rounded), onPressed: () => store.removeGroupMember(name, p)),
           ]),
@@ -468,48 +474,6 @@ class GroupPeople extends StatelessWidget {
         Text(t.groupBalanceHint, style: tt.bodySmall!.copyWith(color: l.textMuted)),
       ],
     ]);
-  }
-}
-
-/// Invite this person, link them to a member who is already in, or unlink. Only the admin changes the members document;
-/// the others see who is linked.
-Future<void> _personActions(BuildContext context, CollabGroup g, String person) async {
-  final t = S.of(context), s = CollabScope.read(context);
-  final linked = g.session.memberOfPerson(person);
-  if (!g.isAdmin) {
-    showNote(context, t.onlyAdminLinks);
-    return;
-  }
-  final members = g.session.memberKeys.toList();
-  final choice = await showModalBottomSheet<String>(
-    context: context,
-    builder: (ctx) => SafeArea(
-      child: ListView(shrinkWrap: true, children: [
-        ListTile(title: Text(person, style: Theme.of(ctx).textTheme.titleMedium)),
-        if (linked == null) ListTile(leading: const Icon(Icons.person_add_alt_1_outlined), title: Text(t.inviteFor(person)), onTap: () => Navigator.pop(ctx, 'invite')),
-        if (linked == null)
-          for (final k in members)
-            ListTile(
-              leading: const Icon(Icons.link_rounded),
-              title: Text(g.session.nameOf(k)),
-              subtitle: Text([t.linkMember, ...g.session.personsOf(k)].join(' · ')),
-              onTap: () => Navigator.pop(ctx, 'link:$k'),
-            ),
-        if (linked != null) ListTile(leading: const Icon(Icons.link_off_rounded), title: Text(t.unlink), subtitle: Text(t.linkedTo(g.session.nameOf(linked))), onTap: () => Navigator.pop(ctx, 'unlink')),
-        // rights and removal live in the person's sheet too (Nutzer 06.11.: one concept „Personen“)
-        if (linked != null) ListTile(leading: const Icon(Icons.admin_panel_settings_outlined), title: Text(t.personRights), onTap: () => Navigator.pop(ctx, 'rights')),
-      ]),
-    ),
-  );
-  if (choice == null || !context.mounted) return;
-  if (choice == 'invite') {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => InviteScreen(group: g, person: person)));
-  } else if (choice == 'rights') {
-    await memberActions(context, g, linked!);
-  } else if (choice == 'unlink') {
-    s.unlinkPerson(g, linked!, person);
-  } else if (choice.startsWith('link:')) {
-    s.linkPerson(g, choice.substring(5), person);
   }
 }
 

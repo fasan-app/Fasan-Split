@@ -707,7 +707,15 @@ class _HomeScreenState extends State<HomeScreen> {
         : [if (scope == kScopeAll) for (final g in store.groups) ...store.inGroup(g), ...store.inGroup(null)];
     final flat = _itemsView ? flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => _itemMatches(b, i, q, t.de), payerMatch: q.isEmpty ? null : (b) => payerSearchMatch(context, b, q)) : const <(Bill, BillItem?)>[];
     _visibleItems = flat;
-    final peopleCount = scopeIsGroup(scope) ? CollabScope.of(context).peopleOf(scope).length : {for (final b in scopeBills) for (final p in b.ps) p.name.trim().toLowerCase()}.length;
+    // one way of counting everywhere (Nutzer 12.11.: „7 in allen Gruppen, 8 in der Gruppe“): a group counts its members and hand-added people
+    // next to the names from its bills (peopleOf); „Alle“ is the union of that over the groups plus the names of bills without a group
+    final collab = CollabScope.of(context);
+    final peopleCount = scopeIsGroup(scope)
+        ? collab.peopleOf(scope).length
+        : {
+            if (scope == kScopeAll) for (final g in store.allGroups) ...collab.peopleOf(g).map((n) => n.trim().toLowerCase()),
+            for (final b in scopeBills) if (b.group == null) for (final p in b.ps) p.name.trim().toLowerCase(),
+          }.length;
     // one banner at a time, most important first: update, backup due, home-screen tip (iPhone browser)
     final Widget? banner = done
         ? null

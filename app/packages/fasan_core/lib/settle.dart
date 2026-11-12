@@ -22,6 +22,30 @@ Map<String, int> balances(Iterable<Bill> bills, {String Function(String name)? k
   return out;
 }
 
+/// What makes a person's balance uncertain (Nutzer 12.11.: „ungewiss, weil z. B. der Zahler fehlt“). [openBills]: bills with the
+/// person that are not finished yet (they are not in the balance); [noPayer]: finished bills with the person but without a payer
+/// (they cannot be counted). Both are only counted for bills that are not settled and no settlement payment.
+class BalanceGap {
+  const BalanceGap({this.openBills = 0, this.noPayer = 0});
+  final int openBills, noPayer;
+  bool get uncertain => openBills + noPayer > 0;
+}
+
+/// The gaps per person (same [key] as [balances]); people without a gap are not in the map.
+Map<String, BalanceGap> balanceGaps(Iterable<Bill> bills, {String Function(String name)? key}) {
+  final k = key ?? (String n) => n;
+  final open = <String, int>{}, nopay = <String, int>{};
+  for (final b in bills) {
+    if (b.settled || b.isTransfer) continue;
+    final gapMap = !b.done ? open : (b.payer == null ? nopay : null);
+    if (gapMap == null) continue;
+    for (final n in {for (final p in b.ps) k(p.name)}) {
+      gapMap.update(n, (x) => x + 1, ifAbsent: () => 1);
+    }
+  }
+  return {for (final n in {...open.keys, ...nopay.keys}) n: BalanceGap(openBills: open[n] ?? 0, noPayer: nopay[n] ?? 0)};
+}
+
 /// The fewest transfers that settle [bal] (Kosten 2, Beschluss 06.11.: exakt, nicht gierig). The minimum is n − k, where k is the largest
 /// number of groups of people whose balances add up to zero (each group settles inside with size − 1 transfers). Found exactly by dynamic
 /// programming over the subsets (2^n · n steps) for up to [exactLimit] people with a non-zero balance; above that the greedy way.

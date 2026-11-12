@@ -14,6 +14,8 @@ extension GroupTexts on S {
   String inviteFor(String p) => text('groups.inviteFor', [p]);
   String linkedTo(String m) => text('groups.linkedTo', [m]);
   String get inTheApp => text('groups.inTheApp');
+  String get linkedAccountText => text('groups.linkedAccount');
+  String get nameOnlyText => text('groups.nameOnly');
   String get withoutApp => text('groups.withoutApp');
   String get personRights => text('groups.personRights');
   String get notLinked => text('groups.notLinked');

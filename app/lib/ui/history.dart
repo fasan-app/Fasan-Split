@@ -88,7 +88,7 @@ void openBillAt(BuildContext context, String billId, [String? itemUid]) {
   Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => bill.done ? ReviewScreen(bill: bill, focusItem: focus) : ResumeFlow(bill: bill, focusItem: focus)));
 }
 
-String _when(BuildContext context, DateTime d) {
+String whenShort(BuildContext context, DateTime d) {
   final de = S.of(context).de, n = DateTime.now();
   String two(int v) => v.toString().padLeft(2, '0');
   final hm = '${two(d.hour)}:${two(d.minute)}';
@@ -160,7 +160,7 @@ class _ChangesList extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: FasanSpace.xs),
                 child: Row(children: [
                   Expanded(child: Text(where.isEmpty ? who : '$who · $where', style: tt.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  Text(_when(context, r.at), style: tt.bodySmall!.copyWith(color: l.textMuted)),
+                  Text(whenShort(context, r.at), style: tt.bodySmall!.copyWith(color: l.textMuted)),
                 ]),
               ),
             ),
@@ -216,7 +216,7 @@ class _CostList extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text([e.title, if (!perGroup && e.group != null) e.group!].join(' · '), style: tt.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
                 if (why != null) Text(why, style: tt.bodySmall!.copyWith(color: l.textMuted)),
-                Text('${trLang(de ? 'de' : 'en', 'history.balanceAfter')}: ${money(after, de: de, sign: true)} $sign · ${_when(context, e.at)}', style: tt.bodySmall!.copyWith(color: l.textMuted)),
+                Text('${trLang(de ? 'de' : 'en', 'history.balanceAfter')}: ${money(after, de: de, sign: true)} $sign · ${whenShort(context, e.at)}', style: tt.bodySmall!.copyWith(color: l.textMuted)),
               ]),
             ),
             Padding(padding: const EdgeInsets.only(top: 4), child: Icon(Icons.chevron_right_rounded, size: 20, color: l.textMuted)),
@@ -289,13 +289,13 @@ class LedgerSheet extends StatelessWidget {
           Text([e.title, if (!perGroup && e.group != null) e.group!].join(' · '), style: tt.titleMedium),
           const SizedBox(height: FasanSpace.s),
           Text('${tr('ledger.before')}: ${money(before, de: de, sign: true)} $sign  →  ${tr('history.balanceAfter')}: ${money(after, de: de, sign: true)} $sign', style: tt.bodyMedium),
-          Text(_when(context, e.at), style: tt.bodySmall!.copyWith(color: l.textMuted)),
+          Text(whenShort(context, e.at), style: tt.bodySmall!.copyWith(color: l.textMuted)),
           const SizedBox(height: FasanSpace.m),
           if (rec == null)
             Text(de ? (e.whyDe ?? tr('ledger.noRecord')) : (e.whyEn ?? e.whyDe ?? tr('ledger.noRecord')), style: tt.bodyMedium)
           else ...[
             FasanLabel(tr('ledger.what')),
-            Text('$who · ${_when(context, rec.at)}${rec.app == null ? '' : ' · ${tr('ledger.device')} ${rec.app}'}', style: tt.bodySmall!.copyWith(color: l.textMuted)),
+            Text('$who · ${whenShort(context, rec.at)}${rec.app == null ? '' : ' · ${tr('ledger.device')} ${rec.app}'}', style: tt.bodySmall!.copyWith(color: l.textMuted)),
             const SizedBox(height: FasanSpace.xs),
             for (final line in rec.lines)
               InkWell(
@@ -377,13 +377,13 @@ class RestoreDialog extends StatelessWidget {
                   final b = s.bill(bill.id);
                   return ListTile(
                     minVerticalPadding: 12,
-                    title: Text('${who(s)} · ${_when(ctx, s.at)}'),
+                    title: Text('${who(s)} · ${whenShort(ctx, s.at)}'),
                     subtitle: Text(tr('history.restoreSummary', ['${b.items?.length ?? 0}', money(b.effectiveTotal, de: de), [for (final i in (b.items ?? const <BillItem>[]).take(3)) '${i.qty > 1 ? '${i.qty} × ' : ''}${i.name}'].join(', ')])),
                     onTap: () async {
                       final ok = await showDialog<bool>(
                         context: ctx,
                         builder: (c2) => AlertDialog(
-                          content: Text(tr('history.restoreConfirm', [who(s), _when(ctx, s.at)])),
+                          content: Text(tr('history.restoreConfirm', [who(s), whenShort(ctx, s.at)])),
                           actions: [
                             TextButton(onPressed: () => Navigator.pop(c2, false), child: Text(tr('s.cancel'))),
                             FilledButton(onPressed: () => Navigator.pop(c2, true), child: Text(tr('history.restoreDo'))),

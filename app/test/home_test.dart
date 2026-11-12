@@ -265,7 +265,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 50));
       }
       expect(find.text('Urlaub'), findsOneWidget, reason: 'Karte der Abrechnung (der Gruppenschalter zeigt „Alle Gruppen“)');
-      expect(find.text('1 Bon'), findsOneWidget);
+      expect(find.textContaining('1 Bon · '), findsOneWidget, reason: 'Karte zeigt jetzt Bons und Mitgliederzahl (Nutzer 12.11.)');
       await tester.tap(find.text('Freunde').last);
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 50));

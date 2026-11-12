@@ -2,6 +2,7 @@
 // Fasan Split – screens of the collaboration: joining, live sharing with the one-time consent, invitations, members,
 // notes, chat and the account. The screens talk only to CollabService. Public relays are contacted only after the user
 // has agreed in the consent dialog, and tests never reach them (they use MemoryRelay). MPL-2.0
+import 'person_profile.dart';
 import '../l10n/tr.dart';
 import 'dart:async';
 
@@ -598,8 +599,8 @@ class MembersScreen extends StatelessWidget {
                   if (s.distrusted.contains(k)) t.confirmsAboutMe,
                   if (s.blocked.contains(k)) trLang(t.de ? 'de' : 'en', 'trust.blockShort'),
                 ].join(' · ')),
-                trailing: k == me ? null : const Icon(Icons.more_vert_rounded),
-                onTap: k == me && !group.isAdmin ? null : () => memberActions(context, group, k),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => openProfile(context, groupName: group.localName, pub: k),
               ),
           ]);
         },
@@ -967,14 +968,21 @@ class _ChatScreenState extends State<ChatScreen> {
                 final n = g.secret.direct ? c.directName(g) : g.localName;
                 final peer = g.secret.direct ? c.directPeer(g) : null;
                 final seen = peer == null ? null : c.lastSeen(peer);
-                return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                // Nutzer 12.11.: the name in the chat header looks tappable, so it opens the person (direct chat) or the members (group chat).
+                return InkWell(key: const ValueKey('chat-header'), onTap: () {
+                  if (peer != null) {
+                    openProfile(context, groupName: '', person: n, pub: peer);
+                  } else if (!g.secret.direct) {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => MembersScreen(group: g)));
+                  }
+                }, child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                   Text(n.isEmpty ? t.chatTitle : n),
                   if (peer != null && (c.isOnline(peer) || seen != null))
                     Text(
                       c.isOnline(peer) ? 'online' : trLang(t.de ? 'de' : 'en', 'collab_ui.lastSeen', [seen!.day, seen.month, seen.hour.toString().padLeft(2, '0'), seen.minute.toString().padLeft(2, '0')]),
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
-                ]);
+                ]));
               })),
       body: Column(children: [
         Expanded(

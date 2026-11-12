@@ -1,3 +1,9 @@
+## 0.1.114
+- New: Tap a person and their profile opens. It shows whether they linked an account or are only a name, their balance, your shared groups and what they changed. In a chat, the name at the top leads there too (in a group chat to the member list).
+- Better: "Without app / In the app" is gone. It now says "Account linked" or "Name only".
+- Better: A person's balance counts finished bills only. With open bills or missing payers it says "uncertain" next to it, even at 0 €.
+- Fixed: The member count is now the same everywhere (home, group card, group).
+
 ## 0.1.113
 - New: If a device with an old app version (up to 0.1.85) writes into your bills, the history warns you. Old versions overwrite new changes and create duplicate entries.
 

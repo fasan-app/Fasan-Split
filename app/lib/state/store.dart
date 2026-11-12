@@ -334,6 +334,9 @@ class BillStore extends ChangeNotifier {
   /// Balance per member over the finished bills of the group (positive = gets money). See model/settle.dart.
   Map<String, int> groupBalance(String group, {String Function(String name)? key}) => balances(inGroup(group, done: true), key: key);
 
+  /// What makes the balances of the group uncertain (open bills, finished bills without a payer), per member key.
+  Map<String, BalanceGap> groupGaps(String group, {String Function(String name)? key}) => balanceGaps(inGroup(group, archived: false), key: key);
+
   /// Removes the group; its bills stay, without group.
   void deleteGroup(String name) {
     for (final b in bills) {
