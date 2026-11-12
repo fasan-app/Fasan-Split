@@ -56,6 +56,6 @@ Jedes Paket: Tutorial und Tipps (de/en), Bildschirmvergleich Browser, Test mit e
 
 ## 4. Offene Entscheidungen (Standard in Klammern)
 - Senden: Bestätigen + 10 s Rückgängig, oder nur Bestätigen? (beides)
-- Betragsverlauf: Schalter als Absprache, oder echter Schlüssel je Person (aufwendig, nicht vor Paket 7)? (Absprache)
+- Betragsverlauf: **entschieden 12.11.: echter Schlüssel je Person** (Paket 7, vorher Konzept).
 - Zahlungsangaben nur per Direktnachricht auf Anfrage, nicht im Gruppenprofil? (ja)
 - Reihenfolge: wie vom Nutzer (Mitglieder/Profil zuerst) oder erst die kleinen Fehler aus Paket 3? (Mitglieder/Profil zuerst)
