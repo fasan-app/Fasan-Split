@@ -81,6 +81,12 @@ extension CollabServiceAdmin on CollabService {
     _notify();
   }
 
+  /// Founder: „everybody is admin“ on or off (Paket 5).
+  void setAllAdmins(CollabGroup g, bool on) {
+    g.session.setAllAdmins(on);
+    _notify();
+  }
+
   /// Admin: new group key for everyone in the members list except me; they get it as a NIP-44 message bound to the old
   /// group, then all documents move to the new key. Returns the group under its new key.
   Future<CollabGroup> rotateKey(CollabGroup g) async {

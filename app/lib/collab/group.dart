@@ -461,11 +461,28 @@ class GroupSession {
   bool get isAdmin => admins.contains(me.pub);
 
   /// The founder and every member an admin marked as admin.
-  Set<String> get admins => {
+  Set<String> get admins {
+    final all = allAdmins;
+    return {
         secret.adminPub,
         for (final k in doc(members).keys('m/'))
-          if (doc(members).get(k) case final Map m when m['admin'] == true) k.substring(2),
-      };
+          if (all) k.substring(2) else if (doc(members).get(k) case final Map m when m['admin'] == true) k.substring(2),
+    };
+  }
+
+  /// „Everybody is admin“ (Paket 5, 13.11.): a switch only the founder sets (entry `l/all` of the members document). Missing =
+  /// off, so groups of older versions stay as they are.
+  bool get allAdmins {
+    final e = doc(members).entry('l/all');
+    return e != null && e.author == secret.adminPub && e.value == true;
+  }
+
+  /// Founder: turns „everybody is admin“ on or off.
+  void setAllAdmins(bool on) {
+    if (me.pub != secret.adminPub) throw StateError('only the founder changes this');
+    doc(members).set('l/all', on);
+    touch(members);
+  }
 
   /// Filter for entries of others in the bill documents (trust, CollabService). Null = take all.
   bool Function(String docId, Entry e)? acceptEntry;
@@ -593,7 +610,7 @@ class GroupSession {
         accepted = acceptEntry == null ? entries : entries.where((x) => x.author == me.pub || acceptEntry!(id, x));
         if (id == keysDoc) accepted = accepted.where(_keyEntryOk);
       } else if (fromAdmin) {
-        accepted = entries.where((x) => (x.key.startsWith('m/') || x.key == 'l/admin' || x.key.startsWith('i/')) && adm.contains(x.author));
+        accepted = entries.where((x) => (x.key.startsWith('m/') || x.key == 'l/admin' || x.key.startsWith('i/') || x.key == 'l/all') && adm.contains(x.author) && (x.key != 'l/all' || x.author == secret.adminPub));
       } else {
         final self = entries.where((x) => x.key == 'm/${e.pubkey}' && x.author == e.pubkey).toList();
         if (self.isEmpty) return; // nothing a non-admin may write here

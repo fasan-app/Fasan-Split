@@ -44,6 +44,14 @@ class MembersScreen extends StatelessWidget {
                 value: s.hidesNewBills(group),
                 onChanged: (v) => s.setHideNewBills(group, v),
               ),
+            SwitchListTile(
+              key: const ValueKey('all-admins'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(context.tr('admin.allTitle')),
+              subtitle: Text(context.tr(me == admin ? 'admin.allSub' : 'admin.allSubOnlyFounder')),
+              value: group.session.allAdmins,
+              onChanged: me == admin ? (v) => s.setAllAdmins(group, v) : null,
+            ),
             for (final k in keys)
               ListTile(
                 leading: CircleAvatar(child: Text(group.session.nameOf(k).characters.first.toUpperCase())),

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // Widget tests of the collaboration screens. They use MemoryRelay only: no public relay is contacted. MPL-2.0
 import 'package:fasan_core/bill.dart';
+import 'package:fasan_split/collab/group.dart' show GroupSession;
+import 'package:fasan_split/collab/lww.dart' show Entry;
 import 'package:fasan_split/collab/activity.dart';
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/notify.dart';
@@ -413,6 +415,32 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('profile-confirm-all')));
     await tester.pumpAndSettle();
     expect(svc.confirmAll, isTrue, reason: 'Schalter aus = alles wartet auf mich');
+  });
+
+  testWidgets('Paket 5: „Alle sind Admins“ gilt nur vom Gründer; Admin-Zeile im Profil nur, solange es aus ist', (tester) async {
+    final g = await svc.createGroup('WG');
+    final other = 'ab' * 32;
+    g.session.doc(GroupSession.members).set('m/$other', {'name': 'Otto'});
+    expect(g.session.admins.contains(other), isFalse);
+    // an entry by a non-founder does not count (own group, so that it cannot shadow the founder's entry below)
+    final g2 = await svc.createGroup('WG2');
+    g2.session.doc(GroupSession.members).apply(Entry('l/all', true, DateTime.now().millisecondsSinceEpoch + 10, other));
+    expect(g2.session.allAdmins, isFalse);
+    tester.view.physicalSize = const Size(1080, 2400);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(Builder(builder: (c) => Scaffold(body: Center(child: TextButton(onPressed: () => openProfile(c, groupName: g.localName, pub: other), child: const Text('auf')))))));
+    await tester.tap(find.text('auf'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('profile-admin')));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byKey(const ValueKey('profile-admin')), matching: find.text('Zur Verwaltung machen')), findsOneWidget);
+    svc.setAllAdmins(g, true);
+    await tester.pumpAndSettle();
+    expect(g.session.allAdmins, isTrue);
+    expect(g.session.admins.contains(other), isTrue, reason: 'alle Mitglieder sind Admin');
+    svc.setAllAdmins(g, false);
+    expect(g.session.admins.contains(other), isFalse);
+    await tester.pump(const Duration(seconds: 5));
   });
 
   testWidgets('Chat: Name oben antippen öffnet im Gruppenchat die Mitglieder (Nutzer 12.11.)', (tester) async {

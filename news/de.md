@@ -1,3 +1,6 @@
+## 0.1.118
+- Neu: In der Mitgliederliste gibt es „Alle sind Admins“ (nur der Gründer schaltet es). Ist es aus, ernennst du Admins im Profil einer Person.
+
 ## 0.1.117
 - Neu: Im Profil einer Person siehst du direkt, ob ihre Einträge für dich sofort gelten (Standard), erst gefragt werden oder nicht erlaubt sind – ein Tipp ändert die Stufe. Im eigenen Profil gilt ein Schalter für alle.
 

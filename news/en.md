@@ -1,3 +1,6 @@
+## 0.1.118
+- New: The members list has “Everybody is admin” (only the founder switches it). While it is off, you appoint admins in a person's profile.
+
 ## 0.1.117
 - New: In a person's profile you see right away whether their entries about you apply at once (default), wait for you or are not allowed – one tap changes the level. In your own profile one switch covers everyone.
 

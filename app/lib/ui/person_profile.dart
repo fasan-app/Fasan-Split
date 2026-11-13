@@ -159,6 +159,11 @@ class PersonProfileScreen extends StatelessWidget {
             value: !s.confirmAll,
             onChanged: (v) => s.confirmAll = !v,
           ),
+        if (admin && !isMe && k != g.secret.adminPub)
+          g.session.allAdmins
+              ? tile(Icons.shield_outlined, trLang(lang, 'admin.allTitle'), key: const ValueKey('profile-admin'), sub: trLang(lang, 'admin.profileAll'))
+              : tile(g.session.admins.contains(k) ? Icons.remove_moderator_outlined : Icons.add_moderator_outlined, g.session.admins.contains(k) ? t.takeAdmin : t.giveAdmin,
+                  key: const ValueKey('profile-admin'), onTap: () => s.setAdmin(g, k, !g.session.admins.contains(k))),
         if (!isMe || admin) tile(Icons.admin_panel_settings_outlined, trLang(lang, 'profile.manage'), key: const ValueKey('profile-manage'), onTap: () => memberActions(context, g, k)),
       ],
     ]);
