@@ -395,7 +395,8 @@ void main() {
         ])))));
     await tester.tap(find.text('fremd'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const ValueKey('profile-trust')));
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('profile-trust')), 300);
+    await tester.pumpAndSettle();
     expect(find.descendant(of: find.byKey(const ValueKey('profile-trust')), matching: find.text('Trägt direkt ein')), findsOneWidget, reason: 'Standard ist „voll“, ohne Umweg über das Menü sichtbar');
     await tester.tap(find.byKey(const ValueKey('profile-trust')));
     await tester.pumpAndSettle();
@@ -410,7 +411,8 @@ void main() {
     await tester.tap(find.text('ich'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('profile-trust')), findsNothing, reason: 'für sich selbst gibt es keine Stufe');
-    await tester.ensureVisible(find.byKey(const ValueKey('profile-confirm-all')));
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('profile-confirm-all')), 300);
+    await tester.pumpAndSettle();
     expect(svc.confirmAll, isFalse);
     await tester.tap(find.byKey(const ValueKey('profile-confirm-all')));
     await tester.pumpAndSettle();
@@ -431,7 +433,7 @@ void main() {
     await tester.pumpWidget(host(Builder(builder: (c) => Scaffold(body: Center(child: TextButton(onPressed: () => openProfile(c, groupName: g.localName, pub: other), child: const Text('auf')))))));
     await tester.tap(find.text('auf'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const ValueKey('profile-admin')));
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('profile-admin')), 300);
     await tester.pumpAndSettle();
     expect(find.descendant(of: find.byKey(const ValueKey('profile-admin')), matching: find.text('Zur Verwaltung machen')), findsOneWidget);
     svc.setAllAdmins(g, true);

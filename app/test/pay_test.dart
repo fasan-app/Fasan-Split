@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:fasan_split/collab/group.dart' show GroupSession;
 import 'package:fasan_split/collab/keys.dart';
+import 'package:fasan_split/collab/ledger.dart' show LedgerEntry;
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
 import 'package:fasan_core/pay.dart';
@@ -50,6 +51,37 @@ void main() {
     expect(got?.paypal, 'LenaM');
     expect(got?.iban, 'DE89370400440532013000');
     expect(hub.stored.any((e) => e.content.contains('LenaM') || e.content.contains('DE89')), isFalse, reason: 'auf dem Relay nur verschlüsselt');
+    a.dispose();
+    b.dispose();
+  });
+
+  test('Betragsverlauf (Paket 7): Standard aus; an = Mitglieder sehen Bons und Änderungen; aus = wieder weg', () async {
+    SharedPreferences.setMockInitialValues({});
+    final hub = MemoryRelayHub();
+    final a = CollabService(store: BillStore.memory()..me = 'Pia', vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
+    await a.init();
+    await a.setName('Pia');
+    final g = await a.createGroup('Stadt 26');
+    final link = g.invitations!.create().link;
+    final b = CollabService(store: BillStore.memory()..me = 'Lena', vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => MemoryRelay(hub));
+    await b.init();
+    await b.join(link, 'Lena');
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    final gb = b.groups.values.first;
+    b.ledger.entries.add(LedgerEntry(at: DateTime.now(), billId: 'x1', title: 'Strandbar Erfunden', group: gb.localName, delta: 700, total: 700, groupTotal: 700));
+    expect(b.shareHistory, isFalse, reason: 'Standard: aus');
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    expect(a.historyOf(g, b.identity!.pub), isNull, reason: 'nichts freigegeben');
+    b.shareHistory = true;
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    final seen = a.historyOf(g, b.identity!.pub);
+    expect(seen, hasLength(1));
+    expect(seen!.single.title, 'Strandbar Erfunden');
+    expect(seen.single.delta, 700);
+    expect(hub.stored.any((e) => e.content.contains('Strandbar')), isFalse, reason: 'auf dem Relay nur verschlüsselt');
+    b.shareHistory = false;
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    expect(a.historyOf(g, b.identity!.pub), isNull, reason: 'wieder zurückgenommen');
     a.dispose();
     b.dispose();
   });

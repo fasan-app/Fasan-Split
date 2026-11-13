@@ -1,3 +1,7 @@
+## 0.1.121
+- Neu: Im eigenen Profil gibt es „Meinen Verlauf für Mitglieder zeigen“ (Standard aus). In anderen Profilen siehst du dann deren Verlauf der Beträge; verborgene Bons sind nie dabei.
+- Neu: „Meine Zahlungsangaben schicken“ im Profil einer Person (nach Rückfrage, nur in den Chat mit ihr).
+
 ## 0.1.120
 - Neu: Bons und Posten lassen sich anpinnen (⋮-Menü beim Bon, Posten-Blatt beim Posten). Angepinntes steht oben mit Nadel und gilt nur auf deinem Gerät.
 

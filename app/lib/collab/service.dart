@@ -38,6 +38,7 @@ part 'service_admin.dart';
 part 'service_bridge.dart';
 part 'service_chat.dart';
 part 'service_friends.dart';
+part 'service_history.dart';
 part 'service_locks.dart';
 part 'service_persistence.dart';
 part 'service_photos.dart'; // defined next to the relays (the invitation format needs it too)
@@ -164,6 +165,7 @@ class CollabService extends ChangeNotifier {
   // ---- how others can pay me back (model/pay.dart; Nutzer 04.11.) ----
 
   static const _kPay = 'collab.pay';
+  static const _kShareHistory = 'collab.shareHistory';
   // ---- (methods: service_admin.dart) deleting the account (Nutzer 04.11.) ----
 
   static const _kHidden = 'collab.hiddenFriends';

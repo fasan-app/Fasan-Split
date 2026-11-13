@@ -12,6 +12,7 @@ import 'package:fasan_split/main.dart';
 import 'package:fasan_split/collab/keys.dart' show MemoryVault;
 import 'package:fasan_split/collab/nostr.dart' show MemoryRelay, MemoryRelayHub;
 import 'package:fasan_split/collab/service.dart' show CollabGroup, CollabService;
+import 'package:fasan_split/collab/group.dart' show GroupSession;
 import 'package:fasan_split/collab/notes.dart' show Notes;
 import 'package:fasan_split/ui/collab_chat.dart' show ChatScreen;
 import 'package:fasan_split/ui/collab_notes.dart' show MembersScreen;
@@ -343,6 +344,16 @@ void main() {
       Notes.sendPay(doc, 'cd' * 32, pay: {'iban': 'DE89370400440532013000', 'holder': 'Max Beispiel', 'paypal': 'MaxB'});
       return ChatScreen(group: groupObj!);
     },
+    // amount history in the profile of another member who shows it (Paket 7)
+    'b34-profil-verlauf': (_) {
+      final id = GroupSession.profile('ab' * 32);
+      final doc = groupObj!.session.doc(id);
+      doc.set('hist', [
+        {'t': DateTime.now().subtract(const Duration(hours: 3)).millisecondsSinceEpoch, 'n': 'Strandbar Erfunden', 'd': 700},
+        {'t': DateTime.now().subtract(const Duration(days: 1)).millisecondsSinceEpoch, 'n': 'Restaurant Beispiel', 'd': -300},
+      ]);
+      return PersonProfileScreen(groupName: groupForProfile, pub: 'ab' * 32);
+    },
     'b32-mitglieder-admin': (_) => MembersScreen(group: groupObj!),
     'b31-profil-rechte': (_) => PersonProfileScreen(groupName: groupForProfile, pub: 'ab' * 32),
     'b30-abmelden-dialog': (_) => const ProfileScreen(),
@@ -553,12 +564,12 @@ void main() {
           if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j') || e.key.startsWith('sc'))) ctl.tier = PerfTier.slow;
           final key = GlobalKey();
           CollabService? svc;
-          if (e.key.startsWith('b29') || e.key.startsWith('b30') || e.key.startsWith('b31') || e.key.startsWith('b32') || e.key.startsWith('b33')) {
+          if (e.key.startsWith('b29') || e.key.startsWith('b30') || e.key.startsWith('b31') || e.key.startsWith('b32') || e.key.startsWith('b33') || e.key.startsWith('b34')) {
             final made = svc = CollabService(store: store, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(MemoryRelayHub()));
             await tester.runAsync(() async {
               await made.init();
               await made.setName('Lena');
-              if (e.key.startsWith('b31') || e.key.startsWith('b32') || e.key.startsWith('b33')) {
+              if (e.key.startsWith('b31') || e.key.startsWith('b32') || e.key.startsWith('b33') || e.key.startsWith('b34')) {
                 groupObj = await made.createGroup('Beispielstadt');
                 groupForProfile = groupObj!.localName;
               }

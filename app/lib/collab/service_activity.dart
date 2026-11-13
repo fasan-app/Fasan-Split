@@ -257,6 +257,7 @@ extension CollabServiceActivity on CollabService {
     prefs?.setInt(CollabService._kLedgerAt, _lastBooked.millisecondsSinceEpoch);
     if (changed) {
       prefs?.setString(CollabService._kLedger, l.encode());
+      _publishHistoryAll();
       _notify();
     }
   }

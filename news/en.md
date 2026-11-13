@@ -1,3 +1,7 @@
+## 0.1.121
+- New: Your own profile has “Show my history to members” (off by default). In other profiles you then see their amount history; hidden bills are never included.
+- New: “Send my payment details” in a person's profile (after confirmation, only into the chat with them).
+
 ## 0.1.120
 - New: Bills and items can be pinned (⋮ menu on a bill, item sheet on an item). Pinned things rise to the top with a pin and only count on your device.
 

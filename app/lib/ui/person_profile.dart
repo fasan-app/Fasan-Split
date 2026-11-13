@@ -17,6 +17,7 @@ import 'groups.dart' show groupNaming;
 import 'history.dart' show openBillAt, whenShort;
 import 'balance_breakdown.dart';
 import 'common.dart' show showNote;
+import 'package:fasan_core/bill.dart' show money;
 import 'scope.dart';
 
 /// Opens the profile of [person] (a name from the bills) or of the member [pub] in the group [groupName].
@@ -128,11 +129,45 @@ class PersonProfileScreen extends StatelessWidget {
             ]),
           ),
         ),
+      if (g != null && k != null) ...[
+        const SizedBox(height: FasanSpace.l),
+        FasanLabel(trLang(lang, 'shist.title')),
+        if (isMe)
+          SwitchListTile(
+            key: const ValueKey('profile-share-history'),
+            contentPadding: EdgeInsets.zero,
+            title: Text(trLang(lang, 'shist.share')),
+            subtitle: Text(trLang(lang, 'shist.shareSub')),
+            value: c.shareHistory,
+            onChanged: (v) => c.shareHistory = v,
+          )
+        else
+          ..._sharedHistory(context, c.historyOf(g, k), lang, tt, l),
+      ],
       if (g != null) ...[
         const SizedBox(height: FasanSpace.l),
         _actions(context, g, k, name, isMe),
       ],
     ]);
+  }
+
+  /// The history somebody chose to show (Paket 7), or the note that they do not.
+  List<Widget> _sharedHistory(BuildContext context, List<SharedHistoryLine>? lines, String lang, TextTheme tt, FasanLook l) {
+    if (lines == null) return [Padding(key: const ValueKey('profile-history-off'), padding: const EdgeInsets.symmetric(vertical: FasanSpace.s), child: Text(trLang(lang, 'shist.notShared'), style: tt.bodyMedium!.copyWith(color: l.textMuted)))];
+    if (lines.isEmpty) return [Padding(padding: const EdgeInsets.symmetric(vertical: FasanSpace.s), child: Text(trLang(lang, 'shist.empty'), style: tt.bodyMedium!.copyWith(color: l.textMuted)))];
+    final de = lang == 'de';
+    return [
+      for (final e in lines.take(8))
+        Container(
+          key: ValueKey('profile-history-${e.at.millisecondsSinceEpoch}'),
+          constraints: BoxConstraints(minHeight: l.minTap),
+          alignment: Alignment.centerLeft,
+          child: Row(children: [
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [Text(e.title, style: tt.bodyLarge, maxLines: 1, overflow: TextOverflow.ellipsis), Text(whenShort(context, e.at), style: tt.bodySmall!.copyWith(color: l.textMuted))])),
+            Text('${e.delta >= 0 ? '+' : '−'}${money(e.delta.abs(), de: de)} €', style: tt.bodyLarge),
+          ]),
+        ),
+    ];
   }
 
   Widget _actions(BuildContext context, CollabGroup g, String? k, String name, bool isMe) {
@@ -153,6 +188,15 @@ class PersonProfileScreen extends StatelessWidget {
             await s.requestPay(k, name);
             if (context.mounted) showNote(context, trLang(lang, 'pay.asked'));
           }),
+        if (!isMe)
+          tile(Icons.outbox_outlined, trLang(lang, 'pay.give'), key: const ValueKey('profile-pay-send'), sub: s.myPay.isEmpty ? trLang(lang, 'pay.noneSaved') : trLang(lang, 'pay.giveSub', [name]), onTap: s.myPay.isEmpty
+              ? null
+              : () async {
+                  if (!await confirmDialog(context, trLang(lang, 'pay.give'), trLang(lang, 'pay.giveSub', [name]), trLang(lang, 'pay.send'))) return;
+                  final d = await s.directWith(k, name);
+                  s.sendPay(d);
+                  if (context.mounted) showNote(context, trLang(lang, 'pay.sentDone'));
+                }),
         if (!isMe)
           tile(Icons.verified_user_outlined, t.trustAboutMe, key: const ValueKey('profile-trust'), sub: trLang(lang, 'trust.${s.trustOf(k).name}'), onTap: () => pickTrust(context, s, k))
         else
