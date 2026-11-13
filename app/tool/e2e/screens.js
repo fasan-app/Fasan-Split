@@ -125,6 +125,9 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     // selection mode: bottom bar „Schicken (N)“ instead of the navigation (12.11.), same step in test/screens_test.dart
     await step('h03-auswahl', async () => { await p.getByRole('button', { name: /Menü anzeigen|Show menu/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(400); await p.getByRole('menuitem', { name: /^Auswählen$/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(500); await p.getByText('Foto-Test').or(p.getByLabel('Foto-Test')).first().click({ timeout: 8000 }); await p.waitForTimeout(500); });
     await step('h03b-auswahl-zu', async () => { await p.getByRole('button', { name: /Abbrechen|Cancel/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(500); });
+    // pinned bill (Paket 8, 13.11.): ⋮ of the last row → „Anpinnen“, then back to normal; same step name in test/screens_test.dart
+    await step('h14-angepinnt', async () => { await p.getByRole('button', { name: /Menü anzeigen|Show menu/ }).last().click({ timeout: 8000 }); await p.waitForTimeout(500); await p.getByRole('menuitem', { name: /Anpinnen|^Pin$/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(800); });
+    await step('h14b-pin-weg', async () => { await p.getByRole('button', { name: /Menü anzeigen|Show menu/ }).last().click({ timeout: 8000 }); await p.waitForTimeout(500); await p.getByRole('menuitem', { name: /Nicht mehr anpinnen|Unpin/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(600); });
     await step('h04-archiv', async () => { await tap(/^(Offen|Archiv|Papierkorb)$/); await tap(/^Archiv$/); });
     await step('h05-papierkorb', async () => { await tap(/^(Offen|Archiv|Papierkorb)$/); await tap(/^Papierkorb$/); });
     await step('h06-gruppen', async () => { await tap(/^Abrechnung/); });
