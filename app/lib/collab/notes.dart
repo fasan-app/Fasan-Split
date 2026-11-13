@@ -13,8 +13,12 @@ class NoteInfo {
 }
 
 class ChatMessage {
-  ChatMessage(this.id, this.from, this.text, this.at, {this.bill, this.items = const [], this.reply, this.edited = false, this.deleted = false, this.reactions = const {}, this.mentions = const [], this.pinned = false});
+  ChatMessage(this.id, this.from, this.text, this.at, {this.bill, this.items = const [], this.reply, this.edited = false, this.deleted = false, this.reactions = const {}, this.mentions = const [], this.pinned = false, this.payAsk = false, this.pay});
   final String id, from, text;
+
+  /// Payment details in the direct chat (Paket 6, 13.11.): [payAsk] = „please send me your payment details“, [pay] = the details sent on request (PayInfo JSON).
+  final bool payAsk;
+  final Map<String, Object?>? pay;
 
   /// Id of the message this one answers (quote), or null.
   final String? reply;
@@ -156,7 +160,7 @@ abstract final class Notes {
       if (v is Map) {
         final id = k.substring(2);
         out.add(ChatMessage(id, v['f'] as String? ?? '', v['x'] as String? ?? '', DateTime.fromMillisecondsSinceEpoch((v['t'] as num?)?.toInt() ?? 0),
-            bill: v['b'] as String?, items: [for (final i in (v['i'] as List?) ?? const []) if (i is num) i.toInt()], reply: v['r'] as String?, edited: v['ed'] == 1, deleted: v['d'] == 1, reactions: reactions[id] ?? const {}, mentions: [for (final m in (v['m'] as List?) ?? const []) '$m'], pinned: pinned.contains(id)));
+            bill: v['b'] as String?, items: [for (final i in (v['i'] as List?) ?? const []) if (i is num) i.toInt()], reply: v['r'] as String?, edited: v['ed'] == 1, deleted: v['d'] == 1, reactions: reactions[id] ?? const {}, mentions: [for (final m in (v['m'] as List?) ?? const []) '$m'], pinned: pinned.contains(id), payAsk: v['pq'] == 1, pay: v['py'] is Map ? (v['py'] as Map).cast<String, Object?>() : null));
       }
     }
     out.sort((a, b) => a.at != b.at ? a.at.compareTo(b.at) : a.id.compareTo(b.id));
@@ -177,6 +181,13 @@ abstract final class Notes {
   static String send(LwwDoc doc, String from, String text, {String? bill, List<int> items = const [], String? reply, List<String> mentions = const []}) {
     final id = newUid();
     doc.set('c/$id', {'f': from, 'x': text, 't': _stamp(), 'b': ?bill, if (items.isNotEmpty) 'i': items, 'r': ?reply, if (mentions.isNotEmpty) 'm': mentions});
+    return id;
+  }
+
+  /// A payment request (empty details) or a payment answer ([pay]) in a direct chat.
+  static String sendPay(LwwDoc doc, String from, {Map<String, Object?>? pay}) {
+    final id = newUid();
+    doc.set('c/$id', {'f': from, 'x': '€', 't': _stamp(), if (pay == null) 'pq': 1 else 'py': pay});
     return id;
   }
 

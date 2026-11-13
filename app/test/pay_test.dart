@@ -2,6 +2,7 @@
 // Fasan Split – payment helpers (model/pay.dart). MPL-2.0
 import 'dart:math';
 
+import 'package:fasan_split/collab/group.dart' show GroupSession;
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/nostr.dart';
 import 'package:fasan_split/collab/service.dart';
@@ -21,7 +22,7 @@ void main() {
     expect(PayInfo.fromJson(PayInfo(iban: 'X', paypal: 'Y').toJson()).paypal, 'Y');
   });
 
-  test('Bezahl-Angaben: nur in der Gruppe geteilt, beim anderen lesbar', () async {
+  test('Bezahl-Angaben (Paket 6): bleiben auf dem Gerät, gehen nur auf Anfrage und nach „Schicken“ in den Direkt-Chat', () async {
     SharedPreferences.setMockInitialValues({});
     final hub = MemoryRelayHub();
     final a = CollabService(store: BillStore.memory()..me = 'Pia', vault: MemoryVault(), relayFactory: (_) => MemoryRelay(hub));
@@ -35,10 +36,20 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 1200));
     b.myPay = PayInfo(iban: 'DE89370400440532013000', holder: 'Lena Muster', paypal: 'LenaM');
     await Future<void>.delayed(const Duration(milliseconds: 1200));
+    expect(a.payOf(b.identity!.pub), isNull, reason: 'ohne Anfrage und Antwort sieht niemand die Angaben');
+    expect(g.session.doc(GroupSession.profile(b.identity!.pub)).get('pay'), isNull, reason: 'nicht mehr im Gruppenprofil');
+    await a.requestPay(b.identity!.pub, 'Lena');
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    final db = b.directWithPub(a.identity!.pub)!;
+    final ask = b.messages(db).where((m) => m.payAsk).toList();
+    expect(ask, hasLength(1), reason: 'die Anfrage kommt im Chat an');
+    expect(a.payOf(b.identity!.pub), isNull, reason: 'Anfrage allein gibt nichts heraus');
+    b.sendPay(db);
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
     final got = a.payOf(b.identity!.pub);
     expect(got?.paypal, 'LenaM');
     expect(got?.iban, 'DE89370400440532013000');
-    expect(hub.stored.any((e) => e.content.contains('LenaM')), isFalse, reason: 'auf dem Relay nur verschlüsselt');
+    expect(hub.stored.any((e) => e.content.contains('LenaM') || e.content.contains('DE89')), isFalse, reason: 'auf dem Relay nur verschlüsselt');
     a.dispose();
     b.dispose();
   });

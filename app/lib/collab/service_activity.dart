@@ -329,6 +329,7 @@ extension CollabServiceActivity on CollabService {
 
   void _onDocChanged(CollabGroup g, String id) {
     _scheduleSave();
+    if (identity != null && id == GroupSession.profile(identity!.pub)) _unpublishPay(g); // older versions published my details here
     if (_adoptPending && (id.startsWith('profile:') || id == GroupSession.members)) unawaited(_adoptNameFromGroups());
     _trackActivity(g, id);
     if (id == GroupSession.members || id == GroupSession.chat || id == GroupSession.notes || id.startsWith('profile:')) {

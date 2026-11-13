@@ -1,3 +1,6 @@
+## 0.1.119
+- Neu: Deine Zahlungsangaben bleiben auf deinem Gerät. Im Profil einer Person fragst du sie an; sie bekommt eine Karte im Chat und entscheidet mit „Schicken“. Früher sahen alle Gruppenmitglieder die Angaben – das ist vorbei, alte Einträge werden zurückgenommen.
+
 ## 0.1.118
 - Neu: In der Mitgliederliste gibt es „Alle sind Admins“ (nur der Gründer schaltet es). Ist es aus, ernennst du Admins im Profil einer Person.
 

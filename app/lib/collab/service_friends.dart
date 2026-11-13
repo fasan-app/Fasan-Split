@@ -141,8 +141,7 @@ extension CollabServiceFriends on CollabService {
     _ensureInvitations(g);
     final myName = identity?.name.trim() ?? '';
     if (myName.isNotEmpty && session.doc(GroupSession.profile(me.pub)).get('name') == null) session.setMyName(myName);
-    final pay = myPay;
-    if (!pay.isEmpty && session.doc(GroupSession.profile(me.pub)).get('pay') == null) _publishPay(g, pay);
+    _unpublishPay(g);
     // a new group key from an admin after someone was removed (rotateKey)
     g.rekeySub = relay
         .subscribe(Filter(kinds: const [kindData], tags: {'t': ['${secret.tag}:rekey'], 'p': [me.pub]}))

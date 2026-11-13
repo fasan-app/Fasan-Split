@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../collab/group.dart';
+import 'package:fasan_core/pay.dart' show PayInfo;
 import '../collab/notes.dart';
 import '../collab/service.dart';
 import '../l10n.dart';
@@ -174,8 +175,42 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// „Please send me your payment details“ (Paket 6): mine = waiting; theirs = button „Send“ (only I decide, details stay on this device otherwise).
+  Widget _payAskCard(ChatMessage m, bool mine, List<ChatMessage> msgs, TextTheme tt, FasanLook l) {
+    final t = S.of(context), lang = t.de ? 'de' : 'en', c = CollabScope.read(context);
+    if (mine) return Text(trLang(lang, 'pay.youAsked'), key: ValueKey('pay-asked-${m.id}'), style: tt.bodyMedium);
+    final answered = msgs.any((x) => x.from == c.identity?.pub && x.pay != null && x.at.isAfter(m.at));
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+      Text(trLang(lang, 'pay.requestCard', [widget.group.session.nameOf(m.from)]), style: tt.bodyMedium),
+      const SizedBox(height: 6),
+      answered
+          ? Text(trLang(lang, 'pay.sentDone'), style: tt.labelMedium)
+          : FilledButton.tonal(
+              key: ValueKey('pay-send-${m.id}'),
+              onPressed: () {
+                if (c.myPay.isEmpty) {
+                  showNote(context, trLang(lang, 'pay.noneSaved'));
+                  return;
+                }
+                c.sendPay(widget.group);
+              },
+              child: Text(trLang(lang, 'pay.send')),
+            ),
+    ]);
+  }
+
+  /// The payment details somebody sent on request.
+  Widget _payCard(ChatMessage m, bool mine, TextTheme tt) {
+    final t = S.of(context), lang = t.de ? 'de' : 'en', p = PayInfo.fromJson(m.pay!);
+    if (mine) return Text(trLang(lang, 'pay.youSent'), style: tt.bodyMedium);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+      Text(trLang(lang, 'pay.sentCard', [widget.group.session.nameOf(m.from)]), style: tt.labelMedium),
+      SelectableText([if (p.holder.isNotEmpty) p.holder, if (p.iban.isNotEmpty) 'IBAN ${p.iban}', if (p.paypal.isNotEmpty) 'PayPal ${p.paypal}', if (p.bitcoin.isNotEmpty) 'BTC ${p.bitcoin}', if (p.monero.isNotEmpty) 'XMR ${p.monero}'].join('\n'), style: tt.bodyMedium),
+    ]);
+  }
+
   /// Short one-line description of a message for quotes.
-  String _preview(ChatMessage m, bool de) => m.deleted ? (trLang(de ? 'de' : 'en', 'collab_ui.messageDeleted')) : (m.bill != null ? (trLang(de ? 'de' : 'en', 'collab_ui.receipt', [m.text])) : m.text);
+  String _preview(ChatMessage m, bool de) => m.deleted ? (trLang(de ? 'de' : 'en', 'collab_ui.messageDeleted')) : (m.payAsk || m.pay != null ? '€' : m.bill != null ? (trLang(de ? 'de' : 'en', 'collab_ui.receipt', [m.text])) : m.text);
 
   /// Tag a bill in the chat: the bills of this group, or – writing to a friend – of the groups we share.
   Future<void> _attach() async {
@@ -361,9 +396,11 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             _ => Text(trLang(t.de ? 'de' : 'en', 'collab_ui.receiptNotAvailable'), style: tt.bodySmall),
                           },
+                        if (m.payAsk && !m.deleted) _payAskCard(m, mine, msgs, tt, l),
+                        if (m.pay != null && !m.deleted) _payCard(m, mine, tt),
                         if (m.deleted)
                           Text(trLang(t.de ? 'de' : 'en', 'collab_ui.messageDeleted2'), style: tt.bodySmall?.copyWith(fontStyle: FontStyle.italic, color: l.textMuted))
-                        else if (m.text.isNotEmpty && m.bill == null)
+                        else if (m.text.isNotEmpty && m.bill == null && !m.payAsk && m.pay == null)
                           Text.rich(_rich(m, tt.bodyMedium, l.accent)),
                         if (m.edited && !m.deleted) Text(trLang(t.de ? 'de' : 'en', 'collab_ui.edited'), style: tt.labelSmall),
                         // reactions: emoji with the number of people; changed through the long-press menu

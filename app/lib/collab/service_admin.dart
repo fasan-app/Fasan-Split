@@ -267,30 +267,57 @@ extension CollabServiceAdmin on CollabService {
     _notify();
   }
 
-  /// My payment details, on this device; shared only in my groups' profiles (encrypted, members only).
+  /// My payment details, kept on this device only (Paket 6, 13.11.). Others get them only when they ask in the direct chat and I send.
   PayInfo get myPay => PayInfo.fromJson((jsonDecode(prefs?.getString(CollabService._kPay) ?? '{}') as Map).cast<String, Object?>());
 
   set myPay(PayInfo p) {
     prefs?.setString(CollabService._kPay, jsonEncode(p.toJson()));
-    for (final g in groups.values) {
-      _publishPay(g, p);
-    }
     _notify();
   }
 
-  void _publishPay(CollabGroup g, PayInfo p) {
-    final id = GroupSession.profile(g.session.me.pub);
-    g.session.doc(id).set('pay', p.isEmpty ? null : p.toJson());
+  /// Takes back what older versions published in my profiles in the groups (details were visible to all members there).
+  void _unpublishPay(CollabGroup g) {
+    final me = identity;
+    if (me == null) return;
+    final id = GroupSession.profile(me.pub);
+    if (g.session.doc(id).get('pay') == null) return;
+    g.session.doc(id).set('pay', null);
     g.session.touch(id);
   }
 
-  /// What [pub] shared to be paid (newest group that has it), or null.
+  /// Asks [pub] in our direct chat to send their payment details.
+  Future<void> requestPay(String pub, String name) async {
+    final me = identity;
+    if (me == null) return;
+    final d = await directWith(pub, name);
+    Notes.sendPay(d.session.doc(GroupSession.chat), me.pub);
+    d.session.touch(GroupSession.chat);
+    _notify();
+  }
+
+  /// Answers a request in the direct chat [d] with my details (only when asked and only after I tapped „send“).
+  void sendPay(CollabGroup d) {
+    final me = identity;
+    final p = myPay;
+    if (me == null || p.isEmpty) return;
+    Notes.sendPay(d.session.doc(GroupSession.chat), me.pub, pay: p.toJson());
+    d.session.touch(GroupSession.chat);
+    _notify();
+  }
+
+  /// What [pub] sent me to be paid (newest answer in our direct chat), or null. [pub] never published it anywhere else.
   PayInfo? payOf(String pub) {
-    for (final g in groups.values) {
-      final v = g.session.doc(GroupSession.profile(pub)).get('pay');
-      if (v is Map) return PayInfo.fromJson(v.cast<String, Object?>());
+    PayInfo? best;
+    DateTime? at;
+    for (final g in directs) {
+      for (final m in messages(g)) {
+        if (m.from == pub && m.pay != null && (at == null || m.at.isAfter(at))) {
+          best = PayInfo.fromJson(m.pay!);
+          at = m.at;
+        }
+      }
     }
-    return null;
+    return best;
   }
 
   // ---- deleting the account (Nutzer 04.11.) ----

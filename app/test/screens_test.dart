@@ -12,6 +12,8 @@ import 'package:fasan_split/main.dart';
 import 'package:fasan_split/collab/keys.dart' show MemoryVault;
 import 'package:fasan_split/collab/nostr.dart' show MemoryRelay, MemoryRelayHub;
 import 'package:fasan_split/collab/service.dart' show CollabGroup, CollabService;
+import 'package:fasan_split/collab/notes.dart' show Notes;
+import 'package:fasan_split/ui/collab_chat.dart' show ChatScreen;
 import 'package:fasan_split/ui/collab_notes.dart' show MembersScreen;
 import 'package:fasan_split/ui/person_profile.dart' show PersonProfileScreen;
 import 'package:fasan_split/flows/scan_queue.dart';
@@ -333,6 +335,13 @@ void main() {
     // account (Nutzer 11.11.): profile with „Abmelden“ and the sign-out question (signed-in account, invented name)
     'b29-profil': (_) => const ProfileScreen(),
     // rights level in the profile of another member (Paket 4, 13.11.): shown as its own row with the current level
+    // payment details on request in the chat (Paket 6): a request of another member with the „Send“ button, and details they sent
+    'b33-chat-zahlung': (_) {
+      final doc = groupObj!.session.doc('chat');
+      Notes.sendPay(doc, 'ab' * 32);
+      Notes.sendPay(doc, 'cd' * 32, pay: {'iban': 'DE89370400440532013000', 'holder': 'Max Beispiel', 'paypal': 'MaxB'});
+      return ChatScreen(group: groupObj!);
+    },
     'b32-mitglieder-admin': (_) => MembersScreen(group: groupObj!),
     'b31-profil-rechte': (_) => PersonProfileScreen(groupName: groupForProfile, pub: 'ab' * 32),
     'b30-abmelden-dialog': (_) => const ProfileScreen(),
@@ -535,12 +544,12 @@ void main() {
           if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j') || e.key.startsWith('sc'))) ctl.tier = PerfTier.slow;
           final key = GlobalKey();
           CollabService? svc;
-          if (e.key.startsWith('b29') || e.key.startsWith('b30') || e.key.startsWith('b31') || e.key.startsWith('b32')) {
+          if (e.key.startsWith('b29') || e.key.startsWith('b30') || e.key.startsWith('b31') || e.key.startsWith('b32') || e.key.startsWith('b33')) {
             final made = svc = CollabService(store: store, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(MemoryRelayHub()));
             await tester.runAsync(() async {
               await made.init();
               await made.setName('Lena');
-              if (e.key.startsWith('b31') || e.key.startsWith('b32')) {
+              if (e.key.startsWith('b31') || e.key.startsWith('b32') || e.key.startsWith('b33')) {
                 groupObj = await made.createGroup('Beispielstadt');
                 groupForProfile = groupObj!.localName;
               }

@@ -1,3 +1,6 @@
+## 0.1.119
+- New: Your payment details stay on your device. Ask for someone's in their profile; they get a card in the chat and decide with “Send”. Before, all group members saw them – that is over, old entries are taken back.
+
 ## 0.1.118
 - New: The members list has “Everybody is admin” (only the founder switches it). While it is off, you appoint admins in a person's profile.
 
