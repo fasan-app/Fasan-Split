@@ -1733,6 +1733,9 @@ class CollabService extends ChangeNotifier {
   /// Photo of [b] is on its way from the group (the receipt view shows „kommt …“ instead of nothing).
   bool photoComing(Bill b) => !b.photosRemoved && b.photoRef != null && !imageExists(b.imagePath) && b.group != null && groupByLocalName(b.group!) != null;
 
+  final Map<String, int> _photoRetries = {};
+  final List<Timer> _photoRetryTimers = [];
+
   Future<void> _runPhotoQueue() async {
     if (_photoRunning) return;
     _photoRunning = true;
@@ -1743,9 +1746,17 @@ class CollabService extends ChangeNotifier {
         final b = store.bills.where((x) => x.id == billId).firstOrNull;
         final ref = PhotoRef.fromJson(orig ? b?.origRef : b?.photoRef);
         if (g == null || b == null || ref == null || imageExists(orig ? b.originalPath : b.imagePath)) continue;
-        final bytes = await PhotoSync.fetch(g.session.relay, g.secret, ref, authors: g.session.memberKeys, key: b.hidden ? g.session.keyFor(GroupSession.bill(b.id)) : null);
+        final bytes = await PhotoSync.fetch(g.session.relay, g.secret, ref, isMember: (pub) => g.session.memberKeys.contains(pub), key: b.hidden ? g.session.keyFor(GroupSession.bill(b.id)) : null);
         if (bytes == null) {
           _photoFailed[ref.hash] = DateTime.now();
+          // nobody asks again by itself: try again after the pause, a few times (a new member may learn the members late)
+          final tries = _photoRetries[ref.hash] = (_photoRetries[ref.hash] ?? 0) + 1;
+          if (tries <= 5 && !_disposed) {
+            _photoRetryTimers.add(Timer(const Duration(minutes: 1, seconds: 5), () {
+              final gg = groups[tag], bb = store.bills.where((x) => x.id == billId).firstOrNull;
+              if (!_disposed && gg != null && bb != null) _wantPhotos(gg, bb);
+            }));
+          }
           continue;
         }
         final path = await saveImage('ph_${ref.hash}.jpg', bytes);
@@ -2240,6 +2251,9 @@ class CollabService extends ChangeNotifier {
     if (_storeListening) store.removeListener(_onStoreChanged);
     store.removeListener(_ledgerSoon);
     _ledgerTimer?.cancel();
+    for (final t in _photoRetryTimers) {
+      t.cancel();
+    }
     for (final s in _subs.values) {
       s.cancel();
     }

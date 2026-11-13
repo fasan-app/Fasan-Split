@@ -82,33 +82,47 @@ abstract final class PhotoSync {
   }
 
   /// Fetches and checks a photo; null if it did not complete in [timeout] or the pieces do not give the named hash.
-  /// Only pieces from [authors] count (group members), so a stranger cannot slip in a wrong picture under a known hash
-  /// (it would also fail the hash check).
-  static Future<Uint8List?> fetch(Relay relay, GroupSecret s, PhotoRef ref, {Set<String>? authors, Duration timeout = const Duration(seconds: 25), Uint8List? key}) async {
-    final parts = <int, Uint8List>{};
+  /// Only pieces from group members count, so a stranger cannot slip in a wrong picture under a known hash (it would also fail the
+  /// hash check). Members are asked when a piece is used, not once at the start ([isMember], else [authors]): a relay delivers the
+  /// stored pieces immediately, often before this device has learned who the members are (new member, members document still on
+  /// its way). Such pieces are kept and counted as soon as their author is known (13.11.: the photo never arrived in that case,
+  /// the e2e test hung for ten minutes).
+  static Future<Uint8List?> fetch(Relay relay, GroupSecret s, PhotoRef ref, {Set<String>? authors, bool Function(String pub)? isMember, Duration timeout = const Duration(seconds: 25), Uint8List? key}) async {
+    final parts = <int, Map<String, Uint8List>>{}; // piece number → author → opened bytes
     final done = Completer<Uint8List?>();
+    bool member(String pub) => isMember != null ? isMember(pub) : (authors == null || authors.contains(pub));
+    Timer? recheck;
+    void tryAssemble() {
+      if (done.isCompleted || parts.length < ref.pieces) return;
+      final out = BytesBuilder(copy: false);
+      for (var k = 0; k < ref.pieces; k++) {
+        final byAuthor = parts[k];
+        final from = byAuthor?.keys.where(member).firstOrNull;
+        if (from == null) return; // not every piece has a known member as author yet
+        out.add(byAuthor![from]!);
+      }
+      final bytes = out.takeBytes();
+      done.complete(bytes.length == ref.size && hashOf(bytes) == ref.hash ? bytes : null);
+    }
+
     late StreamSubscription<NostrEvent> sub;
     sub = relay.subscribe(Filter(kinds: const [kindData], tags: {'t': [tagOf(s, ref.hash)]})).listen((e) {
-      if (done.isCompleted || !e.valid || (authors != null && !authors.contains(e.pubkey))) return;
+      if (done.isCompleted || !e.valid) return;
       final d = e.tag('d');
       final prefix = 'fs:${s.tag}:ph:${ref.hash}:';
       if (d == null || !d.startsWith(prefix)) return;
       final i = int.tryParse(d.substring(prefix.length));
-      if (i == null || i < 0 || i >= ref.pieces || parts.containsKey(i)) return;
+      if (i == null || i < 0 || i >= ref.pieces || (parts[i]?.containsKey(e.pubkey) ?? false)) return;
       try {
-        parts[i] = aeadOpenBytes(e.content, key ?? s.key, d);
+        (parts[i] ??= {})[e.pubkey] = aeadOpenBytes(e.content, key ?? s.key, d);
       } catch (_) {
         return; // not for this key or damaged
       }
-      if (parts.length < ref.pieces) return;
-      final out = BytesBuilder(copy: false);
-      for (var k = 0; k < ref.pieces; k++) {
-        out.add(parts[k]!);
-      }
-      final bytes = out.takeBytes();
-      done.complete(bytes.length == ref.size && hashOf(bytes) == ref.hash ? bytes : null);
+      tryAssemble();
     });
+    recheck = Timer.periodic(const Duration(milliseconds: 500), (_) => tryAssemble());
     final r = await done.future.timeout(timeout, onTimeout: () => null);
+    recheck.cancel();
     await sub.cancel();
     return r;
   }

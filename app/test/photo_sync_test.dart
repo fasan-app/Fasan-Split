@@ -3,6 +3,7 @@
 // entry, the Original/Digital switch and the line pictures were missing – the photo never left the phone that scanned).
 // Pieces ≤ 40 KB, encrypted with the group key, checked by hash; line pictures cut on the receiving device. Test relay only.
 // MPL-2.0
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -58,6 +59,23 @@ GroupSecret secret() => GroupSecret(key: randomBytes(32), adminPub: KeyPair.gene
 Future<void> settle([int ms = 600]) => Future<void>.delayed(Duration(milliseconds: ms));
 
 void main() {
+  test('Mitglieder werden erst beim Verwenden der Stücke gefragt: Absender, der erst später als Mitglied bekannt wird, zählt noch (13.11., Foto kam nie an)', () async {
+    final s = secret(), me = KeyPair.generate();
+    final photo = receipt(noisy: true);
+    final ref = PhotoSync.refOf(photo);
+    final hub = MemoryRelayHub();
+    final relay = MemoryRelay(hub);
+    for (final e in PhotoSync.events(me, s, photo)) {
+      await relay.publish(e); // the relay has all pieces before this device knows the members
+    }
+    var known = false;
+    Timer(const Duration(milliseconds: 1200), () => known = true); // members document arrives late
+    final got = await PhotoSync.fetch(relay, s, ref, isMember: (pub) => known && pub == me.pub, timeout: const Duration(seconds: 6));
+    expect(got, photo, reason: 'ohne die Korrektur: Stücke beim Eintreffen verworfen, Abruf endet mit null');
+    // a stranger stays out even later
+    expect(await PhotoSync.fetch(relay, s, ref, isMember: (pub) => false, timeout: const Duration(seconds: 2)), isNull);
+  });
+
   test('Stücke ≤ 40 KB, verschlüsselt, zurück zusammengesetzt und geprüft', () async {
     final s = secret(), me = KeyPair.generate();
     final photo = receipt(noisy: true);
