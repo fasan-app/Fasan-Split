@@ -147,6 +147,18 @@ class PersonProfileScreen extends StatelessWidget {
         tile(Icons.link_rounded, trLang(lang, 'profile.linkTo'), key: const ValueKey('profile-link'), sub: admin ? null : trLang(lang, 'profile.onlyAdmins'), onTap: admin ? () => _linkTo(context, g, name) : null),
       ] else ...[
         tile(Icons.link_off_rounded, t.unlink, key: const ValueKey('profile-unlink'), sub: admin ? t.linkedTo(g.session.nameOf(k)) : trLang(lang, 'profile.onlyAdmins'), onTap: admin ? () => s.unlinkPerson(g, k, name) : null),
+        if (!isMe)
+          tile(Icons.verified_user_outlined, t.trustAboutMe, key: const ValueKey('profile-trust'), sub: trLang(lang, 'trust.${s.trustOf(k).name}'), onTap: () => pickTrust(context, s, k))
+        else
+          SwitchListTile(
+            key: const ValueKey('profile-confirm-all'),
+            contentPadding: EdgeInsets.zero,
+            secondary: const Icon(Icons.verified_user_outlined),
+            title: Text(t.trustAboutMe),
+            subtitle: Text(t.trustAboutMeSub),
+            value: !s.confirmAll,
+            onChanged: (v) => s.confirmAll = !v,
+          ),
         if (!isMe || admin) tile(Icons.admin_panel_settings_outlined, trLang(lang, 'profile.manage'), key: const ValueKey('profile-manage'), onTap: () => memberActions(context, g, k)),
       ],
     ]);

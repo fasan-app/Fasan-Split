@@ -1,3 +1,6 @@
+## 0.1.117
+- New: In a person's profile you see right away whether their entries about you apply at once (default), wait for you or are not allowed – one tap changes the level. In your own profile one switch covers everyone.
+
 ## 0.1.116
 - New: While selecting, a "Send (N)" button sits at the bottom, for whole bills and, in the items view, for single items. The app asks before sending, then you can undo for 10 seconds.
 - Better: Delete is red while selecting and set apart at the top right, so you don't hit it by accident.

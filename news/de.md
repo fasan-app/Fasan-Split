@@ -1,3 +1,6 @@
+## 0.1.117
+- Neu: Im Profil einer Person siehst du direkt, ob ihre Einträge für dich sofort gelten (Standard), erst gefragt werden oder nicht erlaubt sind – ein Tipp ändert die Stufe. Im eigenen Profil gilt ein Schalter für alle.
+
 ## 0.1.116
 - Neu: Beim Auswählen steht unten der Knopf „Schicken (N)“ – für ganze Rechnungen und, in der Posten-Ansicht, für einzelne Posten. Vor dem Senden fragt die App nach, danach kannst du 10 Sekunden lang rückgängig machen.
 - Besser: Löschen ist beim Auswählen rot und steht abgesetzt oben rechts, damit du es nicht aus Versehen triffst.

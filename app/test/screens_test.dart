@@ -12,6 +12,7 @@ import 'package:fasan_split/main.dart';
 import 'package:fasan_split/collab/keys.dart' show MemoryVault;
 import 'package:fasan_split/collab/nostr.dart' show MemoryRelay, MemoryRelayHub;
 import 'package:fasan_split/collab/service.dart' show CollabService;
+import 'package:fasan_split/ui/person_profile.dart' show PersonProfileScreen;
 import 'package:fasan_split/flows/scan_queue.dart';
 import 'package:fasan_split/ui/my_balance.dart';
 import 'package:fasan_split/ui/history.dart';
@@ -129,6 +130,8 @@ Future<Bill> _realBill(String photo, Directory dir) async {
     people: [for (final (i, n) in ['Lena', 'Nora', 'Tilda', 'Rosa', 'Jonas', 'Pia'].indexed) Person(n, i)],
   );
 }
+
+String groupForProfile = '';
 
 void main() {
   final out = Platform.environment['FASAN_SCREENS'];
@@ -327,6 +330,8 @@ void main() {
     'b14e-fertig': (b) => PayScreen(bill: b),
     // account (Nutzer 11.11.): profile with „Abmelden“ and the sign-out question (signed-in account, invented name)
     'b29-profil': (_) => const ProfileScreen(),
+    // rights level in the profile of another member (Paket 4, 13.11.): shown as its own row with the current level
+    'b31-profil-rechte': (_) => PersonProfileScreen(groupName: groupForProfile, pub: 'ab' * 32),
     'b30-abmelden-dialog': (_) => const ProfileScreen(),
     'b15b-ergebnis': (b) => ResultScreen(bill: b..done = true),
   };
@@ -412,6 +417,10 @@ void main() {
       await _frames(t);
     },
     // profile of a person (12.11.): tap Lena in the people list; same step in the browser walk
+    'b31-profil-rechte': (t) async {
+      await t.ensureVisible(find.byKey(const ValueKey('profile-trust')));
+      await _frames(t, 4);
+    },
     'h08g-profil': (t) async {
       await _openPeople(t);
       await t.tap(find.text('Lena').first);
@@ -523,11 +532,12 @@ void main() {
           if ((e.key.startsWith('b') || e.key.startsWith('h') || e.key.startsWith('j') || e.key.startsWith('sc'))) ctl.tier = PerfTier.slow;
           final key = GlobalKey();
           CollabService? svc;
-          if (e.key.startsWith('b29') || e.key.startsWith('b30')) {
+          if (e.key.startsWith('b29') || e.key.startsWith('b30') || e.key.startsWith('b31')) {
             final made = svc = CollabService(store: store, vault: MemoryVault(), relayFactory: (_) => MemoryRelay(MemoryRelayHub()));
             await tester.runAsync(() async {
               await made.init();
               await made.setName('Lena');
+              if (e.key.startsWith('b31')) groupForProfile = (await made.createGroup('Beispielstadt')).localName;
             });
           }
           await tester.pumpWidget(RepaintBoundary(key: key, child: SplitApp(store: store, ui: ctl, collab: svc, home: e.value(bill))));

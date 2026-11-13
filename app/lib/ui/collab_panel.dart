@@ -107,26 +107,7 @@ Future<void> memberActions(BuildContext context, CollabGroup g, String pub) asyn
     case 'admin':
       s.setAdmin(g, pub, !isAdm);
     case 'level':
-      final pick = await showModalBottomSheet<TrustLevel>(
-        context: context,
-        builder: (ctx) => SafeArea(
-          child: RadioGroup<TrustLevel>(
-            groupValue: trustLevel,
-            onChanged: (v) => Navigator.pop(ctx, v),
-            child: ListView(shrinkWrap: true, children: [
-              ListTile(title: Text(t.trustAboutMe, style: Theme.of(ctx).textTheme.titleMedium), subtitle: Text(t.trustAboutMeSub)),
-              for (final l in TrustLevel.values)
-                RadioListTile<TrustLevel>(
-                  key: ValueKey('trust-${l.name}'),
-                  value: l,
-                  title: Text(trLang(de ? 'de' : 'en', 'trust.${l.name}')),
-                  subtitle: Text(trLang(de ? 'de' : 'en', 'trust.${l.name}Sub')),
-                ),
-            ]),
-          ),
-        ),
-      );
-      if (pick != null) s.setTrust(pub, pick);
+      await pickTrust(context, s, pub);
     case 'remove':
       if (await confirmDialog(context, t.removeMember, '${g.session.nameOf(pub)}. ${t.removeMemberSub}', t.removeMember)) {
         await s.removeMember(g, pub);
@@ -219,3 +200,28 @@ Widget collabTile(BuildContext context, IconData icon, String title, VoidCallbac
 }
 
 /// Account: name, public key, the 12 recovery words (on request), restore from words, the relays in use.
+
+/// Asks which stand-in level [pub] gets for entries about me (full, confirm, block) and stores the choice (Nutzer 12.11., Paket 4).
+Future<void> pickTrust(BuildContext context, CollabService s, String pub) async {
+  final t = S.of(context), de = t.de, trustLevel = s.trustOf(pub);
+  final pick = await showModalBottomSheet<TrustLevel>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: RadioGroup<TrustLevel>(
+        groupValue: trustLevel,
+        onChanged: (v) => Navigator.pop(ctx, v),
+        child: ListView(shrinkWrap: true, children: [
+          ListTile(title: Text(t.trustAboutMe, style: Theme.of(ctx).textTheme.titleMedium), subtitle: Text(t.trustAboutMeSub)),
+          for (final l in TrustLevel.values)
+            RadioListTile<TrustLevel>(
+              key: ValueKey('trust-${l.name}'),
+              value: l,
+              title: Text(trLang(de ? 'de' : 'en', 'trust.${l.name}')),
+              subtitle: Text(trLang(de ? 'de' : 'en', 'trust.${l.name}Sub')),
+            ),
+        ]),
+      ),
+    ),
+  );
+  if (pick != null) s.setTrust(pub, pick);
+}

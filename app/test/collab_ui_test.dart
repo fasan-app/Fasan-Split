@@ -378,6 +378,43 @@ void main() {
     expect(find.text('In der App'), findsNothing);
   });
 
+  testWidgets('Profil (Paket 4): Rechte-Stufe einer Person steht sichtbar im Profil und wirkt; im eigenen Profil gilt ein Schalter für alle', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    svc.dispose();
+    svc = CollabService(store: store, vault: MemoryVault(), prefs: await SharedPreferences.getInstance(), relayFactory: (_) => MemoryRelay(hub));
+    await svc.init();
+    final g = await svc.createGroup('WG');
+    final other = 'ab' * 32;
+    tester.view.physicalSize = const Size(1080, 2400);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(Builder(builder: (c) => Scaffold(body: Column(children: [
+          TextButton(onPressed: () => openProfile(c, groupName: g.localName, pub: other), child: const Text('fremd')),
+          TextButton(onPressed: () => openProfile(c, groupName: g.localName, pub: svc.identity!.pub), child: const Text('ich')),
+        ])))));
+    await tester.tap(find.text('fremd'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('profile-trust')));
+    expect(find.descendant(of: find.byKey(const ValueKey('profile-trust')), matching: find.text('Trägt direkt ein')), findsOneWidget, reason: 'Standard ist „voll“, ohne Umweg über das Menü sichtbar');
+    await tester.tap(find.byKey(const ValueKey('profile-trust')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('trust-block')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('trust-block')));
+    await tester.pumpAndSettle();
+    expect(svc.trustOf(other), TrustLevel.block);
+    expect(find.descendant(of: find.byKey(const ValueKey('profile-trust')), matching: find.text('Nicht erlaubt')), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ich'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('profile-trust')), findsNothing, reason: 'für sich selbst gibt es keine Stufe');
+    await tester.ensureVisible(find.byKey(const ValueKey('profile-confirm-all')));
+    expect(svc.confirmAll, isFalse);
+    await tester.tap(find.byKey(const ValueKey('profile-confirm-all')));
+    await tester.pumpAndSettle();
+    expect(svc.confirmAll, isTrue, reason: 'Schalter aus = alles wartet auf mich');
+  });
+
   testWidgets('Chat: Name oben antippen öffnet im Gruppenchat die Mitglieder (Nutzer 12.11.)', (tester) async {
     final g = await svc.createGroup('WG');
     tester.view.physicalSize = const Size(1080, 2400);
