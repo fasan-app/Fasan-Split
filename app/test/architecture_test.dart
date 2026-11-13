@@ -41,13 +41,10 @@ void main() {
   });
 
   // size guard (Nutzer 13.11., modularer Umbau): big files hide several areas; split by area before they grow further
-  // Known exception, to be split next (STAND.md „Umbau“): the sync service holds fields and constants between its areas, so it needs
-  // mixins/extensions with care, not a mechanical cut. The entry must disappear when it is done.
-  const knownBig = {'lib/collab/service.dart'};
-  test('Keine Quelldatei in lib/ ist länger als 1200 Zeilen (außer erzeugten, Textdateien und der bekannten Ausnahme)', () {
+  test('Keine Quelldatei in lib/ ist länger als 1200 Zeilen (außer erzeugten und Textdateien)', () {
     final big = [
       for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart') && !f.path.endsWith('.g.dart') && !f.path.contains('/l10n/')))
-        if (f.readAsLinesSync().length > 1200 && !knownBig.contains(f.path)) '${f.path} (${f.readAsLinesSync().length})',
+        if (f.readAsLinesSync().length > 1200) '${f.path} (${f.readAsLinesSync().length})',
     ];
     expect(big, isEmpty, reason: 'Datei nach Bereichen teilen');
   });

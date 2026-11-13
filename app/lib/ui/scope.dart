@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 
 import '../collab/notify.dart';
 import '../collab/service.dart';
+export '../collab/service.dart'; // the CollabService extensions (service_*.dart) only apply where this library is imported
 import '../perf/perf_governor.dart';
 import '../state/store.dart';
 

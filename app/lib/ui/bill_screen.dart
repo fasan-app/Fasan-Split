@@ -12,6 +12,7 @@ import '../l10n.dart' show S;
 import '../l10n_bill.dart';
 import '../l10n/tr.dart';
 import 'scope.dart';
+import '../collab/service.dart';
 import 'package:fasan_core/bill.dart';
 import '../flows/scan_bill.dart' show remainderName;
 import '../recognition/service.dart';

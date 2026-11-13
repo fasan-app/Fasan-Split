@@ -10,6 +10,7 @@ import 'package:fasan_core/bill.dart';
 import 'package:fasan_reader/reader.dart' show nameAlternatives;
 import 'assign.dart' show PeoplePicker;
 import 'scope.dart';
+import '../collab/service.dart';
 import 'common.dart';
 import 'person_picker.dart';
 import 'send_items.dart';
