@@ -224,7 +224,7 @@ class _GroupScreenState extends State<GroupScreen> {
     final live = CollabScope.of(context).groupByLocalName(name);
     final l = FasanLook.of(context);
     final people = CollabScope.of(context).peopleOf(name).length;
-    final flat = _view == 1 ? flattenItems(bills, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => itemSearchMatch(b, i, q, t.de), payerMatch: q.isEmpty ? null : (b) => payerSearchMatch(context, b, q)) : const <(Bill, BillItem?)>[];
+    final flat = _view == 1 ? flattenItems(bills, favorites: store.favorites, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => itemSearchMatch(b, i, q, t.de), payerMatch: q.isEmpty ? null : (b) => payerSearchMatch(context, b, q)) : const <(Bill, BillItem?)>[];
     return Scaffold(
       // the plus inside the group (Nutzer 07.11.): a bill started here is put into this group
       floatingActionButton: FasanDepth(

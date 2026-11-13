@@ -82,7 +82,7 @@ String sortLabel(BillSort s, bool de) => switch (s) {
     };
 
 /// Sorts and filters one list of bills for display.
-List<Bill> arrange(List<Bill> l, BillSort s, String? category, {bool onlyOpen = false}) {
+List<Bill> arrange(List<Bill> l, BillSort s, String? category, {bool onlyOpen = false, Set<String> favorites = const {}}) {
   final out = [for (final b in l) if ((category == null || b.category == category) && (!onlyOpen || b.fill != ItemFill.complete)) b];
   int byDate(Bill a, Bill b) => b.date.compareTo(a.date);
   switch (s) {
@@ -101,7 +101,9 @@ List<Bill> arrange(List<Bill> l, BillSort s, String? category, {bool onlyOpen = 
       // open first, then partial, then complete; inside a state the newest first (Nutzer 07.11.)
       out.sort((a, b) => a.fill != b.fill ? a.fill.index.compareTo(b.fill.index) : byDate(a, b));
   }
-  return out;
+  // pinned bills (Paket 8, only on this device) go to the top, each part keeping its order
+  if (favorites.isEmpty) return out;
+  return [...out.where((b) => favorites.contains(b.id)), ...out.where((b) => !favorites.contains(b.id))];
 }
 
 extension _Let<T> on T {
@@ -174,6 +176,15 @@ Future<void> sortSheet(BuildContext context, {required String? filter, required 
 extension BillStoreSort on BillStore {
   BillSort get sortMode => BillSort.values.firstWhere((s) => s.name == appSettings['sort'], orElse: () => BillSort.status);
   set sortMode(BillSort s) => appSettings = {...appSettings, 'sort': s.name};
+
+  /// Pinned bills (id) and items ('billId/itemUid'), Paket 8 (13.11.): only on this device, they rise to the top of their list.
+  Set<String> get favorites => {...?(appSettings['fav'] as List?)?.cast<String>()};
+  bool isFavorite(String id) => favorites.contains(id);
+  void toggleFavorite(String id) {
+    final f = favorites;
+    f.contains(id) ? f.remove(id) : f.add(id);
+    appSettings = {...appSettings, 'fav': f.toList()};
+  }
 
   /// Show only bills with open items (Nutzer 07.11.), on the lists and in groups.
   bool get onlyOpen => appSettings['onlyOpen'] == true;

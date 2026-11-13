@@ -737,9 +737,9 @@ class _HomeScreenState extends State<HomeScreen> {
     bool keep(Bill b) => billMatches(b, _fills, _noPayer) && (q.isEmpty || _searchText(b, t.de).contains(q) || (hasPayerRow(b) && payerSearchMatch(context, b, q)));
     final groups = [
       for (final g in store.groups)
-        if (scope == kScopeAll || scope == g) (g, arrange(store.inGroup(g, archived: done), sort, _catFilter, onlyOpen: store.onlyOpen).where(keep).toList())
+        if (scope == kScopeAll || scope == g) (g, arrange(store.inGroup(g, archived: done), sort, _catFilter, onlyOpen: store.onlyOpen, favorites: store.favorites).where(keep).toList())
     ].where((e) => e.$2.isNotEmpty).toList();
-    final loose = scope == kScopeAll || scope == kScopeLoose ? arrange(store.inGroup(null, archived: done), sort, _catFilter, onlyOpen: store.onlyOpen).where(keep).toList() : <Bill>[];
+    final loose = scope == kScopeAll || scope == kScopeLoose ? arrange(store.inGroup(null, archived: done), sort, _catFilter, onlyOpen: store.onlyOpen, favorites: store.favorites).where(keep).toList() : <Bill>[];
     final shown = [for (final e in groups) ...e.$2, ...loose];
     // nothing at all in this view (not: nothing that passes the buttons)
     final anyHere = [for (final g in store.groups) if (scope == kScopeAll || scope == g) ...store.inGroup(g, archived: done), if (scope == kScopeAll || scope == kScopeLoose) ...store.inGroup(null, archived: done)].isNotEmpty;
@@ -748,7 +748,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final scopeBills = scopeIsGroup(scope)
         ? store.inGroup(scope)
         : [if (scope == kScopeAll) for (final g in store.groups) ...store.inGroup(g), ...store.inGroup(null)];
-    final flat = _itemsView ? flattenItems(shown, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => _itemMatches(b, i, q, t.de), payerMatch: q.isEmpty ? null : (b) => payerSearchMatch(context, b, q)) : const <(Bill, BillItem?)>[];
+    final flat = _itemsView ? flattenItems(shown, favorites: store.favorites, onlyOpen: store.onlyOpen, fills: _fills, itemMatch: q.isEmpty ? null : (b, i) => _itemMatches(b, i, q, t.de), payerMatch: q.isEmpty ? null : (b) => payerSearchMatch(context, b, q)) : const <(Bill, BillItem?)>[];
     _visibleItems = flat;
     // one way of counting everywhere (Nutzer 12.11.: „7 in allen Gruppen, 8 in der Gruppe“): a group counts its members and hand-added people
     // next to the names from its bills (peopleOf); „Alle“ is the union of that over the groups plus the names of bills without a group
@@ -1041,6 +1041,8 @@ class _HomeScreenState extends State<HomeScreen> {
               _selecting = true;
               _selected.add(b.id);
             });
+          case 'fav':
+            store.toggleFavorite(b.id);
           case 'note':
             _editNotes(context, b);
           case 'delete':
@@ -1058,6 +1060,11 @@ class _HomeScreenState extends State<HomeScreen> {
             title: Text(archive ? t.markOpen : t.markDone),
             subtitle: canArchive ? null : Text(trLang(lang, 'home.enterItFirstAll2')),
           ),
+        ),
+        PopupMenuItem(
+          key: ValueKey('fav-${b.id}'),
+          value: 'fav',
+          child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(store.isFavorite(b.id) ? Icons.push_pin : Icons.push_pin_outlined), title: Text(trLang(lang, store.isFavorite(b.id) ? 'fav.unpin' : 'fav.pin'))),
         ),
         // note on the bill, from the list (Nutzer 09.11. 19:08): the same notes as in the bill, with „pin“ for the line under the title
         PopupMenuItem(value: 'note', child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.sticky_note_2_outlined), title: Text(trLang(lang, 'home.noteEdit')))),

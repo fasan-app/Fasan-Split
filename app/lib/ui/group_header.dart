@@ -456,7 +456,7 @@ class GroupPayerRow extends StatelessWidget {
 /// Entries of the flat list: a bill heading ([item] null), the payer line, then its visible items.
 /// [fills] (the status buttons) wins over [onlyOpen]: with „erledigt“ switched on, the items that are done must show even when
 /// „Nur offene Posten“ is on (Nutzer 09.11. 18:44: the button showed nothing). [itemMatch] narrows the items to the search.
-List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOpen, Set<ItemFill> fills = const {}, bool Function(Bill, BillItem)? itemMatch, bool Function(Bill)? payerMatch}) {
+List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOpen, Set<ItemFill> fills = const {}, bool Function(Bill, BillItem)? itemMatch, bool Function(Bill)? payerMatch, Set<String> favorites = const {}}) {
   final out = <(Bill, BillItem?)>[];
   for (final b in bills) {
     if (b.isTransfer) continue;
@@ -464,6 +464,11 @@ List<(Bill, BillItem?)> flattenItems(Iterable<Bill> bills, {required bool onlyOp
         .where((i) => fills.isNotEmpty ? fills.contains(i.fill) : (!onlyOpen || i.fill != ItemFill.complete))
         .where((i) => itemMatch == null || itemMatch(b, i))
         .toList();
+    if (favorites.isNotEmpty) {
+      // pinned items first, each part keeping its order (List.sort is not stable)
+      final pinned = [for (final i in its) if (favorites.contains('${b.id}/${i.uid}')) i], rest = [for (final i in its) if (!favorites.contains('${b.id}/${i.uid}')) i];
+      its..clear()..addAll([...pinned, ...rest]);
+    }
     // the rest to the total shows only in the plain list: not under a status button or a search, not with „Nur offene“
     final rest = fills.isEmpty && itemMatch == null && !onlyOpen && b.difference != 0 && b.its.isNotEmpty;
     final payer = hasPayerRow(b) &&

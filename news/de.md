@@ -1,3 +1,6 @@
+## 0.1.120
+- Neu: Bons und Posten lassen sich anpinnen (⋮-Menü beim Bon, Posten-Blatt beim Posten). Angepinntes steht oben mit Nadel und gilt nur auf deinem Gerät.
+
 ## 0.1.119
 - Neu: Deine Zahlungsangaben bleiben auf deinem Gerät. Im Profil einer Person fragst du sie an; sie bekommt eine Karte im Chat und entscheidet mit „Schicken“. Früher sahen alle Gruppenmitglieder die Angaben – das ist vorbei, alte Einträge werden zurückgenommen.
 

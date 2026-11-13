@@ -53,6 +53,12 @@ void main() {
     expect(open.map((e) => e.$2?.name), [null, 'Posten a1']);
   });
 
+  test('flattenItems (Paket 8): angepinnte Posten stehen in ihrem Bon vorn, der Rest behält die Reihenfolge', () {
+    final a = bill('a', [ItemFill.open, ItemFill.open, ItemFill.open]);
+    final flat = flattenItems([a], onlyOpen: false, favorites: {'a/${a.its[2].uid}'});
+    expect(flat.where((e) => e.$2 != null && e.$2!.name.startsWith('Posten')).map((e) => e.$2!.name), ['Posten a2', 'Posten a0', 'Posten a1']);
+  });
+
   test('flattenItems: Statusknopf „erledigt“ gewinnt gegen „Nur offene“ (sonst bleibt die Liste leer); Suche engt Posten ein', () {
     final a = bill('a', [ItemFill.complete, ItemFill.open]);
     final done = flattenItems([a], onlyOpen: true, fills: {ItemFill.complete});

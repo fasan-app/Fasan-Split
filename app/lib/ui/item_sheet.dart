@@ -9,6 +9,7 @@ import '../l10n/tr.dart';
 import 'package:fasan_core/bill.dart';
 import 'package:fasan_reader/reader.dart' show nameAlternatives;
 import 'assign.dart' show PeoplePicker;
+import 'category_ui.dart' show BillStoreSort;
 import 'scope.dart';
 import '../collab/service.dart';
 import 'common.dart';
@@ -148,6 +149,22 @@ class _ItemSheetState extends State<_ItemSheet> {
           }),
           if (widget.bill.ps.any((p) => (it.shares[widget.bill.ps.indexOf(p)] ?? 0) > 0)) _FixedAmounts(bill: widget.bill, item: it, changed: widget.changed),
           const SizedBox(height: FasanSpace.s),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Builder(builder: (context) {
+              final store = StoreScope.of(context), fid = '${widget.bill.id}/${it.uid}', on = store.isFavorite(fid);
+              return FasanButton(
+                key: const ValueKey('pin-this-item'),
+                label: context.tr(on ? 'fav.unpin' : 'fav.pin'),
+                kind: FasanButtonKind.quiet,
+                icon: on ? Icons.push_pin : Icons.push_pin_outlined,
+                onPressed: () {
+                  store.toggleFavorite(fid);
+                  setState(() {});
+                },
+              );
+            }),
+          ),
           Align(
             alignment: Alignment.centerLeft,
             child: FasanButton(

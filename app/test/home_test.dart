@@ -8,6 +8,7 @@ import 'package:fasan_split/recognition/service.dart';
 import 'package:fasan_split/flows/scan_queue.dart';
 import 'package:fasan_split/state/store.dart';
 import 'package:fasan_split/ui/groups.dart' show GroupScreen;
+import 'package:fasan_split/ui/category_ui.dart' show BillStoreSort;
 import 'package:fasan_split/ui/home.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +61,27 @@ void main() {
   ScanQueue idle(BillStore s) => ScanQueue(s, recognize: (_) => const Stream.empty());
 
   group('Übersicht', () {
+    testWidgets('Anpinnen (Paket 8): Bon aus dem ⋮-Menü anpinnen – steigt nach oben, trägt die Nadel, Löschen der Markierung bringt ihn zurück', (tester) async {
+      final store = BillStore.memory([_bill('a', 'Frühstück'), _bill('b', 'Abendessen')]);
+      await app(tester, store, idle(store));
+      double y(String t) => tester.getTopLeft(find.text(t)).dy;
+      final before = y('Frühstück') < y('Abendessen');
+      final pinId = before ? 'b' : 'a', pinName = before ? 'Abendessen' : 'Frühstück', other = before ? 'Frühstück' : 'Abendessen';
+      await tester.tap(find.byKey(ValueKey('more-$pinId')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ValueKey('fav-$pinId')));
+      await tester.pumpAndSettle();
+      expect(store.isFavorite(pinId), isTrue);
+      expect(find.byKey(ValueKey('pinned-$pinId')), findsOneWidget);
+      expect(y(pinName) < y(other), isTrue, reason: 'angepinnt steht oben');
+      await tester.tap(find.byKey(ValueKey('more-$pinId')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ValueKey('fav-$pinId')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(ValueKey('pinned-$pinId')), findsNothing);
+      expect(y('Frühstück') < y('Abendessen'), before, reason: 'ohne Nadel wieder die alte Reihenfolge');
+    });
+
     testWidgets('Notiz zum Bon aus der Liste: schreiben, anpinnen, steht sofort unter dem Titel der Kachel', (tester) async {
       final store = BillStore.memory([_bill('a', 'Frühstück')]);
       await app(tester, store, idle(store));

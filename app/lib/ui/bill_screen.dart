@@ -813,6 +813,7 @@ class ItemTile extends StatelessWidget {
             // line 1: the name gets the whole width next to the amount; line 2: state marks and people (Nutzer 08.11.: lange Namen
             // wurden von Personen und Symbolen abgeschnitten)
             Row(children: [
+              if (StoreScope.of(context).isFavorite('${bill.id}/${item.uid}')) Padding(padding: const EdgeInsets.only(right: 4), child: Icon(Icons.push_pin, size: 16, color: l.accent)),
               Expanded(child: ItemTitle(item, maxLines: 1)),
               const SizedBox(width: FasanSpace.m),
               ConstrainedBox(constraints: const BoxConstraints(maxWidth: 150), child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: Money(item.amount))),

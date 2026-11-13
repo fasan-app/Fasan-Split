@@ -320,6 +320,7 @@ void main() {
     'h07b-gruppe-posten': (_) => const HomeScreen(),
     'h03-auswahl': (_) => const HomeScreen(),
     'h13-freunde': (_) => const HomeScreen(),
+    'h14-angepinnt': (_) => const HomeScreen(),
     // group page with the walk receipt (Beispielstadt, Pia paid, Lena owes 10,00): Personen, settle as paid – whole and a part (06.11.)
     for (final k in ['h07-gruppe-offen', 'h08-personen', 'h08b-bezahlt-frage', 'h08d-teilbetrag', 'h08e-rest-offen', 'h08g-profil', 'h08h-person-saldo', 'h07c-gruppe-suche'])
       k: (_) => Builder(builder: (c) => GroupScreen(name: 'Beispielstadt', queue: ScanQueue.current ?? ScanQueue(StoreScope.read(c)))),
@@ -421,6 +422,14 @@ void main() {
     'h13-freunde': (t) async {
       await t.tap(find.text('Freunde'));
       await t.pump(const Duration(milliseconds: 500));
+    },
+    // pinned bill (Paket 8): ⋮ of the first row → „Anpinnen“; the pin shows at the title
+    'h14-angepinnt': (t) async {
+      final rows = find.byWidgetPredicate((w) => w.key is ValueKey<String> && (w.key! as ValueKey<String>).value.startsWith('more-') && (w.key! as ValueKey<String>).value != 'more-menu');
+      await t.tap(rows.last);
+      await _frames(t, 8);
+      await t.tap(find.text('Anpinnen'), warnIfMissed: false);
+      await _frames(t, 6);
     },
     'h08-personen': (t) => _openPeople(t),
     'h08b-bezahlt-frage': (t) async {

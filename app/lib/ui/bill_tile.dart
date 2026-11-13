@@ -12,6 +12,7 @@ import '../l10n_bill.dart';
 import 'package:fasan_core/bill.dart';
 import '../flows/scan_queue.dart';
 import 'category.dart';
+import 'category_ui.dart' show BillStoreSort;
 import 'package:fasan_core/settle.dart';
 import 'my_balance.dart';
 import 'scan_stage.dart';
@@ -187,6 +188,7 @@ class BillTile extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
+                    if (StoreScope.of(context).isFavorite(bill.id)) Padding(padding: const EdgeInsets.only(right: 4), child: Icon(Icons.push_pin, key: ValueKey('pinned-${bill.id}'), size: 16, color: l.accent)),
                     Expanded(child: MarqueeText(bill.purpose.isEmpty ? (waiting || failed ? t.photoBill : t.appName) : bill.purpose, style: tt.titleMedium)),
                   ]),
                   const SizedBox(height: 2),

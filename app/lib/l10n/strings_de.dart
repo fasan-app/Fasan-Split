@@ -665,6 +665,8 @@ const Map<String, String> stringsDe = {
   'pay.youSent': 'Du hast deine Zahlungsangaben geschickt.',
   'pay.youAsked': 'Du hast um Zahlungsangaben gebeten.',
   'pay.sentDone': 'Geschickt.',
+  'fav.pin': 'Anpinnen',
+  'fav.unpin': 'Nicht mehr anpinnen',
   'trust.full': 'Trägt direkt ein',
   'trust.fullSub': 'Seine Einträge für dich gelten sofort.',
   'trust.confirm': 'Fragt erst',
