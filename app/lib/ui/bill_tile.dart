@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // Fasan Split – one bill as a card on the overview. MPL-2.0
 
-import '../l10n/tr.dart' show trLang;
 import 'dart:convert';
 import 'dart:typed_data' show Uint8List;
 import 'package:fasan_ui/fasan_ui.dart';
