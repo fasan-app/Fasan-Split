@@ -1227,3 +1227,11 @@ Nicht ohne Nutzer: Web Push (fremder Dienst), Messung auf echtem Samsung/iPhone,
 **Lehre 13.11.:** Das Browser-Build-Skript kopierte den neuen Code nicht in die Arbeitskopie; alle Browser-Fotos von 12.11. (0.1.114/0.1.115) zeigten einen alten Stand und gelten als ungeprüft. Vor jedem Browserlauf `diff -rq app/lib <Arbeitskopie>/lib` prüfen. Offen: Foto des Bons kommt im Browserlauf nicht an (`ready:false`).
 
 - 13.11. (Umbau U1/U2 + Foto-Abruf): `collab_ui.dart` in 8 Dateien, `home_bars.dart`, Größen-Wächter; CI-Filter behoben (Tor lief nur 6 s). **CI-e2e „Bonfoto für die Gruppe“ hing einmal 10 min (Lauf 43334433462, beim Wiederholen grün).** Ursache vermutet und im Code belegt: `PhotoSync.fetch` bekam die Mitglieder als Momentaufnahme; Foto-Stücke, die vor der Mitgliederliste eintrafen, wurden verworfen, der Abruf gab nach 25 s auf und versuchte es nie wieder. Behoben: Mitglieder werden beim Verwenden der Stücke gefragt (`isMember`), Wiederholung bis 5× im Minutentakt (`_photoRetries`). Test `photo_sync_test` „Mitglieder werden erst beim Verwenden…“ (Beweis „scheitert ohne Korrektur“ nur als Kompilierfehler, nicht als Verhaltensfehler). **Nicht belegt:** Der lokale Browserlauf bekommt das Foto weiterhin nicht (`ready:false`, seit ~21:30 am 12.11. bei jedem Lauf, davor ging es); die lokale Ursache ist offen, die Lokalfehler stammen sehr wahrscheinlich nicht (nur) aus diesem Wettlauf. Der Browserlauf läuft deshalb mit gekürzter Wartezeit (20 statt 90 Runden, nur in der Arbeitskopie).
+
+## 14.11. 12:40 Bon-Ansicht: drei Entwürfe zur Auswahl (noch nichts gebaut)
+Pflichtlektüre dazu gelesen: recherche/2026-11-05-ein-bildschirm-bon.md, 2026-11-08-gruppe-gesamtansicht.md, PRUEFLISTE-OBERFLAECHE.md.
+Entwurf A: Kopf wie Gruppe (Posten | Summe | Personen, Zustandsrahmen), Personen in einer wischbaren Zeile samt Vorschlägen.
+Entwurf B: Kopf wie Gruppe, Personen als Avatar-Stapel mit Zeile „Mira, Jonas, Lea +2 · bezahlt: Mira“.
+Entwurf C: kompakter Kopf (Zweck, Summe, Rahmen), Avatar-Zeile bleibt oben stehen, aktive Person mit Hinweis.
+Warten auf Auswahl des Nutzers; danach bauen, Bildschirmfotos App und Browser, Schritt mit 5 Personen in screens_test und screens.js,
+Register 27d, 26d, 09.11. Nr. 3, 08.11. 04:09 (2) schließen. Währenddessen: Punkt 2 (Suche Datumsbereich) beginnen.
