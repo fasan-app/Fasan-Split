@@ -65,6 +65,7 @@ Ein Paket wird ganz fertig gemacht, bevor das nächste beginnt. Halbe Pakete ste
   hieß kompakt machen, nicht entfernen).
 - **Vor jeder Frage oder Empfehlung an den Nutzer** die vorhandenen Recherchen zum Thema lesen (`docs/recherche/`, Karte, Camera, fasan_ui);
   nie aus Erinnerung oder Fremdseiten antworten, wenn es eigene Messungen gibt (06.11.: Blossom/Relay-Grenzen falsch angegeben).
+- **Gestaltung nie ohne Freigabe bauen (Nutzer 14.11. 13:20):** Wählt der Nutzer aus Entwürfen eine **Mischung** („E1 und F2“), heißt das: erst den **gemischten Entwurf zeichnen** und vorlegen; gebaut wird erst nach seinem ausdrücklichen „ja“ auf genau diesen Entwurf. Auch bei kleinen Gestaltungsänderungen am fertigen Bildschirm: Entwurf, Freigabe, dann bauen. Nichts Gestaltetes pushen, das er nicht gesehen und freigegeben hat (Fehler 14.11. 13:01–13:20: Mischung sofort gebaut).
 - **Bei Kritik des Nutzers nicht sofort losprogrammieren:** erst zeigen, dass die Kritik verstanden ist, und den Plan nennen.
 - **Nichts dem Nutzer zum Prüfen überlassen, was die Sitzung selbst prüfen kann.** Was sie nicht kann (z. B. echtes iPhone), vorher sagen.
 - **Was die Zukunft betrifft, sofort festschreiben – ohne Aufforderung (Nutzer 06.11.: „Dass ich dich daran erinnern muss …“).**

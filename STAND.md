@@ -1253,3 +1253,7 @@ Funktionen unverändert: Reiter Posten/Am Bon/Offene, Infostreifen, Bon-Miniatur
 E1: Bon-Karte oben mit Miniatur links, Summe, Rahmen, Infostreifen, „Ganzen Bon ansehen ›“ (klickbar). F2: hell, weich, große Radien, Personen als Pillen
 (aktive dunkel), „+ Person“ öffnet Vorschläge (Gruppe/Freunde/Alle), Reiter Posten | Am Bon | Nur offene als Segment, Posten auf weißer Karte mit Zustandspunkt.
 Bleibt: Ausschnitt unter jedem Posten, Bezahlt von, Menü oben, Später weiter / n offen. Wird gebaut (Paket Bon-Kopf), Register 37, 27d, 26d.
+
+## 14.11. 13:20 Nutzer: Mischung heißt „erst gemischten Entwurf zeigen“ (Fehler: sofort gebaut)
+Bon-Kopf E1+F2 wurde sofort gebaut (lokal, NICHT gepusht, NICHT veröffentlicht: app/lib/ui/bill_head.dart, bill_screen.dart, person_picker.dart, Texte, Tests).
+Regel in CLAUDE.md ergänzt. Stand: gemischte Entwürfe M1–M3 vorgelegt; Freigabe des Nutzers fehlt; bis dahin kein Push dieser Änderung.
