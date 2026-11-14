@@ -1,3 +1,6 @@
+## 0.1.128
+- Neu: Die App erkennt die Währung auf dem Bon (€, CHF, £, $, Kč, zł …). Ist sie nicht deine, fragt der Bon mit „CHF?“, ob er umgestellt werden soll – erst dann wird der Kurs geholt.
+
 ## 0.1.127
 - Neu: „Namen ändern“ im eigenen Profil.
 

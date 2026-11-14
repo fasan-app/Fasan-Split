@@ -143,7 +143,7 @@ class ScanQueue extends ChangeNotifier {
               if (!done.isCompleted) done.complete();
               return;
             }
-            final b = await billFromScan(e.result, photo, id: placeholder.id, group: placeholder.group, created: placeholder.created, saveOriginal: false);
+            final b = await billFromScan(e.result, photo, id: placeholder.id, group: placeholder.group, created: placeholder.created, saveOriginal: false, homeCurrency: store.homeCurrency);
             b.originalPath = placeholder.originalPath;
             final k = _keep.remove(placeholder.id);
             if (k != null) {

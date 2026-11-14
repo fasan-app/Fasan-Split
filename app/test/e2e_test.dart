@@ -12,6 +12,7 @@ import 'dart:io';
 import 'package:fasan_split/recognition/onnx.dart';
 import 'package:fasan_split/recognition/paddle.dart';
 import 'package:fasan_split/recognition/pipeline.dart';
+import 'package:fasan_reader/currency.dart';
 import 'package:fasan_reader/place.dart';
 import 'package:fasan_split/recognition/service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +21,9 @@ void main() {
   final diag = Platform.environment['FASAN_DIAGNOSE'] ?? '../../fasan-diagnose/tests';
   // FASAN_BONORDNER: anderer Ordner, z. B. fasan-diagnose/tests/echt (echte Bons, nur dort).
   final dir = Directory(Platform.environment['FASAN_BONORDNER'] ?? '$diag/bons');
-  final ready = dir.existsSync() && File('assets/models/det.onnx').existsSync();
+  // ONNX Runtime must be loadable too (14.11.: with the models in place but no library on LD_LIBRARY_PATH the full local run went red)
+  final ort = (Platform.environment['LD_LIBRARY_PATH'] ?? '').split(':').any((d) => d.isNotEmpty && File('$d/libonnxruntime.so.1.22.0').existsSync());
+  final ready = dir.existsSync() && File('assets/models/det.onnx').existsSync() && ort;
   test('e2e synthetische Bons', () async {
     final threads = int.tryParse(Platform.environment['FASAN_THREADS'] ?? '') ?? 2;
     final uv = File('assets/models/uvdoc.onnx');
@@ -35,12 +38,23 @@ void main() {
     final groups = <String, List<int>>{'png': [0, 0], 'jpg': [0, 0]};
     var postenOk = 0, postenAll = 0;
     final metaHits = [0, 0, 0];
+    final curHits = [0, 0]; // currency guess right / wrong
     final rec = Recognizer(ocr, earlyStop: Platform.environment['FASAN_EARLYSTOP'] != '0');
     for (final f in files) {
       final truth = jsonDecode(File(f.replaceFirst(RegExp(r'(-mild|-hart|-extrem|-kopf|-quer)?\.(png|jpg)$'), '.json')).readAsStringSync()) as Map<String, dynamic>;
       final sw = Stopwatch()..start();
       final x = await rec.recognize(File(f).readAsBytesSync());
       final r = x.result;
+      // currency read from the receipt (Roadmap 2, 14.11.): no receipt may suggest a wrong currency; without any sign there is no
+      // suggestion (the US diner test receipts print bare amounts – null is right there, a guess from the address would be a guess)
+      {
+        final g = guessCurrency(RecognitionService.fromRecognition(x).lines.map((l) => l.$1).toList());
+        final want = f.split('/').last.startsWith('us-') ? 'USD' : 'EUR';
+        final ok = g == null || g == want;
+        curHits[ok ? 0 : 1]++;
+        // ignore: avoid_print
+        if (!ok) print('    Währung: $g statt $want');
+      }
       // date and place from the printed lines (only for truths that carry them: tests/echt)
       if (truth['datum'] != null) {
         final meta = extractMeta(RecognitionService.fromRecognition(x).lines.map((l) => l.$1).toList());
@@ -82,8 +96,10 @@ void main() {
       }
     }
     // ignore: avoid_print
+    // ignore: avoid_print
+    print('GESAMT Währung: ${curHits[0]} richtig, ${curHits[1]} falsch');
     if (metaHits[2] > 0) print('GESAMT Ort/Datum: Datum ${metaHits[0]}/${metaHits[2]}, PLZ ${metaHits[1]}/${metaHits[2]}');
     // ignore: avoid_print
     print('GESAMT dart: png ${groups['png']![0]}/${groups['png']![1]}, jpg ${groups['jpg']![0]}/${groups['jpg']![1]} komplett richtig, Posten $postenOk/$postenAll');
-  }, skip: ready ? false : 'Testbons oder Modelle fehlen', timeout: const Timeout(Duration(hours: 3)));
+  }, skip: ready ? false : 'Testbons, Modelle oder ONNX Runtime (LD_LIBRARY_PATH) fehlen', timeout: const Timeout(Duration(hours: 3)));
 }

@@ -2,6 +2,7 @@
 // Fasan Split – currency of a bill: chip with rate and its date, picker, „Kurs aktualisieren“, manual rate
 // (Nutzer 04.11.; state/rates.dart). MPL-2.0
 import '../l10n/tr.dart' show trLang;
+import 'package:fasan_ui/fasan_ui.dart' show FasanLook;
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
@@ -92,6 +93,13 @@ class _CurrencyChipState extends State<CurrencyChip> {
       ),
     );
     if (r == null || !mounted) return;
+    return _apply(r, cur);
+  }
+
+  /// Applies a choice of the sheet (or the suggestion read from the receipt).
+  Future<void> _apply(String r, String cur) async {
+    final store = StoreScope.read(context), b = widget.bill, home = store.homeCurrency;
+    b.currencyGuess = null; // decided either way
     if (r == '!fetch') return _fetch(cur);
     if (r == '!manual') return _manual(cur);
     if (r == home) {
@@ -110,11 +118,43 @@ class _CurrencyChipState extends State<CurrencyChip> {
     store.ratesOnline ? await _fetch(r) : await _manual(r);
   }
 
+  /// The receipt seems to be in another currency (Roadmap 2): take it (then the rate as usual) or keep the home currency.
+  Future<void> _askGuess(String guess) async {
+    final store = StoreScope.read(context), lang = S.of(context).de ? 'de' : 'en', home = store.homeCurrency;
+    final take = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(trLang(lang, 'currency.guessTitle', [guess])),
+        content: Text(trLang(lang, 'currency.guessText', [guess, home])),
+        actions: [
+          TextButton(key: const ValueKey('currency-guess-no'), onPressed: () => Navigator.pop(ctx, false), child: Text(trLang(lang, 'currency.guessKeep', [home]))),
+          FilledButton(key: const ValueKey('currency-guess-yes'), onPressed: () => Navigator.pop(ctx, true), child: Text(trLang(lang, 'currency.guessTake', [guess]))),
+        ],
+      ),
+    );
+    if (take == null || !mounted) return;
+    if (take) return _apply(guess, home);
+    widget.bill.currencyGuess = null;
+    store.upsert(widget.bill);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = S.of(context), store = StoreScope.of(context), b = widget.bill;
     final home = store.homeCurrency, code = b.currency ?? home;
     final rt = rateText(b, home, t.de);
+    final guess = b.currency == null ? b.currencyGuess : null;
+    if (guess != null && guess != home) {
+      return ActionChip(
+        key: const ValueKey('currency-guess'),
+        visualDensity: VisualDensity.compact,
+        avatar: Text(currencySign(guess)),
+        side: BorderSide(color: FasanLook.of(context).accent),
+        label: Text(trLang(t.de ? 'de' : 'en', 'currency.guessChip', [guess])),
+        onPressed: _busy ? null : () => _askGuess(guess),
+      );
+    }
     return ActionChip(
       visualDensity: VisualDensity.compact,
       avatar: _busy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : Text(currencySign(code)),

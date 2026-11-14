@@ -13,6 +13,7 @@ import '../recognition/service.dart';
 import '../state/scan_live.dart';
 import 'scan_stage.dart';
 import 'flow.dart';
+import 'scope.dart' show StoreScope;
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key, required this.photo, this.events, this.group});
@@ -64,7 +65,7 @@ class _ScanScreenState extends State<ScanScreen> {
     final playing = _live.playing;
     if (playing != null) await playing.timeout(const Duration(seconds: 5), onTimeout: () {});
     if (!mounted) return;
-    final bill = await billFromScan(r, widget.photo, group: widget.group);
+    final bill = await billFromScan(r, widget.photo, group: widget.group, homeCurrency: StoreScope.read(context).homeCurrency);
     if (!mounted) return;
     FasanHaptics.of(context).confirm();
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => ReviewScreen(bill: bill, scan: r)));

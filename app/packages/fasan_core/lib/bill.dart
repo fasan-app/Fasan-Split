@@ -352,6 +352,7 @@ class Bill {
     this.currency,
     this.rate,
     this.rateDate,
+    this.currencyGuess,
     DateTime? updated,
   })  : updated = updated ?? created,
         notes = notes ?? [];
@@ -460,6 +461,10 @@ class Bill {
   String? currency;
   double? rate;
   DateTime? rateDate;
+
+  /// Currency read from the receipt that differs from the home currency (fasan_reader currency.dart), only a suggestion until
+  /// the person takes it (CurrencyChip); local to the phone that scanned, never synced.
+  String? currencyGuess;
 
   /// Cents of this bill in the home currency.
   int toHome(int cents) => currency == null || rate == null ? cents : (cents * rate!).round();
@@ -696,6 +701,7 @@ class Bill {
     currency = o.currency;
     rate = o.rate;
     rateDate = o.rateDate;
+    currencyGuess = o.currencyGuess;
   }
 
   Map<String, Object?> toJson() => {
@@ -739,6 +745,7 @@ class Bill {
         if (currency != null) 'currency': currency,
         if (rate != null) 'rate': rate,
         if (rateDate != null) 'rateDate': rateDate!.toIso8601String(),
+        if (currencyGuess != null) 'currencyGuess': currencyGuess,
         'updated': updated.toIso8601String(),
       };
 
@@ -780,6 +787,7 @@ class Bill {
         currency: j['currency'] as String?,
         rate: (j['rate'] as num?)?.toDouble(),
         rateDate: DateTime.tryParse(j['rateDate'] as String? ?? ''),
+        currencyGuess: j['currencyGuess'] as String?,
         updated: DateTime.tryParse(j['updated'] as String? ?? ''),
       )
         ..paid = {for (final e in ((j['paid'] as Map?) ?? const {}).entries) int.parse('${e.key}'): (e.value as num).toInt()}

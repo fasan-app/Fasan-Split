@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:fasan_reader/currency.dart';
 import 'package:fasan_reader/place.dart';
 import '../recognition/service.dart';
 import '../state/store.dart';
@@ -12,7 +13,7 @@ import 'package:fasan_core/category_guess.dart';
 /// Saves the scan image, the log and (unless [saveOriginal] is false) the photo as taken, and builds the bill from the result.
 /// The header comes from the best read pass (bestHeader); the lines of the winner are only the fallback.
 Future<Bill> billFromScan(ScanResultData r, Uint8List photo,
-    {String? id, String? group, DateTime? created, bool saveOriginal = true}) async {
+    {String? id, String? group, DateTime? created, bool saveOriginal = true, String homeCurrency = 'EUR'}) async {
   id ??= DateTime.now().microsecondsSinceEpoch.toString();
   final img = await BillStore.saveFile('$id.jpg', r.display);
   // utf8, not codeUnits (UTF-16 units broke every character outside Latin-1 in 0.1.2)
@@ -40,6 +41,10 @@ Future<Bill> billFromScan(ScanResultData r, Uint8List photo,
     originalAspect: r.photoAspect,
   );
   b.alignSigns(); // „-198,00“ printed for a charge: items and total must agree in sign before the difference is looked at
+  // currency printed on the receipt (Roadmap 2): only a suggestion when it is not the home currency – the bill stays in the home
+  // currency until the person takes it, because a foreign currency without a rate would count 1:1
+  final cur = guessCurrency([for (final l in r.lines) l.$1]);
+  if (cur != null && cur != homeCurrency) b.currencyGuess = cur;
   b.category = guessCategory(b); // first guess, changed with one tap (category.dart)
   // Amount without an item line, visible only in the VAT table as a 0 % row (Café Muster 04.11.: „0.00 e 7.90 e 0.00
   // e 7.90“, items 79,00, total 86,90): added as its own item, marked unsure, so the bill adds up and nothing is lost.

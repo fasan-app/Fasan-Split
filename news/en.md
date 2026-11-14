@@ -1,3 +1,6 @@
+## 0.1.128
+- New: The app reads the currency on the receipt (€, CHF, £, $, Kč, zł …). If it is not yours, the bill asks “CHF?” whether to switch – only then the rate is fetched.
+
 ## 0.1.127
 - New: “Change name” in your own profile.
 

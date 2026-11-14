@@ -41,7 +41,9 @@ void main() {
   final env = Platform.environment;
   final diag = env['FASAN_DIAGNOSE'] ?? '../../fasan-diagnose/tests';
   final dir = Directory(env['FASAN_BONORDNER'] ?? '$diag/echt');
-  final ready = dir.existsSync() && File('assets/models/det.onnx').existsSync();
+  // ONNX Runtime must be loadable too (14.11.: with the models in place but no library on LD_LIBRARY_PATH the full local run went red)
+  final ort = (Platform.environment['LD_LIBRARY_PATH'] ?? '').split(':').any((d) => d.isNotEmpty && File('$d/libonnxruntime.so.1.22.0').existsSync());
+  final ready = dir.existsSync() && File('assets/models/det.onnx').existsSync() && ort;
   test('Stresstest: Varianten jedes Bons (Auflösung, Drehung, Helligkeit, Unschärfe, JPEG)', () async {
     final uv = File('assets/models/uvdoc.onnx');
     final ocr = PaddleOcr(
@@ -90,5 +92,5 @@ void main() {
     expect(falseChecked, isEmpty, reason: 'a wrong reading must never count as checked');
     expect(rate, greaterThanOrEqualTo(double.tryParse(env['FASAN_MINRATE'] ?? '') ?? 0.85), reason: 'too many variants are read wrong');
     expect(math.min(total, 1), 1);
-  }, skip: ready ? false : 'Testbons oder Modelle fehlen', timeout: const Timeout(Duration(hours: 4)));
+  }, skip: ready ? false : 'Testbons, Modelle oder ONNX Runtime (LD_LIBRARY_PATH) fehlen', timeout: const Timeout(Duration(hours: 4)));
 }
