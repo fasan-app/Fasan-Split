@@ -31,9 +31,15 @@ const profile = name === 'webkit'
     await p.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click());
     await p.waitForTimeout(1500);
     for (const n of [/^(Überspringen|Skip)$/, /^(Los geht|Loslegen|Weiter)/]) { const x = p.getByText(n).first(); if (await x.count()) { await x.click().catch(() => {}); await p.waitForTimeout(800); } }
-    await p.getByRole('button', { name: /^(Einstellungen|Settings)$/ }).first().click({ timeout: 20000 });
+    // Einstellungen live in the own profile since 11.11. (avatar top right, then the gear); the old top-level button is gone
+    const gear = p.getByRole('button', { name: /^(Einstellungen|Settings)$/ });
+    if (!(await gear.count())) { await p.getByRole('button', { name: /^(Profil|Profile)/ }).first().click({ timeout: 20000 }); await p.waitForTimeout(1200); }
+    await gear.first().click({ timeout: 20000 });
     await p.waitForTimeout(1500);
     await p.screenshot({ path: `${dir}/${name}-1-settings.png` });
+    // since the settings got sections (11.11.) the test sits under „Diagnose“
+    const diag = p.getByText(/^(Diagnose|Diagnostics)$/).first();
+    if (await diag.count()) { await diag.click({ timeout: 20000 }); await p.waitForTimeout(1200); }
     const t = p.getByText(/^(Leistungstest|Performance test)/).first();
     for (let i = 0; i < 30 && !(await t.count()); i++) { await p.evaluate(() => { for (const e of document.querySelectorAll('flt-semantics')) if (e.scrollHeight > e.clientHeight + 50 && getComputedStyle(e).overflowY !== 'visible') e.scrollTop += 600; }); await p.waitForTimeout(500); }
     await p.screenshot({ path: `${dir}/${name}-1b-settings-found.png` });
