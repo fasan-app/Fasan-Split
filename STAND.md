@@ -1257,3 +1257,6 @@ Bleibt: Ausschnitt unter jedem Posten, Bezahlt von, Menü oben, Später weiter /
 ## 14.11. 13:20 Nutzer: Mischung heißt „erst gemischten Entwurf zeigen“ (Fehler: sofort gebaut)
 Bon-Kopf E1+F2 wurde sofort gebaut (lokal, NICHT gepusht, NICHT veröffentlicht: app/lib/ui/bill_head.dart, bill_screen.dart, person_picker.dart, Texte, Tests).
 Regel in CLAUDE.md ergänzt. Stand: gemischte Entwürfe M1–M3 vorgelegt; Freigabe des Nutzers fehlt; bis dahin kein Push dieser Änderung.
+
+## 14.11. 15:17 Nutzer: M1–M3 abgelehnt („niemals deine besten Entwürfe“), will 10 weitere
+Fehler: M1–M3 und D/E/F waren Varianten desselben Aufbaus. Neu vorgelegt: 10 Entwürfe N1–N10 mit je eigenem Grundgedanken. Weiter nichts bauen/pushen bis Freigabe.
