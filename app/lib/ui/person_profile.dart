@@ -184,6 +184,12 @@ class PersonProfileScreen extends StatelessWidget {
         tile(Icons.link_rounded, trLang(lang, 'profile.linkTo'), key: const ValueKey('profile-link'), sub: admin ? null : trLang(lang, 'profile.onlyAdmins'), onTap: admin ? () => _linkTo(context, g, name) : null),
       ] else ...[
         tile(Icons.link_off_rounded, t.unlink, key: const ValueKey('profile-unlink'), sub: admin ? t.linkedTo(g.session.nameOf(k)) : trLang(lang, 'profile.onlyAdmins'), onTap: admin ? () => s.unlinkPerson(g, k, name) : null),
+        if (isMe)
+          // own name (Roadmap 1.6): one name everywhere, like in Einstellungen (04.11.)
+          tile(Icons.edit_outlined, trLang(lang, 'profile.rename'), key: const ValueKey('profile-rename'), sub: name, onTap: () async {
+            final v = await askText(context, trLang(lang, 'profile.rename'), name);
+            if (v != null) await s.setName(v.trim());
+          }),
         if (!isMe)
           tile(Icons.payments_outlined, trLang(lang, 'pay.ask'), key: const ValueKey('profile-pay-ask'), sub: trLang(lang, 'pay.askSub', [name]), onTap: () async {
             await s.requestPay(k, name);

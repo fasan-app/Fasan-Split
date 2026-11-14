@@ -695,6 +695,7 @@ const Map<String, String> stringsDe = {
   'rights.note': 'Gilt zwischen den Apps der Gruppe: jedes Handy verwirft, was gegen diese Regeln eingetragen wird. Keine technische Sperre gegen veränderte Apps.',
   'rights.notesBlocked': 'In dieser Gruppe schreiben nur Admins Notizen.',
   'rights.banner': 'In dieser Gruppe ändern nur Admins Rechnungen. Du siehst alles, kannst aber nichts ändern.',
+  'profile.rename': 'Namen ändern',
   'trust.full': 'Trägt direkt ein',
   'trust.fullSub': 'Seine Einträge für dich gelten sofort.',
   'trust.confirm': 'Fragt erst',

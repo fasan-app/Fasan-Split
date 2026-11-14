@@ -420,6 +420,24 @@ void main() {
     expect(svc.confirmAll, isTrue, reason: 'Schalter aus = alles wartet auf mich');
   });
 
+  testWidgets('Eigenes Profil: „Namen ändern“ setzt den Namen überall', (tester) async {
+    final g = await svc.createGroup('WG');
+    tester.view.physicalSize = const Size(1080, 2400);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(Builder(builder: (c) => Scaffold(body: Center(child: TextButton(onPressed: () => openProfile(c, groupName: g.localName, pub: svc.identity!.pub), child: const Text('auf')))))));
+    await tester.tap(find.text('auf'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('profile-rename')), 300);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('profile-rename')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Mara');
+    await tester.tap(find.text('OK').last);
+    await tester.pumpAndSettle();
+    expect(svc.identity!.name, 'Mara');
+    await tester.pump(const Duration(seconds: 5));
+  });
+
   testWidgets('Paket 5: „Alle sind Admins“ gilt nur vom Gründer; Admin-Zeile im Profil nur, solange es aus ist', (tester) async {
     final g = await svc.createGroup('WG');
     final other = 'ab' * 32;

@@ -695,6 +695,7 @@ const Map<String, String> stringsEn = {
   'rights.note': 'Holds between the apps of the group: every phone drops what is entered against these rules. No technical lock against changed apps.',
   'rights.notesBlocked': 'In this group only admins write notes.',
   'rights.banner': 'In this group only admins change bills. You see everything but cannot change it.',
+  'profile.rename': 'Change name',
   'trust.full': 'Enters directly',
   'trust.fullSub': 'Their entries for you count at once.',
   'trust.confirm': 'Asks first',

@@ -161,6 +161,9 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     await step('h09-notizen', async () => { await tap(/^Notizen/); });
     await step('h10-notizen-zu', async () => { await back(); });
     await step('h11-chat', async () => { await tap(/^Chat/); });
+    // members list from the chat header (Paket 5/5b): Lena is no admin here, so „Wer darf was“ is greyed with the reason; same name as test/screens_test.dart b32
+    await step('b32-mitglieder-admin', async () => { await p.getByText(/^Beispielstadt$/).first().click({ timeout: 8000 }); await p.waitForTimeout(1000); await p.mouse.move(196, 500); await p.mouse.wheel(0, 500); await p.waitForTimeout(600); });
+    await step('b32b-mitglieder-zu', async () => { await back(); });
     await step('h12-chat-zu', async () => { await back(); await back(); });
     await step('h13-freunde', async () => { await tap(/^Freunde/); });
     result.steps = steps;

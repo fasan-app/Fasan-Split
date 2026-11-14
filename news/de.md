@@ -1,3 +1,6 @@
+## 0.1.127
+- Neu: „Namen ändern“ im eigenen Profil.
+
 ## 0.1.126
 - Neu: „Wer darf was“ in der Mitgliederliste – Admins legen fest, ob nur Admins Rechnungen anlegen, Rechnungen und Posten ändern oder Notizen schreiben. Wer es nicht darf, sieht den Bon mit Hinweis, kann ihn aber nicht ändern.
 

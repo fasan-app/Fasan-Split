@@ -1,3 +1,6 @@
+## 0.1.127
+- New: “Change name” in your own profile.
+
 ## 0.1.126
 - New: “Who may do what” in the members list – admins decide whether only admins add bills, change bills and items or write notes. Whoever may not sees the bill with a note but cannot change it.
 

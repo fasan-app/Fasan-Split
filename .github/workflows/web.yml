@@ -155,11 +155,45 @@ jobs:
           retention-days: 7
 
   # Erkennungs-Tor: ohne Bestehen keine Veröffentlichung der Web-App (Nutzer 06.11.)
+  # Unit and widget tests of the app (14.11.: they ran only in android.yml, which is off since the APK went on ice – so nothing in
+  # the web pipeline ran them). Three shards side by side (flutter test --total-shards/--shard-index), deploy waits for all.
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+      - name: Modelle holen (Prüfsummen)
+        working-directory: app
+        run: bash tool/fetch_models.sh
+      - name: pdftotext für den PDF-Test
+        run: sudo apt-get install -y -qq poppler-utils >/dev/null
+      - name: Tests (Teil ${{ matrix.shard }} von 3)
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter test --total-shards 3 --shard-index ${{ matrix.shard }} 2>&1 | tail -n 400
+      - name: Pakete testen
+        if: matrix.shard == 0
+        run: |
+          set -o pipefail
+          for d in app/packages/*/; do
+            if [ -d "$d/test" ]; then (cd "$d" && flutter test 2>&1 | tail -n 40); fi
+          done
+
   erkennung:
     uses: ./.github/workflows/erkennung.yml
     secrets: inherit
   deploy:
-    needs: [build, e2e, erkennung]
+    needs: [build, e2e, erkennung, test]
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
