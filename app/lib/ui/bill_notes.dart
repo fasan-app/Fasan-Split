@@ -2,6 +2,7 @@
 // Fasan Split – notes on a bill (Nutzer 04.11.): anyone in the group writes a note, can pin it as a hint on top of the
 // bill, and can mention people with @ – they find it in their „Neuigkeiten“. Shared with the bill (BillSync `n/`). MPL-2.0
 import '../l10n/tr.dart' show trLang;
+import 'person_avatar.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -77,7 +78,7 @@ class _BillNotesState extends State<BillNotes> {
         child: ListView(shrinkWrap: true, children: [
           ListTile(title: Text(trLang(de ? 'de' : 'en', 'bill_notes.mentionWhom'), style: Theme.of(ctx).textTheme.titleMedium)),
           if (people.isEmpty) ListTile(title: Text(trLang(de ? 'de' : 'en', 'bill_notes.nobodyElseOnThis'))),
-          for (final p in people) ListTile(leading: FasanAvatar(name: p, index: 0, size: 32), title: Text(p), onTap: () => Navigator.pop(ctx, p)),
+          for (final p in people) ListTile(leading: PersonAvatar(name: p, index: 0, size: 32), title: Text(p), onTap: () => Navigator.pop(ctx, p)),
         ]),
       ),
     );
@@ -114,7 +115,7 @@ class _BillNotesState extends State<BillNotes> {
         Padding(
           padding: const EdgeInsets.only(bottom: FasanSpace.s),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            FasanAvatar(name: n.from, index: 0, size: 28),
+            PersonAvatar(name: n.from, index: 0, size: 28),
             const SizedBox(width: FasanSpace.s),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

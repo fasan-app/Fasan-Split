@@ -2,6 +2,7 @@
 // Fasan Split – how a balance comes about (Nutzer 07.11.: „im Profil sehen, wie sich das Saldo ergibt, alle Positiven und Negativen
 // als Rechnung auf einen Blick“; „die Umrechnung, wer wem wie viel schuldet, auch in der Gruppe für alle zum Nachvollziehen“).
 // Two screens over the same data as the balances themselves (settle.dart), so the lines always add up to the number shown. MPL-2.0
+import 'person_avatar.dart';
 import 'package:fasan_core/bill.dart';
 import 'package:fasan_core/settle.dart';
 import 'package:fasan_ui/fasan_ui.dart';
@@ -191,7 +192,7 @@ class GroupBreakdownScreen extends StatelessWidget {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   dense: true,
-                  leading: FasanAvatar(name: label(e.key), index: e.key.hashCode % 8, size: 28),
+                  leading: PersonAvatar(name: label(e.key), index: e.key.hashCode % 8, size: 28),
                   title: Text(label(e.key)),
                   trailing: Text('${money(e.value, de: de, sign: true)} $sign', style: tt.titleSmall!.copyWith(color: c(e.value))),
                 ),

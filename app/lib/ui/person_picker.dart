@@ -2,6 +2,7 @@
 // Fasan Split – choose a person for a bill (Nutzer 05.11.): everyone from the group, then friends, then recent names, filtered while
 // typing; a new name as the last row. A friend who is not in the bill's group can be invited on the spot (and the invitation taken
 // back). MPL-2.0
+import 'person_avatar.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -161,7 +162,7 @@ class _PickerSheetState extends State<_PickerSheet> {
       last = c.source;
       rows.add(ListTile(
         key: ValueKey('pick-${c.name}'),
-        leading: FasanAvatar(name: c.name, index: c.name.hashCode.abs() % 8, size: 32),
+        leading: PersonAvatar(name: c.name, index: c.name.hashCode.abs() % 8, size: 32),
         title: Text(c.name),
         subtitle: widget.hasGroup && c.source == PersonSource.friend ? Text(context.tr('picker.notInGroup'), style: tt.bodySmall!.copyWith(color: l.textMuted)) : null,
         onTap: () => _pick(c),

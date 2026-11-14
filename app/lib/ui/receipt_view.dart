@@ -12,6 +12,7 @@
 //   (Beschluss 02.11.).
 import 'dart:math' as math;
 
+import 'person_avatar.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -628,7 +629,7 @@ class _PersonBar extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(6, 4, 14, 4),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    FasanAvatar(name: bill.ps[p].name, index: bill.ps[p].color, size: 28),
+                    PersonAvatar(name: bill.ps[p].name, index: bill.ps[p].color, size: 28),
                     const SizedBox(width: 8),
                     Text(bill.ps[p].name, style: Theme.of(context).textTheme.labelLarge),
                     const SizedBox(width: 8),

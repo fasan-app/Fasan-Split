@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // Fasan Split – Gruppen and Freunde, group page. A group is local until it is shared live (see collab_ui.dart); the
 // invitation and the live part of a group live in collab_ui.dart. MPL-2.0
+import 'person_avatar.dart';
 import '../l10n/tr.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
@@ -375,7 +376,7 @@ class GroupPeople extends StatelessWidget {
               child: InkWell(
                 onTap: () => openProfile(context, groupName: name, person: p),
                 child: Row(children: [
-                  FasanAvatar(name: p, index: i, size: 32),
+                  PersonAvatar(name: p, index: i, size: 32),
                   const SizedBox(width: FasanSpace.m),
                   Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -638,7 +639,7 @@ class FriendsPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s + 2),
             child: Row(children: [
               Stack(clipBehavior: Clip.none, children: [
-                FasanAvatar(name: f.name, index: f.color, size: 44),
+                PersonAvatar(name: f.name, index: f.color, size: 44),
                 // online now (Nutzer 04.11.; off in Einstellungen → Privatsphäre)
                 if (f.pub != null && collab.isOnline(f.pub!))
                   Positioned(
@@ -747,7 +748,7 @@ Future<void> friendActions(BuildContext context, String name) async {
     context: context,
     builder: (ctx) => SafeArea(
       child: ListView(shrinkWrap: true, children: [
-        ListTile(leading: FasanAvatar(name: name, index: 0, size: 32), title: Text(name, style: Theme.of(ctx).textTheme.titleMedium)),
+        ListTile(leading: PersonAvatar(name: name, index: 0, size: 32), title: Text(name, style: Theme.of(ctx).textTheme.titleMedium)),
         if (direct != null || pub != null)
           ListTile(leading: const Icon(Icons.chat_bubble_outline_rounded), title: Text(trLang(de ? 'de' : 'en', 'groups.writeAMessage')), onTap: () => Navigator.pop(ctx, 'direct'))
         else

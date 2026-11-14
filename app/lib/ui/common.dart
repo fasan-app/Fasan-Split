@@ -3,6 +3,7 @@
 
 
 import '../l10n/tr.dart' show trLang;
+import 'person_avatar.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -265,7 +266,7 @@ class PeopleStack extends StatelessWidget {
       width: n == 0 ? 0 : size + step * (n - 1),
       height: size,
       child: Stack(children: [
-        for (var i = 0; i < shown.length; i++) Positioned(left: i * step, child: FasanAvatar(name: shown[i].$1, index: shown[i].$2, size: size)),
+        for (var i = 0; i < shown.length; i++) Positioned(left: i * step, child: PersonAvatar(name: shown[i].$1, index: shown[i].$2, size: size)),
         if (more > 0)
           Positioned(
             left: shown.length * step,

@@ -4,6 +4,7 @@
 // Only finished bills with a payer count. Me = the name in Einstellungen → „Das bin ich“ and, in live groups, the
 // names linked to my member key. MPL-2.0
 import '../l10n/tr.dart' show trLang;
+import 'person_avatar.dart';
 import 'dart:async';
 
 import 'package:fasan_ui/fasan_ui.dart';
@@ -79,7 +80,7 @@ class MyBalanceBadge extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: color, width: 2)),
-              child: FasanAvatar(name: store.me.isEmpty ? '?' : store.me, index: 0, size: 28),
+              child: PersonAvatar(name: store.me.isEmpty ? '?' : store.me, index: 0, size: 28),
             ),
             // a settled balance reads „0,00 €“, never nothing (Nutzer 09.11. 18:44); the sign carries the meaning, colour only adds
             const SizedBox(width: 6),
@@ -151,7 +152,7 @@ class MyBalanceScreen extends StatelessWidget {
         for (final e in (per.entries.toList()..sort((a, b) => a.value.compareTo(b.value))))
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: FasanAvatar(name: e.key, index: e.key.hashCode % 8, size: 32),
+            leading: PersonAvatar(name: e.key, index: e.key.hashCode % 8, size: 32),
             title: Text(e.value > 0 ? t.getsFrom(e.key) : t.owesTo(e.key)),
             trailing: Text('${money(e.value.abs(), de: t.de)} ${signOf(context)}', style: tt.titleMedium!.copyWith(color: c(e.value))),
           ),
@@ -159,7 +160,7 @@ class MyBalanceScreen extends StatelessWidget {
         for (final e in (prov.entries.toList()..sort((a, b) => a.value.compareTo(b.value))))
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: Opacity(opacity: 0.6, child: e.key.isEmpty ? const Icon(Icons.help_outline_rounded) : FasanAvatar(name: e.key, index: e.key.hashCode % 8, size: 32)),
+            leading: Opacity(opacity: 0.6, child: e.key.isEmpty ? const Icon(Icons.help_outline_rounded) : PersonAvatar(name: e.key, index: e.key.hashCode % 8, size: 32)),
             title: Text(
               e.key.isEmpty ? trLang(t.de ? 'de' : 'en', 'my_balance.provisionalOpenPayer') : trLang(t.de ? 'de' : 'en', e.value > 0 ? 'my_balance.provisionalGets' : 'my_balance.provisionalOwes', [e.key]),
               style: tt.bodyLarge!.copyWith(color: l.textMuted),
@@ -246,7 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.s, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
         Row(children: [
-          ListenableBuilder(listenable: _name, builder: (context, _) => FasanAvatar(name: _name.text.trim().isEmpty ? '?' : _name.text.trim(), index: 0, size: 64)),
+          ListenableBuilder(listenable: _name, builder: (context, _) => PersonAvatar(name: _name.text.trim().isEmpty ? '?' : _name.text.trim(), index: 0, size: 64)),
           const SizedBox(width: FasanSpace.m),
           Expanded(
             child: TextField(

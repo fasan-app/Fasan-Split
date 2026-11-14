@@ -2,6 +2,7 @@
 // Fasan Split – THE bill screen (Nutzer 05.11.): total and purpose, who was there, who paid, the items – changed and assigned on
 // one screen. Replaces the old steps 1 (total), 2 (people) and 3 (assign); what follows is the summary (PayScreen). All texts
 // come from lib/l10n (context.tr). Researched layout: docs/recherche/2026-11-05-ein-bildschirm-bon.md. MPL-2.0
+import 'person_avatar.dart';
 import 'send_items.dart';
 import 'dart:math' as math;
 
@@ -193,7 +194,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       builder: (ctx) => SafeArea(
         // scrolls on a phone held sideways (the four entries are taller than the sheet there)
         child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(leading: FasanAvatar(name: name, index: b.ps[i].color, size: 32), title: MarqueeText(name, style: Theme.of(ctx).textTheme.titleMedium)),
+          ListTile(leading: PersonAvatar(name: name, index: b.ps[i].color, size: 32), title: MarqueeText(name, style: Theme.of(ctx).textTheme.titleMedium)),
           ListTile(leading: const Icon(Icons.payments_outlined), title: Text(ctx.tr('person.setPayer')), onTap: () => Navigator.pop(ctx, 'payer')),
           ListTile(leading: const Icon(Icons.done_all_rounded), title: Text(ctx.tr('person.allOpen')), enabled: b.unassigned > 0, onTap: () => Navigator.pop(ctx, 'open')),
           ListTile(leading: const Icon(Icons.person_remove_outlined), title: Text(ctx.tr('person.remove')), onTap: () => Navigator.pop(ctx, 'remove')),
@@ -592,7 +593,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   key: ValueKey('person-$i'),
                   visualDensity: VisualDensity.compact,
                   labelPadding: const EdgeInsets.only(right: 2),
-                  avatar: FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 22),
+                  avatar: PersonAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 22),
                   label: MarqueeLabel(b.ps[i].name, style: Theme.of(context).chipTheme.labelStyle ?? tt.labelLarge),
                   selected: active == i,
                   showCheckmark: false,

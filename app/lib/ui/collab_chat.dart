@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // Fasan Split – The chat of a group or a direct chat. Split out of collab_ui.dart (13.11., Umbau, behaviour unchanged). MPL-2.0
+import 'person_avatar.dart';
 import 'person_profile.dart';
 import '../l10n/tr.dart';
 import 'dart:async';
@@ -75,7 +76,7 @@ class _ChatScreenState extends State<ChatScreen> {
         child: ListView(shrinkWrap: true, children: [
           ListTile(title: Text(trLang(de ? 'de' : 'en', 'collab_ui.mentionWhom'), style: Theme.of(ctx).textTheme.titleMedium)),
           if (people.isEmpty) ListTile(title: Text(trLang(de ? 'de' : 'en', 'collab_ui.nobodyElseInThe'))),
-          for (final p in people) ListTile(leading: FasanAvatar(name: p.$2, index: 0, size: 32), title: Text(p.$2), onTap: () => Navigator.pop(ctx, p)),
+          for (final p in people) ListTile(leading: PersonAvatar(name: p.$2, index: 0, size: 32), title: Text(p.$2), onTap: () => Navigator.pop(ctx, p)),
         ]),
       ),
     );

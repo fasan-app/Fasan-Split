@@ -3,6 +3,7 @@
 // somebody and everything that can be done with them. Status (account linked or just a name), balance with its certainty, shared
 // groups, what they entered or changed, and the actions that used to hide in two bottom sheets. Later packages add rights levels,
 // admin, payment details (docs/VORSCHLAG-12-11-MITGLIEDER-PROFIL.md). MPL-2.0
+import 'person_avatar.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -69,7 +70,7 @@ class PersonProfileScreen extends StatelessWidget {
     ];
     return ListView(padding: EdgeInsets.fromLTRB(FasanSpace.l, FasanSpace.m, FasanSpace.l, 40 + MediaQuery.paddingOf(context).bottom), children: [
       Row(children: [
-        FasanAvatar(name: name, index: 0, size: 64),
+        PersonAvatar(name: name, index: 0, size: 64),
         const SizedBox(width: FasanSpace.l),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // Fasan Split – the bill flow: 1 total and purpose, 2 who was there, 3 assign, 4 who paid + result. MPL-2.0
+import 'person_avatar.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -173,7 +174,7 @@ class ResultBody extends StatelessWidget {
           constraints: BoxConstraints(minHeight: l.minTap),
           decoration: BoxDecoration(border: Border(bottom: BorderSide(color: l.hairline))),
           child: Row(children: [
-            FasanAvatar(name: bill.ps[i].name, index: bill.ps[i].color, size: 32),
+            PersonAvatar(name: bill.ps[i].name, index: bill.ps[i].color, size: 32),
             const SizedBox(width: FasanSpace.m),
             Expanded(child: Text(t.perPerson(bill.ps[i].name), style: tt.bodyLarge)),
             Money(pp[i] ?? 0),
@@ -185,11 +186,11 @@ class ResultBody extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(children: [
-            FasanAvatar(name: bill.ps[from].name, index: bill.ps[from].color, size: 26),
+            PersonAvatar(name: bill.ps[from].name, index: bill.ps[from].color, size: 26),
             const SizedBox(width: 6),
             Icon(Icons.arrow_forward_rounded, size: 18, color: l.textMuted),
             const SizedBox(width: 6),
-            FasanAvatar(name: bill.ps[to].name, index: bill.ps[to].color, size: 26),
+            PersonAvatar(name: bill.ps[to].name, index: bill.ps[to].color, size: 26),
             const SizedBox(width: FasanSpace.m),
             Expanded(child: Text(t.owes(bill.ps[from].name, bill.ps[to].name, '${money(c, de: t.de)} ${billSign(context, bill)}'), style: tt.bodyMedium)),
             // I owe: pay right here (Nutzer 04.11.; pay_ui.dart)

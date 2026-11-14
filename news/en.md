@@ -1,3 +1,6 @@
+## 0.1.122
+- New: Every person has their own hatching pattern (eight patterns) next to colour and initials, so you can tell people apart without colour vision.
+
 ## 0.1.121
 - New: Your own profile has “Show my history to members” (off by default). In other profiles you then see their amount history; hidden bills are never included.
 - New: “Send my payment details” in a person's profile (after confirmation, only into the chat with them).

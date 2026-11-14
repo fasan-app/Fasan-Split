@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // Fasan Split – who paid: one person, or several with their own amounts (Nutzer 05.11.: in the bill screen, not on a later step).
 // The sheet works directly on `bill.payer` / `bill.paid` (empty `paid` = [payer] paid everything). MPL-2.0
+import 'person_avatar.dart';
 import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -139,7 +140,7 @@ class _PayersSheetState extends State<_PayersSheet> {
               Padding(
                 padding: const EdgeInsets.only(bottom: FasanSpace.xs),
                 child: Row(children: [
-                  FasanAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 28),
+                  PersonAvatar(name: b.ps[i].name, index: b.ps[i].color, size: 28),
                   const SizedBox(width: FasanSpace.s),
                   Expanded(child: Text(b.ps[i].name, style: tt.bodyLarge)),
                   SizedBox(
