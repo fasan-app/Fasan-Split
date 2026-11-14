@@ -563,6 +563,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             final line = [
               c?.label(t.de) ?? context.tr('category_ui.chooseCategory'),
               day,
+              if (b.currency != null) b.currency!, // a foreign currency belongs in the visible line, not only behind ▾
               if ((b.placeAddress ?? '').trim().isNotEmpty) b.placeAddress!.trim(),
             ].join(' · ');
             return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -580,6 +581,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   ]),
                 ),
               ),
+              // a currency read from the receipt must be seen without opening the details (Foto 14.11.: it hid behind ▾)
+              if (!open && b.currency == null && b.currencyGuess != null) Align(alignment: Alignment.centerLeft, child: CurrencyChip(bill: b)),
               if (open) ...[
                 Wrap(spacing: 4, runSpacing: 0, children: [CurrencyChip(bill: b), CategoryChip(bill: b)]),
                 WhenWhere(bill: b, compact: true, onChanged: _changed),

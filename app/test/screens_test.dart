@@ -155,6 +155,8 @@ void main() {
     '6-ergebnis': (b) => ResultScreen(bill: b..payer = 1),
     '7-einstellungen': (_) => const SettingsScreen(),
     'b01-bon': (b) => ReviewScreen(bill: b),
+    // currency read from the receipt (Roadmap 2, 14.11.): the suggestion chip „CHF?“ in the bill head (set by hand here: no real foreign receipt)
+    'b35-waehrung-vorschlag': (b) => ReviewScreen(bill: b..currencyGuess = 'CHF'),
     'b02-menue': (b) => ReviewScreen(bill: b),
     'b04-posten-blatt': (b) => ReviewScreen(bill: b),
     'b04v-posten-vllt': (b) => ReviewScreen(bill: b),

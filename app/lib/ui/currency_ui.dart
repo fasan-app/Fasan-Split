@@ -149,7 +149,7 @@ class _CurrencyChipState extends State<CurrencyChip> {
       return ActionChip(
         key: const ValueKey('currency-guess'),
         visualDensity: VisualDensity.compact,
-        avatar: Text(currencySign(guess)),
+        avatar: const Icon(Icons.currency_exchange_rounded, size: 18),
         side: BorderSide(color: FasanLook.of(context).accent),
         label: Text(trLang(t.de ? 'de' : 'en', 'currency.guessChip', [guess])),
         onPressed: _busy ? null : () => _askGuess(guess),
