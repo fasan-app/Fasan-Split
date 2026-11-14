@@ -1260,3 +1260,8 @@ Regel in CLAUDE.md ergänzt. Stand: gemischte Entwürfe M1–M3 vorgelegt; Freig
 
 ## 14.11. 15:17 Nutzer: M1–M3 abgelehnt („niemals deine besten Entwürfe“), will 10 weitere
 Fehler: M1–M3 und D/E/F waren Varianten desselben Aufbaus. Neu vorgelegt: 10 Entwürfe N1–N10 mit je eigenem Grundgedanken. Weiter nichts bauen/pushen bis Freigabe.
+
+## 14.11. 15:25 Nutzer: Entwürfe setzen voraus, dass Bon- und Postenbilder so passen – stimmt, ungeprüft
+Gemessen (55 Testfotos in fasan-diagnose): Originalfotos Höhe/Breite Median 0,85, 38 von 55 quer, keines länger als 1,78. Hochkant-Miniatur (N3, N6, N10, E1) passt also für
+die Mehrheit der Originalfotos nicht ohne Beschnitt. Nicht gemessen: Format des begradigten Scans, Lesbarkeit der Posten-Ausschnitte in kleiner Größe, Anteil der Bons ohne Bild
+(Gruppe/Browser, „Ohne Bon“). Nächster Schritt vor jeder Auswahl: Entwürfe mit echten Bildern aus fasan-diagnose rendern (nur lokal ansehen, nichts davon ins Repo).
