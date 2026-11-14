@@ -1244,3 +1244,7 @@ farbige Zustandsmarkierung der Posten, oberstes Menü (Zurück, Titel, Am-Bon-zu
 ## 14.11. 12:55 Nutzer: Bon-Kopf 3. Runde
 Basis D3 (Reiter Posten | Am Bon | Offene gefällt). Vorschläge erst nach Tipp auf „+ Person“. Infostreifen „11 Posten · 5 fertig …“ wie D1.
 Bon-Ansicht oben als klar anklickbarer Bereich mit Miniatur des ganzen Bons (D3 ließ den Bon nicht als Ganzes ansehen). Entwürfe E1–E3 vorgelegt; Bon-Ausschnitte unter Posten und „Bezahlt von“ bleiben (Fehler: fehlten in D).
+
+## 14.11. 12:58 Nutzer: Entwürfe E zu unruhig und unaufgeräumt
+Gestaltungsrichtung: Dieter Rams, Jony Ive, Bauhaus (ruhig, weniger Rahmen, klares Raster, ein Akzent). Entwürfe F1 (Rams), F2 (Ive), F3 (Bauhaus) vorgelegt.
+Funktionen unverändert: Reiter Posten/Am Bon/Offene, Infostreifen, Bon-Miniatur klickbar, Ausschnitte, Bezahlt von, + Person öffnet Vorschläge.
