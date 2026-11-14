@@ -1235,3 +1235,8 @@ Entwurf B: Kopf wie Gruppe, Personen als Avatar-Stapel mit Zeile „Mira, Jonas,
 Entwurf C: kompakter Kopf (Zweck, Summe, Rahmen), Avatar-Zeile bleibt oben stehen, aktive Person mit Hinweis.
 Warten auf Auswahl des Nutzers; danach bauen, Bildschirmfotos App und Browser, Schritt mit 5 Personen in screens_test und screens.js,
 Register 27d, 26d, 09.11. Nr. 3, 08.11. 04:09 (2) schließen. Währenddessen: Punkt 2 (Suche Datumsbereich) beginnen.
+
+## 14.11. 12:45 Nutzer: Auswahl Bon-Kopf (Entwürfe 2. Runde)
+Wunsch: volle, wischbare Personennamen wie A, Gestaltung wie C (kompakter Kopf, Personenzeile oben). Muss bleiben: Filter („Nur offene Posten“),
+farbige Zustandsmarkierung der Posten, oberstes Menü (Zurück, Titel, Am-Bon-zuordnen, Rückgängig/Wiederholen, Posten prüfen, ⋮), Bon-Ansichten.
+„Am Bon zuordnen“ soll präsenter werden. Vorschläge (+ Bine, Alle aus der Gruppe) sollen komplett anders aussehen. Neue Entwürfe D1–D3 vorgelegt, wartet auf Auswahl.
