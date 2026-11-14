@@ -1248,3 +1248,8 @@ Bon-Ansicht oben als klar anklickbarer Bereich mit Miniatur des ganzen Bons (D3 
 ## 14.11. 12:58 Nutzer: Entwürfe E zu unruhig und unaufgeräumt
 Gestaltungsrichtung: Dieter Rams, Jony Ive, Bauhaus (ruhig, weniger Rahmen, klares Raster, ein Akzent). Entwürfe F1 (Rams), F2 (Ive), F3 (Bauhaus) vorgelegt.
 Funktionen unverändert: Reiter Posten/Am Bon/Offene, Infostreifen, Bon-Miniatur klickbar, Ausschnitte, Bezahlt von, + Person öffnet Vorschläge.
+
+## 14.11. 13:01 Nutzer wählt: Mischung E1 + F2 (Bon-Kopf)
+E1: Bon-Karte oben mit Miniatur links, Summe, Rahmen, Infostreifen, „Ganzen Bon ansehen ›“ (klickbar). F2: hell, weich, große Radien, Personen als Pillen
+(aktive dunkel), „+ Person“ öffnet Vorschläge (Gruppe/Freunde/Alle), Reiter Posten | Am Bon | Nur offene als Segment, Posten auf weißer Karte mit Zustandspunkt.
+Bleibt: Ausschnitt unter jedem Posten, Bezahlt von, Menü oben, Später weiter / n offen. Wird gebaut (Paket Bon-Kopf), Register 37, 27d, 26d.
