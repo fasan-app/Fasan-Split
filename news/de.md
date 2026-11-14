@@ -1,3 +1,6 @@
+## 0.1.125
+- Neu: „Als PDF teilen“ im ⋮-Menü eines Bons – eine Seite mit Posten, Menge, wer dabei war, Betrag, Summe und dem Anteil je Person. Ohne Foto des Bons; wo das Gerät nicht teilen kann, wird die Datei gespeichert.
+
 ## 0.1.124
 - Besser: Meldungen mit „Rückgängig“ verschwinden nach einigen Sekunden von selbst (sie blieben vorher bis zum Wegwischen stehen), „Rückgängig“ steht neben dem Text und ein Betrag bricht nicht mehr zwischen Zahl und €.
 

@@ -1,3 +1,6 @@
+## 0.1.125
+- New: “Share as PDF” in a bill's ⋮ menu – one page with items, quantity, who was in, amount, total and each person's share. Without the receipt photo; where the device cannot share, the file is saved.
+
 ## 0.1.124
 - Better: Messages with “Undo” disappear by themselves after a few seconds (they stayed until swiped away before), “Undo” sits beside the text and an amount no longer breaks between number and sign.
 

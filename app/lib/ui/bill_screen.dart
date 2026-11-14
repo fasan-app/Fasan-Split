@@ -23,6 +23,7 @@ import 'history.dart';
 import 'category.dart' show categoryById;
 import 'category_ui.dart';
 import 'change_badge.dart';
+import 'bill_pdf.dart' show sharePdfFlow;
 import 'common.dart';
 import 'hints.dart';
 import 'currency_ui.dart';
@@ -449,6 +450,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssignScreen(bill: b, initialMode: AssignMode.receipt)));
               case 'send':
                 sendItemsFlow(context, b);
+              case 'pdf':
+                sharePdfFlow(context, b, S.of(context).de ? 'de' : 'en');
               case 'history':
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => HistoryScreen.bill(billId: b.id, billTitle: b.purpose)));
               case 'lock':
@@ -478,6 +481,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               ),
               PopupMenuItem(value: 'receipt', enabled: hasScan, child: row(Icons.receipt_long_outlined, context.tr('bill.assignOnReceipt'), hasScan ? null : noPhoto)),
               PopupMenuItem(value: 'send', enabled: b.its.isNotEmpty && canSendItems(context, b), child: row(Icons.forward_to_inbox_outlined, context.tr('send.item'), canSendItems(context, b) ? null : context.tr(b.hidden ? 'vis.noSend' : 'send.noGroup'))),
+              PopupMenuItem(key: const ValueKey('bill-pdf'), value: 'pdf', enabled: b.its.isNotEmpty, child: row(Icons.picture_as_pdf_outlined, context.tr('pdf.share'), b.its.isEmpty ? context.tr('pdf.noItems') : null)),
               PopupMenuItem(value: 'history', child: row(Icons.history_rounded, context.tr('history.title'), null)),
               // who can read the bill (Nutzer 09.11. Sichtbarkeit): everybody in the group, or only the people on it
               PopupMenuItem(
