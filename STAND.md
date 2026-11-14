@@ -1268,3 +1268,7 @@ die Mehrheit der Originalfotos nicht ohne Beschnitt. Nicht gemessen: Format des 
 
 ## 14.11. 15:28 Nutzer: Bons in allen Formaten, wenig oder viel Text – muss bedacht werden (Register 38)
 Formattafel (erfundene Bons: lang, kurz, quer fotografiert, A4 dicht, Kartenbeleg, ohne Bild) in den drei Rahmenarten der Entwürfe erzeugt und dem Nutzer gezeigt (/tmp, nicht im Repo).
+
+## 14.11. 15:34 Nutzer: nicht selbstständig verwerfen; alle Entwürfe, die „auch Apple nehmen würde“
+Fehler: ich habe N1/N2/N7 und weitere aus der Auswahl genommen. Entscheidung liegt beim Nutzer. Alle zehn (N1–N10) neu gezeichnet mit robustem Bildplatz (Foto optional,
+fester Ersatz, begradigter Scan statt Foto, Vollansicht nur auf Tipp) und je vier Bildzuständen (gutes Foto, A4 dicht, Querfoto, ohne Bild). Auswahl durch den Nutzer offen.
