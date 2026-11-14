@@ -13,6 +13,7 @@ void main() {
       'lib/collab/notify.dart', // notification permission API differs
       'lib/ui/diagnose.dart', // device block of the protocol (no dart:io on the web)
       'lib/ui/home.dart', // update check (APK update vs „load again“), „Zum Home-Bildschirm“ hint
+      'lib/ui/home_lists.dart', // part of home.dart (Umbau 14.11.): the same hints (outdated web build, no WebGL, „Zum Home-Bildschirm“)
       'lib/ui/join_screen.dart', // „open the web app“ / home-screen hints
     };
     final found = <String>{};

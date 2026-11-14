@@ -1,3 +1,6 @@
+## 0.1.124
+- Besser: Meldungen mit „Rückgängig“ verschwinden nach einigen Sekunden von selbst (sie blieben vorher bis zum Wegwischen stehen), „Rückgängig“ steht neben dem Text und ein Betrag bricht nicht mehr zwischen Zahl und €.
+
 ## 0.1.123
 - Neu: Im Chat öffnet der Name über einer Nachricht das Profil (auch im Langdruck-Menü „Profil von …“); der Chat-Kopf zeigt mit einem Pfeil, dass er sich antippen lässt.
 - Neu: In der Freundesliste hat jede Zeile ⋮ – dasselbe Menü wie der Langdruck.

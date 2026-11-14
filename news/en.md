@@ -1,3 +1,6 @@
+## 0.1.124
+- Better: Messages with “Undo” disappear by themselves after a few seconds (they stayed until swiped away before), “Undo” sits beside the text and an amount no longer breaks between number and sign.
+
 ## 0.1.123
 - New: In the chat the name above a message opens the profile (also “Profile of …” in the long-press menu); the chat header shows an arrow that it can be tapped.
 - New: Every row in the friends list has ⋮ – the same menu as the long press.

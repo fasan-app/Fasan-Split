@@ -374,14 +374,25 @@ Future<bool> editItem(BuildContext context, BillItem it, {VoidCallback? onDelete
 void showNote(BuildContext context, String text, {String? actionLabel, VoidCallback? onAction, Duration duration = const Duration(seconds: 4)}) {
   ScaffoldMessenger.maybeOf(context)
     ?..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Text(text),
+    ..showSnackBar(noteBar(text, duration: duration, margin: EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, bottomBarSpace(context) + FasanSpace.s), action: actionLabel == null ? null : SnackBarAction(label: actionLabel, onPressed: onAction ?? () {})));
+}
+
+/// The one way a message looks and behaves (Roadmap 1.3, 14.11.). Browser walk 14.11.: a note with „Rückgängig“ stayed on screen
+/// three pages later – Flutter keeps a snack bar with an action until it is dismissed unless `persist` is false – and the action took
+/// its own line, so „6,00 €“ broke between number and sign. Now: it always runs out, the action stays beside the text up to 40 % of
+/// the width (SnackBar.actionOverflowThreshold, default 0.25), and an amount never breaks from its currency sign.
+SnackBar noteBar(String text, {Duration duration = const Duration(seconds: 4), EdgeInsetsGeometry? margin, SnackBarAction? action}) => SnackBar(
+      content: Text(keepAmountsTogether(text)),
       duration: duration,
       behavior: SnackBarBehavior.floating,
-      margin: EdgeInsets.fromLTRB(FasanSpace.m, 0, FasanSpace.m, bottomBarSpace(context) + FasanSpace.s),
-      action: actionLabel == null ? null : SnackBarAction(label: actionLabel, onPressed: onAction ?? () {}),
-    ));
-}
+      margin: margin,
+      action: action,
+      actionOverflowThreshold: 0.4,
+      persist: false,
+    );
+
+/// Joins a number and a following currency sign with a no-break space („6,00 €“ never splits at the line end).
+String keepAmountsTogether(String s) => s.replaceAllMapped(RegExp(r'(\d) (€|EUR|CHF|USD|\$|£)'), (m) => '${m[1]}\u00A0${m[2]}');
 
 /// Item name: plain German name with symbol (or cleaned receipt name), receipt name small below (Karte 3.8).
 class ItemTitle extends StatelessWidget {
