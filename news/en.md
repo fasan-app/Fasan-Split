@@ -1,3 +1,6 @@
+## 0.1.126
+- New: “Who may do what” in the members list – admins decide whether only admins add bills, change bills and items or write notes. Whoever may not sees the bill with a note but cannot change it.
+
 ## 0.1.125
 - New: “Share as PDF” in a bill's ⋮ menu – one page with items, quantity, who was in, amount, total and each person's share. Without the receipt photo; where the device cannot share, the file is saved.
 

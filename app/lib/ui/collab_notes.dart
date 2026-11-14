@@ -8,6 +8,7 @@ import 'package:fasan_ui/fasan_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../collab/group.dart';
+import 'common.dart' show showNote;
 import '../collab/notes.dart';
 import '../collab/service.dart';
 import '../l10n.dart';
@@ -52,6 +53,18 @@ class MembersScreen extends StatelessWidget {
               value: group.session.allAdmins,
               onChanged: me == admin ? (v) => s.setAllAdmins(group, v) : null,
             ),
+            // who may do what (Paket 5b): per right „all“ or „admins only“; only admins change it, others see it greyed with the reason
+            Padding(padding: const EdgeInsets.only(top: FasanSpace.m, bottom: FasanSpace.xs), child: Text(context.tr('rights.title'), style: Theme.of(context).textTheme.titleSmall)),
+            for (final r in GroupSession.rightNames)
+              SwitchListTile(
+                key: ValueKey('right-$r'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(context.tr('rights.$r')),
+                subtitle: group.isAdmin ? null : Text(context.tr('rights.onlyAdminsChange')),
+                value: group.session.rights[r] == 'admins',
+                onChanged: group.isAdmin ? (v) => s.setRight(group, r, v) : null,
+              ),
+            Padding(padding: const EdgeInsets.only(bottom: FasanSpace.m), child: Text(context.tr('rights.note'), style: Theme.of(context).textTheme.bodySmall)),
             for (final k in keys)
               ListTile(
                 leading: CircleAvatar(child: Text(group.session.nameOf(k).characters.first.toUpperCase())),
@@ -86,7 +99,12 @@ class NotesScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add_rounded),
         label: Text(t.newNote),
+        // rights of the group (Paket 5b): without „notes“ the button says why instead of writing what others would drop
         onPressed: () async {
+          if (s.identity != null && !group.session.may('notes', s.identity!.pub)) {
+            showNote(context, context.tr('rights.notesBlocked'));
+            return;
+          }
           final title = await askText(context, t.newNote, t.noteTitle);
           if (title == null || !context.mounted) return;
           final id = s.newNote(group, title);
@@ -180,6 +198,8 @@ class _NoteEditorState extends State<NoteEditor> {
     _timer?.cancel();
     _timer = null;
     _dirty = false;
+    final me = _service.identity?.pub;
+    if (me != null && !widget.group.session.may('notes', me)) return; // rights (Paket 5b): others would drop it
     _service.saveNote(widget.group, widget.noteId, title: _title.text.trim(), text: _text.text);
   }
 

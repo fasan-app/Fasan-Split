@@ -136,10 +136,12 @@ class LockBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lock = bill.lockBy;
-    if (lock == null) return const SizedBox.shrink();
     final c = CollabScope.of(context), l = FasanLook.of(context);
-    final other = c.lockedAgainstMe(bill, lock);
-    final who = c.lockerName(bill, lock);
+    // the rights of the group (Paket 5b) read like a padlock held by the admins
+    final byRights = !c.mayEditBill(bill);
+    if (lock == null && !byRights) return const SizedBox.shrink();
+    final other = byRights || c.lockedAgainstMe(bill, lock);
+    final who = lock == null ? '' : c.lockerName(bill, lock);
     return Padding(
       padding: const EdgeInsets.only(bottom: FasanSpace.m),
       child: Container(
@@ -152,7 +154,7 @@ class LockBanner extends StatelessWidget {
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(Icons.lock_rounded, color: l.accent),
           const SizedBox(width: FasanSpace.m),
-          Expanded(child: Text(context.tr(other ? 'lock.bannerOther' : 'lock.bannerMine', [who]), style: Theme.of(context).textTheme.bodyMedium)),
+          Expanded(child: Text(byRights && lock == null ? context.tr('rights.banner') : context.tr(other ? 'lock.bannerOther' : 'lock.bannerMine', [who]), key: const ValueKey('lock-banner-text'), style: Theme.of(context).textTheme.bodyMedium)),
         ]),
       ),
     );

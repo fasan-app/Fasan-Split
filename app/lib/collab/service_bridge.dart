@@ -99,10 +99,14 @@ extension CollabServiceBridge on CollabService {
         final id = GroupSession.bill(b.id);
         final doc = g.session.doc(id);
         final me = identity?.pub;
+        // rights of the group (Paket 5b): without „bills“ a new bill stays on this phone only (others would drop it anyway);
+        // without „edit“ my changes are not written and come back from the document below, like under a padlock
+        if (me != null && doc.keys('').isEmpty && !g.session.may('bills', me)) continue;
+        final mayEdit = me == null || g.session.may('edit', me);
         var blocked = false;
         // padlocks: what somebody else locked is not written; it comes back from the document below
         final changed = BillSync.write(doc, b,
-            allow: me == null ? null : (k) => lockAllows(doc, k, me, adminPub: g.secret.adminPub), onBlocked: () => blocked = true);
+            allow: me == null ? null : (k) => mayEdit && lockAllows(doc, k, me, adminPub: g.secret.adminPub), onBlocked: () => blocked = true);
         if (changed) {
           g.session.touch(id);
           _saveDoc(g, id); // at once, not 600 ms later: the document must never be older than the stored bill (see _adoptDocs)

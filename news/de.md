@@ -1,3 +1,6 @@
+## 0.1.126
+- Neu: „Wer darf was“ in der Mitgliederliste – Admins legen fest, ob nur Admins Rechnungen anlegen, Rechnungen und Posten ändern oder Notizen schreiben. Wer es nicht darf, sieht den Bon mit Hinweis, kann ihn aber nicht ändern.
+
 ## 0.1.125
 - Neu: „Als PDF teilen“ im ⋮-Menü eines Bons – eine Seite mit Posten, Menge, wer dabei war, Betrag, Summe und dem Anteil je Person. Ohne Foto des Bons; wo das Gerät nicht teilen kann, wird die Datei gespeichert.
 

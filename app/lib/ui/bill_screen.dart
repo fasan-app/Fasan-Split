@@ -516,9 +516,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
           LockBanner(bill: b),
           // locked by somebody else: shown, but cannot be changed (absorbs touches; the list itself still scrolls)
           AbsorbPointer(
-            absorbing: CollabScope.of(context).lockedAgainstMe(b, b.lockBy),
+            absorbing: CollabScope.of(context).lockedAgainstMe(b, b.lockBy) || !CollabScope.of(context).mayEditBill(b),
             child: Opacity(
-              opacity: CollabScope.of(context).lockedAgainstMe(b, b.lockBy) ? 0.55 : 1,
+              opacity: CollabScope.of(context).lockedAgainstMe(b, b.lockBy) || !CollabScope.of(context).mayEditBill(b) ? 0.55 : 1,
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           // head: purpose and total on one row; the total is the only big number on the screen
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [

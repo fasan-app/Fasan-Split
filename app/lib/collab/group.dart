@@ -477,6 +477,29 @@ class GroupSession {
     return e != null && e.author == secret.adminPub && e.value == true;
   }
 
+  /// Rights of the group (Paket 5b, 14.11., Vorschlag 12.11. Punkt 5): for each right „all“ (default) or „admins“. Entry `l/rights` of
+  /// the members document, written by an admin; each phone drops entries that break it (like the padlock), so it holds between the
+  /// apps – a member with a changed app could still write locally, which is why the screen says „keine technische Sperre“.
+  static const rightNames = ['bills', 'edit', 'notes'];
+
+  Map<String, String> get rights {
+    final e = doc(members).entry('l/rights');
+    if (e == null || !admins.contains(e.author) || e.value is! Map) return const {};
+    return {for (final x in (e.value as Map).entries) if (rightNames.contains(x.key) && x.value == 'admins') '${x.key}': 'admins'};
+  }
+
+  /// Whether [pub] may use [right] in this group.
+  bool may(String right, String pub) => rights[right] != 'admins' || admins.contains(pub);
+
+  /// Admin: sets [right] to „admins“ ([onlyAdmins]) or back to everyone.
+  void setRight(String right, bool onlyAdmins) {
+    if (!isAdmin) throw StateError('only an admin changes the rights');
+    final r = {...rights};
+    onlyAdmins ? r[right] = 'admins' : r.remove(right);
+    doc(members).set('l/rights', r);
+    touch(members);
+  }
+
   /// Founder: turns „everybody is admin“ on or off.
   void setAllAdmins(bool on) {
     if (me.pub != secret.adminPub) throw StateError('only the founder changes this');
@@ -610,7 +633,7 @@ class GroupSession {
         accepted = acceptEntry == null ? entries : entries.where((x) => x.author == me.pub || acceptEntry!(id, x));
         if (id == keysDoc) accepted = accepted.where(_keyEntryOk);
       } else if (fromAdmin) {
-        accepted = entries.where((x) => (x.key.startsWith('m/') || x.key == 'l/admin' || x.key.startsWith('i/') || x.key == 'l/all') && adm.contains(x.author) && (x.key != 'l/all' || x.author == secret.adminPub));
+        accepted = entries.where((x) => (x.key.startsWith('m/') || x.key == 'l/admin' || x.key.startsWith('i/') || x.key == 'l/all' || x.key == 'l/rights') && adm.contains(x.author) && (x.key != 'l/all' || x.author == secret.adminPub));
       } else {
         final self = entries.where((x) => x.key == 'm/${e.pubkey}' && x.author == e.pubkey).toList();
         if (self.isEmpty) return; // nothing a non-admin may write here

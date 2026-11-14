@@ -81,6 +81,18 @@ extension CollabServiceAdmin on CollabService {
     _notify();
   }
 
+  /// Admin: one right of the group to „admins only“ or back to everyone (Paket 5b).
+  void setRight(CollabGroup g, String right, bool onlyAdmins) {
+    g.session.setRight(right, onlyAdmins);
+    _notify();
+  }
+
+  /// Whether I may change [b] under the rights of its group (no group, or right open, or I am admin = yes).
+  bool mayEditBill(Bill b) {
+    final me = identity?.pub, g = b.group == null ? null : groupByLocalName(b.group!);
+    return me == null || g == null || g.session.may('edit', me);
+  }
+
   /// Founder: „everybody is admin“ on or off (Paket 5).
   void setAllAdmins(CollabGroup g, bool on) {
     g.session.setAllAdmins(on);
@@ -217,6 +229,13 @@ extension CollabServiceAdmin on CollabService {
   }
 
   bool _accept(CollabGroup g, String docId, Entry e) {
+    // rights of the group (Paket 5b): a bill entry by somebody who may not create or change bills, a note by somebody who may not
+    // write notes, is dropped on this phone. Creating = the bill document had nothing yet.
+    if (docId.startsWith('bill:') && e.author != g.session.me.pub) {
+      final fresh = g.session.doc(docId).keys('').isEmpty;
+      if (!g.session.may(fresh ? 'bills' : 'edit', e.author)) return false;
+    }
+    if (docId == GroupSession.notes && e.author != g.session.me.pub && !g.session.may('notes', e.author)) return false;
     // padlocks (lock_rules.dart): a locked bill or item takes changes only from whoever locked it and from the group admin
     if (docId.startsWith('bill:') && !lockAllows(g.session.doc(docId), e.key, e.author, adminPub: g.secret.adminPub)) return false;
     final me = identity;

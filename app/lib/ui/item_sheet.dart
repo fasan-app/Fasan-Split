@@ -203,7 +203,7 @@ class _ItemSheetState extends State<_ItemSheet> {
   /// Locked by somebody else (item or whole bill): the fields below are shown but cannot be changed.
   bool _lockedForMe(BuildContext context) {
     final c = CollabScope.of(context);
-    return c.lockedAgainstMe(widget.bill, it.lockBy) || c.lockedAgainstMe(widget.bill, widget.bill.lockBy);
+    return c.lockedAgainstMe(widget.bill, it.lockBy) || c.lockedAgainstMe(widget.bill, widget.bill.lockBy) || !c.mayEditBill(widget.bill);
   }
 
   /// The padlock of the item (Nutzer 07.11.): everyone may enter for everyone until somebody locks.
