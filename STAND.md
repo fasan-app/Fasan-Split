@@ -1240,3 +1240,7 @@ Register 27d, 26d, 09.11. Nr. 3, 08.11. 04:09 (2) schließen. Währenddessen: Pu
 Wunsch: volle, wischbare Personennamen wie A, Gestaltung wie C (kompakter Kopf, Personenzeile oben). Muss bleiben: Filter („Nur offene Posten“),
 farbige Zustandsmarkierung der Posten, oberstes Menü (Zurück, Titel, Am-Bon-zuordnen, Rückgängig/Wiederholen, Posten prüfen, ⋮), Bon-Ansichten.
 „Am Bon zuordnen“ soll präsenter werden. Vorschläge (+ Bine, Alle aus der Gruppe) sollen komplett anders aussehen. Neue Entwürfe D1–D3 vorgelegt, wartet auf Auswahl.
+
+## 14.11. 12:55 Nutzer: Bon-Kopf 3. Runde
+Basis D3 (Reiter Posten | Am Bon | Offene gefällt). Vorschläge erst nach Tipp auf „+ Person“. Infostreifen „11 Posten · 5 fertig …“ wie D1.
+Bon-Ansicht oben als klar anklickbarer Bereich mit Miniatur des ganzen Bons (D3 ließ den Bon nicht als Ganzes ansehen). Entwürfe E1–E3 vorgelegt; Bon-Ausschnitte unter Posten und „Bezahlt von“ bleiben (Fehler: fehlten in D).
