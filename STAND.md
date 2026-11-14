@@ -1265,3 +1265,6 @@ Fehler: M1–M3 und D/E/F waren Varianten desselben Aufbaus. Neu vorgelegt: 10 E
 Gemessen (55 Testfotos in fasan-diagnose): Originalfotos Höhe/Breite Median 0,85, 38 von 55 quer, keines länger als 1,78. Hochkant-Miniatur (N3, N6, N10, E1) passt also für
 die Mehrheit der Originalfotos nicht ohne Beschnitt. Nicht gemessen: Format des begradigten Scans, Lesbarkeit der Posten-Ausschnitte in kleiner Größe, Anteil der Bons ohne Bild
 (Gruppe/Browser, „Ohne Bon“). Nächster Schritt vor jeder Auswahl: Entwürfe mit echten Bildern aus fasan-diagnose rendern (nur lokal ansehen, nichts davon ins Repo).
+
+## 14.11. 15:28 Nutzer: Bons in allen Formaten, wenig oder viel Text – muss bedacht werden (Register 38)
+Formattafel (erfundene Bons: lang, kurz, quer fotografiert, A4 dicht, Kartenbeleg, ohne Bild) in den drei Rahmenarten der Entwürfe erzeugt und dem Nutzer gezeigt (/tmp, nicht im Repo).
