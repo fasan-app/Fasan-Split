@@ -1201,6 +1201,8 @@ Noch offen: Browser-Gegenstück (screens.js) für Saldo-Verlauf und Gruppensuche
 - Web Push: **freigegeben** (Push-Dienste der Browser). Vor dem Bau zu klären: Ort des Sende-Dienstes (eigener Server nötig) und was er sehen darf.
 - Gestaltung (Fasan-Glas, Kopfzone, Bon-Ansicht): **mehrere Entwürfe zur Auswahl**, nicht direkt umbauen.
 - Git-Geschichte: **umgeschrieben 14.11. (Nutzer 09:50: „ja“)** mit git-filter-repo – Absender (Autor/Committer) und Dateiinhalte aller Commits ohne Klarnamen-Adresse, `main` hart gepusht (c41ee2f). Der Tag `neueste` (alter Stand 0.1.85, ohne die Adresse) blieb; Tag-Push wäre für diese Sitzung gesperrt (403). **Lehre:** die Adresse selbst nie in öffentliche Dateien schreiben (ich hatte sie in diese Datei geschrieben – zweiter Durchlauf nötig). Alte Commit-Kennungen bleiben bei GitHub abrufbar, bis der Nutzer den GitHub-Support um Bereinigung bittet. Andere Sitzungen: neu klonen. Private Repos Fasan/fasan-diagnose tragen die Adresse noch in alten Commits (nicht umgeschrieben, privat).
+- 10:20 Nutzer: Push muss für jeden kostenlos extern laufen, ohne Einrichtung durch ihn, dezentral wie Nostr. Befund: Gerät-zu-Gerät im Browser unmöglich (CORS bei allen Push-Diensten gesperrt); Vorschlag zustandsloser Weiterreicher (keine Konten, keine Daten, jeder kann einen betreiben). Offen: wer den ersten betreibt.
+
 
 ## 14.11. 01:49 Nachtplan (Nutzer: alles selbstständig, ohne Stopp, Schritt für Schritt)
 Reihenfolge (zuerst Offenes abschließen, dann Umbau, dann Roadmap); jeder Schritt: Test, Tutorial/Tipps falls Bedienung, App- und Browser-Foto angesehen, Push, CI grün.
