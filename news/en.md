@@ -1,3 +1,7 @@
+## 0.1.123
+- New: In the chat the name above a message opens the profile (also “Profile of …” in the long-press menu); the chat header shows an arrow that it can be tapped.
+- New: Every row in the friends list has ⋮ – the same menu as the long press.
+
 ## 0.1.122
 - New: Every person has their own hatching pattern (eight patterns) next to colour and initials, so you can tell people apart without colour vision.
 

@@ -59,10 +59,13 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     // the photo comes in pieces: wait until the menu entries are enabled (line pictures and receipt need the scan)
     let ready = false;
     for (let i = 0; i < 90 && !ready; i++) {
-      await p.getByRole('button', { name: /Menü anzeigen|Show menu/ }).first().click({ timeout: 10000 }).catch(() => {});
+      // the ⋮ of the bill is „Mehr“ (the start page's is „Menü anzeigen“); with the wrong name the check never ran (ready:false, 13.11.)
+      await p.getByRole('button', { name: /^(Mehr|More)$/ }).first().click({ timeout: 10000 }).catch(() => {});
       await p.waitForTimeout(800);
       const item = p.getByRole('menuitem', { name: /Am Original zuordnen|Assign on the original/ }).first();
-      ready = (await item.count()) > 0 && !(await item.isDisabled().catch(() => true));
+      const cnt = await item.count(), dis = cnt > 0 ? await item.isDisabled().catch((e) => 'err:' + e.message.slice(0, 60)) : null;
+      ready = cnt > 0 && dis === false;
+      if (!ready && i < 3) console.log('ready-check', i, cnt, dis);
       if (!ready) { await p.keyboard.press('Escape'); await p.waitForTimeout(1500); }
     }
     result.ready = ready;
@@ -140,6 +143,10 @@ const base = process.env.E2E_BASE || 'http://localhost:8765';
     // profile of a person (12.11.): tap Lena in the people list, same name as the app walk (test/screens_test.dart h08g)
     await step('h08g-profil', async () => { await p.getByRole('button', { name: /^LE Lena/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(800); });
     await step('h08g2-profil-zu', async () => { await back(); });
+    // profile of the other member (Pia, the phone side of this walk; Pakete 4–7, 13.11.): rights level, pay request, admin, history;
+    // same content as test/screens_test.dart b31/b34 (there with an invented member)
+    await step('b31-profil-rechte', async () => { await p.getByRole('button', { name: /^PI Pia/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(800); await p.mouse.move(196, 500); await p.mouse.wheel(0, 900); await p.waitForTimeout(800); });
+    await step('b31b-profil-zu', async () => { await back(); });
     // tap on a balance: the breakdown only for this person (12.11.), same name as the app walk (test/screens_test.dart h08h)
     await step('h08h-person-saldo', async () => { await p.getByRole('button', { name: /^[\u2212-]10,00 €$/ }).first().click({ timeout: 8000 }); await p.waitForTimeout(800); });
     await step('h08h2-saldo-zu', async () => { await back(); });

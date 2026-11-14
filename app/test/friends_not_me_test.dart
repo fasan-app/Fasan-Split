@@ -36,5 +36,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Pia'), findsOneWidget);
     expect(find.text('Lena'), findsNothing, reason: 'ich selbst gehöre nicht in meine Freundesliste');
+    // the long press has a visible twin: ⋮ at the row (48 dp) opens the same actions
+    final more = find.byKey(const ValueKey('friend-more-Pia'));
+    expect(tester.getSize(more).height, greaterThanOrEqualTo(48));
+    await tester.tap(more);
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
   });
 }

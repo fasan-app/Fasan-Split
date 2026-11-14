@@ -2,6 +2,7 @@
 // Fasan Split – The chat of a group or a direct chat. Split out of collab_ui.dart (13.11., Umbau, behaviour unchanged). MPL-2.0
 import 'person_avatar.dart';
 import 'person_profile.dart';
+import '../collab/service.dart';
 import '../l10n/tr.dart';
 import 'dart:async';
 
@@ -12,7 +13,6 @@ import 'package:flutter/services.dart';
 import '../collab/group.dart';
 import 'package:fasan_core/pay.dart' show PayInfo;
 import '../collab/notes.dart';
-import '../collab/service.dart';
 import '../l10n.dart';
 import '../l10n_collab.dart';
 import 'scope.dart';
@@ -144,6 +144,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ]),
           ),
           ListTile(leading: const Icon(Icons.reply_rounded), title: Text(trLang(de ? 'de' : 'en', 'collab_ui.reply')), onTap: () => Navigator.pop(ctx, 'reply')),
+          if (!mine) ListTile(key: const ValueKey('msg-profile'), leading: const Icon(Icons.person_outline_rounded), title: Text(trLang(de ? 'de' : 'en', 'chat.profileOf', [widget.group.session.nameOf(m.from)])), onTap: () => Navigator.pop(ctx, 'profile')),
           if (m.text.isNotEmpty) ListTile(leading: const Icon(Icons.copy_rounded), title: Text(trLang(de ? 'de' : 'en', 'collab_ui.copy')), onTap: () => Navigator.pop(ctx, 'copy')),
           ListTile(leading: Icon(m.pinned ? Icons.push_pin : Icons.push_pin_outlined), title: Text(m.pinned ? (trLang(de ? 'de' : 'en', 'collab_ui.unpin')) : (trLang(de ? 'de' : 'en', 'collab_ui.pin'))), onTap: () => Navigator.pop(ctx, 'pin')),
           if (mine && m.bill == null) ListTile(leading: const Icon(Icons.edit_outlined), title: Text(trLang(de ? 'de' : 'en', 'collab_ui.edit')), onTap: () => Navigator.pop(ctx, 'edit')),
@@ -171,6 +172,8 @@ class _ChatScreenState extends State<ChatScreen> {
         _input.text = m.text;
         _input.selection = TextSelection.collapsed(offset: m.text.length);
       });
+    } else if (choice == 'profile') {
+      openProfile(context, groupName: widget.group.secret.direct ? '' : widget.group.localName, pub: m.from);
     } else if (choice == 'delete') {
       c.deleteMessage(widget.group, m.id);
     }
@@ -289,7 +292,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => MembersScreen(group: g)));
                   }
                 }, child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                  Text(n.isEmpty ? t.chatTitle : n),
+                  // visible signifier that the name opens something (Nutzer 12.11.: Kopf sah tippbar aus, ohne Zeichen)
+                  Row(mainAxisSize: MainAxisSize.min, children: [Flexible(child: Text(n.isEmpty ? t.chatTitle : n, overflow: TextOverflow.ellipsis)), const Icon(Icons.chevron_right_rounded, size: 20)]),
                   if (peer != null && (c.isOnline(peer) || seen != null))
                     Text(
                       c.isOnline(peer) ? 'online' : trLang(t.de ? 'de' : 'en', 'collab_ui.lastSeen', [seen!.day, seen.month, seen.hour.toString().padLeft(2, '0'), seen.minute.toString().padLeft(2, '0')]),
@@ -366,7 +370,15 @@ class _ChatScreenState extends State<ChatScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: FasanSpace.m, vertical: FasanSpace.s),
                       decoration: BoxDecoration(color: mine ? l.accent.withValues(alpha: 0.18) : l.surfaceAlt, borderRadius: BorderRadius.circular(l.rInner), border: m.mentions.contains(me) ? Border.all(color: l.accent, width: 1.5) : null),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                        Text(mine ? t.you : widget.group.session.nameOf(m.from), style: tt.labelSmall),
+                        // the author's name opens their profile (Nutzer 12.11.); my own name does not
+                        if (mine)
+                          Text(t.you, style: tt.labelSmall)
+                        else
+                          InkWell(
+                            key: ValueKey('chat-author-${m.id}'),
+                            onTap: () => openProfile(context, groupName: widget.group.secret.direct ? '' : widget.group.localName, pub: m.from),
+                            child: Padding(padding: const EdgeInsets.only(top: 6, bottom: 6, right: 16), child: Text(widget.group.session.nameOf(m.from), style: tt.labelSmall!.copyWith(decoration: TextDecoration.underline))),
+                          ),
                         // quote of the message this one answers
                         if (m.reply != null)
                           Builder(builder: (context) {

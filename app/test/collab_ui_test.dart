@@ -4,6 +4,7 @@ import 'package:fasan_core/bill.dart';
 import 'package:fasan_split/collab/group.dart' show GroupSession;
 import 'package:fasan_split/collab/lww.dart' show Entry;
 import 'package:fasan_split/collab/activity.dart';
+import 'package:fasan_split/collab/notes.dart' show Notes;
 import 'package:fasan_split/collab/keys.dart';
 import 'package:fasan_split/collab/notify.dart';
 import 'package:fasan_split/collab/nostr.dart';
@@ -442,6 +443,29 @@ void main() {
     expect(g.session.admins.contains(other), isTrue, reason: 'alle Mitglieder sind Admin');
     svc.setAllAdmins(g, false);
     expect(g.session.admins.contains(other), isFalse);
+    await tester.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('Chat: Name des Absenders antippen oder „Profil von …“ im Langdruck öffnet sein Profil; Kopf trägt ein sichtbares Zeichen', (tester) async {
+    final g = await svc.createGroup('WG');
+    final other = 'ab' * 32;
+    g.session.doc(GroupSession.members).set('m/$other', {'name': 'Otto'});
+    Notes.send(g.session.doc(GroupSession.chat), other, 'Hallo');
+    tester.view.physicalSize = const Size(1080, 2400);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(ChatScreen(group: g)));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byKey(const ValueKey('chat-header')), matching: find.byIcon(Icons.chevron_right_rounded)), findsOneWidget);
+    await tester.tap(find.byWidgetPredicate((w) => w.key is ValueKey<String> && (w.key! as ValueKey<String>).value.startsWith('chat-author-')));
+    await tester.pumpAndSettle();
+    expect(find.byType(PersonProfileScreen), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.text('Hallo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('msg-profile')));
+    await tester.pumpAndSettle();
+    expect(find.byType(PersonProfileScreen), findsOneWidget);
     await tester.pump(const Duration(seconds: 5));
   });
 

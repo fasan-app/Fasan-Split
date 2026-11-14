@@ -674,6 +674,7 @@ const Map<String, String> stringsDe = {
   'shist.empty': 'Noch nichts im Verlauf.',
   'pay.give': 'Meine Zahlungsangaben schicken',
   'pay.giveSub': 'Geht als Karte in den Chat mit {0}. Nur {0} sieht sie.',
+  'chat.profileOf': 'Profil von {0}',
   'trust.full': 'Trägt direkt ein',
   'trust.fullSub': 'Seine Einträge für dich gelten sofort.',
   'trust.confirm': 'Fragt erst',

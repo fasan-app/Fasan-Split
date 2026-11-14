@@ -674,6 +674,7 @@ const Map<String, String> stringsEn = {
   'shist.empty': 'Nothing in the history yet.',
   'pay.give': 'Send my payment details',
   'pay.giveSub': 'Goes into the chat with {0} as a card. Only {0} sees it.',
+  'chat.profileOf': 'Profile of {0}',
   'trust.full': 'Enters directly',
   'trust.fullSub': 'Their entries for you count at once.',
   'trust.confirm': 'Asks first',
