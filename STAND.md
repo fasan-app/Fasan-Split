@@ -1186,6 +1186,16 @@ Noch offen: Browser-Gegenstück (screens.js) für Saldo-Verlauf und Gruppensuche
 - 0.1.122 (Schraffur je Person, Beschluss Bon 3.9, 14.11.): `ui/person_avatar.dart` (`PersonAvatar` = `FasanAvatar` + `HatchPainter`, acht Muster passend zu den acht Personenfarben, erste Person glatt), alle 26 Stellen umgestellt, `fasan_ui` unverändert. Test `person_avatar_test`, Bildschirmfoto `h08-personen` angesehen (Lena schraffiert). Nicht gemessen: Leistung auf Samsung/iPhone (statisch gezeichnet, ClipOval + CustomPaint je Avatar; bei vielen Avataren in langen Listen zu prüfen) und kein Browser-Foto.
 - 14.11. Browser-Lauf 0.1.122: Bildschirmfoto `h08-personen` im Browser angesehen, Schraffur an Lena sichtbar, Browser = App. Bildrate im Lauf (Headless-Chromium, nicht Samsung/iPhone): p50 17 ms, max 17 ms, 0 langsame Bilder in `h08-personen` und `b01-bon`. Echtgerät-Messung (Android/iOS) weiter offen.
 
+## 14.11. 01:49 Nachtplan (Nutzer: alles selbstständig, ohne Stopp, Schritt für Schritt)
+Reihenfolge (zuerst Offenes abschließen, dann Umbau, dann Roadmap); jeder Schritt: Test, Tutorial/Tipps falls Bedienung, App- und Browser-Foto angesehen, Push, CI grün.
+1. Browser-Lauf mit zweitem Mitglied: Schritte b31–b34 (Profil anderer, Rechte, Admin, Chat-Zahlungskarten, Verlauf) auch im Browser.
+2. Ursache `ready:false` (Foto kommt im lokalen Browser-Lauf nicht an) finden und beheben.
+3. Alte offene UI-Punkte: Personen-Chips im Bon-Kopf umbrechen, Chat-Kopf ohne sichtbares Zeichen, Langdruck in der Freundesliste, Autorennamen im Chat → Profil.
+4. Umbau weiter: `groups.dart`, `receipt_view.dart`, `bill_screen.dart` prüfen/teilen; CI testet nur geänderte Pakete.
+5. Roadmap 1: Meldungen/Dialoge im Stil (SnackBar), Namen ändern im Profil.
+6. Roadmap 2: Bon als PDF teilen, Rechte-Matrix je Admin.
+Nicht ohne Nutzer: Web Push (fremder Dienst), Messung auf echtem Samsung/iPhone, Umschreiben der öffentlichen Git-Geschichte.
+
 ## 13.11. 00:25 Reihenfolge neu (Nutzer 00:24, ANFORDERUNGEN 32)
 1. Paket 3 / 0.1.116: CI-Lauf 43322443929 abwarten (Tor läuft noch), dann „live“ melden.
 2. **CI-Filter ERLEDIGT 13.11. (Ursache war ein Fehler, kein fehlender Filter):** Der Filter von 08.11. verglich mit der Release „neueste“ (APK, seit 09.11. eingefroren, Stand d077992) und lief deshalb bei jedem Push. Jetzt Vergleich mit dem letzten erfolgreichen Lauf von web.yml auf main; zusätzlich nächtlicher Volllauf (02:17 UTC); unklar → Tor läuft. Geprüft nur durch Lesen/YAML-Syntax; Wirkung zeigt der nächste Push (dieser läuft einmal voll, weil erkennung.yml selbst in der Dateiliste steht).
